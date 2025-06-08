@@ -54,7 +54,7 @@ export default function Page1() {
         onClick={toggleAudio}
       >
         {isMuted ? (
-          <FaVolumeMute className="text-[var(--background)] text-4xl md:text-5xl hover:text-[var(--backgournd)] hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300 group-" />
+          <FaVolumeMute className="text-[var(--background)] text-4xl md:text-5xl hover:text-[var(--background)] hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300 group-" />
         ) : (
           <FaVolumeUp className="text-[var(--background)] text-4xl md:text-5xl hover:text-[var(--background)] hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300 group-" />
         )}
@@ -191,7 +191,7 @@ export default function Page1() {
         <div className="flex justify-end mt-8 items-center gap-2 pt-5 relative z-20">
           <div
             onClick={scrollToRight}
-            className="flex items-center gap-2 text-[var(--colortwo)] text-lg md:text-2xl font-medium hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300 cursor-pointer"
+            className="absolute bottom-8 right-0 flex items-center gap-2 text-[var(--colortwo)] text-lg md:text-2xl font-medium hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300 cursor-pointer"
           >
             <span className="cursor-pointer"> what&apos;s new?</span>
             <FaArrowRight className="text-[var(--colortwo)] text-lg md:text-2xl hover:text-pink-300 hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300 cursor-pointer" />

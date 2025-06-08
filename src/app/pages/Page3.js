@@ -77,7 +77,7 @@ export default function Page3() {
       </div>
 
       {/* More clues button: Bottom-right, fixed within Page3 section */}
-      <div className="absolute bottom-8 right-0 flex justify-center items-center gap-2 pr-5 pb-8 z-30">
+      <div className="absolute bottom-8 right-0 flex justify-center items-center gap-2 pr-5 pb-8 z-30 ">
         <div onClick={scrollToRight} className="flex items-center gap-2 text-amber-100 text-lg md:text-2xl font-medium hover:text-amber-300 transition-colors cursor-pointer">
           <span>evidence?</span><FaArrowRight/>
         </div>

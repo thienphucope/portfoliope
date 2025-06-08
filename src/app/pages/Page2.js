@@ -219,9 +219,9 @@ export default function Page2() {
           {/* Magnifier image: Centered on content */}
           <img
             ref={magnifierRef}
-            src="/magnifier.webp"
+            src="/yellowtorch.png"
             alt="Magnifier"
-            className="absolute z-30 w-64 h-64 md:w-72 md:h-72 object-contain cursor-pointer hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] transition-all duration-300 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rotate-[-45deg]"
+            className="absolute z-30 w-64 h-64 md:w-72 md:h-72 object-contain cursor-pointer hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] transition-all duration-300 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
           />
 
           {/* Content */}
