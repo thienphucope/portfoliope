@@ -215,7 +215,7 @@ export default function Page1() {
           <img
             src="/cursor.png"
             alt="Magnifier"
-            className="magnifier"
+            className="magnifier absolute left-1/2 top-1/2 transform -translate-y-1/2 -translate-x-[40%]" // đổi từ -translate-x-1/2 sang -translate-x-[40%]
             onClick={handleMaskClick}
           />
         </div>
@@ -249,7 +249,7 @@ export default function Page1() {
           }`}
         >
           <div className={`flex-none relative z-20 initially-hidden ${isIntroDone ? 'animate-text-1' : ''}`}>
-            <h2 className="text-5xl md:text-7xl text-[var(--colorone)] font-bold mt-15 md:mb-2 font-chomsky hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300">
+            <h2 className="text-5xl md:text-7xl text-[var(--colorone)] font-bold mt-5 md:mt-15 md:mb-2 font-chomsky hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300">
               Ope Watson
             </h2>
             <div>
