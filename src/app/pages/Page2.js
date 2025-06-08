@@ -1,4 +1,3 @@
-/* Cover Component: Full-screen newspaper with scrollable height and balanced spacing */
 "use client";
 
 import { useEffect, useRef } from "react";
@@ -77,6 +76,7 @@ export default function Page2() {
         requestAnimationFrame(animateReveal);
       } else {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.style.display = "none"; // Remove canvas from display
         revealInProgress = false;
       }
     };
@@ -136,11 +136,7 @@ export default function Page2() {
           magnifier.style.display = "none";
         }, 500);
       }
-      // BỎ touch-action: none để cho phép scroll lại
-      if (canvas) {
-        canvas.style.touchAction = "auto";
-      }
-      
+
       startTime = performance.now();
       requestAnimationFrame(animateReveal);
     };

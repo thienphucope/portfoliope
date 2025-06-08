@@ -249,7 +249,7 @@ export default function Page1() {
           }`}
         >
           <div className={`flex-none relative z-20 initially-hidden ${isIntroDone ? 'animate-text-1' : ''}`}>
-            <h2 className="text-5xl md:text-7xl text-[var(--colorone)] font-bold mt-5 md:mt-15 md:mb-2 font-chomsky hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300">
+            <h2 className="text-5xl md:text-7xl text-[var(--colorone)] font-bold mt-8 md:mt-15 md:mb-2 font-chomsky hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300">
               Ope Watson
             </h2>
             <div>
