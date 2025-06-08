@@ -4,19 +4,28 @@ import { FaYoutube, FaInstagram, FaGithub, FaEnvelope, FaTwitter, FaArrowDown, F
 
 export default function Page1() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const [isIconHovered, setIsIconHovered] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true); // Track video play/pause state
   const [displayText, setDisplayText] = useState("A curious explorer and eager sleuth, driven by a love for mysteries, and the thrill of uncovering what lies under the surface of everything.");
+  const [displayTitle, setDisplayTitle] = useState("Ope Watson");
+  const [displayPronunciation, setDisplayPronunciation] = useState("en. /'oʊp 'wɑːtsən/  jp. /opeオペ/");
   const [isIntroStarted, setIsIntroStarted] = useState(false);
   const [isIntroDone, setIsIntroDone] = useState(false);
-  const audioRef = useRef(null);
+  const playerRef = useRef(null);
   const textRef = useRef(null);
+  const titleRef = useRef(null);
+  const pronunciationRef = useRef(null);
 
   const originalText = "A curious explorer and eager sleuth, driven by a love for mysteries, and the thrill of uncovering what lies under the surface of everything.";
   const replacementText = "An unmotivated sloth in human form, dedicated to avoiding effort, solving nothing, and uninterested in anything beyond the nearest snack or nap.";
+  const originalTitle = "Ope Watson";
+  const replacementTitle = "No Touch!";
+  const originalPronunciation = "en. /'oʊp 'wɑːtsən/  jp. /opeオペ/";
+  const replacementPronunciation = "pronounce it anyways!";
 
   // Scramble text animation
-  const scrambleText = (targetText, duration = 200) => {
+  const scrambleText = (original, target, setDisplay, duration = 200) => {
     const chars = "abcdehknguvxyz";
     let startTime = null;
     let frame;
@@ -27,29 +36,29 @@ export default function Page1() {
       const progressRatio = Math.min(progress / duration, 1);
 
       if (progressRatio < 0.7) {
-        const scrambled = originalText
+        const scrambled = original
           .split("")
           .map((char, i) => {
             if (char === " ") return char;
             return chars[Math.floor(Math.random() * chars.length)];
           })
           .join("");
-        setDisplayText(scrambled);
+        setDisplay(scrambled);
         frame = requestAnimationFrame(animate);
       } else {
         const blendRatio = (progressRatio - 0.7) / 0.3;
-        const currentText = originalText
+        const currentText = original
           .split("")
           .map((char, i) => {
             if (char === " ") return char;
-            return blendRatio < Math.random() ? char : targetText[i] || char;
+            return blendRatio < Math.random() ? char : target[i] || char;
           })
           .join("");
-        setDisplayText(currentText);
+        setDisplay(currentText);
         if (progressRatio < 1) {
           frame = requestAnimationFrame(animate);
         } else {
-          setDisplayText(targetText);
+          setDisplay(target);
         }
       }
     };
@@ -58,14 +67,34 @@ export default function Page1() {
     return () => cancelAnimationFrame(frame);
   };
 
-  // Handle mouse enter
-  const handleMouseEnter = () => {
-    scrambleText(replacementText);
+  // Handle mouse enter for description
+  const handleMouseEnterDescription = () => {
+    scrambleText(originalText, replacementText, setDisplayText);
   };
 
-  // Handle mouse leave
-  const handleMouseLeave = () => {
-    scrambleText(originalText);
+  // Handle mouse leave for description
+  const handleMouseLeaveDescription = () => {
+    scrambleText(replacementText, originalText, setDisplayText);
+  };
+
+  // Handle mouse enter for title
+  const handleMouseEnterTitle = () => {
+    scrambleText(originalTitle, replacementTitle, setDisplayTitle);
+  };
+
+  // Handle mouse leave for title
+  const handleMouseLeaveTitle = () => {
+    scrambleText(replacementTitle, originalTitle, setDisplayTitle);
+  };
+
+  // Handle mouse enter for pronunciation
+  const handleMouseEnterPronunciation = () => {
+    scrambleText(originalPronunciation, replacementPronunciation, setDisplayPronunciation);
+  };
+
+  // Handle mouse leave for pronunciation
+  const handleMouseLeavePronunciation = () => {
+    scrambleText(replacementPronunciation, originalPronunciation, setDisplayPronunciation);
   };
 
   // Open modal function
@@ -84,23 +113,59 @@ export default function Page1() {
 
   // Toggle audio mute/unmute
   const toggleAudio = () => {
-    if (audioRef.current) {
-      audioRef.current.muted = !isMuted;
+    if (playerRef.current) {
+      if (isMuted) {
+        playerRef.current.unMute();
+        playerRef.current.playVideo();
+        setIsPlaying(true);
+      } else {
+        playerRef.current.mute();
+      }
       setIsMuted(!isMuted);
     }
   };
 
-  // Initialize audio and trigger intro animation
-  useEffect(() => {
-    if (audioRef.current && isIntroStarted) {
-      audioRef.current.volume = 0.5;
-      audioRef.current.loop = true;
-      audioRef.current.play().catch((error) => {
-        console.log("Audio playback failed:", error);
-      });
+  // Toggle video play/pause
+  const togglePlayPause = () => {
+    if (playerRef.current) {
+      if (isPlaying) {
+        playerRef.current.pauseVideo();
+      } else {
+        playerRef.current.playVideo();
+      }
+      setIsPlaying(!isPlaying);
     }
+  };
+
+  // Initialize YouTube player
+  useEffect(() => {
     if (isIntroStarted) {
-      setTimeout(() => setIsIntroDone(true), 100);
+      const tag = document.createElement('script');
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+      window.onYouTubeIframeAPIReady = () => {
+        playerRef.current = new window.YT.Player('youtube-player', {
+          height: '0',
+          width: '0',
+          videoId: 'pL35m337Qa4',
+          playerVars: {
+            autoplay: 1,
+            loop: 1,
+            playlist: 'pL35m337Qa4',
+            controls: 0,
+            showinfo: 0,
+            modestbranding: 1,
+            mute: 1,
+          },
+          events: {
+            onReady: (event) => {
+              event.target.setVolume(50);
+            },
+          },
+        });
+      };
     }
   }, [isIntroStarted]);
 
@@ -108,6 +173,12 @@ export default function Page1() {
   const handleMaskClick = () => {
     setIsIntroStarted(true);
   };
+
+  useEffect(() => {
+    if (isIntroStarted) {
+      setTimeout(() => setIsIntroDone(true), 100);
+    }
+  }, [isIntroStarted]);
 
   return (
     <section id="gallery" className="w-full min-h-screen bg-[var(--background)] snap-start font-serif box-border relative z-10">
@@ -138,6 +209,14 @@ export default function Page1() {
           }
           100% {
             filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.8));
+          }
+        }
+        @keyframes rotate {
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg);
           }
         }
         .animate-text-1 {
@@ -176,6 +255,10 @@ export default function Page1() {
           animation: slideInFromRight 0.5s ease-out forwards;
           animation-delay: 3.1s;
         }
+        .animate-disk {
+          animation: slideInFromRight 0.5s ease-out forwards;
+          animation-delay: 3.3s;
+        }
         .initially-hidden {
           opacity: 0;
           transform: translateY(100%);
@@ -209,19 +292,63 @@ export default function Page1() {
         .magnifier:hover {
           animation: glow 0.5s ease-in-out alternate infinite;
         }
+        .disk-container {
+          position: absolute;
+          left: -60px; /* Half of the disk width to center it on the border */
+          top: 60%; /* Moved higher */
+          transform: translateY(-50%);
+          width: 120px; /* Reduced size */
+          height: 120px;
+          z-index: 30;
+          cursor: pointer;
+        }
+        .disk {
+          width: 120px;
+          height: 120px;
+          border: 5px solid var(--colorone);
+          border-radius: 50%;
+          background-image: url('/blackcat.jpg');
+          background-size: cover;
+          background-position: center;
+          animation: rotate 10s linear infinite;
+        }
+        .disk-text {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 120px;
+          height: 120px;
+          animation: rotate 10s linear infinite;
+        }
+        .disk-text svg {
+          width: 100%;
+          height: 100%;
+        }
+        .disk-text text {
+          fill: var(--colorone);
+          font-size: 12px; /* Adjusted for smaller disk */
+          font-weight: bold;
+          text-transform: uppercase;
+        }
+        .disk-text textPath {
+          fill: var(--colorone);
+          paint-order: stroke;
+          stroke: var(--background);
+          stroke-width: 6px; /* Background effect */
+        }
       `}</style>
       {!isIntroStarted && (
         <div className="mask">
           <img
             src="/cursor.png"
             alt="Magnifier"
-            className="magnifier absolute left-1/2 top-1/2 transform -translate-y-1/2 -translate-x-[40%]" // đổi từ -translate-x-1/2 sang -translate-x-[40%]
+            className="magnifier absolute left-1/2 top-1/2 transform -translate-y-1/2 -translate-x-[40%]"
             onClick={handleMaskClick}
           />
         </div>
       )}
       <div className={`flex flex-col md:flex-row items-stretch w-full min-h-screen ${!isIntroStarted ? 'hidden' : ''}`}>
-        <audio ref={audioRef} src="/background-audio.mp3" />
+        <div id="youtube-player" style={{ display: 'none' }}></div>
         <div
           className="absolute left-0 top-10 transform -translate-y-1/2 pl-5 z-30 cursor-pointer group"
           onClick={toggleAudio}
@@ -248,21 +375,53 @@ export default function Page1() {
             isIntroDone ? 'md:w-2/5' : 'md:w-full'
           }`}
         >
+          <div className={`disk-container initially-hidden-icon ${isIntroDone ? 'animate-disk' : ''}`} onClick={togglePlayPause}>
+            <div className="disk"></div>
+            <div className="disk-text">
+              <svg viewBox="0 0 120 120">
+                <path
+                  id="textPath"
+                  d="M 60, 15 A 45, 45 0 0 1 60, 105 A 45, 45 0 0 1 60, 15"
+                  fill="none"
+                />
+                <text>
+                  <textPath href="#textPath" startOffset="0%">
+                    unmute to hear
+                  </textPath>
+                </text>
+              </svg>
+            </div>
+          </div>
           <div className={`flex-none relative z-20 initially-hidden ${isIntroDone ? 'animate-text-1' : ''}`}>
-            <h2 className="text-5xl md:text-7xl text-[var(--colorone)] font-bold mt-8 md:mt-15 md:mb-2 font-chomsky hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300">
-              Ope Watson
+            <h2
+              className="text-5xl md:text-6xl text-[var(--colorone)] font-bold mt-8 md:mt-15 md:mb-2 font-chomsky hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300"
+              ref={titleRef}
+              onMouseEnter={handleMouseEnterTitle}
+              onMouseLeave={handleMouseLeaveTitle}
+            >
+              {displayTitle}
             </h2>
             <div>
-              <span className="text-base md:text-xl leading-relaxed text-[var(--colorone)] italic inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300">
-                en. /&apos;oʊp &apos;wɑːtsən/  jp. /opeオペ/
+              <span
+                className="text-base md:text-xl leading-relaxed text-[var(--colorone)] italic inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300"
+                ref={pronunciationRef}
+                onMouseEnter={handleMouseEnterPronunciation}
+                onMouseLeave={handleMouseLeavePronunciation}
+              >
+                {displayPronunciation}
               </span>
             </div>
           </div>
           <div
-            className={`flex-none text-xl md:text-2xl line-clamp-3 leading-relaxed text-[var(--colortwo)] space-y-2 md:space-y-3 mt-7 mr-5 relative z-20 initially-hidden ${isIntroDone ? 'animate-text-2' : ''}`}
+            className={`flex-none text-xl md:text-2xl leading-relaxed text-[var(--colortwo)] space-y-2 md:space-y-3 mt-7 mr-5 relative z-20 initially-hidden ${isIntroDone ? 'animate-text-2' : ''}`}
             ref={textRef}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
+            onMouseEnter={handleMouseEnterDescription}
+            onMouseLeave={handleMouseLeaveDescription}
+            style={{
+              lineHeight: '2.5rem',
+              maxHeight: '10rem',
+              overflow: 'hidden',
+            }}
           >
             <div>
               <span className="inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300">
@@ -301,7 +460,7 @@ export default function Page1() {
                   onMouseEnter={() => setIsIconHovered(true)}
                   onMouseLeave={() => setIsIconHovered(false)}
                 >
-                  <FaGithub className="text-[var(--colorone)] text-6xl md:text-7xl hover:text-black hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300 cursor-pointer" />
+                  <FaGithub className="text-[var,--colorone)] text-6xl md:text-7xl hover:text-black hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300 cursor-pointer" />
                 </a>
                 <a
                   href="mailto:thienphucmain1052004@gmail.com"
