@@ -109,7 +109,7 @@ export default function Page2() {
         const yDist = Math.abs(Math.sin(angle)) * maxY;
         const distToEdge = Math.sqrt(xDist * xDist + (yDist * aspectRatio) * (yDist * aspectRatio));
 
-        const baseSpeed = 300 + Math.random() * 10;
+        const baseSpeed = 600 + Math.random() * 10;
         const speed = baseSpeed * (distToEdge / maxDist);
 
         const xScale = aspectRatio;

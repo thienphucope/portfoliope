@@ -6,7 +6,7 @@ export default function Page1() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [isIconHovered, setIsIconHovered] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(true); // Track video play/pause state
+  const [isPlaying, setIsPlaying] = useState(true);
   const [displayText, setDisplayText] = useState("A curious explorer and eager sleuth, driven by a love for mysteries, and the thrill of uncovering what lies under the surface of everything.");
   const [displayTitle, setDisplayTitle] = useState("Ope Watson");
   const [displayPronunciation, setDisplayPronunciation] = useState("en. /'oʊp 'wɑːtsən/  jp. /opeオペ/");
@@ -294,17 +294,17 @@ export default function Page1() {
         }
         .disk-container {
           position: absolute;
-          left: -60px; /* Half of the disk width to center it on the border */
-          top: 60%; /* Moved higher */
+          left: -80px; /* Half of the disk width to center it on the border */
+          top: 65%; /* Desktop position */
           transform: translateY(-50%);
-          width: 120px; /* Reduced size */
-          height: 120px;
+          width: 160px;
+          height: 160px;
           z-index: 30;
           cursor: pointer;
         }
         .disk {
-          width: 120px;
-          height: 120px;
+          width: 160px;
+          height: 160px;
           border: 5px solid var(--colorone);
           border-radius: 50%;
           background-image: url('/blackcat.jpg');
@@ -316,8 +316,8 @@ export default function Page1() {
           position: absolute;
           top: 0;
           left: 0;
-          width: 120px;
-          height: 120px;
+          width: 160px;
+          height: 160px;
           animation: rotate 10s linear infinite;
         }
         .disk-text svg {
@@ -326,7 +326,7 @@ export default function Page1() {
         }
         .disk-text text {
           fill: var(--colorone);
-          font-size: 12px; /* Adjusted for smaller disk */
+          font-size: 12px;
           font-weight: bold;
           text-transform: uppercase;
         }
@@ -334,7 +334,38 @@ export default function Page1() {
           fill: var(--colorone);
           paint-order: stroke;
           stroke: var(--background);
-          stroke-width: 6px; /* Background effect */
+          stroke-width: 6px;
+        }
+        @media (max-width: 767px) {
+          .disk-container {
+            left: 40%; /* Center horizontally in right box */
+            top: -40px; /* Half disk height to protrude upward */
+            transform: translateX(-50%); /* Center horizontally */
+            width: 80px; /* 2/3 of 120px */
+            height: 80px;
+          }
+          .disk {
+            width: 80px;
+            height: 80px;
+            border: 3px solid var(--colorone); /* Scaled border */
+          }
+          .disk-text {
+            width: 80px;
+            height: 80px;
+          }
+          .disk-text svg {
+            width: 100%;
+            height: 100%;
+          }
+          .disk-text text {
+            font-size: 8px; /* Scaled for smaller disk */
+          }
+          .disk-text textPath {
+            stroke-width: 4px; /* Scaled background effect */
+          }
+          .disk-text path {
+            d: 'M 40, 10 A 30, 30 0 0 1 40, 70 A 30, 30 0 0 1 40, 10'; /* Scaled path radius */
+          }
         }
       `}</style>
       {!isIntroStarted && (
@@ -413,7 +444,7 @@ export default function Page1() {
             </div>
           </div>
           <div
-            className={`flex-none text-xl md:text-2xl leading-relaxed text-[var(--colortwo)] space-y-2 md:space-y-3 mt-7 mr-5 relative z-20 initially-hidden ${isIntroDone ? 'animate-text-2' : ''}`}
+            className={`flex-none text-lg md:text-2xl leading-relaxed text-[var(--colortwo)] space-y-2 md:space-y-3 mt-7 mr-5 relative z-20 initially-hidden ${isIntroDone ? 'animate-text-2' : ''}`}
             ref={textRef}
             onMouseEnter={handleMouseEnterDescription}
             onMouseLeave={handleMouseLeaveDescription}
