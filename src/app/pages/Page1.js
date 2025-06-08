@@ -444,7 +444,7 @@ export default function Page1() {
             </div>
           </div>
           <div
-            className={`flex-none text-lg md:text-2xl leading-relaxed text-[var(--colortwo)] space-y-2 md:space-y-3 mt-7 mr-5 relative z-20 initially-hidden ${isIntroDone ? 'animate-text-2' : ''}`}
+            className={`flex-none text-base md:text-2xl leading-relaxed text-[var(--colortwo)] space-y-2 md:space-y-3 mt-7 mr-5 relative z-20 initially-hidden ${isIntroDone ? 'animate-text-2' : ''}`}
             ref={textRef}
             onMouseEnter={handleMouseEnterDescription}
             onMouseLeave={handleMouseLeaveDescription}
