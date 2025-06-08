@@ -78,7 +78,7 @@ export default function Page1() {
           </h2>
           <div>
             <span className="text-base md:text-xl leading-relaxed text-[var(--colorone)] italic inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300">
-              en. /'oʊp 'wɑːtsən/  jp. /opeオペ/
+              en. /&apos;oʊp &apos;wɑːtsən/  jp. /opeオペ/
             </span>
           </div>
         </div>
@@ -109,7 +109,7 @@ export default function Page1() {
             </span>
             <br />
             <span className="text-sm md:text-base text-[var(--colorthree)] inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300">
-              e.g. "Oh gosh! He's so Ope Watson, innit!"
+              e.g. &quot;Oh gosh! He&apos;s so Ope Watson, innit!&quot;
             </span>
           </div>
         </div>
@@ -193,7 +193,7 @@ export default function Page1() {
             onClick={scrollToRight}
             className="flex items-center gap-2 text-[var(--colortwo)] text-lg md:text-2xl font-medium hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300 cursor-pointer"
           >
-            <span className="cursor-pointer"> what's new?</span>
+            <span className="cursor-pointer"> what&apos;s new?</span>
             <FaArrowRight className="text-[var(--colortwo)] text-lg md:text-2xl hover:text-pink-300 hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300 cursor-pointer" />
           </div>
         </div>
