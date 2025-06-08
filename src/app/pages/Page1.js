@@ -50,13 +50,13 @@ export default function Page1() {
 
       {/* Speaker icon: Centered on left side */}
       <div
-        className="absolute left-0 top-1/2 transform -translate-y-1/2 pl-5 z-30 cursor-pointer group"
+        className="absolute left-0 top-10 transform -translate-y-1/2 pl-5 z-30 cursor-pointer group"
         onClick={toggleAudio}
       >
         {isMuted ? (
-          <FaVolumeMute className="text-[#6b4f36] text-4xl md:text-5xl hover:text-pink-300 hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_rgba(255,0,128,1)] transition-all duration-300 group-" />
+          <FaVolumeMute className="text-[var(--background)] text-4xl md:text-5xl hover:text-[var(--backgournd)] hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300 group-" />
         ) : (
-          <FaVolumeUp className="text-[#6b4f36] text-4xl md:text-5xl hover:text-pink-300 hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_rgba(255,0,128,1)] transition-all duration-300 group-" />
+          <FaVolumeUp className="text-[var(--background)] text-4xl md:text-5xl hover:text-[var(--background)] hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300 group-" />
         )}
       </div>
 
@@ -70,57 +70,54 @@ export default function Page1() {
       </div>
 
       {/* Right Section: Text content, social links grid, and about button */}
-      <div className="w-full md:w-2/5 hover:md:w-[45%] flex flex-col text-justify h-full text-[var(--foreground)] p-4 md:p-18 md:pr-18 bg-[#6b4f36] relative transition-all duration-300 group">
-        {/* Overlay for dimming effect */}
-        <div className="absolute inset-0 bg-[#6b4f36] bg-opacity-0 group-hover:bg-opacity-50 transition-opacity duration-300 pointer-events-none z-10"></div>
-
+      <div className="w-full md:w-2/5 hover:md:w-[45%] flex flex-col text-justify h-full text-[var(--foreground)] p-4 md:p-18 md:pr-18 bg-[var(--background)] relative transition-all duration-300">
         {/* Title and pronunciation */}
         <div className="flex-none relative z-20">
-          <h2 className="text-5xl md:text-7xl text-amber-100 font-bold mb-1 md:mb-2 font-chomsky hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_rgba(255,0,128,1)] transition-all duration-300">
+          <h2 className="text-5xl md:text-7xl text-[var(--colorone)] font-bold mb-1 md:mb-2 font-chomsky hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300">
             Ope Watson
           </h2>
           <div>
-            <span className="text-base md:text-xl leading-relaxed text-white-100 italic inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_rgba(255,0,128,1)] transition-all duration-300">
-              en. /&apos;oʊp &apos;wɑːtsən/  jp. /opeオペ/
+            <span className="text-base md:text-xl leading-relaxed text-[var(--colorone)] italic inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300">
+              en. /'oʊp 'wɑːtsən/  jp. /opeオペ/
             </span>
           </div>
         </div>
 
         {/* Main content */}
-        <div className="flex-none text-base md:text-xl leading-relaxed text-white-100 space-y-2 md:space-y-3 mt-2 relative z-20">
+        <div className="flex-none text-base md:text-xl leading-relaxed text-[var(--colortwo)] space-y-2 md:space-y-3 mt-6 relative z-20">
           <div>
-            <span className="font-bold italic inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_rgba(255,0,128,1)] transition-all duration-300">
+            <span className="font-bold italic inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300">
               noun.
             </span>
             <br />
-            <span className="inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_rgba(255,0,128,1)] transition-all duration-300">
+            <span className="inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300">
               1. relentless seeker of knowledge
             </span>
           </div>
 
           <div>
-            <span className="font-bold italic inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_rgba(255,0,128,1)] transition-all duration-300">
+            <span className="font-bold italic inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300">
               adjective.
             </span>
             <br />
-            <span className="inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_rgba(255,0,128,1)] transition-all duration-300">
-              1. describing a person or action marked by curiosity.
+            <span className="inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300">
+              1. describing a person or action marked by curiosity
             </span>
             <br />
-            <span className="inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_rgba(255,0,128,1)] transition-all duration-300">
-              2. passionately immersed in learning and discovery.
+            <span className="inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300">
+              2. passionately immersed in learning and discovery
             </span>
             <br />
-            <span className="text-sm md:text-base text-amber-100 inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_rgba(255,0,128,1)] transition-all duration-300">
-              e.g. &quot;Oh gosh! He&apos;s so Ope Watson, innit!&quot;
+            <span className="text-sm md:text-base text-[var(--colorthree)] inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300">
+              e.g. "Oh gosh! He's so Ope Watson, innit!"
             </span>
           </div>
         </div>
 
         {/* Social links grid: Fills available space */}
-        <div className="flex-1 mt-4 w-full relative z-20 cursor-pointer">
+        <div className="flex-1 mt-8 w-full relative z-20 cursor-pointer">
           <div className="w-full h-full flex items-center justify-center cursor-pointer">
-            <div className={`grid grid-cols-3 gap-4 p-6 border-4 cursor-pointer ${isIconHovered ? 'border-pink-300' : 'border-amber-100'} rounded-md w-full transition-colors duration-300`}>
+            <div className={`grid grid-cols-3 gap-4 p-6 border-0 cursor-pointer ${isIconHovered ? 'border-pink-300' : 'border-[var(--colorone)]'} rounded-md w-full transition-colors duration-300`}>
               <a
                 href="https://youtube.com"
                 target="_blank"
@@ -129,7 +126,7 @@ export default function Page1() {
                 onMouseEnter={() => setIsIconHovered(true)}
                 onMouseLeave={() => setIsIconHovered(false)}
               >
-                <FaYoutube className="text-amber-100 text-6xl md:text-7xl hover:text-pink-300 hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_rgba(255,0,128,1)] transition-all duration-300 cursor-pointer" />
+                <FaYoutube className="text-[var(--colorone)] text-6xl md:text-7xl hover:text-red-300 hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300 cursor-pointer" />
               </a>
               <a
                 href="https://instagram.com"
@@ -139,7 +136,7 @@ export default function Page1() {
                 onMouseEnter={() => setIsIconHovered(true)}
                 onMouseLeave={() => setIsIconHovered(false)}
               >
-                <FaInstagram className="text-amber-100 text-6xl md:text-7xl hover:text-pink-300 hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_rgba(255,0,128,1)] transition-all duration-300 cursor-pointer" />
+                <FaInstagram className="text-[var(--colorone)] text-6xl md:text-7xl hover:text-pink-300 hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300 cursor-pointer" />
               </a>
               <a
                 href="https://github.com"
@@ -149,7 +146,7 @@ export default function Page1() {
                 onMouseEnter={() => setIsIconHovered(true)}
                 onMouseLeave={() => setIsIconHovered(false)}
               >
-                <FaGithub className="text-amber-100 text-6xl md:text-7xl hover:text-pink-300 hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_rgba(255,0,128,1)] transition-all duration-300 cursor-pointer" />
+                <FaGithub className="text-[var(--colorone)] text-6xl md:text-7xl hover:text-black hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300 cursor-pointer" />
               </a>
               <a
                 href="mailto:example@example.com"
@@ -157,7 +154,7 @@ export default function Page1() {
                 onMouseEnter={() => setIsIconHovered(true)}
                 onMouseLeave={() => setIsIconHovered(false)}
               >
-                <FaEnvelope className="text-amber-100 text-6xl md:text-7xl hover:text-pink-300 hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_rgba(255,0,128,1)] transition-all duration-300 cursor-pointer" />
+                <FaEnvelope className="text-[var(--colorone)] text-6xl md:text-7xl hover:text-white hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300 cursor-pointer" />
               </a>
               <a
                 href="https://x.com"
@@ -167,9 +164,8 @@ export default function Page1() {
                 onMouseEnter={() => setIsIconHovered(true)}
                 onMouseLeave={() => setIsIconHovered(false)}
               >
-                <FaTwitter className="text-amber-100 text-6xl md:text-7xl hover:text-pink-300 hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_rgba(255,0,128,1)] transition-all duration-300 cursor-pointer" />
+                <FaTwitter className="text-[var(--colorone)] text-6xl md:text-7xl hover:text-blue-300 hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300 cursor-pointer" />
               </a>
-
             </div>
           </div>
         </div>
@@ -195,10 +191,10 @@ export default function Page1() {
         <div className="flex justify-end mt-8 items-center gap-2 pt-5 relative z-20">
           <div
             onClick={scrollToRight}
-            className="flex items-center gap-2 text-amber-100 text-lg md:text-2xl font-medium hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_rgba(255,0,128,1)] transition-all duration-300 cursor-pointer"
+            className="flex items-center gap-2 text-[var(--colortwo)] text-lg md:text-2xl font-medium hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300 cursor-pointer"
           >
-            <span className="cursor-pointer"> what&apos;s new?</span>
-            <FaArrowRight className="text-amber-100 text-lg md:text-2xl hover:text-pink-300 hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_rgba(255,0,128,1)] transition-all duration-300 cursor-pointer" />
+            <span className="cursor-pointer"> what's new?</span>
+            <FaArrowRight className="text-[var(--colortwo)] text-lg md:text-2xl hover:text-pink-300 hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300 cursor-pointer" />
           </div>
         </div>
       </div>

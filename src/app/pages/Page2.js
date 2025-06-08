@@ -30,7 +30,8 @@ export default function Page2() {
       canvas.width = content.clientWidth;
       canvas.height = content.clientHeight;
       ctx.globalCompositeOperation = "source-over";
-      ctx.fillStyle = "#6b4f36";
+      // Lấy màu nền từ biến CSS --background
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--background') || "#c1729a";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     };
 
@@ -203,11 +204,11 @@ export default function Page2() {
   };
 
   return (
-    <section id="cover" className="w-full h-screen bg-[var(--newspaper-bg)] snap-start font-serif box-border relative sm:overflow-y-auto sm:no-scrollbar">
+    <section id="cover" className="w-full h-screen bg-[var(--background)] snap-start font-serif box-border relative sm:overflow-y-auto sm:no-scrollbar">
       {/* Wrapper for canvas and content: Centered horizontally, flexible height */}
       <div ref={wrapperRef} className="w-[75%] h-[80%] sm:h-auto sm:min-h-[95%] sm:top-4 md:top-1/2 md:-translate-y-1/2 left-1/2 -translate-x-1/2 flex flex-col items-center justify-center absolute">
         {/* Content section: Full width, flexible height with newspaper background */}
-        <div ref={contentRef} className="relative z-10 w-full h-full sm:h-auto bg-[url('/newspaper.jpg')] bg-no-repeat bg-center bg-cover flex flex-col justify-start items-center pt-2 pb-4 px-4 md:pt-4 md:pb-2 md:px-8 text-gray-800 shadow-inner border-2 border-[var(--newspaper-bg)] rounded-md overflow-y-auto no-scrollbar">
+        <div ref={contentRef} className="relative z-10 w-full h-full sm:h-auto bg-[url('/newspaper.jpg')] bg-no-repeat bg-center bg-cover flex flex-col justify-start items-center pt-2 pb-4 px-4 md:pt-4 md:pb-2 md:px-8 text-gray-800 shadow-inner rounded-md overflow-y-auto no-scrollbar">
           {/* Canvas for burn effect: Matches content size */}
           <canvas
             ref={canvasRef}
