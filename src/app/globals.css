@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+:root {
+  --background: #6b4f36; /* Fixed background color */
+  --foreground: #ededed; /* Light foreground for contrast */
+  --newspaper-bg: #6b4f36; /* Same as background for consistency */
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  
+}
+
+* {
+    cursor: url('/cursorhalf.png') 8 8, auto !important;
+}
+
+
+
+/* Hide scrollbar for aesthetic */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+/* Shared typography for Chomsky font */
+@font-face {
+  font-family: 'Chomsky';
+  src: url('https://fonts.googleapis.com/css2?family=Chomsky&display=swap');
+}
+
+/* Shared animation styles */
+.animate-zoom-out {
+  animation: zoomOut 1.5s ease-in forwards;
+}
+@keyframes zoomOut {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+}
+
+.animate-rise {
+  opacity: 0;
+  transform: translateY(100%);
+  animation: rise 1.5s ease-out 1.5s forwards;
+}
+@keyframes rise {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* app/globals.css */
+@font-face {
+  font-family: 'Handwritten';
+  src: url('https://fonts.googleapis.com/css2?family=Caveat&display=swap');
+}
+
+.font-handwritten {
+  font-family: 'Caveat', cursive;
+}
+
+/* Optional: Smooth out polaroid effect */
+.polaroid {
+  transform: rotate(-2deg);
+}
+
+.polaroid:nth-child(even) {
+  transform: rotate(2deg);
+}
