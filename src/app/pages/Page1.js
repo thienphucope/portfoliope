@@ -119,7 +119,7 @@ export default function Page1() {
           <div className="w-full h-full flex items-center justify-center cursor-pointer">
             <div className={`grid grid-cols-3 gap-4 p-6 border-0 cursor-pointer ${isIconHovered ? 'border-pink-300' : 'border-[var(--colorone)]'} rounded-md w-full transition-colors duration-300`}>
               <a
-                href="https://youtube.com"
+                href="https://youtu.be/dQw4w9WgXcQ?si=E7qNEqCYESugKUd2"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex justify-center items-center"
@@ -129,7 +129,7 @@ export default function Page1() {
                 <FaYoutube className="text-[var(--colorone)] text-6xl md:text-7xl hover:text-red-300 hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300 cursor-pointer" />
               </a>
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/opewatson"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex justify-center items-center"
@@ -139,7 +139,7 @@ export default function Page1() {
                 <FaInstagram className="text-[var(--colorone)] text-6xl md:text-7xl hover:text-pink-300 hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300 cursor-pointer" />
               </a>
               <a
-                href="https://github.com"
+                href="https://github.com/thienphucope"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex justify-center items-center"
@@ -149,7 +149,7 @@ export default function Page1() {
                 <FaGithub className="text-[var(--colorone)] text-6xl md:text-7xl hover:text-black hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300 cursor-pointer" />
               </a>
               <a
-                href="mailto:example@example.com"
+                href="mailto:thienphucmain1052004@gmail.com"
                 className="flex justify-center items-center"
                 onMouseEnter={() => setIsIconHovered(true)}
                 onMouseLeave={() => setIsIconHovered(false)}
@@ -157,7 +157,7 @@ export default function Page1() {
                 <FaEnvelope className="text-[var(--colorone)] text-6xl md:text-7xl hover:text-white hover:scale-110 hover:filter hover:drop-shadow-[0_0_30px_currentColor] transition-all duration-300 cursor-pointer" />
               </a>
               <a
-                href="https://x.com"
+                href="https://x.com/samekosaba"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex justify-center items-center"
