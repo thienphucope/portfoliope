@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 :root {
-  --background: #694d51; /* Fixed background color */
+  --background: #ae5e71; /* Fixed background color */
   --foreground: #ededed; /* Light foreground for contrast */
-  --colorone: #fae1c9; /* Light beige for color one */
+  --colorone: #ae5e71; /* Light beige for color one */
   --colortwo: #fdfcfc; /* Soft brown for color two */
   --colorthree: #fae1c9; /* Muted taupe for color three */
 }

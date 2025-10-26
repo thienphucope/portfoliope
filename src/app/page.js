@@ -1,6 +1,6 @@
 import Page1 from './pages/Page1';
-import Page2 from './pages/Page2';
-import Page3 from './pages/Page3';
+import Page2 from '../../bin/Page2';
+import Page3 from '../../bin/Page3';
 
 export default function Home() {
   return (
