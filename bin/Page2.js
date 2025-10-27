@@ -17,7 +17,7 @@ Consider the dopamine rush: Each intermittent text, ambiguous compliment, or fle
 
 Real-life anecdotes abound. Take Sarah, a 28-year-old marketing executive who returned to her on-again, off-again partner three times over two years. "He made me feel alive," she confessed, "but it was always the highs that kept me hooked, not the stability." Experts like Dr. Lisa Marie Bobby, a relationship therapist, emphasize that this pattern often stems from unresolved attachment issues, where anxious attachment styles seek reassurance in unreliable sources.
 
-Breaking free requires self-awareness and boundary-setting. Cognitive Behavioral Therapy (CBT) techniques can rewire these responses, while building a support network of friends who call out red flags helps. Apps like "Fuckboy Detector" (a satirical yet useful tool) even gamify the process by analyzing texting patterns for ghosting potential. Ultimately, recognizing the allure as a mirage—not a destiny—empowers women to seek partners who offer consistency over chaos.
+Breaking free requires self-awareness and boundary-setting. Cognitive Behavioral Therapy (CBT) techniques can rewire these responses, while building a support network of friends who call out red flags helps. Apps like "Fuckboy Detector" (a satirical yet useful tool) even gamify the process of analyzing texting patterns for ghosting potential. Ultimately, recognizing the allure as a mirage—not a destiny—empowers women to seek partners who offer consistency over chaos.
 
 This case isn't just about dating disasters; it's a lens into broader human behavior. In professional settings, the fuckboy dynamic mirrors toxic bosses who dangle promotions like breadcrumbs, keeping teams in perpetual limbo. In friendships, it manifests as the unreliable pal who only calls when they need something. By unpacking the fuckboy allure, we gain tools to foster healthier connections across life's arenas.
 
@@ -29,7 +29,7 @@ From a feminist perspective, the fuckboy trope reinforces patriarchal power imba
 
 In therapy sessions worldwide, clients report epiphanies when mapping their "fuckboy timelines," spotting patterns like clockwork. One exercise: Journal three instances of returning, then rewrite the ending with self-compassion. It's transformative, turning pain into power.
 
-For those in the trenches, community is key. Online forums like r/FemaleDatingStrategy offer solidarity, while podcasts such as "Where Should We Begin?" with Esther Perel provide vicarious wisdom. The fuckboy allure fades when illuminated by shared stories—proof that you're not alone, and escape is not only possible but probable.
+For those in the trenches, community is key. Online forums like r/FemaleDatingStrategy offer solidarity, while podcasts suchs as "Where Should We Begin?" with Esther Perel provide vicarious wisdom. The fuckboy allure fades when illuminated by shared stories—proof that you're not alone, and escape is not only possible but probable.
 
 As we conclude this archive, reflect: What if the thrill you seek is already within? Self-love isn't a consolation prize; it's the ultimate upgrade. Ditch the drama, embrace the depth. Your story deserves a protagonist who stays for the plot twists—and the quiet chapters too.`
     },
@@ -91,8 +91,10 @@ As we conclude this archive, reflect: What if the thrill you seek is already wit
     },
   ];
 
-  const [hoveredImage, setHoveredImage] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [mousePos, setMousePos] = useState({ x: -999, y: -999 });
+  const [isHoveringGrid, setIsHoveringGrid] = useState(false);
+
 
   useEffect(() => {
     if (selectedItem) {
@@ -120,15 +122,17 @@ As we conclude this archive, reflect: What if the thrill you seek is already wit
     <section id="page2" className="w-full min-h-screen bg-[var(--background)] snap-start font-serif box-border relative z-10 flex justify-center items-center p-4">
       <div className="w-[80vw] flex flex-col items-center">
         <h1 className="text-[var(--colorthree)] text-8xl font-bold mb-8 w-full text-center">🙢 CASE ARCHIVES 🙠</h1>
-        <div className="w-full h-[90vh] grid grid-cols-2 grid-rows-4 gap-6">
+        
+        <div 
+          className="w-full h-[90vh] grid grid-cols-2 grid-rows-4 gap-6"
+          onMouseMove={(e) => setMousePos({ x: e.clientX, y: e.clientY })}
+          onMouseEnter={() => setIsHoveringGrid(true)}
+          onMouseLeave={() => setIsHoveringGrid(false)}
+        >
           {images.map((imageItem) => (
             <div
               key={imageItem.id}
-              className={`bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] overflow-hidden transition-all duration-300 hover:brightness-110 hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7),0_0_20px_rgba(236,72,153,0.5),0_0_40px_rgba(234,179,8,0.3)] flex cursor-pointer ${
-                hoveredImage === imageItem.id ? 'z-10' : ''
-              }`}
-              onMouseEnter={() => setHoveredImage(imageItem.id)}
-              onMouseLeave={() => setHoveredImage(null)}
+              className="bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] overflow-hidden flex cursor-pointer transition-all duration-300"
               onClick={() => handleCardClick(imageItem)}
             >
               <div className="w-1/3 aspect-square flex-shrink-0 flex items-center justify-center">
@@ -149,6 +153,36 @@ As we conclude this archive, reflect: What if the thrill you seek is already wit
         <h1 className="text-[var(--colorthree)] pt-15 text-8xl font-bold mb-8 w-full text-center">🙢 IN PROGRESS 🙠</h1>
       </div>
 
+      {/* THAY ĐỔI: Spotlight Overlay với vùng tối hơn một chút bằng cách tăng opacity trong gradient */}
+      <div
+        className={`
+          fixed inset-0 z-20 
+          bg-black 
+          pointer-events-none 
+          transition-opacity duration-300
+          ${isHoveringGrid ? 'opacity-100' : 'opacity-0'}
+        `}
+        style={{
+          maskImage: `radial-gradient(
+            circle 75vmax at ${mousePos.x}px ${mousePos.y}px, 
+            transparent 0%, 
+            transparent 20%, 
+            rgba(0,0,0,0.3) 40%, 
+            rgba(0,0,0,0.7) 70%, 
+            black 100%
+          )`,
+          WebkitMaskImage: `radial-gradient(
+            circle 75vmax at ${mousePos.x}px ${mousePos.y}px, 
+            transparent 0%, 
+            transparent 20%, 
+            rgba(0,0,0,0.3) 40%, 
+            rgba(0,0,0,0.7) 70%, 
+            black 100%
+          )`,
+        }}
+      />
+
+      {/* Modal (Giữ nguyên, z-50 cao nhất) */}
       {selectedItem && (
         <div 
           onClick={handleOverlayClick}
