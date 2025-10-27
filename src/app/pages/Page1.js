@@ -5,14 +5,18 @@ import { FaYoutube, FaInstagram, FaGithub, FaEnvelope, FaTwitter, FaArrowDown } 
 export default function Page1() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isIconHovered, setIsIconHovered] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isDiscHovered, setIsDiscHovered] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
   const [videoTitle, setVideoTitle] = useState('');
   const [displayText, setDisplayText] = useState("");
   const [displayTitle, setDisplayTitle] = useState("");
   const [displayPronunciation, setDisplayPronunciation] = useState("");
   const [isIntroStarted, setIsIntroStarted] = useState(false);
   const [isIntroDone, setIsIntroDone] = useState(false);
+  
+  const [animationClass, setAnimationClass] = useState(''); 
+  const [animationKey, setAnimationKey] = useState(0); 
+  const newSongTimerRef = useRef(null); 
+
   const playerRef = useRef(null);
   const textRef = useRef(null);
   const titleRef = useRef(null);
@@ -48,9 +52,45 @@ export default function Page1() {
     setDisplayPronunciation(originalPronPadded);
   }, []);
 
+  // Force scroll to top on reload
+  useEffect(() => {
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+  }, []); 
+
+  // Lock/unlock scroll and cursor
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+
+    if (!isIntroStarted) {
+      document.body.style.overflow = 'hidden';
+      document.body.classList.remove('use-custom-cursor'); 
+    } else {
+      document.body.style.overflow = 'auto';
+      document.body.classList.add('use-custom-cursor'); 
+    }
+
+    return () => {
+      document.body.style.overflow = prevOverflow || 'auto';
+      document.body.classList.remove('use-custom-cursor');
+    };
+  }, [isIntroStarted]);
+
   // Scramble text animation
   const scrambleText = (original, target, setDisplay, duration = 200) => {
-    const chars = "abcdehknguvxyz";
+    const chars = "iljtfrsciljtfr"; 
+    let seed = 1234; 
+    const m = 2147483647; 
+    const a = 1103515245; 
+    const c = 12345;      
+
+    const pseudoRandom = () => {
+      seed = (a * seed + c) % m;
+      return seed / m;
+    };
+
     let startTime = null;
     let frame;
 
@@ -63,8 +103,8 @@ export default function Page1() {
         const scrambled = original
           .split("")
           .map((char) => {
-            if (char === " ") return char;
-            return chars[Math.floor(Math.random() * chars.length)];
+            if (char === " " || char === padChar) return char;
+            return chars[Math.floor(pseudoRandom() * chars.length)];
           })
           .join("");
         setDisplay(scrambled);
@@ -74,8 +114,8 @@ export default function Page1() {
         const currentText = original
           .split("")
           .map((char, i) => {
-            if (char === " ") return char;
-            return blendRatio < Math.random() ? char : target[i] || char;
+            if (char === " " || char === padChar) return char;
+            return blendRatio < pseudoRandom() ? char : target[i] || char;
           })
           .join("");
         setDisplay(currentText);
@@ -161,7 +201,7 @@ export default function Page1() {
           width: '0',
           videoId: 'Vwnp-2T3VFg',
           playerVars: {
-            autoplay: 0,
+            autoplay: 1,
             loop: 1,
             playlist: 'Vwnp-2T3VFg,pL35m337Qa4',
             controls: 0,
@@ -171,11 +211,27 @@ export default function Page1() {
           events: {
             onReady: (event) => {
               event.target.setVolume(50);
-              setVideoTitle(event.target.getVideoData().title);
+              // ĐÃ XÓA: setVideoTitle(event.target.getVideoData().title);
+              // Để onStateChange trigger animation ngay lần đầu
             },
             onStateChange: (event) => {
               if (event.data === window.YT.PlayerState.PLAYING) {
-                setVideoTitle(event.target.getVideoData().title);
+                const newTitle = event.target.getVideoData().title;
+                setVideoTitle(oldTitle => {
+                  // Lần đầu tiên (oldTitle = '') nó sẽ chạy
+                  // Những lần sau (bài mới) nó cũng sẽ chạy
+                  if (oldTitle !== newTitle) { 
+                    if (newSongTimerRef.current) {
+                      clearTimeout(newSongTimerRef.current);
+                    }
+                    setAnimationClass('fly-cycle');
+                    setAnimationKey(k => k + 1);
+                    newSongTimerRef.current = setTimeout(() => {
+                      setAnimationClass(''); 
+                    }, 5500); // 5.5 giây
+                  }
+                  return newTitle; 
+                });
               }
             },
           },
@@ -183,6 +239,26 @@ export default function Page1() {
       };
     }
   }, [isIntroStarted]);
+
+  // Handle hover cho đĩa nhạc
+  const handleDiskMouseEnter = () => {
+    if (newSongTimerRef.current) {
+      clearTimeout(newSongTimerRef.current);
+      newSongTimerRef.current = null;
+    }
+    setAnimationClass('fly-out');
+    setAnimationKey(k => k + 1);
+  };
+
+  const handleDiskMouseLeave = () => {
+    if (newSongTimerRef.current) {
+      clearTimeout(newSongTimerRef.current);
+      newSongTimerRef.current = null;
+    }
+    setAnimationClass('fly-in');
+    setAnimationKey(k => k + 1);
+  };
+
 
   // Handle mask click
   const handleMaskClick = () => {
@@ -199,21 +275,56 @@ export default function Page1() {
     <section id="gallery" className="w-full min-h-screen bg-[var(--background)] snap-start font-serif box-border relative z-10 flex justify-center items-center">
       <style jsx>{`
         @keyframes glow {
-          0% {
-            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.3));
-          }
-          100% {
-            filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.8));
-          }
+          0% { filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.3)); }
+          100% { filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.8)); }
         }
         @keyframes rotate {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        /* === ĐÃ SỬA: 150px -> 80px === */
+        @keyframes flyOut {
           0% {
-            transform: rotate(0deg);
+            opacity: 0;
+            transform: translateY(-50%) translateX(0);
           }
           100% {
-            transform: rotate(360deg);
+            opacity: 1;
+            transform: translateY(-50%) translateX(40px); 
           }
         }
+        
+        @keyframes flyIn {
+          0% {
+            opacity: 1;
+            transform: translateY(-50%) translateX(40px);
+          }
+          100% {
+            opacity: 0;
+            transform: translateY(-50%) translateX(0);
+          }
+        }
+
+        @keyframes flyOutStayIn {
+          0% {
+            opacity: 0;
+            transform: translateY(-50%) translateX(0);
+          }
+          9% { 
+            opacity: 1;
+            transform: translateY(-50%) translateX(40px);
+          }
+          91% {
+            opacity: 1;
+            transform: translateY(-50%) translateX(40px);
+          }
+          100% {
+            opacity: 0;
+            transform: translateY(-50%) translateX(0);
+          }
+        }
+        
         .mask {
           position: absolute;
           top: 0;
@@ -226,19 +337,11 @@ export default function Page1() {
           align-items: center;
           z-index: 50;
           transition: opacity 0.5s ease-out;
+          cursor: default;
         }
-        .mask.hidden {
-          opacity: 0;
-          pointer-events: none;
-        }
-        .magnifier {
-          width: 100px;
-          height: 100px;
-          cursor: pointer;
-        }
-        .magnifier:hover {
-          animation: glow 0.5s ease-in-out alternate infinite;
-        }
+        .mask.hidden { opacity: 0; pointer-events: none; }
+        .magnifier { width: 100px; height: 100px; cursor: default; }
+        .magnifier:hover { animation: glow 0.5s ease-in-out alternate infinite; }
         .disk {
           width: 60px;
           height: 60px;
@@ -249,9 +352,7 @@ export default function Page1() {
           background-position: center;
           animation: rotate 10s linear infinite;
         }
-        .disk.paused {
-          animation-play-state: paused;
-        }
+        .disk.paused { animation-play-state: paused; }
         .disk-text {
           position: absolute;
           top: 0;
@@ -260,13 +361,8 @@ export default function Page1() {
           height: 60px;
           animation: rotate 10s linear infinite;
         }
-        .disk-text.paused {
-          animation-play-state: paused;
-        }
-        .disk-text svg {
-          width: 100%;
-          height: 100%;
-        }
+        .disk-text.paused { animation-play-state: paused; }
+        .disk-text svg { width: 100%; height: 100%; }
         .disk-text text {
           fill: var(--colorone);
           font-size: 7px;
@@ -276,8 +372,32 @@ export default function Page1() {
         .disk-text textPath {
           fill: var(--colorone);
           paint-order: stroke;
-          stroke: white; /* Assuming white container background */
+          stroke: white; 
           stroke-width: 4px;
+        }
+
+        .title-fly-out {
+          position: absolute;
+          top: 50%;
+          left: 50%; 
+          transform: translateY(-50%);
+          color: var(--colorone);
+          font-size: 1.125rem; 
+          font-weight: 600;
+          font-style: italic;
+          white-space: nowrap;
+          opacity: 0; 
+          pointer-events: none; 
+        }
+        
+        .title-fly-out.fly-out {
+          animation: flyOut 0.5s forwards;
+        }
+        .title-fly-out.fly-in {
+          animation: flyIn 0.5s forwards;
+        }
+        .title-fly-out.fly-cycle {
+          animation: flyOutStayIn 5.5s forwards;
         }
       `}</style>
       {!isIntroStarted && (
@@ -291,9 +411,7 @@ export default function Page1() {
         </div>
       )}
       <div id="youtube-player" style={{ display: 'none' }}></div>
-      {/* New Layout Starts Here */}
       <div className={`w-[80vw] h-[90vh] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] text-gray-800 transition-opacity duration-1000 relative ${isIntroStarted ? 'opacity-100' : 'opacity-0'}`}>
-        {/* Hidden SVG for gradient definition */}
         <svg className="absolute w-0 h-0 opacity-0 pointer-events-none" aria-hidden="true">
           <defs>
             <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -309,8 +427,8 @@ export default function Page1() {
             <div 
               className="relative cursor-pointer" 
               onClick={togglePlayPause}
-              onMouseEnter={() => setIsDiscHovered(true)}
-              onMouseLeave={() => setIsDiscHovered(false)}
+              onMouseEnter={handleDiskMouseEnter}
+              onMouseLeave={handleDiskMouseLeave}
             >
                 <div className={`disk ${!isPlaying ? 'paused' : ''}`}></div>
                 <div className={`disk-text ${!isPlaying ? 'paused' : ''}`}>
@@ -322,13 +440,17 @@ export default function Page1() {
                         />
                         <text>
                         <textPath href="#textPath" startOffset="0%">
-                            unmute to hear
+                            music player
                         </textPath>
                         </text>
                     </svg>
                 </div>
-                {isDiscHovered && videoTitle && (
-                  <span className="absolute top-1/2 -translate-y-1/2 left-full ml-2 text-[var(--colorone)] text-sm italic bg-white px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                
+                {videoTitle && (
+                  <span 
+                    key={animationKey} 
+                    className={`title-fly-out ${animationClass}`}
+                  >
                     {videoTitle}
                   </span>
                 )}
@@ -358,7 +480,7 @@ export default function Page1() {
         {/* Introduction */}
         <div className="absolute top-1/2 -translate-y-1/2 right-4 md:right-10 w-4/9 text-justify">
             <h2
-                className="text-5xl md:text-8xl text-[var(--colorone)] font-bold mb-2 font-chomsky hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300"
+                className="block w-full text-right text-5xl md:text-8xl text-[var(--colorone)] font-bold mb-2 font-chomsky hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300"
                 ref={titleRef}
                 onMouseEnter={handleMouseEnterTitle}
                 onMouseLeave={handleMouseLeaveTitle}
@@ -367,7 +489,7 @@ export default function Page1() {
             </h2>
             <div>
                 <span
-                    className="text-base md:text-2xl text-[var(--colorone)] italic inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300"
+                    className="block w-full text-right text-base md:text-2xl text-[var(--colorone)] italic inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300"
                     ref={pronunciationRef}
                     onMouseEnter={handleMouseEnterPronunciation}
                     onMouseLeave={handleMouseLeavePronunciation}

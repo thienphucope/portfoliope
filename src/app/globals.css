@@ -14,20 +14,42 @@ body {
   
 }
 
-* {
-    cursor: url('/cursorhalf.png') 8 8, auto !important;
+.use-custom-cursor,
+.use-custom-cursor * {
+  cursor: url('/cursorhalf.png') 8 8, auto !important;
 }
 
 
 
-/* Hide scrollbar for aesthetic */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+/* Reset scrollbar hiding */
+html, 
+body {
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  width: 100vw;
+  -ms-overflow-style: none !important;  
+  scrollbar-width: none !important;
 }
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+}
+
+/* Ensure all scrollable containers also hide scrollbars */
 .no-scrollbar {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+}
+
 
 /* Shared typography for Chomsky font */
 @font-face {
