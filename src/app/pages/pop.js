@@ -182,17 +182,26 @@ export default function Pop() {
     };
   }, []);
 
-  // Ping server on mount to warm up (prevent cold start)
+  // Ping servers on mount to warm up (prevent cold start)
   useEffect(() => {
-    const warmUpServer = async () => {
+    const warmUpServers = async () => {
       try {
+        // Ping RAG backend
         await fetch("https://rag-backend-zh2e.onrender.com/status", { method: 'GET' });
-        console.log('Server warmed up');
+        console.log('RAG server warmed up');
       } catch (error) {
-        console.error('Warm-up ping failed:', error);
+        console.error('RAG warm-up ping failed:', error);
+      }
+
+      try {
+        // Ping TTS API
+        await fetch("https://thienphuc1052004--xtts-api-xttsapi-tts-generate.modal.run/ping", { method: 'GET' });
+        console.log('TTS server warmed up');
+      } catch (error) {
+        console.error('TTS warm-up ping failed:', error);
       }
     };
-    warmUpServer();
+    warmUpServers();
   }, []);
 
   // Cleanup khi toggle chat
@@ -279,7 +288,7 @@ export default function Pop() {
                 value={inputValue}
                 onChange={handleChange}
                 onKeyDown={handleKeyDown}
-                placeholder="Type a message..."
+                placeholder="Type a message in ENGLISH ONLY..."
                 disabled={isSending || isStreaming}
                 className="flex-grow rounded-none px-3 py-2 focus:outline-none text-[var(--colorone)] text-lg"
               />
