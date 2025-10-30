@@ -4,16 +4,20 @@ import { ClockIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline';
 
 export default function Pop() {
   const [isOpen, setIsOpen] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
+  const [showHistory, setShowHistory] = useState(true);
   const [inputValue, setInputValue] = useState('');
   const [isSending, setIsSending] = useState(false);
-  const [convo, setConvo] = useState([]);
+  const [convo, setConvo] = useState([
+    { role: 'assistant', content: "Hello, I'm Elia, Ope Watson's assistant. Ask me anything – I can even share Ope Watson's secrets!" }
+  ]); // Initial bot intro message (no TTS for this)
   const [streamingText, setStreamingText] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false); // New state for audio playback
   const inputRef = useRef(null);
   const historyRef = useRef(null);
   const streamingIntervalRef = useRef(null);
-  const username = 'CLIENT'; // Fixed username for API calls; can be made dynamic if needed
+  const audioRef = useRef(null); // Ref for Audio object
+  const username = 'YOU'; // Fixed username for API calls; can be made dynamic if needed
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
@@ -57,6 +61,52 @@ export default function Pop() {
     streamingIntervalRef.current = interval;
   };
 
+  // New function to call TTS API and play audio
+  const generateAndPlayAudio = async (text) => {
+    if (!text) return;
+
+    try {
+      setIsPlayingAudio(true);
+      const ttsResponse = await fetch("https://thienphuc1052004--xtts-api-xttsapi-tts-generate.modal.run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, language: "en" }), // Set language to "en"; can be dynamic
+      });
+
+      if (!ttsResponse.ok) {
+        throw new Error(`TTS Error: ${ttsResponse.status}`);
+      }
+
+      // Get WAV as blob
+      const audioBlob = await ttsResponse.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+
+      // Create and play Audio
+      if (audioRef.current) {
+        audioRef.current.pause(); // Stop any previous audio
+      }
+      audioRef.current = new Audio(audioUrl);
+      audioRef.current.play().catch((error) => {
+        console.error("Audio play failed:", error);
+        setIsPlayingAudio(false);
+      });
+
+      // Cleanup URL when done
+      audioRef.current.onended = () => {
+        URL.revokeObjectURL(audioUrl);
+        setIsPlayingAudio(false);
+      };
+
+      audioRef.current.onerror = () => {
+        URL.revokeObjectURL(audioUrl);
+        setIsPlayingAudio(false);
+      };
+    } catch (error) {
+      console.error("TTS generation failed:", error);
+      setIsPlayingAudio(false);
+    }
+  };
+
   const handleSend = async () => {
     if (!inputValue.trim() || isSending) return;
 
@@ -65,8 +115,8 @@ export default function Pop() {
     setInputValue('');
     setConvo(prev => [...prev, { role: 'user', content: userMessage }]);
 
-    // Show history on first prompt
-    if (convo.length === 0) {
+    // Show history on first prompt (now with initial message, it will show immediately)
+    if (convo.length === 1) { // Only the initial bot message
       setShowHistory(true);
     }
 
@@ -87,8 +137,13 @@ export default function Pop() {
       const data = await response.json();
       const botReply = data.response || "No response from backend";
 
-      // Start streaming
+      // Start streaming text immediately
       streamResponse(botReply);
+
+      // Call TTS API after RAG response (async, so streams alongside) - Skip for initial message
+      if (userMessage.trim()) { // Only for user messages, not initial
+        generateAndPlayAudio(botReply);
+      }
     } catch (error) {
       console.error("Error processing request:", error);
       const errorMessage = error.message;
@@ -114,11 +169,15 @@ export default function Pop() {
     setInputValue(e.target.value);
   };
 
-  // Cleanup intervals on unmount or toggle
+  // Cleanup intervals and audio on unmount or toggle
   useEffect(() => {
     return () => {
       if (streamingIntervalRef.current) {
         clearInterval(streamingIntervalRef.current);
+      }
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
       }
     };
   }, []);
@@ -142,9 +201,14 @@ export default function Pop() {
       clearInterval(streamingIntervalRef.current);
       streamingIntervalRef.current = null;
     }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
     setIsOpen(!isOpen);
     setIsSending(false);
     setIsStreaming(false);
+    setIsPlayingAudio(false);
     setInputValue('');
     setStreamingText('');
   };
@@ -191,7 +255,7 @@ export default function Pop() {
                     return (
                       <div key={index} className="mb-4 cursor-default text-justify px-1">
                         <div className="font-bold mb-1 text-[var(--colorone)] inline">
-                          {msg.role === "user" ? `${username.toUpperCase()}: ` : "OPE: "}
+                          {msg.role === "user" ? `${username.toUpperCase()}: ` : "AMELIA: "}
                         </div>
                         <div className="text-[var(--colorone)] inline break-words whitespace-pre-line">
                           {displayContent}
@@ -235,6 +299,12 @@ export default function Pop() {
               </button>
             </div>
           </div>
+          {/* New audio indicator */}
+          {isPlayingAudio && (
+            <div className="fixed bottom-32 left-1/2 transform -translate-x-1/2 bg-[var(--colorone)] text-white px-4 py-2 rounded-full text-sm z-40 animate-pulse">
+              🎵 Playing audio...
+            </div>
+          )}
         </>
       )}
       <style jsx>{`
