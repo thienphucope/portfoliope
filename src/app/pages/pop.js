@@ -176,7 +176,7 @@ export default function Pop() {
           {showHistory && (
             <div 
               ref={historyRef}
-              className="fixed bottom-30 left-1/2 transform -translate-x-1/2 w-full max-w-[50vw] bg-white rounded-2xl shadow-xl flex flex-col z-40 border-3 border-[var(--colorone)] p-4 max-h-[50vh] overflow-y-auto"
+              className="fixed font-serif bottom-30 left-1/2 transform -translate-x-1/2 w-full max-w-[50vw] bg-white rounded-2xl shadow-xl flex flex-col z-40 border-3 border-[var(--colorone)] p-4 max-h-[50vh] overflow-y-auto no-scrollbar"
             >
               <div className="flex flex-col">
                 {convo.length === 0 ? (

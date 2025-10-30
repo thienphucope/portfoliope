@@ -12,6 +12,12 @@ export default function Page1() {
   const [displayPronunciation, setDisplayPronunciation] = useState("");
   const [isIntroStarted, setIsIntroStarted] = useState(false);
   const [isIntroDone, setIsIntroDone] = useState(false);
+  const [isStoryOpen, setIsStoryOpen] = useState(false);
+
+  // Thêm constant này để quản lý text gốc cho story (chỉ 1 chỗ duy nhất!)
+  const DEFAULT_STORY_TEXT = "Dear Ope Watson!\n\nToday, I've seen a ghost hanging behind the room's door. Can you explain that?\n\n\n\n\n\n\n\n\n\n\n\n\nThis feature is under development. Your submitted story will be sent to the VOID!";
+  
+  const [storyText, setStoryText] = useState(DEFAULT_STORY_TEXT); // Sử dụng constant ở đây
   
   const [animationClass, setAnimationClass] = useState(''); 
   const [animationKey, setAnimationKey] = useState(0); 
@@ -133,32 +139,44 @@ export default function Page1() {
 
   // Handle mouse enter for description
   const handleMouseEnterDescription = () => {
-    scrambleText(originalTextPadded, replacementTextPadded, setDisplayText);
+    if (!isStoryOpen) {
+      scrambleText(originalTextPadded, replacementTextPadded, setDisplayText);
+    }
   };
 
   // Handle mouse leave for description
   const handleMouseLeaveDescription = () => {
-    scrambleText(replacementTextPadded, originalTextPadded, setDisplayText);
+    if (!isStoryOpen) {
+      scrambleText(replacementTextPadded, originalTextPadded, setDisplayText);
+    }
   };
 
   // Handle mouse enter for title
   const handleMouseEnterTitle = () => {
-    scrambleText(originalTitlePadded, replacementTitlePadded, setDisplayTitle);
+    if (!isStoryOpen) {
+      scrambleText(originalTitlePadded, replacementTitlePadded, setDisplayTitle);
+    }
   };
 
   // Handle mouse leave for title
   const handleMouseLeaveTitle = () => {
-    scrambleText(replacementTitlePadded, originalTitlePadded, setDisplayTitle);
+    if (!isStoryOpen) {
+      scrambleText(replacementTitlePadded, originalTitlePadded, setDisplayTitle);
+    }
   };
 
   // Handle mouse enter for pronunciation
   const handleMouseEnterPronunciation = () => {
-    scrambleText(originalPronPadded, replacementPronPadded, setDisplayPronunciation);
+    if (!isStoryOpen) {
+      scrambleText(originalPronPadded, replacementPronPadded, setDisplayPronunciation);
+    }
   };
 
   // Handle mouse leave for pronunciation
   const handleMouseLeavePronunciation = () => {
-    scrambleText(replacementPronPadded, originalPronPadded, setDisplayPronunciation);
+    if (!isStoryOpen) {
+      scrambleText(replacementPronPadded, originalPronPadded, setDisplayPronunciation);
+    }
   };
 
   // Open modal function
@@ -169,9 +187,15 @@ export default function Page1() {
 
   // Scroll to next section (scroll down)
   const scrollToDown = () => {
-    const container = document.querySelector('.snap-y');
-    if (container) {
-      container.scrollBy({ top: container.offsetHeight, behavior: 'smooth' });
+    // Chọn .snap-y để tìm đúng container đang cuộn
+    // Sau đó tìm con trực tiếp (:nth-child(2)) có class .snap-start
+    const page2Container = document.querySelector('.snap-y > .snap-start:nth-child(2)');
+    
+   if (page2Container) {
+      // Yêu cầu trình duyệt cuộn đến phần tử đó một cách mượt mà
+      page2Container.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      console.error("Không tìm thấy container của Page 2!");
     }
   };
 
@@ -199,11 +223,11 @@ export default function Page1() {
         playerRef.current = new window.YT.Player('youtube-player', {
           height: '0',
           width: '0',
-          videoId: 'Vwnp-2T3VFg',
+          videoId: 'cYmD3BMv46o',
           playerVars: {
             autoplay: 1,
             loop: 1,
-            playlist: 'Vwnp-2T3VFg,pL35m337Qa4',
+            playlist: 'cYmD3BMv46o,Vwnp-2T3VFg,pL35m337Qa4',
             controls: 0,
             showinfo: 0,
             modestbranding: 1,
@@ -270,6 +294,17 @@ export default function Page1() {
       setTimeout(() => setIsIntroDone(true), 100);
     }
   }, [isIntroStarted]);
+
+  const handleStorySubmit = () => {
+    console.log("Submitted story:", storyText);
+    setIsStoryOpen(false);
+    setStoryText(DEFAULT_STORY_TEXT); // Reset dùng constant
+  };
+
+  const handleStoryCancel = () => {
+    setIsStoryOpen(false);
+    setStoryText(DEFAULT_STORY_TEXT); // Reset dùng constant
+  };
 
   return (
     <section id="gallery" className="w-full min-h-screen bg-[var(--background)] snap-start font-serif box-border relative z-10 flex justify-center items-center">
@@ -422,7 +457,7 @@ export default function Page1() {
         </svg>
 
         {/* Upbar */}
-        <div className="p-4 md:p-6 flex justify-between items-center pl-4 md:pl-10">
+        <div className="p-4 md:p-6 flex justify-between items-center pl-4 md:pl-10 relative z-40">
             {/* Disk on the left */}
             <div 
               className="relative cursor-pointer" 
@@ -458,12 +493,22 @@ export default function Page1() {
 
             {/* Titles on the right */}
             <div className="flex items-center justify-end gap-6 md:gap-10 text-xl font-semibold pr-4 md:pr-10 text-[var(--colorone)]">
-                <a href="#" className="hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300 hover:drop-shadow-lg">Blogs</a>
-                <a href="#" className="hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300 hover:drop-shadow-lg">Tell your story!</a>
+                <div 
+                  className="hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300 hover:drop-shadow-lg cursor-pointer"
+                  onClick={scrollToDown}
+                >
+                  Case Archives
+                </div>
+                <div 
+                  className="hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300 hover:drop-shadow-lg cursor-pointer"
+                  onClick={() => setIsStoryOpen(true)}
+                >
+                  Tell your story!
+                </div>
             </div>
         </div>
 
-        {/* Image */}
+        {/* Image - z-10 */}
         <div className="absolute bottom-0 left-0 h-1/2 z-10">
             <img
                 src="/watsoncrop.png"
@@ -477,56 +522,86 @@ export default function Page1() {
             />
         </div>
 
-        {/* Introduction */}
-        <div className="absolute top-1/2 -translate-y-1/2 right-4 md:right-10 w-4/9 text-justify">
-            <h2
-                className="block w-full text-right text-5xl md:text-8xl text-[var(--colorone)] font-bold mb-2 font-chomsky hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300"
-                ref={titleRef}
-                onMouseEnter={handleMouseEnterTitle}
-                onMouseLeave={handleMouseLeaveTitle}
-            >
-                {displayTitle}
-            </h2>
-            <div>
-                <span
-                    className="block w-full text-right text-base md:text-2xl text-[var(--colorone)] italic inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300"
-                    ref={pronunciationRef}
-                    onMouseEnter={handleMouseEnterPronunciation}
-                    onMouseLeave={handleMouseLeavePronunciation}
-                >
-                    {displayPronunciation}
-                </span>
-            </div>
-            <div
-                className="text-base md:text-2xl leading-relaxed text-[var(--colorone)] mt-4"
-                ref={textRef}
-                onMouseEnter={handleMouseEnterDescription}
-                onMouseLeave={handleMouseLeaveDescription}
-            >
-                <span className="inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300">
-                    {displayText}
-                </span>
-            </div>
-        </div>
+        {/* Introduction - z-0 default */}
+        {!isStoryOpen && (
+          <div className="absolute top-1/2 -translate-y-1/2 right-4 md:right-10 w-4/9 text-justify z-0">
+              <h2
+                  className="block w-full text-right text-5xl md:text-8xl text-[var(--colorone)] font-bold mb-2 font-chomsky hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300"
+                  ref={titleRef}
+                  onMouseEnter={handleMouseEnterTitle}
+                  onMouseLeave={handleMouseLeaveTitle}
+              >
+                  {displayTitle}
+              </h2>
+              <div>
+                  <span
+                      className="block w-full text-right text-base md:text-2xl text-[var(--colorone)] italic inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300"
+                      ref={pronunciationRef}
+                      onMouseEnter={handleMouseEnterPronunciation}
+                      onMouseLeave={handleMouseLeavePronunciation}
+                  >
+                      {displayPronunciation}
+                  </span>
+              </div>
+              <div
+                  className="text-base md:text-2xl leading-relaxed text-[var(--colorone)] mt-4"
+                  ref={textRef}
+                  onMouseEnter={handleMouseEnterDescription}
+                  onMouseLeave={handleMouseLeaveDescription}
+              >
+                  <span className="inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300">
+                      {displayText}
+                  </span>
+              </div>
+          </div>
+        )}
 
-        {/* Bottom Social Icons */}
-        <div className="absolute bottom-10 right-10 flex gap-4 z-20">
-          <a href="https://www.youtube.com/watch?v=Vwnp-2T3VFg">
-            <FaYoutube className="text-[var(--colorone)] text-5xl hover:fill-[url(#iconGradient)] transition-all duration-300 hover:drop-shadow-lg" />
-          </a>
-          <a href="https://www.instagram.com/opewatson/">
-            <FaInstagram className="text-[var(--colorone)] text-5xl hover:fill-[url(#iconGradient)] transition-all duration-300 hover:drop-shadow-lg" />
-          </a>
-          <a href="https://github.com/thienphucope">
-            <FaGithub className="text-[var(--colorone)] text-5xl hover:fill-[url(#iconGradient)] transition-all duration-300 hover:drop-shadow-lg" />
-          </a>
-          <a href="mailto:thienphucmain@gmail.com">
-            <FaEnvelope className="text-[var(--colorone)] text-5xl hover:fill-[url(#iconGradient)] transition-all duration-300 hover:drop-shadow-lg" />
-          </a>
-          <a href="https://x.com/a">
-            <FaTwitter className="text-[var(--colorone)] text-5xl hover:fill-[url(#iconGradient)] transition-all duration-300 hover:drop-shadow-lg" />
-          </a>
-        </div>
+        {/* Story Overlay */}
+        {isStoryOpen && (
+          <div className="absolute top-[80px] rounded-2xl left-0 right-0 bottom-0 bg-white z-[30] p-8 flex flex-col">
+            <textarea
+              value={storyText}
+              onChange={(e) => setStoryText(e.target.value)}
+              className="flex-1 font-serif text-xl pt-5 leading-[1.6] text-gray-400 bg-transparent border-none outline-none resize-none overflow-y-auto no-scrollbar text-justify focus:text-[var(--colorone)]"
+              placeholder={DEFAULT_STORY_TEXT} // Sử dụng constant ở đây
+            />
+            <div className="flex justify-end gap-4 mt-4">
+              <button 
+                onClick={handleStoryCancel}
+                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-all duration-300"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleStorySubmit}
+                className="px-4 py-2 bg-[var(--colorone)] text-white rounded hover:bg-pink-300 transition-all duration-300"
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Bottom Social Icons - z-20 */}
+        {!isStoryOpen && (
+          <div className="absolute bottom-10 right-10 flex gap-4 z-20">
+            <a href="https://www.youtube.com/@opewatson" target="_blank" rel="noopener noreferrer" aria-label="YouTube">
+              <FaYoutube className="text-[var(--colorone)] text-5xl hover:fill-[url(#iconGradient)] transition-all duration-300 hover:drop-shadow-lg" />
+            </a>
+            <a href="https://www.instagram.com/opewatson/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+              <FaInstagram className="text-[var(--colorone)] text-5xl hover:fill-[url(#iconGradient)] transition-all duration-300 hover:drop-shadow-lg" />
+            </a>
+            <a href="https://github.com/thienphucope" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+              <FaGithub className="text-[var(--colorone)] text-5xl hover:fill-[url(#iconGradient)] transition-all duration-300 hover:drop-shadow-lg" />
+            </a>
+            <a href="mailto:thienphucmain@gmail.com" target="_blank" rel="noopener noreferrer" aria-label="Email">
+              <FaEnvelope className="text-[var(--colorone)] text-5xl hover:fill-[url(#iconGradient)] transition-all duration-300 hover:drop-shadow-lg" />
+            </a>
+            <a href="https://x.com/a" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
+              <FaTwitter className="text-[var(--colorone)] text-5xl hover:fill-[url(#iconGradient)] transition-all duration-300 hover:drop-shadow-lg" />
+            </a>
+          </div>
+        )}
 
       </div>
     </section>
