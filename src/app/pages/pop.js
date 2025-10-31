@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
-import { ClockIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline';
+import { ClockIcon, PaperAirplaneIcon, ArrowPathIcon, MagnifyingGlassIcon, SpeakerWaveIcon } from '@heroicons/react/24/outline';
 
 export default function Pop() {
   const [isOpen, setIsOpen] = useState(false);
@@ -8,16 +8,19 @@ export default function Pop() {
   const [inputValue, setInputValue] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [convo, setConvo] = useState([
-    { role: 'assistant', content: "Hello, I'm Elia, Ope Watson's assistant. Ask me anything – I can even share Ope Watson's secrets!" }
+    { role: 'assistant', content: "Hello, I'm Amelia, Ope Watson's assistant. Ask me anything – I can even share Ope Watson's secrets!" }
   ]); // Initial bot intro message (no TTS for this)
   const [streamingText, setStreamingText] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false); // New state for audio playback
+  const [ragReady, setRagReady] = useState(false); // Track RAG readiness
+  const [ttsReady, setTtsReady] = useState(false); // Track TTS readiness
   const inputRef = useRef(null);
   const historyRef = useRef(null);
   const streamingIntervalRef = useRef(null);
   const audioRef = useRef(null); // Ref for Audio object
   const username = 'YOU'; // Fixed username for API calls; can be made dynamic if needed
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY || ''; // Gemini API key for fallback
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
@@ -61,9 +64,57 @@ export default function Pop() {
     streamingIntervalRef.current = interval;
   };
 
-  // New function to call TTS API and play audio
+  // Function to get response from Gemini as RAG fallback, now with conversation history
+  const getGeminiResponse = async (history) => {
+    if (!GEMINI_API_KEY) {
+      throw new Error('Gemini API key not configured');
+    }
+
+    const systemPrompt = "You are Forgetful Amelia, an AI assistant. Ope haven't connect you to the database yet so you can't answer question about Ope but still try to help with anything. Provide clear and concise answers. Do NOT use asterisks. Capitalize to emphasive";
+
+    const contents = [
+      {
+        role: "user",
+        parts: [{ text: systemPrompt }]
+      },
+      ...history.map(msg => ({
+        role: msg.role === 'user' ? "user" : "model",
+        parts: [{ text: msg.content }]
+      }))
+    ];
+
+    // Optional: Limit context length to prevent token overflow (e.g., keep last 10 exchanges + system)
+    if (contents.length > 21) {
+      contents.splice(1, contents.length - 21); // Keep system + last 20 (10 pairs)
+    }
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Gemini Error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response from Gemini";
+
+    return responseText;
+  };
+
+  // New function to call TTS API and play audio (skip if not ready)
   const generateAndPlayAudio = async (text) => {
-    if (!text) return;
+    if (!text || !ttsReady) {
+      console.log('TTS not ready, skipping audio generation');
+      return;
+    }
 
     try {
       setIsPlayingAudio(true);
@@ -113,10 +164,12 @@ export default function Pop() {
     setIsSending(true);
     const userMessage = inputValue.trim();
     setInputValue('');
-    setConvo(prev => [...prev, { role: 'user', content: userMessage }]);
+    const userMsgObj = { role: 'user', content: userMessage };
+    const updatedConvoWithUser = [...convo, userMsgObj];
+    setConvo(updatedConvoWithUser);
 
     // Show history on first prompt (now with initial message, it will show immediately)
-    if (convo.length === 1) { // Only the initial bot message
+    if (updatedConvoWithUser.length === 2) { // Initial + first user
       setShowHistory(true);
     }
 
@@ -124,23 +177,31 @@ export default function Pop() {
     setConvo(prev => [...prev, { role: 'assistant', content: '' }]);
 
     try {
-      const response = await fetch("https://rag-backend-zh2e.onrender.com/rag", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, query: userMessage }),
-      });
+      let botReply;
+      if (ragReady) {
+        // Use RAG backend
+        const response = await fetch("https://rag-backend-zh2e.onrender.com/rag", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, query: userMessage }),
+        });
 
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`RAG Error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        botReply = data.response || "No response from backend";
+      } else {
+        // Fallback to Gemini with history
+        console.log('RAG not ready, using Gemini fallback');
+        botReply = await getGeminiResponse(updatedConvoWithUser);
       }
-
-      const data = await response.json();
-      const botReply = data.response || "No response from backend";
 
       // Start streaming text immediately
       streamResponse(botReply);
 
-      // Call TTS API after RAG response (async, so streams alongside) - Skip for initial message
+      // Call TTS API after response (async, so streams alongside) - Skip for initial message
       if (userMessage.trim()) { // Only for user messages, not initial
         generateAndPlayAudio(botReply);
       }
@@ -182,26 +243,84 @@ export default function Pop() {
     };
   }, []);
 
-  // Ping servers on mount to warm up (prevent cold start)
+  // Smart warm-up for RAG and TTS on mount
   useEffect(() => {
-    const warmUpServers = async () => {
+    // RAG: Poll every 1s until OK 200
+    const RAG_STATUS_URL = "https://rag-backend-zh2e.onrender.com/status";
+    let ragInterval = setInterval(async () => {
       try {
-        // Ping RAG backend
-        await fetch("https://rag-backend-zh2e.onrender.com/status", { method: 'GET' });
-        console.log('RAG server warmed up');
+        const response = await fetch(RAG_STATUS_URL, { method: 'GET' });
+        if (response.ok) {
+          setRagReady(true);
+          console.log('RAG server ready');
+          clearInterval(ragInterval);
+        }
       } catch (error) {
-        console.error('RAG warm-up ping failed:', error);
+        console.log('RAG warm-up ping failed, retrying...');
+        // Continue polling on error (e.g., failed to fetch during cold start)
+      }
+    }, 1000);
+
+    // Initial check
+    (async () => {
+      try {
+        const initialResponse = await fetch(RAG_STATUS_URL, { method: 'GET' });
+        if (initialResponse.ok) {
+          setRagReady(true);
+          clearInterval(ragInterval);
+        }
+      } catch {}
+    })();
+
+    // Cleanup interval on unmount
+    return () => clearInterval(ragInterval);
+
+  }, []);
+
+  // TTS: Retry on timeout until OK 200
+  useEffect(() => {
+    const TTS_PING_URL = "https://thienphuc1052004--xtts-api-xttsapi-tts-generate.modal.run/ping";
+    let retryCount = 0;
+    const maxRetries = 10;
+
+    const checkTts = async () => {
+      if (retryCount >= maxRetries) {
+        console.error('TTS warm-up exceeded max retries');
+        return;
       }
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
       try {
-        // Ping TTS API
-        await fetch("https://thienphuc1052004--xtts-api-xttsapi-tts-generate.modal.run/ping", { method: 'GET' });
-        console.log('TTS server warmed up');
+        await fetch(TTS_PING_URL, {
+          method: 'GET',
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        
+        // Any response (even errors) means server is up
+        setTtsReady(true);
+        console.log('TTS server responded');
+        return;
+
       } catch (error) {
-        console.error('TTS warm-up ping failed:', error);
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          console.log('TTS ping timed out, retrying...');
+          retryCount++;
+          // Only retry on timeout
+          setTimeout(checkTts, 5000);
+        } else {
+          // For other errors (network, etc), consider TTS ready
+          console.log('TTS error but marking as ready:', error);
+          setTtsReady(true);
+        }
       }
     };
-    warmUpServers();
+
+    // Initial check
+    checkTts();
   }, []);
 
   // Cleanup khi toggle chat
@@ -278,6 +397,28 @@ export default function Pop() {
                   })
                 )}
               </div>
+              {/* Status Bottombar */}
+              <div className="sticky bottom-0 left-0 w-full bg-white pt-3 z-50">
+                {/* Right: Status icons */}
+                <div className="flex items-center justify-end space-x-4">
+                  {/* RAG Icon */}
+                  <div className="flex items-center">
+                    {ragReady ? (
+                      <MagnifyingGlassIcon className="w-5 h-5 text-[var(--colorone)]" />
+                    ) : (
+                      <ArrowPathIcon className="w-5 h-5 text-gray-400 animate-spin" />
+                    )}
+                  </div>
+                  {/* TTS Icon */}
+                  <div className="flex items-center">
+                    {ttsReady ? (
+                      <SpeakerWaveIcon className={`w-5 h-5 text-[var(--colorone)] rounded-full bg-white ${isPlayingAudio ? 'animate-pulse' : ''}`} />
+                    ) : (
+                      <ArrowPathIcon className="w-5 h-5 text-gray-400 animate-spin" />
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
           <div className="font-serif fixed bottom-10 left-1/2 transform -translate-x-1/2 w-full max-w-[50vw] bg-white rounded-full shadow-xl flex flex-col z-40 border-3 border-[var(--colorone)] transition-all duration-500 ease-in-out opacity-100 translate-y-0 overflow-hidden">
@@ -308,18 +449,12 @@ export default function Pop() {
               </button>
             </div>
           </div>
-          {/* New audio indicator */}
-          {isPlayingAudio && (
-            <div className="fixed bottom-32 left-1/2 transform -translate-x-1/2 bg-[var(--colorone)] text-white px-4 py-2 rounded-full text-sm z-40 animate-pulse">
-              🎵 Playing audio...
-            </div>
-          )}
         </>
       )}
       <style jsx>{`
         @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
+          0%, 100% { background-color: white; color: var(--colorone); }
+          50% { background-color: var(--colorone); color: white;}
         }
         .animate-pulse {
           animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
