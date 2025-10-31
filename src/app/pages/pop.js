@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
-import { ClockIcon, PaperAirplaneIcon, ArrowPathIcon, MagnifyingGlassIcon, SpeakerWaveIcon } from '@heroicons/react/24/outline';
+import { ClockIcon, PaperAirplaneIcon, ArrowPathIcon, MagnifyingGlassIcon, SpeakerWaveIcon, MicrophoneIcon } from '@heroicons/react/24/outline';
 
 export default function Pop() {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,12 +15,113 @@ export default function Pop() {
   const [isPlayingAudio, setIsPlayingAudio] = useState(false); // New state for audio playback
   const [ragReady, setRagReady] = useState(false); // Track RAG readiness
   const [ttsReady, setTtsReady] = useState(false); // Track TTS readiness
+  const [apiUsername, setApiUsername] = useState('YOU'); // Dynamic username for API calls only
+  const [isListening, setIsListening] = useState(false); // State for voice input
+  const [speechActive, setSpeechActive] = useState(false); // Track if speech recognition is active for cursor management
   const inputRef = useRef(null);
   const historyRef = useRef(null);
   const streamingIntervalRef = useRef(null);
   const audioRef = useRef(null); // Ref for Audio object
-  const username = 'YOU'; // Fixed username for API calls; can be made dynamic if needed
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY || ''; // Gemini API key for fallback
+  const recognitionRef = useRef(null); // Ref for SpeechRecognition
+  const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || ''; // Gemini API key for fallback
+  const displayName = 'YOU'; // Fixed display name for UI
+
+  // Fetch user's IP on mount to set dynamic API username
+  useEffect(() => {
+    fetch('https://api.ipify.org?format=json')
+      .then(response => response.json())
+      .then(data => {
+        const ipFormatted = data.ip.replace(/\./g, '-'); // Format IP to avoid display issues
+        // Try to get device info
+        const userAgent = navigator.userAgent;
+        let device = 'Unknown';
+        if (userAgent.includes('Mobile')) {
+          device = 'Mobile';
+        } else if (userAgent.includes('Windows')) {
+          device = 'Windows';
+        } else if (userAgent.includes('Mac')) {
+          device = 'Mac';
+        } else if (userAgent.includes('Linux')) {
+          device = 'Linux';
+        }
+        setApiUsername(`${device}-${ipFormatted}`); // e.g., Mobile-192-168-1-1
+        console.log('Dynamic API username set to:', `${device}-${ipFormatted}`);
+      })
+      .catch(error => {
+        console.error('Failed to fetch IP:', error);
+        // Fallback to device info only
+        const userAgent = navigator.userAgent;
+        const device = userAgent.includes('Mobile') ? 'Mobile' : userAgent.includes('Windows') ? 'Windows' : 'Unknown Device';
+        setApiUsername(device);
+      });
+  }, []);
+
+  // Setup SpeechRecognition
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = 'en-US'; // English only
+
+      recognitionRef.current.onstart = () => {
+        setIsListening(true);
+        setSpeechActive(true);
+      };
+
+      recognitionRef.current.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        setInputValue(transcript);
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+        setSpeechActive(false);
+      };
+
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+        setSpeechActive(false);
+      };
+    } else {
+      console.warn('Speech recognition not supported in this browser.');
+    }
+  }, []);
+
+  // Keep cursor at the end of input when speech is active
+  useEffect(() => {
+    if (speechActive && inputRef.current) {
+      const input = inputRef.current;
+      input.focus();
+      input.selectionStart = input.value.length;
+      input.selectionEnd = input.value.length;
+    }
+  }, [inputValue, speechActive]);
+
+  const handleVoiceInput = () => {
+    if (!recognitionRef.current || isSending || isStreaming) return;
+
+    if (isListening) {
+      recognitionRef.current.stop();
+    } else {
+      recognitionRef.current.start();
+    }
+  };
+
+  // Handle Ctrl key for mic activation
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !isSending && !isStreaming) {
+      handleSend();
+    } else if (e.key === 'Control' && !isListening && !isSending && !isStreaming && inputRef.current === document.activeElement) {
+      e.preventDefault();
+      handleVoiceInput();
+    }
+  };
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
@@ -179,11 +280,11 @@ export default function Pop() {
     try {
       let botReply;
       if (ragReady) {
-        // Use RAG backend
+        // Use RAG backend with dynamic API username
         const response = await fetch("https://rag-backend-zh2e.onrender.com/rag", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, query: userMessage }),
+          body: JSON.stringify({ username: apiUsername, query: userMessage }),
         });
 
         if (!response.ok) {
@@ -220,12 +321,6 @@ export default function Pop() {
     }
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !isSending && !isStreaming) {
-      handleSend();
-    }
-  };
-
   const handleChange = (e) => {
     setInputValue(e.target.value);
   };
@@ -239,6 +334,9 @@ export default function Pop() {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
+      }
+      if (recognitionRef.current && isListening) {
+        recognitionRef.current.stop();
       }
     };
   }, []);
@@ -333,12 +431,17 @@ export default function Pop() {
       audioRef.current.pause();
       audioRef.current = null;
     }
+    if (recognitionRef.current && isListening) {
+      recognitionRef.current.stop();
+    }
     setIsOpen(!isOpen);
     setIsSending(false);
     setIsStreaming(false);
     setIsPlayingAudio(false);
     setInputValue('');
     setStreamingText('');
+    setIsListening(false);
+    setSpeechActive(false);
   };
 
   // Auto-focus input sau khi reset states
@@ -383,7 +486,7 @@ export default function Pop() {
                     return (
                       <div key={index} className="mb-4 cursor-default text-justify px-1">
                         <div className="font-bold mb-1 text-[var(--colorone)] inline">
-                          {msg.role === "user" ? `${username.toUpperCase()}: ` : "AMELIA: "}
+                          {msg.role === "user" ? `${displayName.toUpperCase()}: ` : "AMELIA: "}
                         </div>
                         <div className="text-[var(--colorone)] inline break-words whitespace-pre-line">
                           {displayContent}
@@ -423,6 +526,14 @@ export default function Pop() {
           )}
           <div className="font-serif fixed bottom-10 left-1/2 transform -translate-x-1/2 w-full max-w-[50vw] bg-white rounded-full shadow-xl flex flex-col z-40 border-3 border-[var(--colorone)] transition-all duration-500 ease-in-out opacity-100 translate-y-0 overflow-hidden">
             <div className="flex items-center px-3 py-2">
+              <button
+                onClick={handleVoiceInput}
+                disabled={isSending || isStreaming}
+                className="px-2 py-0 hover:bg-gray-50 transition-colors flex items-center justify-center rounded-full disabled:opacity-50"
+                title="Voice Input (or press Ctrl)"
+              >
+                <MicrophoneIcon className={`w-6 h-6 text-[var(--colorone)] rounded-full ${isListening ? 'animate-pulse' : ''}`} />
+              </button>
               <input
                 ref={inputRef}
                 type="text"
