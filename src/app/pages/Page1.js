@@ -223,11 +223,11 @@ export default function Page1() {
         playerRef.current = new window.YT.Player('youtube-player', {
           height: '0',
           width: '0',
-          videoId: 'cYmD3BMv46o',
+          videoId: 'NaJz1PdbjCM',
           playerVars: {
             autoplay: 1,
             loop: 1,
-            playlist: 'cYmD3BMv46o,Vwnp-2T3VFg,pL35m337Qa4',
+            playlist: 'NaJz1PdbjCM,cYmD3BMv46o,Vwnp-2T3VFg,pL35m337Qa4',
             controls: 0,
             showinfo: 0,
             modestbranding: 1,

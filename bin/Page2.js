@@ -2,94 +2,14 @@
 import { useState, useEffect } from 'react';
 
 export default function Page2() {
-  const images = [
-    { 
-      id: 1, 
-      image: "/watsoncrop.png", 
-      fullImage: "/watsoncrop.png",
-      title: "The Fuckboy Allure", 
-      description: "Why do girls run back to known Fuckboys?", 
-      content: `In this case archive, we delve into the psychological and social dynamics that make 'fuckboys' so irresistibly alluring to many women. Drawing from real-life stories and expert insights, explore the patterns of attraction, the cycle of heartbreak, and strategies for breaking free. This entry combines humor, empathy, and practical advice to help readers recognize and navigate these complex relationships.
+  const [images, setImages] = useState([]);
 
-The allure of the fuckboy is a multifaceted phenomenon rooted in evolutionary psychology, social conditioning, and modern dating culture. At its core, the fuckboy—often characterized by charm, confidence, and a dash of unpredictability—taps into primal desires for excitement and validation. Women, conditioned by societal narratives of romance that glorify the "bad boy" archetype in films, books, and music, find themselves drawn to these figures despite repeated disappointments. Studies from evolutionary psychologists like David Buss suggest that such traits signal high genetic fitness and resource acquisition potential, even if they're superficial in contemporary contexts.
-
-Consider the dopamine rush: Each intermittent text, ambiguous compliment, or fleeting moment of attention floods the brain with feel-good chemicals, creating an addictive loop akin to gambling. Neuroimaging research from institutions like the University of California indicates that rejection from these sources activates the same brain regions as physical pain, making the pull even stronger. Yet, the cycle persists because hope lingers—perhaps this time, the fuckboy will change, or the connection will deepen.
-
-Real-life anecdotes abound. Take Sarah, a 28-year-old marketing executive who returned to her on-again, off-again partner three times over two years. "He made me feel alive," she confessed, "but it was always the highs that kept me hooked, not the stability." Experts like Dr. Lisa Marie Bobby, a relationship therapist, emphasize that this pattern often stems from unresolved attachment issues, where anxious attachment styles seek reassurance in unreliable sources.
-
-Breaking free requires self-awareness and boundary-setting. Cognitive Behavioral Therapy (CBT) techniques can rewire these responses, while building a support network of friends who call out red flags helps. Apps like "Fuckboy Detector" (a satirical yet useful tool) even gamify the process of analyzing texting patterns for ghosting potential. Ultimately, recognizing the allure as a mirage—not a destiny—empowers women to seek partners who offer consistency over chaos.
-
-This case isn't just about dating disasters; it's a lens into broader human behavior. In professional settings, the fuckboy dynamic mirrors toxic bosses who dangle promotions like breadcrumbs, keeping teams in perpetual limbo. In friendships, it manifests as the unreliable pal who only calls when they need something. By unpacking the fuckboy allure, we gain tools to foster healthier connections across life's arenas.
-
-Further reading: Helen Fisher's "Anatomy of Love" for the science of attraction; Esther Perel's "Mating in Captivity" for sustaining passion without games; and "Attached" by Amir Levine for attachment theory deep dives. Remember, the greatest rebellion against the fuckboy script is choosing yourself—unapologetically, consistently, and with zero mixed signals.
-
-Expanding on the evolutionary angle, consider how mate selection heuristics from our hunter-gatherer past misfire in the swipe-right era. Traits like aloofness once indicated selectivity and value; now, they're red flags amplified by algorithms that reward engagement over authenticity. Social media exacerbates this, turning every like into a micro-validation hit, making genuine reciprocity feel scarce.
-
-From a feminist perspective, the fuckboy trope reinforces patriarchal power imbalances, where emotional labor falls disproportionately on women. bell hooks' "All About Love" critiques how capitalism commodifies intimacy, turning relationships into transactions. Reclaiming agency means redefining desire—not chasing shadows, but building fires that warm without burning.
-
-In therapy sessions worldwide, clients report epiphanies when mapping their "fuckboy timelines," spotting patterns like clockwork. One exercise: Journal three instances of returning, then rewrite the ending with self-compassion. It's transformative, turning pain into power.
-
-For those in the trenches, community is key. Online forums like r/FemaleDatingStrategy offer solidarity, while podcasts suchs as "Where Should We Begin?" with Esther Perel provide vicarious wisdom. The fuckboy allure fades when illuminated by shared stories—proof that you're not alone, and escape is not only possible but probable.
-
-As we conclude this archive, reflect: What if the thrill you seek is already within? Self-love isn't a consolation prize; it's the ultimate upgrade. Ditch the drama, embrace the depth. Your story deserves a protagonist who stays for the plot twists—and the quiet chapters too.`
-    },
-    { 
-      id: 2, 
-      image: "/duck.gif", 
-      fullImage: "/duck.gif",
-      title: "Apocalyse Survival Guide", 
-      description: "This is all you need to survive any kind of apocalyse!", 
-      content: "Whether it's zombies, nuclear fallout, or an alien invasion, this comprehensive guide equips you with essential skills for post-apocalyptic living. From foraging and fortification to psychological resilience and community building, learn step-by-step how to thrive in chaos. Backed by survival experts and fictional scenarios, this case study turns doomsday fears into actionable knowledge."
-    },
-    { 
-      id: 3, 
-      image: "/watsoncrop.png", 
-      fullImage: "/watsoncrop.png",
-      title: "Title 3", 
-      description: "This is a sample description for item 3.", 
-      content: "Detailed content for case 3 goes here. This section expands on the title and description with in-depth analysis, stories, and insights relevant to the theme."
-    },
-    { 
-      id: 4, 
-      image: "/watsoncrop.png", 
-      fullImage: "/watsoncrop.png",
-      title: "Title 4", 
-      description: "This is a sample description for item 4.", 
-      content: "Detailed content for case 4 goes here. This section expands on the title and description with in-depth analysis, stories, and insights relevant to the theme."
-    },
-    { 
-      id: 5, 
-      image: "/watsoncrop.png", 
-      fullImage: "/watsoncrop.png",
-      title: "Title 5", 
-      description: "This is a sample description for item 5.", 
-      content: "Detailed content for case 5 goes here. This section expands on the title and description with in-depth analysis, stories, and insights relevant to the theme."
-    },
-    { 
-      id: 6, 
-      image: "/watsoncrop.png", 
-      fullImage: "/watsoncrop.png",
-      title: "Title 6", 
-      description: "This is a sample description for item 6.", 
-      content: "Detailed content for case 6 goes here. This section expands on the title and description with in-depth analysis, stories, and insights relevant to the theme."
-    },
-    { 
-      id: 7, 
-      image: "/watsoncrop.png", 
-      fullImage: "/watsoncrop.png",
-      title: "Title 7", 
-      description: "This is a sample description for item 7.", 
-      content: "Detailed content for case 7 goes here. This section expands on the title and description with in-depth analysis, stories, and insights relevant to the theme."
-    },
-    { 
-      id: 8, 
-      image: "/watsoncrop.png", 
-      fullImage: "/watsoncrop.png",
-      title: "Title 8", 
-      description: "This is a sample description for item 8.", 
-      content: "Detailed content for case 8 goes here. This section expands on the title and description with in-depth analysis, stories, and insights relevant to the theme."
-    },
-  ];
+  useEffect(() => {
+    fetch('/cases.json')
+      .then(response => response.json())
+      .then(data => setImages(data.cases))
+      .catch(error => console.error('Error loading cases:', error));
+  }, []);
 
   const [selectedItem, setSelectedItem] = useState(null);
   const [mousePos, setMousePos] = useState({ x: -999, y: -999 });
