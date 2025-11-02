@@ -39,7 +39,7 @@ export default function Home() {
   if (isMobile) {
     return (
       <div className="w-full h-screen flex items-center justify-center bg-[var(--background)] text-white text-xl p-4 text-center">
-        This site is not accessible on mobile devices. Please use a desktop browser. You still use the AI feature below
+        This site is not accessible on mobile devices. Please use a desktop browser. You still use the AI features.
       </div>
     );
   }
@@ -80,7 +80,7 @@ export default function Home() {
       {/* Toggle Button - Fixed Position */}
       <button
         onClick={() => setSpotlightEnabled(!spotlightEnabled)}
-        className="fixed bottom-30 right-7 text-6xl px-0 py-0 z-30 bg-transparent text-[var(--colorone)] rounded-full rounded-full cursor-pointer"
+        className="fixed top-25 right-2 text-6xl px-0 py-0 z-30 bg-transparent text-[var(--colorone)] rounded-full rounded-full cursor-pointer"
       >
         {spotlightEnabled ? '🌙' : '☀️'}
       </button>
