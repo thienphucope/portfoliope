@@ -1,7 +1,7 @@
 ---
 id: 2
 title: Đề phân tích hành vi cảm xúc
-description: Cho trai đang có bồ...không phải Ope
+description: Cho trai đang có bồ...không phải Ope haha
 image: /duck.gif
 fullImage: /bookstore.jpg
 ---
