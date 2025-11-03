@@ -9,30 +9,162 @@ export default function Pop() {
   const [isSending, setIsSending] = useState(false);
   const [convo, setConvo] = useState([
     { role: 'assistant', content: "Hello, I'm Amelia, Ope Watson's assistant. Ask me anything – I can even share Ope Watson's secrets!" }
-  ]); // Initial bot intro message (no TTS for this)
+  ]);
   const [streamingText, setStreamingText] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false); // New state for audio playback
-  const [ragReady, setRagReady] = useState(false); // Track RAG readiness
-  const [ttsReady, setTtsReady] = useState(false); // Track TTS readiness
-  const [apiUsername, setApiUsername] = useState('YOU'); // Dynamic username for API calls only
-  const [isListening, setIsListening] = useState(false); // State for voice input
-  const [speechActive, setSpeechActive] = useState(false); // Track if speech recognition is active for cursor management
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [ragReady, setRagReady] = useState(false);
+  const [ttsReady, setTtsReady] = useState(false);
+  const [apiUsername, setApiUsername] = useState('YOU');
+  const [isListening, setIsListening] = useState(false);
+  const [speechActive, setSpeechActive] = useState(false);
   const inputRef = useRef(null);
   const historyRef = useRef(null);
   const streamingIntervalRef = useRef(null);
-  const audioRef = useRef(null); // Ref for Audio object
-  const recognitionRef = useRef(null); // Ref for SpeechRecognition
-  const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || ''; // Gemini API key for fallback
-  const displayName = 'YOU'; // Fixed display name for UI
+  const audioQueueRef = useRef([]); // Queue for audio blobs ready to play
+  const pendingChunksRef = useRef([]); // Chunks waiting to be sent to TTS
+  const isPlayingRef = useRef(false); // Track if audio is currently playing
+  const isFetchingRef = useRef(false); // Track if fetching TTS
+  const recognitionRef = useRef(null);
+  const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
+  const displayName = 'YOU';
 
-  // Fetch user's IP on mount to set dynamic API username
+  // Normalize text: remove special chars except punctuation
+  const normalizeText = (text) => {
+    return text
+      .replace(/[^\w\s.,!?;:'"()-]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
+  // Split text into sentences and merge short ones
+  const splitIntoChunks = (text, minLength = 0) => {
+    const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+    const chunks = [];
+    let currentChunk = '';
+
+    sentences.forEach((sentence) => {
+      const trimmed = sentence.trim();
+      if (currentChunk.length + trimmed.length < minLength) {
+        currentChunk += (currentChunk ? ' ' : '') + trimmed;
+      } else {
+        if (currentChunk) chunks.push(currentChunk);
+        currentChunk = trimmed;
+      }
+    });
+
+    if (currentChunk) chunks.push(currentChunk);
+    return chunks;
+  };
+
+  // Fetch TTS for a chunk and add to audio queue
+  const fetchTTSChunk = async (chunk) => {
+    try {
+      const ttsResponse = await fetch("https://thienphuc1052004--xtts-api-xttsapi-tts-generate.modal.run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: chunk, language: "en" }),
+      });
+
+      if (!ttsResponse.ok) throw new Error(`TTS Error: ${ttsResponse.status}`);
+
+      const audioBlob = await ttsResponse.blob();
+      return audioBlob;
+    } catch (error) {
+      console.error("TTS chunk failed:", error);
+      return null;
+    }
+  };
+
+  // Process next chunk from pending list
+  const processNextChunk = async () => {
+    if (isFetchingRef.current || pendingChunksRef.current.length === 0) return;
+    
+    isFetchingRef.current = true;
+    const chunk = pendingChunksRef.current.shift();
+    
+    const audioBlob = await fetchTTSChunk(chunk);
+    if (audioBlob) {
+      audioQueueRef.current.push(audioBlob);
+      // Start playing if not already playing
+      if (!isPlayingRef.current) {
+        playNextAudio();
+      }
+    }
+    
+    isFetchingRef.current = false;
+    
+    // Continue processing if more chunks available
+    if (pendingChunksRef.current.length > 0) {
+      processNextChunk();
+    }
+  };
+
+  // Play next audio from queue
+  const playNextAudio = async () => {
+    if (isPlayingRef.current || audioQueueRef.current.length === 0) {
+      // Check if we're done with everything
+      if (audioQueueRef.current.length === 0 && pendingChunksRef.current.length === 0 && !isFetchingRef.current) {
+        setIsPlayingAudio(false);
+        isPlayingRef.current = false;
+      }
+      return;
+    }
+
+    isPlayingRef.current = true;
+    setIsPlayingAudio(true);
+
+    const audioBlob = audioQueueRef.current.shift();
+    const audioUrl = URL.createObjectURL(audioBlob);
+
+    try {
+      await new Promise((resolve, reject) => {
+        const audio = new Audio(audioUrl);
+        audio.onended = () => {
+          URL.revokeObjectURL(audioUrl);
+          resolve();
+        };
+        audio.onerror = () => {
+          URL.revokeObjectURL(audioUrl);
+          reject(new Error('Audio playback failed'));
+        };
+        audio.play().catch(reject);
+      });
+    } catch (error) {
+      console.error("Audio playback failed:", error);
+    }
+
+    isPlayingRef.current = false;
+
+    // Play next audio
+    playNextAudio();
+  };
+
+  // Generate and play audio chunks
+  const generateAndPlayAudio = async (text) => {
+    if (!text || !ttsReady) {
+      console.log('TTS not ready, skipping audio generation');
+      return;
+    }
+
+    const normalized = normalizeText(text);
+    const chunks = splitIntoChunks(normalized, 150);
+    
+    console.log('Audio chunks:', chunks);
+    
+    // Add chunks to pending list
+    pendingChunksRef.current.push(...chunks);
+    
+    // Start processing chunks (will fetch multiple in parallel while playing)
+    processNextChunk();
+    processNextChunk(); // Start 2 fetches immediately for better pipeline
+  };
+
   useEffect(() => {
     fetch('https://api.ipify.org?format=json')
       .then(response => response.json())
       .then(data => {
-        const ipFormatted = data.ip.replace(/\./g, '-'); // Format IP to avoid display issues
-        // Try to get device info
+        const ipFormatted = data.ip.replace(/\./g, '-');
         const userAgent = navigator.userAgent;
         let device = 'Unknown';
         if (userAgent.includes('Mobile')) {
@@ -44,26 +176,24 @@ export default function Pop() {
         } else if (userAgent.includes('Linux')) {
           device = 'Linux';
         }
-        setApiUsername(`${device}-${ipFormatted}`); // e.g., Mobile-192-168-1-1
+        setApiUsername(`${device}-${ipFormatted}`);
         console.log('Dynamic API username set to:', `${device}-${ipFormatted}`);
       })
       .catch(error => {
         console.error('Failed to fetch IP:', error);
-        // Fallback to device info only
         const userAgent = navigator.userAgent;
         const device = userAgent.includes('Mobile') ? 'Mobile' : userAgent.includes('Windows') ? 'Windows' : 'Unknown Device';
         setApiUsername(device);
       });
   }, []);
 
-  // Setup SpeechRecognition
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.continuous = false;
       recognitionRef.current.interimResults = true;
-      recognitionRef.current.lang = 'en-US'; // English only
+      recognitionRef.current.lang = 'en-US';
 
       recognitionRef.current.onstart = () => {
         setIsListening(true);
@@ -93,7 +223,6 @@ export default function Pop() {
     }
   }, []);
 
-  // Keep cursor at the end of input when speech is active
   useEffect(() => {
     if (speechActive && inputRef.current) {
       const input = inputRef.current;
@@ -113,7 +242,6 @@ export default function Pop() {
     }
   };
 
-  // Handle Ctrl key for mic activation
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !isSending && !isStreaming) {
       handleSend();
@@ -141,7 +269,6 @@ export default function Pop() {
         const currentText = fullText.slice(0, index + 1);
         setStreamingText(currentText);
         index++;
-        // Scroll to bottom during streaming
         if (historyRef.current) {
           historyRef.current.scrollTop = historyRef.current.scrollHeight;
         }
@@ -149,23 +276,20 @@ export default function Pop() {
         clearInterval(interval);
         setIsStreaming(false);
         setStreamingText('');
-        // Update convo with full text
         setConvo(prev => {
           const newConvo = [...prev];
           newConvo[newConvo.length - 1] = { role: 'assistant', content: fullText };
           return newConvo;
         });
-        // Scroll to bottom after finish
         if (historyRef.current) {
           historyRef.current.scrollTop = historyRef.current.scrollHeight;
         }
       }
-    }, 20); // Adjust speed for beauty (20ms per char)
+    }, 20);
 
     streamingIntervalRef.current = interval;
   };
 
-  // Function to get response from Gemini as RAG fallback, now with conversation history
   const getGeminiResponse = async (history) => {
     if (!GEMINI_API_KEY) {
       throw new Error('Gemini API key not configured');
@@ -184,9 +308,8 @@ export default function Pop() {
       }))
     ];
 
-    // Optional: Limit context length to prevent token overflow (e.g., keep last 10 exchanges + system)
     if (contents.length > 21) {
-      contents.splice(1, contents.length - 21); // Keep system + last 20 (10 pairs)
+      contents.splice(1, contents.length - 21);
     }
 
     const response = await fetch(
@@ -210,55 +333,6 @@ export default function Pop() {
     return responseText;
   };
 
-  // New function to call TTS API and play audio (skip if not ready)
-  const generateAndPlayAudio = async (text) => {
-    if (!text || !ttsReady) {
-      console.log('TTS not ready, skipping audio generation');
-      return;
-    }
-
-    try {
-      setIsPlayingAudio(true);
-      const ttsResponse = await fetch("https://thienphuc1052004--xtts-api-xttsapi-tts-generate.modal.run", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, language: "en" }), // Set language to "en"; can be dynamic
-      });
-
-      if (!ttsResponse.ok) {
-        throw new Error(`TTS Error: ${ttsResponse.status}`);
-      }
-
-      // Get WAV as blob
-      const audioBlob = await ttsResponse.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-
-      // Create and play Audio
-      if (audioRef.current) {
-        audioRef.current.pause(); // Stop any previous audio
-      }
-      audioRef.current = new Audio(audioUrl);
-      audioRef.current.play().catch((error) => {
-        console.error("Audio play failed:", error);
-        setIsPlayingAudio(false);
-      });
-
-      // Cleanup URL when done
-      audioRef.current.onended = () => {
-        URL.revokeObjectURL(audioUrl);
-        setIsPlayingAudio(false);
-      };
-
-      audioRef.current.onerror = () => {
-        URL.revokeObjectURL(audioUrl);
-        setIsPlayingAudio(false);
-      };
-    } catch (error) {
-      console.error("TTS generation failed:", error);
-      setIsPlayingAudio(false);
-    }
-  };
-
   const handleSend = async () => {
     if (!inputValue.trim() || isSending) return;
 
@@ -269,18 +343,15 @@ export default function Pop() {
     const updatedConvoWithUser = [...convo, userMsgObj];
     setConvo(updatedConvoWithUser);
 
-    // Show history on first prompt (now with initial message, it will show immediately)
-    if (updatedConvoWithUser.length === 2) { // Initial + first user
+    if (updatedConvoWithUser.length === 2) {
       setShowHistory(true);
     }
 
-    // Add placeholder for assistant
     setConvo(prev => [...prev, { role: 'assistant', content: '' }]);
 
     try {
       let botReply;
       if (ragReady) {
-        // Use RAG backend with dynamic API username
         const response = await fetch("https://rag-backend-zh2e.onrender.com/rag", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -294,16 +365,15 @@ export default function Pop() {
         const data = await response.json();
         botReply = data.response || "No response from backend";
       } else {
-        // Fallback to Gemini with history
         console.log('RAG not ready, using Gemini fallback');
         botReply = await getGeminiResponse(updatedConvoWithUser);
       }
 
-      // Start streaming text immediately
+      // Stream original response (no normalization)
       streamResponse(botReply);
 
-      // Call TTS API after response (async, so streams alongside) - Skip for initial message
-      if (userMessage.trim()) { // Only for user messages, not initial
+      // Generate audio with normalized chunks
+      if (userMessage.trim()) {
         generateAndPlayAudio(botReply);
       }
     } catch (error) {
@@ -325,25 +395,22 @@ export default function Pop() {
     setInputValue(e.target.value);
   };
 
-  // Cleanup intervals and audio on unmount or toggle
   useEffect(() => {
     return () => {
       if (streamingIntervalRef.current) {
         clearInterval(streamingIntervalRef.current);
       }
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
+      audioQueueRef.current = [];
+      pendingChunksRef.current = [];
+      isPlayingRef.current = false;
+      isFetchingRef.current = false;
       if (recognitionRef.current && isListening) {
         recognitionRef.current.stop();
       }
     };
   }, []);
 
-  // Smart warm-up for RAG and TTS on mount
   useEffect(() => {
-    // RAG: Poll every 1s until OK 200
     const RAG_STATUS_URL = "https://rag-backend-zh2e.onrender.com/status";
     let ragInterval = setInterval(async () => {
       try {
@@ -355,11 +422,9 @@ export default function Pop() {
         }
       } catch (error) {
         console.log('RAG warm-up ping failed, retrying...');
-        // Continue polling on error (e.g., failed to fetch during cold start)
       }
     }, 1000);
 
-    // Initial check
     (async () => {
       try {
         const initialResponse = await fetch(RAG_STATUS_URL, { method: 'GET' });
@@ -370,12 +435,10 @@ export default function Pop() {
       } catch {}
     })();
 
-    // Cleanup interval on unmount
     return () => clearInterval(ragInterval);
 
   }, []);
 
-  // TTS: Retry on timeout until OK 200
   useEffect(() => {
     const TTS_PING_URL = "https://thienphuc1052004--xtts-api-xttsapi-tts-generate.modal.run/ping";
     let retryCount = 0;
@@ -388,7 +451,7 @@ export default function Pop() {
       }
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       try {
         await fetch(TTS_PING_URL, {
@@ -397,7 +460,6 @@ export default function Pop() {
         });
         clearTimeout(timeoutId);
         
-        // Any response (even errors) means server is up
         setTtsReady(true);
         console.log('TTS server responded');
         return;
@@ -407,30 +469,26 @@ export default function Pop() {
         if (error.name === 'AbortError') {
           console.log('TTS ping timed out, retrying...');
           retryCount++;
-          // Only retry on timeout
           setTimeout(checkTts, 5000);
         } else {
-          // For other errors (network, etc), consider TTS ready
           console.log('TTS error but marking as ready:', error);
           setTtsReady(true);
         }
       }
     };
 
-    // Initial check
     checkTts();
   }, []);
 
-  // Cleanup khi toggle chat
   const handleToggleChat = () => {
     if (streamingIntervalRef.current) {
       clearInterval(streamingIntervalRef.current);
       streamingIntervalRef.current = null;
     }
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
+    audioQueueRef.current = [];
+    pendingChunksRef.current = [];
+    isPlayingRef.current = false;
+    isFetchingRef.current = false;
     if (recognitionRef.current && isListening) {
       recognitionRef.current.stop();
     }
@@ -444,14 +502,12 @@ export default function Pop() {
     setSpeechActive(false);
   };
 
-  // Auto-focus input sau khi reset states
   useEffect(() => {
     if (!isSending && !isStreaming && inputRef.current) {
       inputRef.current.focus();
     }
   }, [isSending, isStreaming]);
 
-  // Scroll to bottom when convo changes
   useEffect(() => {
     if (historyRef.current) {
       historyRef.current.scrollTop = historyRef.current.scrollHeight;
@@ -480,9 +536,9 @@ export default function Pop() {
                   </div>
                 ) : (
                   convo.map((msg, index) => {
-                    if (msg.content === '' && index !== convo.length - 1) return null; // Skip old empty placeholders if any
+                    if (msg.content === '' && index !== convo.length - 1) return null;
                     const displayContent = (index === convo.length - 1 && isStreaming) ? streamingText : msg.content;
-                    if (displayContent === '') return null; // Skip current empty if not streaming
+                    if (displayContent === '') return null;
                     return (
                       <div key={index} className="mb-4 cursor-default text-justify px-1">
                         <div className="font-bold mb-1 text-[var(--colorone)] inline">
@@ -491,7 +547,7 @@ export default function Pop() {
                         <div className="text-[var(--colorone)] inline break-words whitespace-pre-line">
                           {displayContent}
                           {index === convo.length - 1 && isStreaming && (
-                            <span className="animate-pulse">|</span> // Typing indicator
+                            <span className="animate-pulse">|</span>
                           )}
                         </div>
                         <br />
@@ -500,11 +556,8 @@ export default function Pop() {
                   })
                 )}
               </div>
-              {/* Status Bottombar */}
               <div className="sticky bottom-0 left-0 w-full bg-white pt-3 z-50">
-                {/* Right: Status icons */}
                 <div className="flex items-center justify-end space-x-4">
-                  {/* RAG Icon */}
                   <div className="flex items-center">
                     {ragReady ? (
                       <MagnifyingGlassIcon className="w-5 h-5 text-[var(--colorone)]" />
@@ -512,7 +565,6 @@ export default function Pop() {
                       <ArrowPathIcon className="w-5 h-5 text-gray-400 animate-spin" />
                     )}
                   </div>
-                  {/* TTS Icon */}
                   <div className="flex items-center">
                     {ttsReady ? (
                       <SpeakerWaveIcon className={`w-5 h-5 text-[var(--colorone)] rounded-full bg-white ${isPlayingAudio ? 'animate-pulse' : ''}`} />
