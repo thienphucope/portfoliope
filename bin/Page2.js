@@ -449,7 +449,7 @@ export default function Page2() {
     <>
       <style jsx>{`
         #page2 {
-          font-family: 'Times New Roman', Times, serif;
+          font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
         }
 
         .markdown-content :global(h1) {
