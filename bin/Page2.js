@@ -666,7 +666,7 @@ export default function Page2() {
                 <h2 className="text-9xl text-[var(--colorthree)] bg-[var(--colorone)] font-bold">+</h2>
               </div>
               <div className="flex-1 p-6 flex flex-col justify-center items-center">
-                <h3 className="text-5xl text-[var(--colorthree)] font-bold mb-2">ADD NEW CASE</h3>
+                <h3 className="text-4xl text-[var(--colorthree)] font-bold mb-2">ADD NEW CASE</h3>
               </div>
             </div>
           </div>
