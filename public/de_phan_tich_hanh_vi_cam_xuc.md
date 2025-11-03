@@ -1,230 +1,268 @@
 ---
 id: 2
-title: Đề phân tích hành vi cảm xúc
-description: Cho trai đang có bồ...không phải Ope haha
+title: Emotional Behavior Analysis Test
+description: For guys who already have girlfriends... not Ope but I still do :D
 image: /duck.gif
 fullImage: /bookstore.jpg
+
 ---
 
-#### Họ, tên thí sinh: Ope Watson 1
-#### Số báo danh: 100504
+#### Candidate’s Name: Ope Watson 1
 
-## Đọc kỹ và chọn phản ứng phù hợp:
+#### Exam Number: 100504
 
-**Câu 1: Cô ấy nói: "Dạo này anh cứ bận rộn suốt, hình như anh không còn quan tâm em như trước nữa."**
+## Read carefully and choose the most suitable reaction:
 
-a. "Anh xin lỗi, công việc dạo này hơi căng thẳng, nhưng anh vẫn luôn nhớ về em."
+**Question 1:** She says, “You’ve been so busy lately. It feels like you don’t care about me like you used to.”
 
-b. "Em lại nghĩ linh tinh rồi, anh bận kiếm tiền lo cho tương lai hai đứa mà."
+a. “I’m sorry, work has been stressful lately, but I still think about you all the time.”
 
-c. "Vậy em muốn anh nghỉ việc ở nhà nói chuyện với em cả ngày à?"
+b. “You’re overthinking again. I’m busy earning money for our future.”
 
-**Trả lời (Chọn a/b/c và giải thích ngắn gọn):**
+c. “So you want me to quit my job and just talk to you all day?”
 
-[Không gian trống để viết trả lời]
+**Answer (Choose a/b/c and explain briefly):**
 
-### Câu 2: Cô ấy đăng một bức ảnh "tự sướng" kèm caption: "Chán quá không ai rủ đi chơi."
+[Space to write answer]
 
-a. "Anh đang rảnh đây, muốn đi đâu không?"
+---
 
-b. "Làm gì có chuyện đó, bao nhiêu người muốn đi chơi với em kia."
+### Question 2: She posts a selfie with the caption, “So bored, no one asks me out anymore.”
 
-c. "Gì mà chán, rủ bạn bè đi chơi đi em."
+a. “I’m free right now. Want to go somewhere?”
 
-**Trả lời (Chọn a/b/c và giải thích ngắn gọn):**
+b. “That’s not true, tons of people would love to hang out with you.”
 
-[Không gian trống để viết trả lời]
+c. “Come on, don’t be bored. Ask your friends out.”
 
-### Câu 3: Cô ấy nói: "Sao anh cứ để ý mấy cô gái khác trên mạng xã hội hoài vậy?"
+**Answer (Choose a/b/c and explain briefly):**
 
-a. "Anh chỉ xem thôi mà, không có ý gì đâu. Em giận à?"
+[Space to write answer]
 
-b. "Chỉ là bạn bè và đồng nghiệp thôi, em đừng nghĩ nhiều nhé."
+---
 
-c. "Facebook của anh tự đề xuất ấy mà."
+### Question 3: She says, “Why do you keep checking out other girls on social media?”
 
-**Trả lời (Chọn a/b/c và giải thích ngắn gọn):**
+a. “I’m just looking, nothing serious. Are you mad?”
 
-[Không gian trống để viết trả lời]
+b. “They’re just friends or coworkers, don’t overthink it.”
 
-### Câu 4: Cô ấy hỏi: "Nếu anh và em cãi nhau to, anh sẽ làm gì?"
+c. “It’s just Facebook suggesting stuff randomly.”
 
-a. "Anh sẽ im lặng để cả hai cùng bình tĩnh lại, rồi anh sẽ tìm cách xin lỗi em trước."
+**Answer (Choose a/b/c and explain briefly):**
 
-b. "Anh sẽ bỏ đi một lát để tránh làm to chuyện thêm."
+[Space to write answer]
 
-c. "Anh sẽ phân tích xem ai đúng ai sai để giải quyết triệt để."
+---
 
-**Trả lời (Chọn a/b/c và giải thích ngắn gọn):**
+### Question 4: She asks, “If we ever had a big fight, what would you do?”
 
-[Không gian trống để viết trả lời]
+a. “I’d stay quiet until we both calm down, then I’d be the first to apologize.”
 
-### Câu 5: Cô ấy nói: "Anh có thấy người yêu cũ của anh xinh không?"
+b. “I’d leave for a while to avoid making things worse.”
 
-a. "Cô ấy có xinh hay không thì cũng không còn quan trọng với anh nữa."
+c. “I’d figure out who’s right and solve it logically.”
 
-b. "Anh thấy em xinh và thu hút hơn nhiều."
+**Answer (Choose a/b/c and explain briefly):**
 
-c. "Cũng bình thường thôi. Quan trọng là anh đã chọn ở bên em."
+[Space to write answer]
 
-**Trả lời (Chọn a/b/c và giải thích ngắn gọn):**
+---
 
-[Không gian trống để viết trả lời]
+### Question 5: She says, “Do you think your ex was pretty?”
 
-### Câu 6: Cô ấy hỏi: "Điều gì ở em khiến anh yêu nhất?"
+a. “Whether she was or not doesn’t matter anymore.”
 
-a. "Anh yêu tất cả mọi thứ thuộc về em, từ cái tốt đến cái chưa tốt."
+b. “I think you’re way more beautiful and attractive.”
 
-b. "Nhiều lắm, khó mà nói hết được."
+c. “She’s okay. What matters is that I chose to be with you.”
 
-c. "Anh thích nụ cười của em và cả sự thông minh, chu đáo của em nữa."
+**Answer (Choose a/b/c and explain briefly):**
 
-**Trả lời (Chọn a/b/c và giải thích ngắn gọn):**
+[Space to write answer]
 
-[Không gian trống để viết trả lời]
+---
 
-### Câu 7: Cô ấy nói: "Em thấy hình như mình hơi béo lên một chút..."
+### Question 6: She asks, “What’s the thing you love most about me?”
 
-a. "Anh thấy em vẫn rất cân đối và đáng yêu mà."
+a. “I love everything about you — the good and the not-so-good.”
 
-b. "Béo lên thật à? Vậy mình cùng nhau tập thể dục nhé."
+b. “So many things, it’s hard to list them all.”
 
-c. "Đừng lo, anh đâu có để ý chuyện đó."
+c. “I love your smile, and your intelligence and thoughtfulness too.”
 
-**Trả lời (Chọn a/b/c và giải thích ngắn gọn):**
+**Answer (Choose a/b/c and explain briefly):**
 
-[Không gian trống để viết trả lời]
+[Space to write answer]
 
-### Câu 8: Cô ấy hỏi: "Anh có bao giờ cảm thấy chán khi ở bên em không?"
+---
 
-a. "Sao anh có thể chán được? Sao em lại nói thế?"
+### Question 7: She says, “I feel like I’ve gained a bit of weight…”
 
-b. "Nếu chán thì anh đã không ở đây với em rồi."
+a. “You still look perfectly lovely to me.”
 
-c. "Thỉnh thoảng cũng có, nhưng đó là chuyện bình thường mà."
+b. “Really? Then let’s work out together!”
 
-**Trả lời (Chọn a/b/c và giải thích ngắn gọn):**
+c. “Don’t worry, I don’t care about that.”
 
-[Không gian trống để viết trả lời]
+**Answer (Choose a/b/c and explain briefly):**
 
-### Câu 9: Cô ấy nói: "Em nghĩ là mình cần một khoảng thời gian để suy nghĩ lại mối quan hệ này."
+[Space to write answer]
 
-a. "Anh tôn trọng quyết định của em, nhưng anh muốn biết lý do là gì để mình cùng giải quyết."
+---
 
-b. "Em nói gì lạ vậy? Em đang muốn chia tay anh à?"
+### Question 8: She asks, “Do you ever feel bored being with me?”
 
-c. "Nếu em cần không gian, anh sẽ biến mất. Khi nào sẵn sàng thì nói chuyện."
+a. “How could I be bored? Why would you even say that?”
 
-**Trả lời (Chọn a/b/c và giải thích ngắn gọn):**
+b. “If I were bored, I wouldn’t still be here with you.”
 
-[Không gian trống để viết trả lời]
+c. “Sometimes maybe, but that’s normal, isn’t it?”
 
-### Câu 10: Cô ấy nhắn: "Em đi ngủ trước đây, ngủ ngon nhé anh." (Thái độ hơi hờ hững)
+**Answer (Choose a/b/c and explain briefly):**
 
-a. "Em có vẻ mệt/buồn, có chuyện gì à? Kể anh nghe một chút được không?"
+[Space to write answer]
 
-b. "Sao hôm nay em lại ngủ sớm vậy? Có giận anh chuyện gì không?"
+---
 
-c. Gọi điện hỏi thăm, nói chuyện với cô ấy
+### Question 9: She says, “I think I need some time to reconsider our relationship.”
 
-**Trả lời (Chọn a/b/c và giải thích ngắn gọn):**
+a. “I respect that, but I’d like to know why, so we can work on it together.”
 
-[Không gian trống để viết trả lời]
+b. “What are you saying? Are you trying to break up with me?”
 
-## Phân tích tâm lý và chọn phản ứng phù hợp:
+c. “If you need space, I’ll disappear. Talk to me when you’re ready.”
 
-### Câu 11: Cô ấy bơ tin nhắn, không xem không rep, gọi không nghe. Bạn nên làm gì?
+**Answer (Choose a/b/c and explain briefly):**
 
-a. Chờ cô ấy hết giận rồi nói chuyện, nhắn tin tiếp
+[Space to write answer]
 
-b. Hỏi thăm bạn bè của cô ấy.
+---
 
-c. Mua đồ ăn ship cho cô ấy
+### Question 10: She texts, “I’m going to sleep now, good night.” (She sounds distant)
 
-**Trả lời (Chọn a/b/c và phân tích tâm lý):**
+a. “You seem tired or upset — what’s wrong? Want to talk a bit?”
 
-[Không gian trống để viết trả lời]
+b. “Why are you going to bed so early today? Are you mad at me?”
 
-### Câu 12: Khi cô ấy nói với bạn rằng cô ấy đang rất nhiều người theo đuổi, khi 2 người đang trong một mối quan hệ rồi, tức là cô ấy đang:
+c. Call her to check in and talk.
 
-a. Cô ấy đang khoe về chiến tích của mình
+**Answer (Choose a/b/c and explain briefly):**
 
-b. Cô ấy đang trêu bạn, và muốn dò xem phản ứng
+[Space to write answer]
 
-c. Cô ấy đang chia sẻ rằng ngoài bạn ra, cô ấy cũng nhiều sự lựa chọn khác
+---
 
-**Trả lời (Chọn a/b/c và phân tích tâm lý):**
+## Psychological Analysis – Choose the Most Insightful Reaction:
 
-[Không gian trống để viết trả lời]
+### Question 11: She ignores your texts and calls. What should you do?
 
-### Câu 13: Khi cô ấy tức về một ai đó và kể với bạn, bạn nên:
+a. Wait until she calms down, then reach out again.
 
-a. Phân tích đúng sai cho cô ấy hiểu rõ hơn
+b. Ask her friends about what’s going on.
 
-b. Kêu cô ấy kể lại đầu đuôi sự việc, và đưa ra ý kiến của bản thân
+c. Send her food delivery to cheer her up.
 
-c. Chửi người làm cô ấy tức cùng với cô ấy
+**Answer (Choose a/b/c and explain psychologically):**
 
-**Trả lời (Chọn a/b/c và phân tích tâm lý):**
+[Space to write answer]
 
-[Không gian trống để viết trả lời]
+---
 
-### Câu 14: Khi cô ấy nói "Anh có yêu em không?" bằng giọng nũng nịu tức là cô ấy muốn nói điều gì?
+### Question 12: She tells you that many guys are chasing her even though you’re already dating. What does that mean?
 
-a. Cô ấy đang hỏi dò xem bạn có còn yêu cô ấy hay không?
+a. She’s bragging about her “achievements.”
 
-b. Cô ấy đang đòi một món quà nào đó
+b. She’s teasing you to see your reaction.
 
-c. Cô ấy chỉ muốn bạn trả lời là có “để xác định rằng bạn vẫn yêu cô ấy
+c. She’s reminding you that she has other options too.
 
-**Trả lời (Chọn a/b/c và phân tích tâm lý):**
+**Answer (Choose a/b/c and explain psychologically):**
 
-[Không gian trống để viết trả lời]
+[Space to write answer]
 
-### Câu 15: Khi cô ấy nói: "Anh có còn yêu em không?" tức là sao?
+---
 
-a. Cô ấy thấy bạn giận và dỗi cô ấy, nên cô ấy hỏi để xác định rằng bạn giận cô ấy đến mức nào
+### Question 13: She’s angry about someone and tells you the story. What should you do?
 
-b. Cô ấy hỏi dò để xem phản ứng của bạn
+a. Analyze who’s right or wrong for her to understand better.
 
-c. Bạn làm cô ấy tổn thương và cô ấy hỏi câu này để xác định rằng bạn có còn tình cảm với cô ấy hay không
+b. Ask her to tell the whole story first, then share your thoughts.
 
-**Trả lời (Chọn a/b/c và phân tích tâm lý):**
+c. Swear at the person who upset her — side with her.
 
-[Không gian trống để viết trả lời]
+**Answer (Choose a/b/c and explain psychologically):**
 
-### Câu 16: Khi cô ấy và bạn cãi nhau, thứ mà cô ấy để ý nhất đó chính là:
+[Space to write answer]
 
-a. Ai là người đúng, ai là người sai và đưa ra phương án giải quyết vấn đề
+---
 
-b. Để ý xem bạn tỏ ra thái độ như nào với cô ấy, bạn có dỗ dành cô ấy không <dù em là người sai>
+### Question 14: When she coyly asks, “Do you love me?” — what does she really mean?
 
-c. Cãi nhau to có đến mức chia tay hay không?
+a. She’s testing if you still love her.
 
-**Trả lời (Chọn a/b/c và phân tích tâm lý):**
+b. She’s hinting that she wants a gift.
 
-[Không gian trống để viết trả lời]
+c. She just wants to hear you say “yes,” to feel reassured you still love her.
 
-### Câu 17: Khi cô ấy chủ động nói chia tay với một thái độ giận dữ sau khi 2 bạn vừa cãi nhau xong, thì điều đó là:
+**Answer (Choose a/b/c and explain psychologically):**
 
-a. Cô ấy mệt mỏi và muốn chấm dứt với bạn rồi không muốn tiếp tục nữa
+[Space to write answer]
 
-b. Cô ấy đang rất tức giận và muốn im lặng một thời gian, không muốn gặp nhau nữa
+---
 
-c. Cô ấy vẫn còn yêu bạn, chỉ muốn bạn dỗ dành, thể hiện rằng bạn vẫn yêu cô ấy thật nhiều
+### Question 15: When she seriously asks, “Do you still love me?” — what does that mean?
 
-**Trả lời (Chọn a/b/c và phân tích tâm lý):**
+a. She feels hurt or ignored and wants to know how angry you are with her.
 
-[Không gian trống để viết trả lời]
+b. She’s testing your reaction.
 
-### Câu 18: Cô ấy im lặng trong nhiều ngày, và nhắn tin rằng tụi mình dừng lại nhé tức là cô ấy muốn:
+c. You’ve done something that hurt her, and she’s asking to see if you still have feelings for her.
 
-a. Dừng lại một khoảng thời gian để có thể, suy nghĩ thêm về mỗi quan hệ
+**Answer (Choose a/b/c and explain psychologically):**
 
-b. Cô ấy tuyệt vọng, nhưng vẫn hy vọng ở phía bạn
+[Space to write answer]
 
-c. Cô ấy hoàn toàn muốn cắt đứt tình cảm giữa hai người
+---
 
-**Trả lời (Chọn a/b/c và phân tích tâm lý):**
+### Question 16: When you argue, what does she care about the most?
 
-[Không gian trống để viết trả lời]
+a. Who’s right or wrong, and how to solve the problem.
+
+b. Whether you comfort and make up with her — even if she was the one at fault.
+
+c. Whether the fight is serious enough to lead to a breakup.
+
+**Answer (Choose a/b/c and explain psychologically):**
+
+[Space to write answer]
+
+---
+
+### Question 17: She angrily says “Let’s break up!” right after a fight. What does that mean?
+
+a. She’s truly exhausted and wants to end things for good.
+
+b. She’s very angry and wants space, not contact for a while.
+
+c. She still loves you — she just wants you to comfort her and show you still care deeply.
+
+**Answer (Choose a/b/c and explain psychologically):**
+
+[Space to write answer]
+
+---
+
+### Question 18: She stays silent for several days, then texts, “Let’s stop here.” What does she mean?
+
+a. She wants a break to think things through.
+
+b. She’s losing hope but still secretly wishes you’d do something.
+
+c. She truly wants to end the relationship completely.
+
+**Answer (Choose a/b/c and explain psychologically):**
+
+[Space to write answer]
+
+---
