@@ -1,14 +1,82 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { marked } from 'marked';
 import yaml from 'js-yaml';
 
 export default function Page2() {
+  const owner = 'thienphucope';
+  const repo = 'portfoliope';
+  const branch = 'main';
   const [images, setImages] = useState([]);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [contentHTML, setContentHTML] = useState('');
+  const [editMode, setEditMode] = useState(false);
+  const [rawContent, setRawContent] = useState('');
+  const [token, setToken] = useState(process.env.NEXT_PUBLIC_GITHUB_TOKEN || '');
+  const [currentFrontmatter, setCurrentFrontmatter] = useState({});
+  const [pendingImages, setPendingImages] = useState({ thumbnail: null, full: null });
+  const [imagePreviews, setImagePreviews] = useState({ thumbnail: null, full: null });
+  const thumbRef = useRef(null);
+  const fullRef = useRef(null);
+
+  const parseFrontmatterAndContent = (text) => {
+    const frontmatterMatch = text.match(/---\s*\n([\s\S]*?)\n---/);
+    if (!frontmatterMatch) {
+      throw new Error('No valid frontmatter found');
+    }
+    const frontmatter = yaml.load(frontmatterMatch[1]);
+    const endOfFrontmatter = frontmatterMatch[0].length;
+    const content = text.slice(endOfFrontmatter).trim();
+    return { frontmatter, content };
+  };
+
+  const updateFrontmatterField = (field, value) => {
+    try {
+      const { frontmatter, content } = parseFrontmatterAndContent(rawContent);
+      frontmatter[field] = value;
+      const newFrontmatterStr = yaml.dump(frontmatter);
+      const newRawContent = `---\n${newFrontmatterStr}\n---\n\n${content}`;
+      setRawContent(newRawContent);
+      setCurrentFrontmatter(frontmatter);
+    } catch (e) {
+      console.error('Error updating frontmatter:', e);
+    }
+  };
+
+  const normalizeTitle = (title) => {
+    if (!title) return '';
+    return title
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // remove diacritics
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '') // remove non-alnum except space
+      .trim()
+      .replace(/\s+/g, '_'); // multiple spaces to single _
+  };
 
   useEffect(() => {
-    const owner = 'thienphucope';
-    const repo = 'portfoliope';
+    if (selectedItem && !editMode) {
+      setCurrentFrontmatter({
+        title: selectedItem.title || '',
+        description: selectedItem.description || '',
+        image: selectedItem.image || '/default-image.gif',
+        fullImage: selectedItem.fullImage || '/default-full.jpg',
+        id: selectedItem.id
+      });
+    } else if (editMode && rawContent) {
+      try {
+        const { frontmatter } = parseFrontmatterAndContent(rawContent);
+        setCurrentFrontmatter(frontmatter || {});
+      } catch (e) {
+        console.error('YAML parse error:', e);
+        setCurrentFrontmatter({});
+      }
+    } else {
+      setCurrentFrontmatter({});
+    }
+  }, [selectedItem, editMode, rawContent]);
+
+  useEffect(() => {
     fetch(`https://api.github.com/repos/${owner}/${repo}/contents/public`)
       .then(response => response.json())
       .then(files => {
@@ -19,8 +87,6 @@ export default function Page2() {
             .then(text => {
               const frontmatterMatch = text.match(/---\s*\n([\s\S]*?)\n---/);
               const frontmatter = frontmatterMatch ? yaml.load(frontmatterMatch[1]) : {};
-              const contentStart = frontmatterMatch ? text.indexOf('---', frontmatterMatch[0].length) + 3 : 0;
-              const content = text.slice(contentStart).trim();
               return {
                 id: frontmatter.id || Math.random().toString(36).substr(2, 9), // Fallback ID
                 title: frontmatter.title || file.name.replace('.md', '').replace(/-/g, ' ').toUpperCase(),
@@ -39,12 +105,6 @@ export default function Page2() {
       .catch(error => console.error('Error loading cases:', error));
   }, []);
 
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [contentHTML, setContentHTML] = useState('');
-  const [editMode, setEditMode] = useState(false);
-  const [rawContent, setRawContent] = useState('');
-  const [token, setToken] = useState(process.env.NEXT_PUBLIC_GITHUB_TOKEN || '');
-
   // Configure marked to mimic GitHub's GFM rendering (better headers, newlines, tables, etc.)
   useEffect(() => {
     marked.setOptions({
@@ -61,7 +121,7 @@ export default function Page2() {
 
   // Fetch Markdown content when selectedItem changes
   useEffect(() => {
-    if (selectedItem && selectedItem.content) {
+    if (selectedItem && selectedItem.content && !selectedItem.isNew) {
       fetch(selectedItem.content)
         .then(response => {
           if (!response.ok) {
@@ -73,29 +133,34 @@ export default function Page2() {
           setRawContent(fullMdText); // Full text for editing (includes frontmatter)
 
           // Strip frontmatter for rendering
-          const frontmatterMatch = fullMdText.match(/---\s*\n([\s\S]*?)\n---/);
-          let contentToRender = fullMdText;
-          if (frontmatterMatch) {
-            const endOfFrontmatter = frontmatterMatch[0].length;
-            contentToRender = fullMdText.slice(endOfFrontmatter).trim();
+          try {
+            const { content } = parseFrontmatterAndContent(fullMdText);
+            setContentHTML(marked(content));
+          } catch (e) {
+            console.error('Error parsing for render:', e);
+            setContentHTML(marked(fullMdText));
           }
-          setContentHTML(marked(contentToRender));
         })
         .catch(error => {
           console.error('Error loading Markdown content:', error);
           setContentHTML('<p>Error loading content.</p>');
           setRawContent('# Error loading content');
         });
+    } else if (selectedItem?.isNew) {
+      setRawContent(`---\ntitle: \ndescription: \nimage: /default-image.gif\nfullImage: /default-full.jpg\n---\n\n`);
+      setContentHTML('');
     } else {
       setContentHTML('');
       setRawContent('');
     }
+    setPendingImages({ thumbnail: null, full: null });
+    setImagePreviews({ thumbnail: null, full: null });
   }, [selectedItem]);
 
   useEffect(() => {
     if (selectedItem) {
       document.body.style.overflow = 'hidden';
-      setEditMode(false);
+      if (selectedItem.isNew) setEditMode(true);
     } else {
       document.body.style.overflow = 'auto';
     }
@@ -109,6 +174,21 @@ export default function Page2() {
     setSelectedItem(item);
   };
 
+  const handleAddNew = () => {
+    const newId = 'new-' + Date.now();
+    setSelectedItem({
+      id: newId,
+      title: '',
+      description: '',
+      image: '/default-image.gif',
+      fullImage: '/default-full.jpg',
+      content: '',
+      path: '',
+      rawUrl: '',
+      isNew: true
+    });
+  };
+
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
       setSelectedItem(null);
@@ -118,6 +198,67 @@ export default function Page2() {
 
   const handleEditToggle = () => {
     setEditMode(!editMode);
+  };
+
+  const handleThumbUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const timestamp = Date.now();
+    const nameWithoutExt = file.name.split('.').slice(0, -1).join('.');
+    const ext = file.name.split('.').pop();
+    const imgName = `${nameWithoutExt}-${timestamp}.${ext}`;
+    const previewUrl = URL.createObjectURL(file);
+    setPendingImages(prev => ({ ...prev, thumbnail: file }));
+    setImagePreviews(prev => ({ ...prev, thumbnail: previewUrl }));
+    updateFrontmatterField('image', `/${imgName}`);
+  };
+
+  const handleFullUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const timestamp = Date.now();
+    const nameWithoutExt = file.name.split('.').slice(0, -1).join('.');
+    const ext = file.name.split('.').pop();
+    const imgName = `${nameWithoutExt}-${timestamp}.${ext}`;
+    const previewUrl = URL.createObjectURL(file);
+    setPendingImages(prev => ({ ...prev, full: file }));
+    setImagePreviews(prev => ({ ...prev, full: previewUrl }));
+    updateFrontmatterField('fullImage', `/${imgName}`);
+  };
+
+  const uploadImage = async (file, imgName, currentToken) => {
+    const arrayBuffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
+    let binary = '';
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    const base64 = btoa(binary);
+    const imgPath = `public/${imgName}`;
+
+    const putResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${imgPath}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${currentToken}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: `Upload image ${imgName}`,
+        content: base64,
+        branch
+      }),
+    });
+
+    if (!putResponse.ok) {
+      const errorData = await putResponse.json().catch(() => ({}));
+      throw new Error(`Failed to upload image: ${errorData.message || 'Unknown error'}`);
+    }
+
+    return `/${imgName}`;
   };
 
   const handleSave = async () => {
@@ -151,14 +292,78 @@ export default function Page2() {
       return;
     }
 
-    const mdContent = rawContent;
-
-    const filePath = `public/${selectedItem.path}`; // e.g., 'public/the-fuckboy-allure.md'
-    const owner = 'thienphucope';
-    const repo = 'portfoliope';
-
+    let parsedFrontmatter;
+    let content;
     try {
-      // Get current file to fetch SHA
+      const parseResult = parseFrontmatterAndContent(rawContent);
+      parsedFrontmatter = parseResult.frontmatter;
+      content = parseResult.content;
+    } catch (parseErr) {
+      alert('Invalid YAML frontmatter. Please check formatting (e.g., add space after colons like "key: value"). Error: ' + parseErr.message);
+      return;
+    }
+
+    const isNewItem = selectedItem.isNew;
+
+    if (isNewItem && !parsedFrontmatter.title?.trim()) {
+      alert('Title is required for new item.');
+      return;
+    }
+
+    if (isNewItem && !parsedFrontmatter.id) {
+      parsedFrontmatter.id = Math.random().toString(36).substr(2, 9);
+    }
+
+    // Upload pending images if any
+    try {
+      if (pendingImages.thumbnail) {
+        const imgName = parsedFrontmatter.image.slice(1);
+        await uploadImage(pendingImages.thumbnail, imgName, currentToken);
+      }
+      if (pendingImages.full) {
+        const imgName = parsedFrontmatter.fullImage.slice(1);
+        await uploadImage(pendingImages.full, imgName, currentToken);
+      }
+    } catch (uploadErr) {
+      alert('Error uploading images: ' + uploadErr.message);
+      return;
+    }
+
+    const fullFrontmatterStr = yaml.dump(parsedFrontmatter);
+    const mdContent = `---\n${fullFrontmatterStr}\n---\n\n${content}`;
+
+    let filePath;
+    let sha;
+    const slug = isNewItem 
+      ? normalizeTitle(parsedFrontmatter.title.trim())
+      : selectedItem.path;
+
+    if (!slug && isNewItem) {
+      alert('Invalid title for filename.');
+      return;
+    }
+
+    filePath = `public/${isNewItem ? `${slug}.md` : selectedItem.path}`;
+
+    if (isNewItem) {
+      // Check if exists
+      try {
+        const checkResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
+          headers: {
+            'Authorization': `token ${currentToken}`,
+            'Accept': 'application/vnd.github.v3+json',
+          },
+        });
+        if (checkResponse.ok) {
+          alert('A file with this title already exists. Please choose a different title.');
+          return;
+        }
+      } catch (err) {
+        if (!err.message.includes('404')) {
+          console.error(err);
+        }
+      }
+    } else {
       const getResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
         headers: {
           'Authorization': `token ${currentToken}`,
@@ -173,46 +378,71 @@ export default function Page2() {
       }
 
       const fileData = await getResponse.json();
-      const sha = fileData.sha;
+      sha = fileData.sha;
+    }
 
-      // Encode new content as base64
-      const base64Content = btoa(unescape(encodeURIComponent(mdContent)));
+    const base64Content = btoa(unescape(encodeURIComponent(mdContent)));
 
-      // Update file
-      const updateResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `token ${currentToken}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: 'Update case content via app',
-          content: base64Content,
-          sha: sha,
-        }),
-      });
+    const putBody = {
+      message: isNewItem ? 'Create new case via app' : 'Update case content via app',
+      content: base64Content,
+      ...(isNewItem ? { branch } : { sha }),
+    };
 
-      if (updateResponse.ok) {
-        alert('Saved successfully! Check repo for changes.');
-        setEditMode(false);
-        setContentHTML(marked(mdContent)); // Update view
+    const updateResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${currentToken}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(putBody),
+    });
+
+    if (updateResponse.ok) {
+      alert('Saved successfully! Check repo for changes.');
+      const updatedItem = {
+        ...selectedItem,
+        title: parsedFrontmatter.title,
+        description: parsedFrontmatter.description,
+        image: parsedFrontmatter.image,
+        fullImage: parsedFrontmatter.fullImage,
+        id: parsedFrontmatter.id,
+        isNew: undefined
+      };
+      if (isNewItem) {
+        const newRawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${filePath}`;
+        const newItem = { ...updatedItem, path: `${slug}.md`, content: newRawUrl, rawUrl: newRawUrl };
+        setImages(prev => [...prev, newItem]);
+        setSelectedItem(newItem);
       } else {
-        const errorData = await updateResponse.json().catch(() => ({})); // Fallback if not JSON
-        console.error('Update error details:', errorData);
-        if (updateResponse.status === 403) {
-          throw new Error(`403 Forbidden: Token lacks 'Contents: Write' permission for this repo. Regenerate fine-grained token with Write access to ${owner}/${repo}. Docs: ${errorData.documentation_url}`);
-        }
-        throw new Error(`Failed to save: ${updateResponse.status} - ${errorData.message || 'Unknown error'}`);
+        setSelectedItem(updatedItem);
       }
-    } catch (error) {
-      console.error(error);
-      alert('Error saving: ' + error.message);
+      setEditMode(false);
+      setContentHTML(marked(content));
+      // Cleanup previews
+      Object.values(imagePreviews).forEach(url => URL.revokeObjectURL(url));
+      setPendingImages({ thumbnail: null, full: null });
+      setImagePreviews({ thumbnail: null, full: null });
+    } else {
+      const errorData = await updateResponse.json().catch(() => ({})); // Fallback if not JSON
+      console.error('Update error details:', errorData);
+      if (updateResponse.status === 403) {
+        throw new Error(`403 Forbidden: Token lacks 'Contents: Write' permission for this repo. Regenerate fine-grained token with Write access to ${owner}/${repo}. Docs: ${errorData.documentation_url}`);
+      }
+      throw new Error(`Failed to save: ${updateResponse.status} - ${errorData.message || 'Unknown error'}`);
     }
   };
 
   const handleCancel = () => {
     setEditMode(false);
+    if (selectedItem?.isNew) {
+      setSelectedItem(null);
+    }
+    // Cleanup previews
+    Object.values(imagePreviews).forEach(url => URL.revokeObjectURL(url));
+    setPendingImages({ thumbnail: null, full: null });
+    setImagePreviews({ thumbnail: null, full: null });
   };
 
   return (
@@ -389,6 +619,17 @@ export default function Page2() {
         .cancel-btn:hover {
           background: darkred;
         }
+
+        .clickable-img {
+          cursor: pointer;
+          opacity: 0.8;
+        }
+
+        .clickable-img:hover {
+          opacity: 1;
+          transform: scale(1.05);
+          transition: transform 0.2s;
+        }
       `}</style>
 
       <section id="page2" className="w-full min-h-screen bg-[var(--background)] snap-start font-serif box-border relative z-10 flex justify-center items-center p-4">
@@ -417,10 +658,40 @@ export default function Page2() {
                 </div>
               </div>
             ))}
-          
+            <div
+              className="bg-[var(--colorone)] rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] overflow-hidden flex cursor-pointer transition-all duration-300 border-16 border-[var(--colorthree)]"
+              onClick={handleAddNew}
+            >
+              <div className="w-1/3 aspect-square flex-shrink-0 flex items-center justify-center bg-[var(--colorone)]">
+                <h2 className="text-9xl text-[var(--colorthree)] bg-[var(--colorone)] font-bold">+</h2>
+              </div>
+              <div className="flex-1 p-6 flex flex-col justify-center items-center">
+                <h3 className="text-5xl text-[var(--colorthree)] font-bold mb-2">ADD NEW CASE</h3>
+              </div>
+            </div>
           </div>
           <h1 className="text-[var(--colorthree)] pt-15 text-8xl font-bold mb-8 w-full text-center">🙢 IN PROGRESS 🙠</h1>
         </div>
+
+        {/* Hidden file inputs */}
+        {selectedItem && editMode && (
+          <>
+            <input
+              ref={thumbRef}
+              type="file"
+              accept="image/*"
+              onChange={handleThumbUpload}
+              className="hidden"
+            />
+            <input
+              ref={fullRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFullUpload}
+              className="hidden"
+            />
+          </>
+        )}
 
         {/* Modal */}
         {selectedItem && (
@@ -433,17 +704,28 @@ export default function Page2() {
               className="bg-white max-w-[85vw] w-full max-h-[100vh] overflow-y-auto shadow-2xl no-scrollbar"
             >
               {/* Picture Section */}
-              <div className="w-full h-48 overflow-hidden">
+              <div className="w-full h-48 overflow-hidden relative">
                 <img
-                  src={selectedItem.fullImage}
-                  alt={selectedItem.title}
-                  className="w-full h-full object-cover"
+                  src={imagePreviews.full || currentFrontmatter.fullImage || '/default-full.jpg'}
+                  alt={currentFrontmatter.title || selectedItem.title}
+                  className={`w-full h-full object-cover ${editMode ? 'clickable-img' : ''}`}
+                  onClick={editMode ? () => fullRef.current?.click() : undefined}
                 />
               </div>
               {/* Title Section */}
-              <div className="p-6">
+              <div className="p-6 relative">
                 <div className="flex justify-between items-center">
-                  <h2 className="flex-1 text-5xl text-center text-[var(--colorone)] font-bold mb-2">{selectedItem.title}</h2>
+                  <div className={`absolute left-24 top-[-4.5rem] w-40 h-40 overflow-hidden z-10 ${editMode ? 'clickable-img cursor-pointer' : ''}`}>
+                    <img
+                      src={imagePreviews.thumbnail || currentFrontmatter.image || '/default-image.gif'}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      onClick={editMode ? () => thumbRef.current?.click() : undefined}
+                    />
+                  </div>
+                  <div className="flex-1 pl-48 text-center">
+                    <h2 className="text-5xl text-[var(--colorone)] font-bold mb-2">{currentFrontmatter.title || selectedItem.title}</h2>
+                  </div>
                   <div className="flex gap-2">
                     {!editMode && (
                       <button className="action-btn" onClick={handleEditToggle}>
@@ -464,9 +746,11 @@ export default function Page2() {
                 </div>
               </div>
               {/* Description Section */}
-              <div className="px-6 pb-6">
-                <p className="text-xl text-center text-[var(--colorone)] italic">{selectedItem.description}</p>
-              </div>
+              {!editMode && (
+                <div className="px-6 pb-6">
+                  <p className="text-xl text-center text-[var(--colorone)] italic">{currentFrontmatter.description || selectedItem.description}</p>
+                </div>
+              )}
               {/* Main Content Section */}
               <div 
                 className="px-6 pb-6 text-2xl markdown-content max-w-none text-[var(--colorone)] leading-relaxed"
