@@ -11,7 +11,7 @@ fullImage: /bookstore.jpg
 
 #### Exam Number: 100504
 
-## This piece was originally written in Vietnamese, but I wanted to share it with everyone interested in understanding Vietnamese girls. I’ve tried my best to preserve the subtle nuances and essence of the original. The Vietnamese version is included below.
+## This piece was originally written in Vietnamese, but I wanted to share it with everyone interested in understanding Vietnamese girl. I’ve tried my best to preserve the subtle nuances and essence of the original. The Vietnamese version is included below.
 
 ## Read carefully and choose the most suitable reaction:
 
