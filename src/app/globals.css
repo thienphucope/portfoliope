@@ -106,3 +106,5 @@ body::-webkit-scrollbar {
 .polaroid:nth-child(even) {
   transform: rotate(2deg);
 }
+
+
