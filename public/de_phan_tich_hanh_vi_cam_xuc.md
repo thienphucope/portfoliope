@@ -9,6 +9,8 @@ fullImage: /bookstore.jpg
 
 ### This piece was originally written in Vietnamese, but I wanted to share it with everyone interested in understanding Vietnamese girls. I’ve tried my best to preserve the subtle nuances and essence of the original. The Vietnamese version is included below.
 
+### In Progess
+
 ## Read carefully and choose the most suitable reaction:
 
 **Question 1:** She says, “You’ve been so busy lately. It feels like you don’t care about me like you used to.”
