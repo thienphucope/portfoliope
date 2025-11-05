@@ -272,9 +272,9 @@ c. She truly wants to end the relationship completely.
 ---
 
 
-#### Họ, tên thí sinh: Ope Watson 1
+#### Họ, tên thí sinh: Sandy If I were a boy
 
-#### Số báo danh: 100504
+#### Số báo danh: 150998
 
 ## Đọc kỹ và chọn phản ứng phù hợp:
 
@@ -290,6 +290,8 @@ c. "Vậy em muốn anh nghỉ việc ở nhà nói chuyện với em cả ngày
 
 [Không gian trống để viết trả lời]
 
+Đâu có, anh đâu có bận gì đâu, em muốn anh làm gì cho em nè?
+
 ### Câu 2: Cô ấy đăng một bức ảnh "tự sướng" kèm caption: "Chán quá không ai rủ đi chơi."
 
 a. "Anh đang rảnh đây, muốn đi đâu không?"
@@ -301,6 +303,7 @@ c. "Gì mà chán, rủ bạn bè đi chơi đi em."
 **Trả lời (Chọn a/b/c và giải thích ngắn gọn):**
 
 [Không gian trống để viết trả lời]
+Bé! Lần sau em muốn đi đâu chơi thì nhắn trực tiếp với anh nè, không cần phải đăng lung tung bóng gió vậy đâu
 
 ### Câu 3: Cô ấy nói: "Sao anh cứ để ý mấy cô gái khác trên mạng xã hội hoài vậy?"
 
@@ -313,6 +316,7 @@ c. "Facebook của anh tự đề xuất ấy mà."
 **Trả lời (Chọn a/b/c và giải thích ngắn gọn):**
 
 [Không gian trống để viết trả lời]
+Em mong anh sẽ rep là: Đối với anh, em là duy nhất hả? Không nha! Nó tự đề xuất á em, đó gọi là thuật toán marketing của MXH, không tin em cũng nhìn vào máy em đi bé.
 
 ### Câu 4: Cô ấy hỏi: "Nếu anh và em cãi nhau to, anh sẽ làm gì?"
 
@@ -325,6 +329,7 @@ c. "Anh sẽ phân tích xem ai đúng ai sai để giải quyết triệt để
 **Trả lời (Chọn a/b/c và giải thích ngắn gọn):**
 
 [Không gian trống để viết trả lời]
+Nếu cãi nhau, còn tùy hahaha, nhưng mà anh sẽ lắng nghe em trước, hợp lý thì anh sửa, không thì thôi á
 
 ### Câu 5: Cô ấy nói: "Anh có thấy người yêu cũ của anh xinh không?"
 
@@ -337,6 +342,7 @@ c. "Cũng bình thường thôi. Quan trọng là anh đã chọn ở bên em."
 **Trả lời (Chọn a/b/c và giải thích ngắn gọn):**
 
 [Không gian trống để viết trả lời]
+Đối với anh, phụ nữ ai cũng đẹp theo cách của riêng họ, mỗi người 1 vẻ, cô ấy đẹp, em cũng đẹp, không so sánh vậy được
 
 ### Câu 6: Cô ấy hỏi: "Điều gì ở em khiến anh yêu nhất?"
 
@@ -349,6 +355,7 @@ c. "Anh thích nụ cười của em và cả sự thông minh, chu đáo của 
 **Trả lời (Chọn a/b/c và giải thích ngắn gọn):**
 
 [Không gian trống để viết trả lời]
+Yêu đâu cần lý do em, nó nằm ngoài vùng của lý trí rồi. Đừng hỏi anh câu này nữa
 
 ### Câu 7: Cô ấy nói: "Em thấy hình như mình hơi béo lên một chút..."
 
@@ -361,6 +368,7 @@ c. "Đừng lo, anh đâu có để ý chuyện đó."
 **Trả lời (Chọn a/b/c và giải thích ngắn gọn):**
 
 [Không gian trống để viết trả lời]
+Em sao cũng được, béo hay gầy không quan trọng, quan trọng em hài lòng với mình là được
 
 ### Câu 8: Cô ấy hỏi: "Anh có bao giờ cảm thấy chán khi ở bên em không?"
 
@@ -373,6 +381,7 @@ c. "Thỉnh thoảng cũng có, nhưng đó là chuyện bình thường mà."
 **Trả lời (Chọn a/b/c và giải thích ngắn gọn):**
 
 [Không gian trống để viết trả lời]
+Ừ thỉnh thoảng cũng có chứ, nhưng mà chán đâu có gì là xấu đâu, đó là biểu hiện của sự bình yên á, anh thích sự bình yên của em.
 
 ### Câu 9: Cô ấy nói: "Em nghĩ là mình cần một khoảng thời gian để suy nghĩ lại mối quan hệ này."
 
@@ -385,6 +394,7 @@ c. "Nếu em cần không gian, anh sẽ biến mất. Khi nào sẵn sàng thì
 **Trả lời (Chọn a/b/c và giải thích ngắn gọn):**
 
 [Không gian trống để viết trả lời]
+Ok em, anh tôn trọng điều đó, nhưng mà tuki xong nhắn anh 1 tiếng đừng đi luôn nha 
 
 ### Câu 10: Cô ấy nhắn: "Em đi ngủ trước đây, ngủ ngon nhé anh." (Thái độ hơi hờ hững)
 
@@ -397,6 +407,7 @@ c. Gọi điện hỏi thăm, nói chuyện với cô ấy
 **Trả lời (Chọn a/b/c và giải thích ngắn gọn):**
 
 [Không gian trống để viết trả lời]
+Uhm… hôm nay em có gì buồn hả, có gì hong ổn thì kể anh nghe nha bé
 
 ## Phân tích tâm lý và chọn phản ứng phù hợp:
 
@@ -411,6 +422,7 @@ c. Mua đồ ăn ship cho cô ấy
 **Trả lời (Chọn a/b/c và phân tích tâm lý):**
 
 [Không gian trống để viết trả lời]
+Hello em oi, có gì hong ổn nhớ nhắn anh nha, anh đợi
 
 ### Câu 12: Khi cô ấy nói với bạn rằng cô ấy đang rất nhiều người theo đuổi, khi 2 người đang trong một mối quan hệ rồi, tức là cô ấy đang:
 
@@ -423,6 +435,7 @@ c. Cô ấy đang chia sẻ rằng ngoài bạn ra, cô ấy cũng nhiều sự 
 **Trả lời (Chọn a/b/c và phân tích tâm lý):**
 
 [Không gian trống để viết trả lời]
+* con gái nó thích show off vậy thôi à, kệ cha nó hahahha, cứ hùa theo là được*
 
 ### Câu 13: Khi cô ấy tức về một ai đó và kể với bạn, bạn nên:
 
@@ -435,6 +448,7 @@ c. Chửi người làm cô ấy tức cùng với cô ấy
 **Trả lời (Chọn a/b/c và phân tích tâm lý):**
 
 [Không gian trống để viết trả lời]
+*lắng nghe chăm chú hoi, rồi phân tích đúng sai sau, nếu nó sai thiệt thì khỏi cãi còn không thì phải chửi cho tỉnh *
 
 ### Câu 14: Khi cô ấy nói "Anh có yêu em không?" bằng giọng nũng nịu tức là cô ấy muốn nói điều gì?
 
@@ -447,6 +461,7 @@ c. Cô ấy chỉ muốn bạn trả lời là có “để xác định rằng 
 **Trả lời (Chọn a/b/c và phân tích tâm lý):**
 
 [Không gian trống để viết trả lời]
+* haizzz con nhỏ này bánh bèo vô dụng vcl, cứ nói Anh yêu em rồi chắc nó muốn chở đi chơi đó… ráng chiều nó đi*
 
 ### Câu 15: Khi cô ấy nói: "Anh có còn yêu em không?" tức là sao?
 
@@ -459,6 +474,7 @@ c. Bạn làm cô ấy tổn thương và cô ấy hỏi câu này để xác đ
 **Trả lời (Chọn a/b/c và phân tích tâm lý):**
 
 [Không gian trống để viết trả lời]
+*vừa bánh bèo lại overthink sao con nhỏ này…* thì rep tỉnh bơ thoi, of course yes, anh có gì không ổn làm em hiểu lầm hả
 
 ### Câu 16: Khi cô ấy và bạn cãi nhau, thứ mà cô ấy để ý nhất đó chính là:
 
@@ -471,6 +487,7 @@ c. Cãi nhau to có đến mức chia tay hay không?
 **Trả lời (Chọn a/b/c và phân tích tâm lý):**
 
 [Không gian trống để viết trả lời]
+Là nó muốn tức giận vậy thôi, cứ chịu nghe nó chửi đi, rồi dỗ sau. Nhiều khi chuyện nó tức chả liên quan gì đến mình đâu.
 
 ### Câu 17: Khi cô ấy chủ động nói chia tay với một thái độ giận dữ sau khi 2 bạn vừa cãi nhau xong, thì điều đó là:
 
@@ -482,7 +499,7 @@ c. Cô ấy vẫn còn yêu bạn, chỉ muốn bạn dỗ dành, thể hiện r
 
 **Trả lời (Chọn a/b/c và phân tích tâm lý):**
 
-[Không gian trống để viết trả lời]
+Thì CHIA TAY LUÔN Ô !!! THÍCH THÌ CHIỀU !!
 
 ### Câu 18: Cô ấy im lặng trong nhiều ngày, và nhắn tin rằng tụi mình dừng lại nhé tức là cô ấy muốn:
 
@@ -495,3 +512,4 @@ c. Cô ấy hoàn toàn muốn cắt đứt tình cảm giữa hai người
 **Trả lời (Chọn a/b/c và phân tích tâm lý):**
 
 [Không gian trống để viết trả lời]
+Như câu 17
