@@ -13,9 +13,10 @@ export default function Page1() {
   const [isIntroStarted, setIsIntroStarted] = useState(false);
   const [isIntroDone, setIsIntroDone] = useState(false);
   const [isStoryOpen, setIsStoryOpen] = useState(false);
+  const [apiUsername, setApiUsername] = useState('YOU');
 
   // Thêm constant này để quản lý text gốc cho story (chỉ 1 chỗ duy nhất!)
-  const DEFAULT_STORY_TEXT = "Dear Ope Watson!\n\nToday, I've seen a ghost hanging behind the room's door. Can you explain that?\n\n\n\n\n\n\n\n\n\n\n\n\nThis feature is under development. Your submitted story will be sent to the VOID!";
+  const DEFAULT_STORY_TEXT = "Dear Ope Watson!\n\nToday, I've seen a ghost hanging behind the room's door. Can you explain that?";
   
   const [storyText, setStoryText] = useState(DEFAULT_STORY_TEXT); // Sử dụng constant ở đây
   
@@ -65,6 +66,34 @@ export default function Page1() {
     }
     window.scrollTo(0, 0);
   }, []); 
+
+  // Set dynamic API username based on IP and device
+  useEffect(() => {
+    fetch('https://api.ipify.org?format=json')
+      .then(response => response.json())
+      .then(data => {
+        const ipFormatted = data.ip.replace(/\./g, '-');
+        const userAgent = navigator.userAgent;
+        let device = 'Unknown';
+        if (userAgent.includes('Mobile')) {
+          device = 'Mobile';
+        } else if (userAgent.includes('Windows')) {
+          device = 'Windows';
+        } else if (userAgent.includes('Mac')) {
+          device = 'Mac';
+        } else if (userAgent.includes('Linux')) {
+          device = 'Linux';
+        }
+        setApiUsername(`${device}-${ipFormatted}`);
+        console.log('Dynamic API username set to:', `${device}-${ipFormatted}`);
+      })
+      .catch(error => {
+        console.error('Failed to fetch IP:', error);
+        const userAgent = navigator.userAgent;
+        const device = userAgent.includes('Mobile') ? 'Mobile' : userAgent.includes('Windows') ? 'Windows' : 'Unknown Device';
+        setApiUsername(device);
+      });
+  }, []);
 
   // Lock/unlock scroll and cursor
   useEffect(() => {
@@ -295,8 +324,25 @@ export default function Page1() {
     }
   }, [isIntroStarted]);
 
-  const handleStorySubmit = () => {
+  const handleStorySubmit = async () => {
+    const message = "@dm " + storyText.trim();
     console.log("Submitted story:", storyText);
+    try {
+      const response = await fetch("https://rag-backend-zh2e.onrender.com/rag", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: apiUsername, query: message }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`RAG Error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("Story response from RAG:", data.response);
+    } catch (error) {
+      console.error("Error sending story to RAG:", error);
+    }
     setIsStoryOpen(false);
     setStoryText(DEFAULT_STORY_TEXT); // Reset dùng constant
   };
