@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 
 export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
-  const [spotlightEnabled, setSpotlightEnabled] = useState(false);
+  const [spotlightEnabled, setSpotlightEnabled] = useState(true);
   const [mousePos, setMousePos] = useState({ x: -999, y: -999 });
 
   useEffect(() => {
