@@ -637,19 +637,19 @@ export default function Page2() {
           <h1 className="text-[var(--colorthree)] text-8xl font-bold mb-8 w-full text-center">🙢 CASE ARCHIVES 🙠</h1>
           
           <div 
-            className="w-full h-[90vh] grid grid-cols-2 grid-rows-4 gap-6"
+            className="w-full h-auto min-h-[90vh] grid grid-cols-2 gap-6 auto-rows-fr"
           >
             {images.map((imageItem) => (
               <div
                 key={imageItem.id}
-                className="bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] overflow-hidden flex cursor-pointer transition-all duration-300"
+                className="bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] overflow-hidden flex cursor-pointer transition-all duration-300 )]"
                 onClick={() => handleCardClick(imageItem)}
               >
-                <div className="w-1/3 aspect-square flex-shrink-0 flex items-center justify-center">
+                <div className="w-1/3 aspect-square flex-shrink-0 overflow-hidden">
                   <img
                     src={imageItem.image}
                     alt={`Image ${imageItem.id}`}
-                    className="max-w-full max-h-full object-contain rounded-l-2xl"
+                    className="w-full h-full object-cover rounded-l-2xl"
                   />
                 </div>
                 <div className="flex-1 p-6 flex flex-col justify-top">
@@ -663,14 +663,14 @@ export default function Page2() {
               onClick={handleAddNew}
             >
               <div className="w-1/3 aspect-square flex-shrink-0 flex items-center justify-center bg-[var(--colorone)]">
-                <h2 className="text-9xl text-[var(--colorthree)] bg-[var(--colorone)] font-bold">+</h2>
+                <h2 className="text-9xl mb-4 text-[var(--colorthree)] bg-[var(--colorone)] font-bold">+</h2>
               </div>
               <div className="flex-1 p-6 flex flex-col justify-center items-center">
                 <h3 className="text-4xl text-[var(--colorthree)] font-bold mb-2">ADD NEW CASE</h3>
               </div>
             </div>
           </div>
-          <h1 className="text-[var(--colorthree)] pt-15 text-8xl font-bold mb-8 w-full text-center">🙢 IN PROGRESS 🙠</h1>
+          <h1 className="text-[var(--colorthree)] pt-15 text-8xl font-bold mb-8 w-full text-center">🙢 OBSESSIONS 🙠</h1>
         </div>
 
         {/* Hidden file inputs */}
