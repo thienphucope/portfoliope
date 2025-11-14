@@ -1,6 +1,6 @@
 ---
-title: Ope’s Backyard Adventures
-description: A place to see what little Ope did when he was bored
+title: Discovering Folk Games
+description: with little Ope
 image: /duck-1763095348785.gif
 fullImage: /town-1763095357316.jpg
 id: qjouj1229
