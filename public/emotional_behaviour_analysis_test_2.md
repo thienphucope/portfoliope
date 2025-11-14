@@ -1,5 +1,5 @@
 ---
-title: Emotional Behaviour Analysis Test 2
+title: Emotional Analysis Continued
 description: Another one?
 image: /duck-1762357263022.gif
 fullImage: /parisiancafe-1762357363148.jpg
