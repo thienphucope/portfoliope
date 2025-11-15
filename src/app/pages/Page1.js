@@ -30,7 +30,7 @@ export default function Page1() {
   const pronunciationRef = useRef(null);
 
   // You can change this value in the code to scale the image
-  const imageScale = 1.8;
+  const imageScale = 1.75;
 
   const padChar = '\u00A0';
 
@@ -94,6 +94,17 @@ export default function Page1() {
         setApiUsername(device);
       });
   }, []);
+
+  // Auto-activate intro after 2 seconds if not started
+  useEffect(() => {
+    if (!isIntroStarted) {
+      const autoActivateTimer = setTimeout(() => {
+        handleMaskClick();
+      }, 2000);
+
+      return () => clearTimeout(autoActivateTimer);
+    }
+  }, [isIntroStarted]);
 
   // Lock/unlock scroll and cursor
   useEffect(() => {
@@ -421,7 +432,12 @@ export default function Page1() {
           cursor: default;
         }
         .mask.hidden { opacity: 0; pointer-events: none; }
-        .magnifier { width: 100px; height: 100px; cursor: default; }
+        .magnifier { 
+          width: 100px; 
+          height: 100px; 
+          cursor: default; 
+          animation: glow 0.5s ease-in-out alternate infinite; /* Thêm glow mặc định */
+        }
         .magnifier:hover { animation: glow 0.5s ease-in-out alternate infinite; }
         .disk {
           width: 60px;
@@ -538,7 +554,7 @@ export default function Page1() {
             </div>
 
             {/* Titles on the right */}
-            <div className="flex items-center justify-end gap-6 md:gap-10 text-xl font-semibold pr-4 md:pr-10 text-[var(--colorone)]">
+            <div className="flex items-center justify-end gap-6 md:gap-10 text-2xl font-semibold pr-4 md:pr-10 text-[var(--colorone)]">
                 <div 
                   className="hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300 hover:drop-shadow-lg cursor-pointer"
                   onClick={scrollToDown}
@@ -572,7 +588,7 @@ export default function Page1() {
         {!isStoryOpen && (
           <div className="absolute top-1/2 -translate-y-1/2 right-4 md:right-10 w-4/9 text-justify z-0">
               <h2
-                  className="block w-full text-right text-5xl md:text-8xl text-[var(--colorone)] font-bold mb-2 font-chomsky hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300"
+                  className="block w-full text-right text-7xl md:text-8xl text-[var(--colorone)] font-bold mb-2 font-chomsky hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300"
                   ref={titleRef}
                   onMouseEnter={handleMouseEnterTitle}
                   onMouseLeave={handleMouseLeaveTitle}

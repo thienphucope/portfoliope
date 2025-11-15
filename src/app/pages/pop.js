@@ -518,7 +518,7 @@ export default function Pop() {
     <>
       <button
         onClick={handleToggleChat}
-        className="font-serif fixed top-5 right-5 w-14 h-14 bg-white text-[var(--colorone)] rounded-full shadow-lg flex items-center justify-center z-50 text-base font-bold transition-all duration-300 hover:scale-110 border border-gray-200"
+        className="font-serif fixed top-12 right-5 w-14 h-14 bg-white text-[var(--colorone)] rounded-full shadow-lg flex items-center justify-center z-50 text-base font-bold transition-all duration-300 hover:scale-110 border border-gray-200"
       >
         AI
       </button>

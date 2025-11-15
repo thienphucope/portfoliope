@@ -630,6 +630,11 @@ export default function Page2() {
           transform: scale(1.05);
           transition: transform 0.2s;
         }
+
+        .masonry-item {
+          break-inside: avoid;
+          margin-bottom: 1.5rem;
+        }
       `}</style>
 
       <section id="page2" className="w-full min-h-screen bg-[var(--background)] snap-start font-serif box-border relative z-10 flex justify-center items-center p-4">
@@ -637,36 +642,36 @@ export default function Page2() {
           <h1 className="text-[var(--colorthree)] text-8xl font-bold mb-8 w-full text-center">🙢 CASE ARCHIVES 🙠</h1>
           
           <div 
-            className="w-full h-auto min-h-[90vh] grid grid-cols-2 gap-6 auto-rows-fr"
+            className="w-full h-auto min-h-[90vh] columns-4 gap-4"
           >
             {images.map((imageItem) => (
               <div
                 key={imageItem.id}
-                className="bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] overflow-hidden flex cursor-pointer transition-all duration-300 )]"
+                className="masonry-item bg-white rounded-xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] overflow-hidden flex flex-col cursor-pointer transition-all duration-300 border-16 border-white"
                 onClick={() => handleCardClick(imageItem)}
               >
-                <div className="w-1/3 aspect-square flex-shrink-0 overflow-hidden">
+                <div className="w-full h-auto overflow-hidden">
                   <img
                     src={imageItem.image}
                     alt={`Image ${imageItem.id}`}
-                    className="w-full h-full object-cover rounded-l-2xl"
+                    className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="flex-1 p-6 flex flex-col justify-top">
-                  <h3 className="text-3xl text-[var(--colorone)] font-bold mb-2">{imageItem.title}</h3>
+                <div className="flex-1 p-3 flex flex-col justify-start">
+                  <h3 className="text-xl text-[var(--colorone)] font-bold">{imageItem.title}</h3>
                   <p className="text-lg text-[var(--colorone)]">{imageItem.description}</p>
                 </div>
               </div>
             ))}
             <div
-              className="bg-[var(--colorone)] rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] overflow-hidden flex cursor-pointer transition-all duration-300 border-16 border-[var(--colorthree)]"
+              className="masonry-item bg-[var(--colorone)] rounded-xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] overflow-hidden flex flex-col cursor-pointer transition-all duration-300 border-16 border-[var(--colorthree)]"
               onClick={handleAddNew}
             >
-              <div className="w-1/3 aspect-square flex-shrink-0 flex items-center justify-center bg-[var(--colorone)]">
-                <h2 className="text-9xl mb-4 text-[var(--colorthree)] bg-[var(--colorone)] font-bold">+</h2>
+              <div className="w-full aspect-square flex-shrink-0 flex items-center justify-center bg-[var(--colorone)]">
+                <h2 className="text-9xl text-[var(--colorthree)] font-bold">+</h2>
               </div>
-              <div className="flex-1 p-6 flex flex-col justify-center items-center">
-                <h3 className="text-4xl text-[var(--colorthree)] font-bold mb-2">ADD NEW CASE</h3>
+              <div className="flex-1 p-6 bg-[var(--colorthree)] flex flex-col justify-center items-center">
+                <h3 className="text-2xl text-[var(--colorone)] font-bold">ADD NEW CASE</h3>
               </div>
             </div>
           </div>

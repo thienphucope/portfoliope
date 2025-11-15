@@ -80,7 +80,7 @@ export default function Home() {
       {/* Toggle Button - Fixed Position */}
       <button
         onClick={() => setSpotlightEnabled(!spotlightEnabled)}
-        className="fixed top-25 right-2 text-6xl px-0 py-0 z-30 bg-transparent text-[var(--colorone)] rounded-full rounded-full cursor-pointer"
+        className="fixed top-32 right-2 text-6xl px-0 py-0 z-30 bg-transparent text-[var(--colorone)] rounded-full rounded-full cursor-pointer"
       >
         {spotlightEnabled ? '🌙' : '☀️'}
       </button>
