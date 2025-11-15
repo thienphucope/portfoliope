@@ -447,9 +447,16 @@ export default function Page2() {
 
   return (
     <>
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fredericka+the+Great&display=swap');
+      `}</style>
       <style jsx>{`
         #page2 {
-          font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+          font-family: 'Fredericka the Great', cursive;
+        }
+
+        .font-fredericka {
+          font-family: 'Fredericka the Great', cursive;
         }
 
         .markdown-content :global(h1) {
@@ -637,9 +644,9 @@ export default function Page2() {
         }
       `}</style>
 
-      <section id="page2" className="w-full min-h-screen bg-[var(--background)] snap-start font-serif box-border relative z-10 flex justify-center items-center p-4">
-        <div className="w-[80vw] flex flex-col items-center">
-          <h1 className="text-[var(--colorthree)] text-8xl font-bold mb-8 w-full text-center">🙢 CASE ARCHIVES 🙠</h1>
+      <section id="page2" className="w-full min-h-screen bg-[var(--background)] snap-start font-fredericka box-border relative z-10 flex justify-center items-center p-4">
+        <div className="w-[89vw] flex flex-col items-center">
+          <h1 className="text-[var(--colorthree)] text-8xl font-bold mb-8 w-full text-center font-fredericka">🙢 CASE ARCHIVES 🙠</h1>
           
           <div 
             className="w-full h-auto min-h-[90vh] columns-4 gap-4"
@@ -647,7 +654,7 @@ export default function Page2() {
             {images.map((imageItem) => (
               <div
                 key={imageItem.id}
-                className="masonry-item bg-white rounded-xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] overflow-hidden flex flex-col cursor-pointer transition-all duration-300 border-16 border-white"
+                className="masonry-item bg-[var(--colortwo)] rounded-xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] overflow-hidden flex flex-col cursor-pointer transition-all duration-300 border-16 border-[var(--colortwo)]"
                 onClick={() => handleCardClick(imageItem)}
               >
                 <div className="w-full h-auto overflow-hidden">
@@ -658,8 +665,8 @@ export default function Page2() {
                   />
                 </div>
                 <div className="flex-1 p-3 flex flex-col justify-start">
-                  <h3 className="text-xl text-[var(--colorone)] font-bold">{imageItem.title}</h3>
-                  <p className="text-lg text-[var(--colorone)]">{imageItem.description}</p>
+                  <h3 className="text-xl text-[var(--colorone)] font-bold font-fredericka">{imageItem.title}</h3>
+                  <p className="text-lg text-[var(--colorone)] font-fredericka">{imageItem.description}</p>
                 </div>
               </div>
             ))}
@@ -668,14 +675,14 @@ export default function Page2() {
               onClick={handleAddNew}
             >
               <div className="w-full aspect-square flex-shrink-0 flex items-center justify-center bg-[var(--colorone)]">
-                <h2 className="text-9xl text-[var(--colorthree)] font-bold">+</h2>
+                <h2 className="text-9xl text-[var(--colorthree)] font-bold font-fredericka">+</h2>
               </div>
               <div className="flex-1 p-6 bg-[var(--colorthree)] flex flex-col justify-center items-center">
-                <h3 className="text-2xl text-[var(--colorone)] font-bold">ADD NEW CASE</h3>
+                <h3 className="text-2xl text-[var(--colorone)] font-bold font-fredericka">ADD NEW CASE</h3>
               </div>
             </div>
           </div>
-          <h1 className="text-[var(--colorthree)] pt-15 text-8xl font-bold mb-8 w-full text-center">🙢 OBSESSIONS 🙠</h1>
+          <h1 className="text-[var(--colorthree)] pt-15 text-8xl font-bold mb-8 w-full text-center font-fredericka">🙢 OBSESSIONS 🙠</h1>
         </div>
 
         {/* Hidden file inputs */}
@@ -729,20 +736,20 @@ export default function Page2() {
                     />
                   </div>
                   <div className="flex-1 pl-48 text-center">
-                    <h2 className="text-5xl text-[var(--colorone)] font-bold mb-2">{currentFrontmatter.title || selectedItem.title}</h2>
+                    <h2 className="text-5xl text-[var(--colorone)] font-bold mb-2 font-fredericka">{currentFrontmatter.title || selectedItem.title}</h2>
                   </div>
                   <div className="flex gap-2">
                     {!editMode && (
-                      <button className="action-btn" onClick={handleEditToggle}>
+                      <button className="action-btn font-fredericka" onClick={handleEditToggle}>
                         Edit
                       </button>
                     )}
                     {editMode && (
                       <>
-                        <button className="action-btn save-btn" onClick={handleSave}>
+                        <button className="action-btn save-btn font-fredericka" onClick={handleSave}>
                           Save
                         </button>
-                        <button className="action-btn cancel-btn" onClick={handleCancel}>
+                        <button className="action-btn cancel-btn font-fredericka" onClick={handleCancel}>
                           Cancel
                         </button>
                       </>
@@ -753,12 +760,12 @@ export default function Page2() {
               {/* Description Section */}
               {!editMode && (
                 <div className="px-6 pb-6">
-                  <p className="text-xl text-center text-[var(--colorone)] italic">{currentFrontmatter.description || selectedItem.description}</p>
+                  <p className="text-xl text-center text-[var(--colorone)] italic font-fredericka">{currentFrontmatter.description || selectedItem.description}</p>
                 </div>
               )}
               {/* Main Content Section */}
               <div 
-                className="px-6 pb-6 text-2xl markdown-content max-w-none text-[var(--colorone)] leading-relaxed"
+                className="px-6 pb-6 text-2xl markdown-content max-w-none text-[var(--colorone)] leading-relaxed font-fredericka"
               >
                 {editMode ? (
                   <textarea

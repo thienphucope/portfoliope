@@ -364,7 +364,10 @@ export default function Page1() {
   };
 
   return (
-    <section id="gallery" className="w-full min-h-screen bg-[var(--background)] snap-start font-serif box-border relative z-10 flex justify-center items-center">
+    <section id="gallery" className="w-full min-h-screen bg-[var(--background)] snap-start font-[family-Fredericka_the_Great] box-border relative z-10 flex justify-center items-center">
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fredericka+the+Great&display=swap');
+      `}</style>
       <style jsx>{`
         @keyframes glow {
           0% { filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.3)); }
@@ -496,6 +499,10 @@ export default function Page1() {
         .title-fly-out.fly-cycle {
           animation: flyOutStayIn 5.5s forwards;
         }
+
+        .font-fredericka {
+          font-family: 'Fredericka the Great', cursive;
+        }
       `}</style>
       {!isIntroStarted && (
         <div className="mask">
@@ -508,7 +515,7 @@ export default function Page1() {
         </div>
       )}
       <div id="youtube-player" style={{ display: 'none' }}></div>
-      <div className={`w-[80vw] h-[90vh] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] text-gray-800 transition-opacity duration-1000 relative ${isIntroStarted ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`w-[80vw] h-[90vh] bg-[var(--colortwo)] rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] text-gray-800 transition-opacity duration-1000 relative ${isIntroStarted ? 'opacity-100' : 'opacity-0'}`}>
         <svg className="absolute w-0 h-0 opacity-0 pointer-events-none" aria-hidden="true">
           <defs>
             <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -546,7 +553,7 @@ export default function Page1() {
                 {videoTitle && (
                   <span 
                     key={animationKey} 
-                    className={`title-fly-out ${animationClass}`}
+                    className={`title-fly-out ${animationClass} font-fredericka`}
                   >
                     {videoTitle}
                   </span>
@@ -554,7 +561,7 @@ export default function Page1() {
             </div>
 
             {/* Titles on the right */}
-            <div className="flex items-center justify-end gap-6 md:gap-10 text-2xl font-semibold pr-4 md:pr-10 text-[var(--colorone)]">
+            <div className="flex items-center justify-end gap-6 md:gap-10 text-3xl font-semibold pr-4 md:pr-10 text-[var(--colorone)] font-fredericka">
                 <div 
                   className="hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300 hover:drop-shadow-lg cursor-pointer"
                   onClick={scrollToDown}
@@ -586,9 +593,9 @@ export default function Page1() {
 
         {/* Introduction - z-0 default */}
         {!isStoryOpen && (
-          <div className="absolute top-1/2 -translate-y-1/2 right-4 md:right-10 w-4/9 text-justify z-0">
+          <div className="absolute top-1/2 -translate-y-1/2 right-4 md:right-10 w-4/9 text-justify z-0 font-fredericka">
               <h2
-                  className="block w-full text-right text-7xl md:text-8xl text-[var(--colorone)] font-bold mb-2 font-chomsky hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300"
+                  className="block w-full text-right text-7xl md:text-8xl text-[var(--colorone)] font-bold mb-2 font-fredericka hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300"
                   ref={titleRef}
                   onMouseEnter={handleMouseEnterTitle}
                   onMouseLeave={handleMouseLeaveTitle}
@@ -597,7 +604,7 @@ export default function Page1() {
               </h2>
               <div>
                   <span
-                      className="block w-full text-right text-base md:text-2xl text-[var(--colorone)] italic inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300"
+                      className="block w-full text-right text-base md:text-2xl text-[var(--colorone)] italic inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300 font-fredericka"
                       ref={pronunciationRef}
                       onMouseEnter={handleMouseEnterPronunciation}
                       onMouseLeave={handleMouseLeavePronunciation}
@@ -620,7 +627,7 @@ export default function Page1() {
 
         {/* Story Overlay */}
         {isStoryOpen && (
-          <div className="absolute top-[80px] rounded-2xl left-0 right-0 bottom-0 bg-white z-[30] p-8 flex flex-col">
+          <div className="absolute top-[80px] rounded-2xl left-0 right-0 bottom-0 bg-[var(--colortwo)] z-[30] p-8 flex flex-col font-fredericka">
             <textarea
               value={storyText}
               onChange={(e) => setStoryText(e.target.value)}
@@ -630,13 +637,13 @@ export default function Page1() {
             <div className="flex justify-end gap-4 mt-4">
               <button 
                 onClick={handleStoryCancel}
-                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-all duration-300"
+                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-all duration-300 font-fredericka"
               >
                 Cancel
               </button>
               <button 
                 onClick={handleStorySubmit}
-                className="px-4 py-2 bg-[var(--colorone)] text-white rounded hover:bg-pink-300 transition-all duration-300"
+                className="px-4 py-2 bg-[var(--colorone)] text-white rounded hover:bg-pink-300 transition-all duration-300 font-fredericka"
               >
                 Submit
               </button>

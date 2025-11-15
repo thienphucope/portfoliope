@@ -2,7 +2,7 @@
 id: 2
 title: Emotional Analysis
 description: For guys who already have girlfriends... not Ope but I still do :D
-image: /duck.gif
+image: /20251011_102021.jpg
 fullImage: /bookstore.jpg
 
 ---
