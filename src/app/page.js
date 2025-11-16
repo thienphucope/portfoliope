@@ -231,7 +231,7 @@ export default function Home() {
         </div>
         
         {/* Cover Section */}
-        <div className="w-full min-h-screen flex-shrink-0 snap-start relative z-10">
+        <div className="w-full min-h-screen flex-shrink-0 snap-start relative z-30">
           <Page2 />
         </div>
 
