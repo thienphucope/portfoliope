@@ -225,17 +225,17 @@ export default function Home() {
           {mounted && snowflakes}
         </div>
 
-        {/* Gallery Section */}
+        {/* Hero Section */}
         <div className="w-full min-h-screen flex-shrink-0 snap-start relative">
           <Page1 />
         </div>
         
-        {/* Cover Section */}
+        {/* Case Archives */}
         <div className="w-full min-h-screen flex-shrink-0 snap-start relative">
           <Page2 />
         </div>
 
-        {/* Cover Section */}
+        {/* Obsessions */}
         <div className="w-full min-h-screen flex-shrink-0 snap-start relative">
           <Page3 />
         </div>

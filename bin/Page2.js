@@ -654,7 +654,7 @@ export default function Page2() {
             {images.map((imageItem) => (
               <div
                 key={imageItem.id}
-                className="masonry-item bg-[var(--colortwo)] rounded-xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] overflow-hidden flex flex-col cursor-pointer transition-all duration-300 border-16 border-[var(--colortwo)]"
+                className="masonry-item bg-[var(--colortwo)] rounded-xl overflow-hidden flex flex-col cursor-pointer transition-all duration-300 border-16 border-[var(--colortwo)] hover:scale-105"
                 onClick={() => handleCardClick(imageItem)}
               >
                 <div className="w-full h-auto overflow-hidden">
@@ -670,8 +670,9 @@ export default function Page2() {
                 </div>
               </div>
             ))}
+
             <div
-              className="masonry-item bg-[var(--colorone)] rounded-xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] overflow-hidden flex flex-col cursor-pointer transition-all duration-300 border-16 border-[var(--colorthree)]"
+              className="masonry-item bg-[var(--colorone)] rounded-xl overflow-hidden flex flex-col cursor-pointer transition-all duration-300 border-16 border-[var(--colorthree)] hover:scale-105"
               onClick={handleAddNew}
             >
               <div className="w-full aspect-square flex-shrink-0 flex items-center justify-center bg-[var(--colorone)]">
