@@ -274,7 +274,7 @@ export default function Page1() {
           },
           events: {
             onReady: (event) => {
-              event.target.setVolume(10);
+              event.target.setVolume(5);
               // ĐÃ XÓA: setVideoTitle(event.target.getVideoData().title);
               // Để onStateChange trigger animation ngay lần đầu
             },
