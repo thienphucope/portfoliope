@@ -263,18 +263,18 @@ export default function Page1() {
         playerRef.current = new window.YT.Player('youtube-player', {
           height: '0',
           width: '0',
-          videoId: 'Vwnp-2T3VFg',
+          videoId: '8itIwVBu6os',
           playerVars: {
             autoplay: 1,
             loop: 1,
-            playlist: 'Vwnp-2T3VFg,B_Cj6sV0dh0,cYmD3BMv46o,Vwnp-2T3VFg,pL35m337Qa4',
+            playlist: '8itIwVBu6os,Vwnp-2T3VFg,09UOuVuFs08,yXQViqx6GMY,j_96mnmGxk0',
             controls: 0,
             showinfo: 0,
             modestbranding: 1,
           },
           events: {
             onReady: (event) => {
-              event.target.setVolume(50);
+              event.target.setVolume(10);
               // ĐÃ XÓA: setVideoTitle(event.target.getVideoData().title);
               // Để onStateChange trigger animation ngay lần đầu
             },
@@ -543,9 +543,6 @@ export default function Page1() {
                         fill="none"
                         />
                         <text>
-                        <textPath href="#textPath" startOffset="0%">
-                            music player
-                        </textPath>
                         </text>
                     </svg>
                 </div>
