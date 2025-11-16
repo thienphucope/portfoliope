@@ -518,16 +518,20 @@ export default function Pop() {
     <>
       <button
         onClick={handleToggleChat}
-        className="font-serif fixed top-12 right-5 w-14 h-14 bg-[var(--colortwo)] text-[var(--colorone)] rounded-full shadow-lg flex items-center justify-center z-50 text-base font-bold transition-all duration-300 hover:scale-110"
+        className="fixed top-12 right-5 w-14 h-14 bg-[var(--colortwo)] rounded-full shadow-lg flex items-center justify-center z-50 transition-all duration-300 hover:scale-110"
       >
-        AI
+        <img
+          src="/amelia.webp"
+          alt="Amelia"
+          className="w-full h-full object-cover rounded-full"
+        />
       </button>
       {isOpen && (
         <>
           {showHistory && (
             <div 
               ref={historyRef}
-              className="fixed font-serif bottom-20 md:bottom-30 left-1/2 transform -translate-x-1/2 w-full md:max-w-[50vw] max-w-[100vw] bg-white rounded-2xl shadow-xl flex flex-col z-40 border-3 border-[var(--colorone)] p-4 max-h-[50vh] overflow-y-auto no-scrollbar"
+              className="fixed font-serif bottom-20 md:bottom-30 left-1/2 transform -translate-x-1/2 w-full md:max-w-[50vw] max-w-[100vw] bg-[var(--colortwo)] rounded-2xl shadow-xl flex flex-col z-40 border-3 border-[var(--colorone)] p-4 max-h-[50vh] overflow-y-auto no-scrollbar"
             >
               <div className="flex flex-col">
                 {convo.length === 0 ? (
@@ -556,7 +560,7 @@ export default function Pop() {
                   })
                 )}
               </div>
-              <div className="sticky bottom-0 left-0 w-full bg-white pt-3 z-50">
+              <div className="sticky bottom-0 left-0 w-full bg-[var(--colortwo)] pt-3 z-50">
                 <div className="flex items-center justify-end space-x-4">
                   <div className="flex items-center">
                     {ragReady ? (
@@ -567,7 +571,7 @@ export default function Pop() {
                   </div>
                   <div className="flex items-center">
                     {ttsReady ? (
-                      <SpeakerWaveIcon className={`w-5 h-5 text-[var(--colorone)] rounded-full bg-white ${isPlayingAudio ? 'animate-pulse' : ''}`} />
+                      <SpeakerWaveIcon className={`w-5 h-5 text-[var(--colorone)] rounded-full bg-[var(--colortwo)] ${isPlayingAudio ? 'animate-pulse' : ''}`} />
                     ) : (
                       <ArrowPathIcon className="w-5 h-5 text-gray-400 animate-spin" />
                     )}
@@ -576,12 +580,12 @@ export default function Pop() {
               </div>
             </div>
           )}
-          <div className="font-serif fixed bottom-0 md:bottom-10 left-1/2 transform -translate-x-1/2 w-full md:max-w-[50vw] max-w-[100vw] bg-white rounded-full shadow-xl flex flex-col z-40 border-3 border-[var(--colorone)] transition-all duration-500 ease-in-out opacity-100 translate-y-0 overflow-hidden">
+          <div className="font-serif fixed bottom-0 md:bottom-10 left-1/2 transform -translate-x-1/2 w-full md:max-w-[50vw] max-w-[100vw] bg-[var(--colortwo)] rounded-full shadow-xl flex flex-col z-40 border-3 border-[var(--colorone)] transition-all duration-500 ease-in-out opacity-100 translate-y-0 overflow-hidden">
             <div className="flex items-center px-3 py-2">
               <button
                 onClick={handleVoiceInput}
                 disabled={isSending || isStreaming}
-                className="px-2 py-0 hover:bg-gray-50 transition-colors flex items-center justify-center rounded-full disabled:opacity-50"
+                className="px-2 py-0 bg-[var(--colortwo)] hover:bg-gray-50 transition-colors flex items-center justify-center rounded-full disabled:opacity-50"
                 title="Voice Input (or press Ctrl)"
               >
                 <MicrophoneIcon className={`w-6 h-6 text-[var(--colorone)] rounded-full ${isListening ? 'animate-pulse' : ''}`} />

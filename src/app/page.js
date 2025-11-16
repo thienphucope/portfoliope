@@ -226,17 +226,17 @@ export default function Home() {
         </div>
 
         {/* Gallery Section */}
-        <div className="w-full min-h-screen flex-shrink-0 snap-start relative z-10">
+        <div className="w-full min-h-screen flex-shrink-0 snap-start relative">
           <Page1 />
         </div>
         
         {/* Cover Section */}
-        <div className="w-full min-h-screen flex-shrink-0 snap-start relative z-30">
+        <div className="w-full min-h-screen flex-shrink-0 snap-start relative">
           <Page2 />
         </div>
 
         {/* Cover Section */}
-        <div className="w-full min-h-screen flex-shrink-0 snap-start relative z-10">
+        <div className="w-full min-h-screen flex-shrink-0 snap-start relative">
           <Page3 />
         </div>
 

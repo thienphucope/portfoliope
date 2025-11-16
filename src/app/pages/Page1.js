@@ -229,7 +229,7 @@ export default function Page1() {
   const scrollToDown = () => {
     // Chọn .snap-y để tìm đúng container đang cuộn
     // Sau đó tìm con trực tiếp (:nth-child(2)) có class .snap-start
-    const page2Container = document.querySelector('.snap-y > .snap-start:nth-child(2)');
+    const page2Container = document.querySelector('.snap-y > .snap-start:nth-child(3)');
     
    if (page2Container) {
       // Yêu cầu trình duyệt cuộn đến phần tử đó một cách mượt mà
