@@ -646,7 +646,7 @@ export default function Page2() {
 
       <section id="page2" className="w-full min-h-screen bg-[var(--background)] snap-start font-fredericka box-border relative z-10 flex justify-center items-center p-4">
         <div className="w-[89vw] flex flex-col items-center">
-          <h1 className="text-[var(--colorthree)] text-8xl font-bold mb-8 w-full text-center font-fredericka">CASE ARCHIVES</h1>
+          <h1 className="text-[var(--colorthree)] text-8xl font-bold mb-8 w-full text-center font-fredericka">🙢 CASE ARCHIVES 🙠</h1>
           
           <div 
             className="w-full h-auto min-h-[90vh] columns-4 gap-4"
@@ -682,6 +682,7 @@ export default function Page2() {
               </div>
             </div>
           </div>
+          <h1 className="text-[var(--colorthree)] pt-15 text-8xl font-bold mb-8 w-full text-center font-fredericka">🙢 OBSESSIONS 🙠</h1>
         </div>
 
         {/* Hidden file inputs */}

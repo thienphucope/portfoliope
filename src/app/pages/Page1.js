@@ -46,7 +46,7 @@ export default function Page1() {
   const originalTitlePadded = originalTitle + padChar.repeat(titleMaxLen - originalTitle.length);
   const replacementTitlePadded = replacementTitle + padChar.repeat(titleMaxLen - replacementTitle.length);
 
-  const originalPronunciation = "en. /'ohp 'wots-uhn/  jp. /opeオペ/";
+  const originalPronunciation = "en. /'oʊp 'wɑːtsən/  jp. /opeオペ/";
   const replacementPronunciation = "pronounce it anyways!";
   const pronMaxLen = Math.max(originalPronunciation.length, replacementPronunciation.length);
   const originalPronPadded = originalPronunciation + padChar.repeat(pronMaxLen - originalPronunciation.length);
@@ -263,11 +263,11 @@ export default function Page1() {
         playerRef.current = new window.YT.Player('youtube-player', {
           height: '0',
           width: '0',
-          videoId: 'Vwnp-2T3VFg',
+          videoId: 'JEUf8nTl5aU',
           playerVars: {
             autoplay: 1,
             loop: 1,
-            playlist: 'Vwnp-2T3VFg,B_Cj6sV0dh0,cYmD3BMv46o,Vwnp-2T3VFg,pL35m337Qa4',
+            playlist: 'JEUf8nTl5aU,d97xXtB4UeA,B_Cj6sV0dh0,cYmD3BMv46o,Vwnp-2T3VFg,pL35m337Qa4',
             controls: 0,
             showinfo: 0,
             modestbranding: 1,

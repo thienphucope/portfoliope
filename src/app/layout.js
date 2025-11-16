@@ -6,7 +6,7 @@ import Pop from './pages/pop';
 
 export const metadata = {
   title: "Ope Watson",
-  description: "Ope Watson's Blog Website",
+  description: "A static portfolio with horizontal scrolling and animations",
 };
 
 export default function RootLayout({ children }) {
