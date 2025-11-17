@@ -27,7 +27,7 @@ c. “So you want me to quit my job and just talk to you all day?”
 
 Let's diving into the question first, then I'll show you how she would react for each reply. 
 
-For the question, she knows you're busy, but the next clause she said that you didn't care about her like you used to. It kinda contradicts the first clause since she has know the reason. Or maybe she’s just making a presumption. In this case, she’s sending a signal that either she needs more care from you, or she suspects you’re seeing other girls.
+For the question, she knows you're busy, but the next clause she said that you didn't care about her like you used to. It kinda contradicts the first clause since she has known the reason. Or maybe she’s just making a presumption. In this case, she’s sending a signal that either she needs more care from you, or she suspects you’re seeing other girls.
 
 So you need to let her know what you are doing and show that you always care about her. (a) does this well. (b) does half of the way but it also imply that her check-in was annoying. She would throw at you "I’m asking about you, and you say I’m overthinking?". You'll probably have to spend time to calm her down. (c) is totally sarcastic, the sequence certainly awaits for you xD.
 
@@ -53,7 +53,7 @@ c. “It’s just Facebook suggesting stuff randomly.”
 
 **Answer (Choose a/b/c and explain briefly):**
 
-If you by chance pause at the 'people you might know' which usually suggests girls, just say (c), it's how the social media's algorithm works. (b) is absolutely a blunder, you're admitting that she's right, which is enough for her to get jealous. If she catch you red-handed on a girl profile zooming in the avatar, you're done xD.
+If you by chance pause at the 'people you might know' which usually suggests girls, just say (c), it's how the social media's algorithm works. (a) and (b) are absolutely blunders, you're admitting that she's right, which is enough for her to get jealous. If she catch you red-handed on a girl profile zooming in the avatar, you're done xD.
 
 ### Question 4: She asks, “If we ever had a big fight, what would you do?”
 
@@ -113,7 +113,7 @@ c. “Sometimes maybe, but that’s normal, isn’t it?”
 
 **Answer (Choose a/b/c and explain briefly):**
 
-I started to be unable ô explain why the question anymore. Hm, this time might be that she need an affirmation. Remember our case is the most sensitive girl, choose (b). In most of the time, a normal girlfriend would be okay with (c). For (b) you need to add "because I don't want my boredom to rub off on you" 
+I started to be unable ô explain why the question anymore. Hm, this time might be that she need an affirmation. Remember our case is the most sensitive girl, choose (a). In most of the time, a normal girlfriend would be okay with (c). For (b) you need to add "because I don't want my boredom to rub off on you" 
 
 ### Question 9: She says, “I think I need some time to reconsider our relationship.”
 
@@ -125,7 +125,7 @@ c. “If you need space, I’ll disappear. Talk to me when you’re ready.”
 
 **Answer (Choose a/b/c and explain briefly):**
 
-To be honest, I would break up with this sensitive girl immediately. In reality, things are more complicated, maybe she's always fine, just today she decides to ask you one of these question. A nice response saves you lots of time! 
+To be honest, I would break up with such sensitive girl immediately. In reality, things are more complicated, maybe she's always fine, just today she decides to ask you one of these question. A nice response saves you lots of time! 
 
 Back on track, I assume you want to keep the relation ship. Choose (a) without "I respect your decision", you can not hold on to the relationship if she decides to break up. Just belive that everything problem can be solved! (b) is merely giving the bad suggestion for the relation ship. Disapprove!! (c) Hah! Disappear and never go back!! 
 
