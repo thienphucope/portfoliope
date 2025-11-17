@@ -7,13 +7,15 @@ fullImage: /bookstore.jpg
 
 ---
 
-This piece was originally written in Vietnamese, but I wanted to share it with everyone interested in understanding Vietnamese girls. I’ve tried my best to preserve the subtle nuances and essence of the original. The Vietnamese version is included below.
+This trivia was originally written in Vietnamese, but I wanted to share it with everyone interested in understanding Vietnamese girls. I’ve tried my best to preserve the subtle nuances and essence of the original. The Vietnamese version is included at the bottom.
 
-In progress...
+Vietnamese girls sometimes come up with so tough questions for their boyfriends which are so sudden for the boy to come up with the RIGHT response. They're likely to screw things up and upset their girlfriend. My following analysis will help you understand the meaning behind those questions and choose the optimal responses to make your girlfriend or your future girlfriend relieved. However, some questions are totally unreasonable, you can definitely come back and EDUCATE not PLEASE her depending on how your relationship going and how dominant you are on the relationship.
+
+NOT EVERY GIRL is whiny and clingy but to make it more difficult, below is the POV — You have the most sensitive girlfriend.
 
 ## Read carefully and choose the most suitable reaction:
 
-**Question 1:** She says, “You’ve been so busy lately. It feels like you don’t care about me like you used to.”
+**Question 1:** She says, “You’ve always been so busy lately. It feels like you don’t care about me like you used to.”
 
 a. “I’m sorry, work has been stressful lately, but I still think about you all the time.”
 
@@ -23,9 +25,11 @@ c. “So you want me to quit my job and just talk to you all day?”
 
 **Answer (Choose a/b/c and explain briefly):**
 
-[Space to write answer]
+Let's diving into the question first, then I'll show you how she would react for each reply. 
 
----
+For the question, she knows you're busy, but the next clause she said that you didn't care about her like you used to. It kinda contradicts the first clause since she has know the reason. Or maybe she’s just making a presumption. In this case, she’s sending a signal that either she needs more care from you, or she suspects you’re seeing other girls.
+
+So you need to let her know what you are doing and show that you always care about her. (a) does this well. (b) does half of the way but it also imply that her check-in was annoying. She would throw at you "I’m asking about you, and you say I’m overthinking?". You'll probably have to spend time to calm her down. (c) is totally sarcastic, the sequence certainly awaits for you xD.
 
 ### Question 2: She posts a selfie with the caption, “So bored, no one asks me out anymore.”
 
@@ -37,9 +41,7 @@ c. “Come on, don’t be bored. Ask your friends out.”
 
 **Answer (Choose a/b/c and explain briefly):**
 
-[Space to write answer]
-
----
+This is easy, she wants you to ask her out. Who else would she expect pick her up other than her boyfriend? Choose (a) everybody, you also want to hang out with your girlfriend, isn't it? (b) is logically right, yeah, but she wants you to make a move! (c) She would just text her friends to plan a hangout. She wants you take the initiative because she's scare of seeming desperate. 
 
 ### Question 3: She says, “Why do you keep checking out other girls on social media?”
 
@@ -51,9 +53,7 @@ c. “It’s just Facebook suggesting stuff randomly.”
 
 **Answer (Choose a/b/c and explain briefly):**
 
-[Space to write answer]
-
----
+If you by chance pause at the 'people you might know' which usually suggests girls, just say (c), it's how the social media's algorithm works. (b) is absolutely a blunder, you're admitting that she's right, which is enough for her to get jealous. If she catch you red-handed on a girl profile zooming in the avatar, you're done xD.
 
 ### Question 4: She asks, “If we ever had a big fight, what would you do?”
 
@@ -65,9 +65,7 @@ c. “I’d figure out who’s right and solve it logically.”
 
 **Answer (Choose a/b/c and explain briefly):**
 
-[Space to write answer]
-
----
+You think (a) and (b) is the same? It's not! You shouldn’t be too close when she’s angry, but you also shouldn’t go too far. For example, if you’re at home, go to another room instead of driving away and be the first to apology. (c) who even cares about logic when they're angry especially a girl?
 
 ### Question 5: She says, “Do you think your ex was pretty?”
 
@@ -79,9 +77,7 @@ c. “She’s okay. What matters is that I chose to be with you.”
 
 **Answer (Choose a/b/c and explain briefly):**
 
-[Space to write answer]
-
----
+This is tough, right? xD The best choice is (a), to make it clear that there’s no longer a place in your life for your ex which (b) and (c) don't have. 
 
 ### Question 6: She asks, “What’s the thing you love most about me?”
 
@@ -93,9 +89,7 @@ c. “I love your smile, and your intelligence and thoughtfulness too.”
 
 **Answer (Choose a/b/c and explain briefly):**
 
-[Space to write answer]
-
----
+As my experience, she wants you to point out particularly one or two things you love about her (c). She knows she's not that perfect and unrealistic. Saying (a) and (c) shows that you don't know exactly what you love about her. Therefore, (b) is a safe choice, just randomly tell her. xD
 
 ### Question 7: She says, “I feel like I’ve gained a bit of weight…”
 
@@ -107,9 +101,7 @@ c. “Don’t worry, I don’t care about that.”
 
 **Answer (Choose a/b/c and explain briefly):**
 
-[Space to write answer]
-
----
+Why does she ask this? Not sure! I don't know. xD There is a way for each situation. If she really gains weight, don't say it directly (b), just bring her out and work out more often together. If she doesn't look overweight, give her to compliment like (a). (c) figuratively means you don't care about her.
 
 ### Question 8: She asks, “Do you ever feel bored being with me?”
 
@@ -121,13 +113,11 @@ c. “Sometimes maybe, but that’s normal, isn’t it?”
 
 **Answer (Choose a/b/c and explain briefly):**
 
-[Space to write answer]
-
----
+I started to be unable ô explain why the question anymore. Hm, this time might be that she need an affirmation. Remember our case is the most sensitive girl, choose (b). In most of the time, a normal girlfriend would be okay with (c). For (b) you need to add "because I don't want my boredom to rub off on you" 
 
 ### Question 9: She says, “I think I need some time to reconsider our relationship.”
 
-a. “I respect that, but I’d like to know why, so we can work on it together.”
+a. “I respect your decision, but I’d like to know why, so we can work on it together.”
 
 b. “What are you saying? Are you trying to break up with me?”
 
@@ -135,9 +125,9 @@ c. “If you need space, I’ll disappear. Talk to me when you’re ready.”
 
 **Answer (Choose a/b/c and explain briefly):**
 
-[Space to write answer]
+To be honest, I would break up with this sensitive girl immediately. In reality, things are more complicated, maybe she's always fine, just today she decides to ask you one of these question. A nice response saves you lots of time! 
 
----
+Back on track, I assume you want to keep the relation ship. Choose (a) without "I respect your decision", you can not hold on to the relationship if she decides to break up. Just belive that everything problem can be solved! (b) is merely giving the bad suggestion for the relation ship. Disapprove!! (c) Hah! Disappear and never go back!! 
 
 ### Question 10: She texts, “I’m going to sleep now, good night.” (She sounds distant)
 
@@ -149,9 +139,7 @@ c. Call her to check in and talk.
 
 **Answer (Choose a/b/c and explain briefly):**
 
-[Space to write answer]
-
----
+She need 
 
 ## Psychological Analysis – Choose the Most Insightful Reaction:
 
