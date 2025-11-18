@@ -24,8 +24,22 @@ export default function Page3() {
       `}</style>
 
       <section id="page3" className="w-full min-h-screen bg-[var(--background)] snap-start font-fredericka box-border relative z-10 flex justify-center items-center p-4">
-        <div className="w-[89vw] flex flex-col items-center">
-          <h1 className="text-[var(--colorthree)] pt-15 text-8xl font-bold mb-8 w-full text-center font-fredericka">OBSESSIONS</h1>
+        <div className="w-[89vw] h-full flex flex-col justify-between items-center pt-16 pb-16">
+          <h1 className="text-[var(--colorthree)] text-8xl font-bold w-full text-center font-fredericka z-10">MERRY CHRISTMAS</h1>
+          
+          {/* Decorations at bottom: Tree in middle with snowman beside */}
+          <div className="flex flex-row items-end justify-center gap-0">
+            <img 
+              src="/snowman.png" 
+              alt="Snowman" 
+              className="max-w-[40%] max-h-[40%] mb-0" 
+            />
+            <img 
+              src="/christmastree.png" 
+              alt="Christmas Tree" 
+              className="max-w-[40%] max-h-[40%] mb-0" 
+            />
+          </div>
         </div>
       </section>
     </>
