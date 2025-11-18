@@ -1,14 +1,65 @@
 ---
-title: Đẹp đẽ
-description: Oh font crashes
+title: Beautiful
+description: Font Crashes
 image: /Generated Image November 18, 2025 - 9_06PM-1763480810754.png
 fullImage: /FinalPicture-v3.00_00_03_07.Still013-1763480819504.png
 id: xrbztiofp
 
 ---
 
-Câu chuyện sau đây có tên là "Đẹp Đẽ".
-Đéo còn gì trên đời đẹp đẽ bằng tình yêu. Người ra so sánh tình yêu với Âm Nhạc, với những nốt buồn u tối, những nốt vui vang lên trong vắt, các nốt đau đột ngột đến từ từ, từng giọt từng giọt rồi nặng hạt dần thành cơn mưa rào, lạnh ngắt. Người ta so sánh tình yêu với hội họa, với những tông vui nhẹ nhàng tươi tắn, những tông buồn ủ ê trầm uất, những tông chói sặc sỡ đến nao lòng. Quả là không ngoa khi Ali 55 Leviticus, em trai của triết gia Ali 44 Leviticus đồng thời cũng là một nhà thơ lớn ở thế kỷ 21, nhận định rằng tình yêu bắt đầu bằng những sợi mì.
+written by: no name
 
-Ôi, những sợi mì, chúng thuôn dài cũng mềm mại, cũng ấm nóng, chúng nằm im trong bát nước dùng, chờ đợi sốt ruột, nôn nao, chúng thèm muốn biết bao việc gã đưa vào miệng, chúng muốn được mơn trớn đầu lưỡi ấy, được tan ra, được hòa quyện, chúng mong mỏi làm sao khoảnh khắc được sưởi ấm cho gã từ bên trong, lấp đầy cho gã những phần còn thiếu, bởi vì chúng cần gã, cũng như gã cần chúng, không có gã, mục đích tồn tại của chúng gần như bằng không, chỉ biết chờ đợi vô vọng trong chuỗi ngày ôi thiu chán ngắt. Không có chúng, thì vào cái buổi khuya này, bụng gã sẽ réo lên liên hồi. Eo ôi, như tiếng chuông báo thức ấy, nghe xong cố ngủ mãi chẳng được.
-Gã chân chân nhìn bát mì và vào cái khoảnh khắc 3 giờ không 4 phút đó, gã cảm thấy khóe mắt cay cay, những dòng lệ trực trào, như mọi con người vẫn còn mơ màng, chẳng biết mình thức hay còn, tỉnh. Một suy nghĩ chợt lóe lên trong đầu gã, làm gã gần như choáng váng bởi độ chói sáng của nó. Ta dùng mì, hay mì dùng ta? Ừ thì, theo các nhà ẩm thực học, theo các nhà hàng, theo gia đình gã theo gần như hầu hết mọi người xung quanh gã nữa, cái câu hỏi ấy nghe vô lý hết sức, bởi mì nấu ra không phải để con người dùng, thì còn làm gì nữa? Nhưng nếu được đàm đạo với triết gia yêu thích của gã, Ali Leviticus, họ sẽ nghĩ khác đi ngay. Đúng là, nấu mì xong thì sớm muộn cũng phải ăn, mà ăn thì còn được gọi là dùng, có khi cũng được kêu là rơi. Nhưng chẳng phải những sợi mì cũng đang dùng gã đó hay sao, chúng mong muốn điều gì sâu thẳm trong gã, chúng cũng cần một điều gì đó lắm chứ, nào phải là không? Sâu thảm ở bên trong, ở dạ dày ấy lại nhớ cái hồi xửa xưa, cách đây 4 tiếng, gã được ăn một bát mì ngon lắm, ngon đến phát khóc, sợi mì không quá dai, không bị bở, nước dùng đậm đà, không quá nhạt, lại không quá mặn, cảm giác giống vừa tìm thấy một người tri kỷ thất lạc giữa dòng đời ào ạt vậy. Chao ôi! Mỗi một húp nước, mỗi một đũa mì lên miệng, tất cả đều như những âu yếm, bát mì thương mến trao gửi gã, là nắm tay, là thì thầm thủ thỉ những lời mật ngọt, là ôm từ phía sau và hát vu vơ trong buổi hẹn đầu, ấm áp lan tỏa không chỉ ở nơi đầu lưỡi, mà nhanh chóng đến cả gương mặt và cơ thể này nữa. Và trước khi gã nhận biết được, những sợi mì đã áp sát gã để xuống nền đất, quấn chặt lấy đôi cổ tay, chúng thỏa mãn gã và cả chính mình, bằng tất cả những gì chúng có, gia vị, nước dùng, cả niềm yêu thương, đừng quên niềm yêu thương thứ mềm mại nóng nóng ấy chui tuột vào bên trong gã, và nghẹn nơi cổ họng là những tiếng reo sung sướng, “nhưng phải giữ im lặng thôi”, bát mì thì thào với gã, “vì người và em là hai kẻ vụng trộm trong đêm”. Gã ôm cả bát mì trọn vào lòng, gã chỉ muốn thêm thêm nữa thôi, sự quyến rũ ấy không ai có thể dứt ra cho được, nhưng bát mì có nghĩ như vậy không? Nó có nghĩ được như vậy không? Than ôi, chưa ăn được bao nhiêu mà đã hết nhãn nước lẫn cái rồi, gã thẫn thờ mãi. Tuy để mất đi một cuộc tình chóng vánh đến như vậy, vụt ngang qua nhau, như đôi kẻ xa lạ trên phố, nhưng hiện tại, chẳng phải gã vẫn còn cả một bát mì khác trước mắt sao? Gã nhìn bát mì, bát mì nhìn lại, giây lát sau, bát mì như một cất tiếng nói: "Em muốn được mì mì chính chính đi vào trong anh". Gã nuốt nước bọt, thọc đũa vào bát, gắp lên một ít, linh cảm cả mách bảo có gì không ổn, nhưng rồi vẫn đưa vào miệng ăn. Đĩ mẹ! Gã cảm thấy bị phản bội. Trước mắt gã đây không phải bát Mì Tri Kỷ của vài tiếng trước. Dẫu rằng cả hai vốn được nấu ra từ cùng một nồi. Không nào có phải là người tình trăm năm, mà đích thị là kẻ thù truyền kiếp. Tên nó là mì. Họ nói là Trương, Trương Thị Mì, gọi nghe Tây một chút thì là Mì Trương. Vãi cả píp! Gã quên bén mất là cái nồi mì này nấu từ hồi 11 giờ, cũng quên béng mất lời ai đó dặn là đừng bao giờ nấu nhiều mì hơn mày có thể ăn, để rồi bây giờ không hề được ăn mì, mà là ăn píp. Và gã vốn dĩ chẳng hề thích píp. Ăn vào một ít đã trực treo dòng lệ, không phải vì sung sướng như khi nãy, mà vì tiếc thương cho cái dạ dày và chiếc lưỡi xấu số của mình. Bình thường không thích, thì có thể không ăn, có thể đổ đi, nhưng đồ lén nấu đổ đi để bị ăn chửi dập mặt à. Không, không được! Thế là gã đành cắn răng chịu đựng, để mở mì trương chui vào trong lòng mình, ve vuốt, hôn hít làm tất cả những điều bình thường gã sẽ chẳng bao giờ để nó làm, vừa ăn gã vừa cố tưởng tượng đến hương vị kiều diễm gã đã nếm mấy tiếng trước, nhưng không thể, vì Trời ơi, đất hỡi, cái thứ này ăn vị còn tệ hơn cả ống hút gạo. Gã cứ như một kẻ cứ tơ tưởng đến nhân tình, trong khi còn đang đầu ấp tay gối với bạn đời, một người bạn đời tồi tệ hết sức, người bạn đời ấy bắt ép gã phải chăm chú vào nó, chỉ mình nó mà thôi. Nó quấn quýt lấy gã bằng một cách mà con gấu sẽ vồ vập miếng mồi tươi ngon của mình. Trời, gã sẽ chết, sẽ chết mất thôi, chứ thế này thì quá sức gã mất rồi. Nhưng dần dà, gã nghĩ mình đã quen với cái vị kỳ quặc của mớ mì ấy, như cô Mị đã chết hẳn trong lòng, do phải sống trong cái khổ quá lâu, phải ăn thế này cũng không sao, miễn là bụng đừng lo thì thôi, vừa nghĩ đến lo, thì thôi, họng gã liền chua chát. Gã chạy vội vào nhà vệ sinh, tất cả chỗ đồ gã vừa ăn trào ngược từ bụng ra hết bồn cầu, xem ra đêm nay lại phải mất ngủ vì đói nữa rồi.
+There’s nothing in this world more beautiful than love. People compare love to Music — sorrowful dark notes, crystal-clear bright ones, and sudden aching tones that fall slowly, drop by drop, then turn into a cold downpour. People compare love to painting — cheerful pastel hues, heavy muted tones, and glaring, heart-wrenching bursts of color. It’s no exaggeration when Ali 55 Leviticus, the younger brother of the philosopher Ali 44 Leviticus, and also a great poet of the 21st century, declared that love begins with noodles.
+
+Ah, noodles. Long, soft, warm. They lie still in a bowl of broth, restless, eager, desperate to be taken into the mouth, caressed by a tongue, to dissolve and merge. They long for the moment they can warm the man from within, filling the empty spaces inside him, because they need him just as much as he needs them. Without him, their very existence becomes pointless — just days of stale waiting. Without them, his stomach would be growling right now, like a cursed alarm clock that won’t let anyone sleep in peace.
+
+He stared blankly at the bowl, and at exactly 3:04 AM, his eyes stung a little. Tears threatened to spill, like any half-conscious human unsure if they were awake or dreaming. A thought flashed in his head like a divine revelation: Do I eat the noodles, or do the noodles eat me? Sure, to chefs, restaurants, and his entire family, that question sounded absurd. Noodles are cooked to be eaten — what else? But if he got to philosophize with his idol Ali Leviticus, the answer would be very different.
+
+Yes, noodles are meant to be eaten. But aren’t they consuming him too? Don’t they crave something inside him as well? Deep down, in that stomach, he remembers a bowl he ate four hours ago. It was delicious to the point of tears. The noodles weren’t too chewy nor mushy, the broth rich but not salty, like finding a long-lost soulmate in the chaos of life.
+
+Every sip of broth, every lift of noodles felt like tender affection — hand-holding, whispered sweet nothings, a hug from behind on a first date. Warmth spread not just on his tongue but across his face, through his entire body. Before he realized it, the noodles had pinned him to the metaphorical ground, wrapped his wrists, and satisfied both him and themselves with all they had — flavor, broth, love — that soft, warm love slipping deep inside him, and the choked moans of delight trying not to escape.
+“Keep quiet,” the bowl whispered.
+“For you and I are lovers stealing a night together.”
+
+He held the bowl tight. He only wanted more. No one can escape such seduction.
+But… did the noodles feel the same?
+
+Alas. He hadn’t even eaten much when the bowl was already empty. A fleeting romance, gone like strangers brushing past each other in a crowd.
+But wait — wasn’t there still another full bowl right there?
+
+They stared at each other.
+A moment later, the noodles spoke:
+“Let me enter you properly.”
+
+He swallowed, picked up his chopsticks, and tasted a bite. His instincts screamed something was wrong, but he ignored them.
+
+And then — betrayal.
+
+This was not the Soulmate Noodle he loved earlier.
+Though both came from the same pot, this one was no lover.
+It was an ancient enemy.
+
+Its name was Noodle. Surname Truong. Truong Thi Noodle.
+Or in a Westernized way: Noodle Truong.
+He cursed.
+He had completely forgotten the pot was cooked at 11 PM, and also forgot the warning: Never cook more than you can eat.
+
+Now he wasn’t eating noodles. He was eating garbage.
+And he hated garbage.
+
+Every bite brought tears not of joy but of grief for his doomed stomach and wounded tongue. Normally, he’d just throw it away. But throwing away secret midnight noodles? He’d be yelled at to death.
+
+So he gritted his teeth and endured, letting Noodle Truong crawl into him, caress and invade places he would never willingly allow. He tried to imagine the beauty of the earlier bowl, but it was impossible — because this tasted worse than edible rice straws.
+
+He was like a man fantasizing about a mistress while being stuck in bed with his awful spouse. The spouse demanded full attention, wrapped around him like a bear mauling its prey.
+He was going to die. He would die. This was too much.
+
+But slowly… he got used to it.
+Like Mị in The Story of A Phởn Wife, whose soul had long died after years of suffering — he convinced himself this was fine. As long as the stomach stays quiet, anything is fine.
+
+The moment he thought of “quiet,” his throat burned.
+He sprinted to the bathroom.
+
+Everything he had just eaten erupted violently out of him and into the toilet.
+
+And so, another sleepless night of hunger awaited.
