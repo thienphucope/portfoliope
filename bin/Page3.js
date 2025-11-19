@@ -1,10 +1,6 @@
 "use client";
 
 export default function Page3() {
-  // You can add state and effects here for obsessions content,
-  // e.g., fetching from GitHub or static data.
-  // For now, placeholder structure matching Page2's style.
-
   return (
     <>
       <style jsx global>{`
@@ -14,33 +10,49 @@ export default function Page3() {
         #page3 {
           font-family: 'Fredericka the Great', cursive;
         }
-
         .font-fredericka {
           font-family: 'Fredericka the Great', cursive;
         }
-
-        /* Add any additional styles for obsessions content here,
-           e.g., similar to Page2's masonry or custom layouts. */
       `}</style>
 
-      <section id="page3" className="w-full min-h-screen bg-[var(--background)] snap-start font-fredericka box-border relative z-10 flex justify-center items-center p-4">
-        <div className="w-[89vw] h-full flex flex-col justify-between items-center pt-16 pb-16">
-          <h1 className="text-[var(--colorthree)] text-8xl font-bold w-full text-center font-fredericka z-10">MERRY CHRISTMAS</h1>
+      {/* Section setup: relative để các con bên trong dùng absolute */}
+      <section id="page3" className="w-full h-screen bg-[var(--background)] snap-start font-fredericka box-border relative overflow-hidden z-10">
+        
+        {/* 1. TEXT: Cố định chính giữa màn hình */}
+        <h1 className="absolute rotate-85 bottom-[19%] left-[65%] -translate-x-1/2 -translate-y-1/2 text-[var(--colorone)] text-xl font-bold z-20 whitespace-nowrap">
+          sauce: erb
+        </h1>
           
-          {/* Decorations at bottom: Tree in middle with snowman beside */}
-          <div className="flex flex-row items-end justify-center gap-0">
-            <img 
-              src="/snowman.png" 
-              alt="Snowman" 
-              className="max-w-[40%] max-h-[40%] mb-0" 
-            />
-            <img 
-              src="/christmastree.png" 
-              alt="Christmas Tree" 
-              className="max-w-[40%] max-h-[40%] mb-0" 
-            />
-          </div>
-        </div>
+        {/* 2. DECORATIONS: Các hình ảnh */}
+        
+        {/* Cây thông: Nằm giữa (left-1/2) và đè lên lớp tuyết một chút */}
+        <img 
+          src="/christmastree.png" 
+          alt="Christmas Tree" 
+          className="absolute bottom-[5%] left-1/2 -translate-x-1/2 w-auto h-[90vh] object-contain z-10" 
+        />
+
+        {/* Người tuyết: Lệch sang phải (left-[70%]) */}
+        <img 
+          src="/snowman.png" 
+          alt="Snowman" 
+          className="absolute bottom-[2%] left-[60%] -translate-x-1/2 w-auto h-[50vh] object-contain z-10" 
+        />
+
+                {/* tất */}
+        <img 
+          src="/sock.png" 
+          alt="Sock" 
+          className="absolute bottom-[25%] left-[43%] -translate-x-1/2 w-auto h-[20vh] object-contain z-10" 
+        />
+
+        {/* 3. LỚP TUYẾT: Nằm dưới cùng */}
+        {/* Dùng rounded-t-[100%] để tạo độ cong như đồi tuyết */}
+        <div className="absolute bottom-0 left-0 w-full h-[10vh] bg-white rounded-t-[100%] z-0"></div>
+        
+        {/* (Tùy chọn) Lớp tuyết phụ để che phần chân màn hình nếu màn hình quá rộng */}
+        <div className="absolute bottom-0 left-0 w-full h-[5vh] bg-white z-0"></div>
+
       </section>
     </>
   );

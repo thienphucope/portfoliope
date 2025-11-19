@@ -102,7 +102,7 @@ export default function Home() {
     }
   }, [updateSnow]);
 
-  const snowflakeCount = 500;
+  const snowflakeCount = 300;
   const snowflakes = useMemo(() => {
     return Array.from({ length: snowflakeCount }).map((_, i) => {
       const randomImage = Math.floor(Math.random() * 3) + 1;
@@ -231,12 +231,12 @@ export default function Home() {
         </div>
         
         {/* Case Archives */}
-        <div className="w-full min-h-screen flex-shrink-0 snap-start relative">
+        <div className="w-full min-h-screen flex-shrink-0 snap-start relative z-11">
           <Page2 />
         </div>
 
         {/* Obsessions */}
-        <div className="w-full min-h-screen flex-shrink-0 snap-start relative">
+        <div className="w-full min-h-screen flex-shrink-0 snap-start relative z-10">
           <Page3 />
         </div>
 
