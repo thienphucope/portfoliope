@@ -1,6 +1,5 @@
 "use client";
 import Page1 from './pages/Page1';
-import Page2 from '../../bin/Page2';
 import Page3 from '../../bin/Page3';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 
@@ -219,7 +218,7 @@ export default function Home() {
         {spotlightEnabled ? '🌙' : '☀️'}
       </button>
 
-      <div ref={scrollRef} className="w-full min-h-screen flex flex-col snap-y snap-mandatory overflow-y-auto no-scrollbar bg-[var(--background)]">
+      <div ref={scrollRef} className="w-full min-h-screen flex flex-col overflow-y-auto no-scrollbar bg-[var(--background)]">
         {/* Snow Effect - Render snowflakes only after mount to avoid hydration mismatch */}
         <div ref={snowRef} className="absolute top-0 left-0 w-full snow-container">
           {mounted && snowflakes}
@@ -228,11 +227,6 @@ export default function Home() {
         {/* Hero Section */}
         <div className="w-full min-h-screen flex-shrink-0 snap-start relative">
           <Page1 />
-        </div>
-        
-        {/* Case Archives */}
-        <div className="w-full min-h-screen flex-shrink-0 snap-start relative z-11">
-          <Page2 />
         </div>
 
         {/* Obsessions */}

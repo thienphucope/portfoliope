@@ -19,7 +19,7 @@ export default function Page3() {
       <section id="page3" className="w-full h-screen bg-[var(--background)] snap-start font-fredericka box-border relative overflow-hidden z-10">
         
         {/* 1. TEXT: Cố định chính giữa màn hình */}
-        <h1 className="absolute rotate-85 bottom-[19%] left-[65%] -translate-x-1/2 -translate-y-1/2 text-[var(--colorone)] text-xl font-bold z-20 whitespace-nowrap">
+        <h1 className="absolute rotate-85 bottom-[19 %] left-[65%] -translate-x-1/2 -translate-y-1/2 text-[var(--colorone)] text-xl font-bold z-20 whitespace-nowrap">
           sauce: erb
         </h1>
           

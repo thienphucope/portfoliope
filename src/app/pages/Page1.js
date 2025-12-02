@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
-import { FaYoutube, FaInstagram, FaGithub, FaEnvelope, FaTwitter, FaArrowDown } from 'react-icons/fa';
+import Link from 'next/link';
+import { FaYoutube, FaInstagram, FaGithub, FaEnvelope, FaTwitter } from 'react-icons/fa';
 
 export default function Page1() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -224,20 +225,6 @@ export default function Page1() {
 
   // Close modal function
   const closeModal = () => setIsModalOpen(false);
-
-  // Scroll to next section (scroll down)
-  const scrollToDown = () => {
-    // Chọn .snap-y để tìm đúng container đang cuộn
-    // Sau đó tìm con trực tiếp (:nth-child(2)) có class .snap-start
-    const page2Container = document.querySelector('.snap-y > .snap-start:nth-child(3)');
-    
-   if (page2Container) {
-      // Yêu cầu trình duyệt cuộn đến phần tử đó một cách mượt mà
-      page2Container.scrollIntoView({ behavior: 'smooth' });
-    } else {
-      console.error("Không tìm thấy container của Page 2!");
-    }
-  };
 
   // Toggle video play/pause
   const togglePlayPause = () => {
@@ -559,12 +546,12 @@ export default function Page1() {
 
             {/* Titles on the right */}
             <div className="flex items-center justify-end gap-6 md:gap-10 text-3xl font-semibold pr-4 md:pr-10 text-[var(--colorone)] font-fredericka">
-                <div 
+                <Link
+                  href="/case"
                   className="hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300 hover:drop-shadow-lg cursor-pointer"
-                  onClick={scrollToDown}
                 >
                   Case Archives
-                </div>
+                </Link>
                 <div 
                   className="hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300 hover:drop-shadow-lg cursor-pointer"
                   onClick={() => setIsStoryOpen(true)}
