@@ -518,10 +518,10 @@ export default function Pop() {
     <>
       <button
         onClick={handleToggleChat}
-        className="fixed top-12 right-5 w-14 h-14 bg-[var(--colortwo)] rounded-full shadow-lg flex items-center justify-center z-50 transition-all duration-300 hover:scale-110"
+        className="fixed top-5 right-5 w-14 h-14 bg-[var(--colortwo)] rounded-full shadow-lg flex items-center justify-center z-50 transition-all duration-300 hover:scale-110"
       >
         <img
-          src="/amelia.webp"
+          src="/thinkingame.jpg"
           alt="Amelia"
           className="w-full h-full object-cover rounded-full"
         />

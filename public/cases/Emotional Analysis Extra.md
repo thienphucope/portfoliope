@@ -1,12 +1,3 @@
----
-title: Emotional Analysis Extra
-description: Another one?
-image: /20250830_0902_Sửa Hình Cho Giống_remix_01k3wb97kmftmam7kxrtcnhwn7.png
-fullImage: /parisiancafe-1762357363148.jpg
-id: 3b71zjnn8
-
----
-
 In writing...
 
 # Review Section

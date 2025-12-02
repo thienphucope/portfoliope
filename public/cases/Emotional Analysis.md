@@ -1,12 +1,3 @@
----
-id: 2
-title: Emotional Analysis
-description: For guys who already have girlfriends... not Ope but I still do :D
-image: /20251011_102021.jpg
-fullImage: /bookstore.jpg
-
----
-
 This trivia was originally written in Vietnamese, but I wanted to share it with everyone interested in understanding Vietnamese girls. I’ve tried my best to preserve the subtle nuances and essence of the original. The Vietnamese version is included at the bottom.
 
 Vietnamese girls sometimes come up with so tough questions for their boyfriends which are so sudden for the boy to come up with the RIGHT response. They're likely to screw things up and upset their girlfriend. My following analysis will help you understand the meaning behind those questions and choose the optimal responses to make your girlfriend or your future girlfriend relieved. However, some questions are totally unreasonable, you can definitely come back and EDUCATE not PLEASE her depending on how your relationship going and how dominant you are on the relationship.

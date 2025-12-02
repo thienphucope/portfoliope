@@ -1,12 +1,3 @@
----
-title: Ultimate Mad Gab List
-description: Answer not included, find it yourself xD
-image: /duck-1763093563887.gif
-fullImage: /duckgarden-1763093570355.jpg
-id: wgis4c388
-
----
-
 ## 1. Easel Aid Ease Man - E.g: He is a lady man :D
 
 ## 2. Know Sayer

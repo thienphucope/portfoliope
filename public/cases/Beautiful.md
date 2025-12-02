@@ -1,12 +1,3 @@
----
-title: Beautiful
-description: Font Crashes
-image: /Generated Image November 18, 2025 - 9_06PM-1763480810754.png
-fullImage: /FinalPicture-v3.00_00_03_07.Still013-1763480819504.png
-id: xrbztiofp
-
----
-
 written by: no name
 
 There’s nothing in this world more beautiful than love. People compare love to Music — sorrowful dark notes, crystal-clear bright ones, and sudden aching tones that fall slowly, drop by drop, then turn into a cold downpour. People compare love to painting — cheerful pastel hues, heavy muted tones, and glaring, heart-wrenching bursts of color. It’s no exaggeration when Ali 55 Leviticus, the younger brother of the philosopher Ali 44 Leviticus, and also a great poet of the 21st century, declared that love begins with noodles.
