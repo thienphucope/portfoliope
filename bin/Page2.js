@@ -71,7 +71,7 @@ const MarkdownViewer = ({ content, onLinkClick }) => {
   return <div ref={containerRef} className="markdown-body" onClick={onLinkClick} />;
 };
 
-// --- COMPONENT CÂY THƯ MỤC (KHÔNG ĐỔI) ---
+// --- COMPONENT CÂY THƯ MỤC (ĐÃ SỬA) ---
 const FileSystemItem = ({ item, level = 0, onSelectFile }) => {
   const [isOpen, setIsOpen] = useState(false);
   const paddingLeft = `${level * 12}px`;
@@ -98,7 +98,8 @@ const FileSystemItem = ({ item, level = 0, onSelectFile }) => {
           ) : <span className="spacer"></span>}
         </span>
         <span className={`item-name ${item.kind === 'directory' ? 'font-bold' : ''}`}>
-          {item.name}
+          {/* Sửa ở đây: replace đuôi .md thành chuỗi rỗng */}
+          {item.name.replace('.md', '')}
         </span>
       </div>
       {item.kind === 'directory' && isOpen && item.children && (
@@ -222,12 +223,12 @@ export default function RedMathVault() {
       </main>
 
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap');
 
         :root {
-          --bg-color: var(--background);
-          --text-red: #8a0000;
-          --bright-red: #ff0000;
+          --bg-color: var(--colortwo);
+          --text-red: var(--colorone);
+          --bright-red: #ffffff;
           --sidebar-width: 300px;
         }
 
@@ -242,7 +243,8 @@ export default function RedMathVault() {
           background-color: transparent !important;
           color: var(--text-red) !important;
           font-family: 'Crimson Text', serif !important;
-          font-size: 20px; line-height: 1.7; width: 100%;
+          font-size: 25px; line-height: 2.0; width: 100%;
+          text-align: justify;
         }
 
         .brand, .page-title, .tree-item, .item-name {
@@ -251,15 +253,15 @@ export default function RedMathVault() {
 
         /* Giữ nguyên toàn bộ style còn lại... */
         .app-container { position: relative; min-height: 100vh; width: 100vw; }
-        .sidebar { position: fixed; top: 0; left: 0; height: 100vh; width: var(--sidebar-width); display: flex; flex-direction: column; z-index: 1000; background: #d2e3eeff; }
-        .sidebar-header { padding: 30px 10px; text-align: center;}
+        .sidebar { position: fixed; top: 0; left: 0; height: 100vh; width: var(--sidebar-width); display: flex; flex-direction: column; z-index: 1000; background: var(--colortwo); }
+        .sidebar-header { padding: 40px 30px; text-align: left;}
         .brand { font-size: 20px; letter-spacing: 2px; }
-        .file-tree-scroll { flex: 1; overflow-y: auto; padding: 10px 20px; }
+        .file-tree-scroll { flex: 1; overflow-y: auto; padding: 10px 10px; }
         .file-tree-scroll::-webkit-scrollbar { width: 4px; }
         .file-tree-scroll::-webkit-scrollbar-thumb { background: var(--text-red); border-radius: 2px; }
         .loading-msg { text-align: center; margin-top: 20px; opacity: 0.6; }
-        .tree-item { display: flex; align-items: center; cursor: pointer; font-size: 15px; padding: 8px 0; color: var(--text-red); opacity: 0.8; transition: opacity 0.2s; }
-        .tree-item:hover { opacity: 1; color: var(--bright-red); }
+        .tree-item { display: flex; align-items: left; cursor: pointer; font-size: 20px; padding: 8px 0px; color: var(--text-red); opacity: 0.8; transition: opacity 0.2s; }
+        .tree-item:hover { opacity: 1; color: #ffffff; }
         .arrow-wrapper { width: 20px; display: flex; justify-content: center; }
         .spacer { width: 20px; }
         .item-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -268,10 +270,34 @@ export default function RedMathVault() {
         .content-wrapper { width: 90%; max-width: 900px; padding-top: 30px; padding-bottom: 100px; }
         .page-title { font-size: 3rem; font-weight: 600; margin-bottom: 40px; color: var(--text-red); text-align: center; }
         .markdown-body p, .markdown-body ul, .markdown-body ol { margin-bottom: 1em; }
-        .markdown-body table { display: block; overflow-x: auto; white-space: nowrap; width: 100%; margin: 1.5em 0; border-collapse: collapse; }
-        .markdown-body td, .markdown-body th { border: 1px solid var(--text-red) !important; padding: 12px 16px; color: var(--text-red) !important; min-width: 100px; }
-        .markdown-body th { font-weight: 600; border-bottom: 2px solid var(--text-red) !important; }
+        /* Gộp chung vào một chỗ cho dễ quản lý */
+
+        /* 1. Cấu trúc bảng */
+        .markdown-body table { 
+          display: table !important; 
+          width: 100% !important; 
+          margin: 0em 0 !important; /* Margin nhỏ */
+          border-collapse: collapse;  /* Gộp viền lại để xử lý cho dễ */
+          border: none !important;    /* Xóa viền khung ngoài */
+        }
+
+        /* 2. Các ô bên trong (Nơi chứa các đường kẻ thực sự) */
+        .markdown-body table td, 
+        .markdown-body table th { 
+          border: none !important;    /* QUAN TRỌNG: Xóa đường kẻ giữa các ô */
+          padding: 0px 15px;          /* Thu nhỏ padding lại chút cho gọn */
+          line-height: 1.4 !important;
+          vertical-align: top;
+        }       
+        
         .markdown-body img { max-width: 100%; height: auto; display: block; margin: 20px auto; }
+        .markdown-body h1 { font-size: 2.0em !important; margin-bottom: 0.2em !important;} /* Tương đương 2.2 x 25px = 55px */
+        .markdown-body h2 { font-size: 1.8em !important; margin-bottom: 0.2em !important;} /* Tương đương 1.8 x 25px = 45px */
+        .markdown-body h3 { font-size: 1.5em !important; margin-bottom: 0.2em !important;} /* Tương đương 1.5 x 25px = 37.5px */
+        .markdown-body h4 { font-size: 1.25em !important; margin-bottom: 0.2em !important;}
+        .markdown-body h5 { font-size: 1.1em !important; margin-bottom: 0.2em !important;}
+        .markdown-body h6 { font-size: 1em !important; margin-bottom: 0.2em !important;}
+        .markdown-body b {font-bold !important;}
         .video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; margin: 20px 0; background: rgba(0,0,0,0.05); }
         .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
         .markdown-body a { color: var(--bright-red) !important; text-decoration: none; border: none !important; }

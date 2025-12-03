@@ -31,7 +31,7 @@ export default function Page1() {
   const pronunciationRef = useRef(null);
 
   // You can change this value in the code to scale the image
-  const imageScale = 1.75;
+  const imageScale = 2.1;
 
   const padChar = '\u00A0';
 
@@ -502,7 +502,7 @@ export default function Page1() {
         </div>
       )}
       <div id="youtube-player" style={{ display: 'none' }}></div>
-      <div className={`w-[80vw] h-[90vh] bg-[var(--colortwo)] rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] text-gray-800 transition-opacity duration-1000 relative ${isIntroStarted ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`w-[80vw] h-[90vh] bg-[var(--colortwo)] rounded-2xl shadow-[0_25px_30px_-12px_rgba(0,0,0,0.7)] text-gray-800 transition-opacity duration-1000 relative ${isIntroStarted ? 'opacity-100' : 'opacity-0'}`}>
         <svg className="absolute w-0 h-0 opacity-0 pointer-events-none" aria-hidden="true">
           <defs>
             <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -564,7 +564,7 @@ export default function Page1() {
         {/* Image - z-10 */}
         <div className="absolute bottom-0 left-0 h-1/2 z-10">
             <img
-                src="/watsoncrop.png"
+                src="/realope.png"
                 alt="Portrait of Subject"
                 className="h-full w-auto"
                 style={{
@@ -577,7 +577,7 @@ export default function Page1() {
 
         {/* Introduction - z-0 default */}
         {!isStoryOpen && (
-          <div className="absolute top-1/2 -translate-y-1/2 right-4 md:right-10 w-4/9 text-justify z-0 font-fredericka">
+          <div className="absolute top-1/2 -translate-y-1/2 right-4 md:right-10 w-4/9 text-justify z-0 font-bold font-fredericka">
               <h2
                   className="block w-full text-right text-7xl md:text-8xl text-[var(--colorone)] font-bold mb-2 font-fredericka hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300"
                   ref={titleRef}
@@ -611,11 +611,11 @@ export default function Page1() {
 
         {/* Story Overlay */}
         {isStoryOpen && (
-          <div className="absolute top-[80px] rounded-2xl left-0 right-0 bottom-0 bg-[var(--colortwo)] z-[30] p-8 flex flex-col font-fredericka">
+          <div className="absolute top-[80px] rounded-xl left-0 right-0 bottom-0 bg-[var(--colortwo)] z-[30] p-8 flex flex-col font-fredericka">
             <textarea
               value={storyText}
               onChange={(e) => setStoryText(e.target.value)}
-              className="flex-1 font-serif text-xl pt-5 leading-[1.6] text-gray-400 bg-transparent border-none outline-none resize-none overflow-y-auto no-scrollbar text-justify focus:text-[var(--colorone)]"
+              className="flex-1 font-serif text-xl pt-5 leading-[1.6] text-white bg-transparent border-none outline-none resize-none overflow-y-auto no-scrollbar text-justify focus:text-[var(--colorone)]"
               placeholder={DEFAULT_STORY_TEXT} // Sử dụng constant ở đây
             />
             <div className="flex justify-end gap-4 mt-4">

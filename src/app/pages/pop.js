@@ -8,7 +8,7 @@ export default function Pop() {
   const [inputValue, setInputValue] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [convo, setConvo] = useState([
-    { role: 'assistant', content: "Hello, I'm Amelia, Ope Watson's assistant. Ask me anything – I can even share Ope Watson's secrets!" }
+    { role: 'assistant', content: "Hello, I'm Amelia. Ask me anything – I can even share Ope Watson's secrets!" }
   ]);
   const [streamingText, setStreamingText] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
@@ -518,10 +518,10 @@ export default function Pop() {
     <>
       <button
         onClick={handleToggleChat}
-        className="fixed top-5 right-5 w-14 h-14 bg-[var(--colortwo)] rounded-full shadow-lg flex items-center justify-center z-50 transition-all duration-300 hover:scale-110"
+        className="fixed top-5 right-5 w-14 h-14 rounded-full shadow-lg flex items-center justify-center z-50 transition-all duration-300 hover:scale-110"
       >
         <img
-          src="/thinkingame.jpg"
+          src="/printer.png"
           alt="Amelia"
           className="w-full h-full object-cover rounded-full"
         />

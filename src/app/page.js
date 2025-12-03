@@ -56,7 +56,7 @@ export default function Home() {
       flakes.forEach((flake) => {
         const startTop = Math.random() * -scrollHeight;
         flake.style.top = `${startTop}px`;
-        const baseFallDuration = Math.random() * 2 + 48; // More variation: 8-23s base
+        const baseFallDuration = Math.random() * 100 + 48; // More variation: 8-23s base
         const fallDuration = baseFallDuration * numScreens;
         flake.style.setProperty('--fall-duration', `${fallDuration}s`);
       });
@@ -101,7 +101,7 @@ export default function Home() {
     }
   }, [updateSnow]);
 
-  const snowflakeCount = 300;
+  const snowflakeCount = 200;
   const snowflakes = useMemo(() => {
     return Array.from({ length: snowflakeCount }).map((_, i) => {
       const randomImage = Math.floor(Math.random() * 3) + 1;
