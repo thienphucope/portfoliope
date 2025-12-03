@@ -253,7 +253,7 @@ export default function RedMathVault() {
 
         /* Giữ nguyên toàn bộ style còn lại... */
         .app-container { position: relative; min-height: 100vh; width: 100vw; }
-        .sidebar { position: fixed; top: 0; left: 0; height: 100vh; width: var(--sidebar-width); display: flex; flex-direction: column; z-index: 1000; background: var(--colortwo); }
+        .sidebar { position: fixed; top: 0; left: 0; height: 100vh; width: var(--sidebar-width); display: flex; flex-direction: column; z-index: 1000; background: #641932; }
         .sidebar-header { padding: 40px 30px; text-align: left;}
         .brand { font-size: 20px; letter-spacing: 2px; }
         .file-tree-scroll { flex: 1; overflow-y: auto; padding: 10px 10px; }
