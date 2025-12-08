@@ -101,13 +101,13 @@ export default function Home() {
     }
   }, [updateSnow]);
 
-  const snowflakeCount = 200;
+  const snowflakeCount = 100;
   const snowflakes = useMemo(() => {
     return Array.from({ length: snowflakeCount }).map((_, i) => {
       const randomImage = Math.floor(Math.random() * 3) + 1;
       const swayDuration = Math.random() * 10 + 16; // 6-10s
       const swayAmplitude = Math.random() * 10 - 10; // -10 to 10px
-      const size = Math.random() * 200 + 100; // 10-310px
+      const size = Math.random() * 10 + 100; // 10-310px
       const rotationDuration = Math.random() * 3 + 10; // 4-12s for gentle spin
       const rotationDirection = Math.random() > 0.5 ? 1 : -1; // Random direction
       const style = {

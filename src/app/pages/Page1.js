@@ -42,7 +42,7 @@ export default function Page1() {
   const replacementTextPadded = replacementText + padChar.repeat(textMaxLen - replacementText.length);
 
   const originalTitle = "Ope Watson";
-  const replacementTitle = "No Touch!";
+  const replacementTitle = "No Touchin!";
   const titleMaxLen = Math.max(originalTitle.length, replacementTitle.length);
   const originalTitlePadded = originalTitle + padChar.repeat(titleMaxLen - originalTitle.length);
   const replacementTitlePadded = replacementTitle + padChar.repeat(titleMaxLen - replacementTitle.length);
