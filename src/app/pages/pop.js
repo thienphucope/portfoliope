@@ -8,7 +8,7 @@ export default function Pop() {
   const [inputValue, setInputValue] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [convo, setConvo] = useState([
-    { role: 'assistant', content: "Xin chào, tớ là Thiên. Cậu cần tớ giúp gì không?" }
+    { role: 'assistant', content: "Xin chào, tớ là Thiên. Cậu cần tớ giúp gì không? (testing vi tts feature - sound jumpscare alert)" }
   ]);
   const [streamingText, setStreamingText] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
