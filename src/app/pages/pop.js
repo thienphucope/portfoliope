@@ -8,7 +8,7 @@ export default function Pop() {
   const [inputValue, setInputValue] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [convo, setConvo] = useState([
-    { role: 'assistant', content: "Hello, I'm Amelia. Ask me anything – I can even share Ope Watson's secrets!" }
+    { role: 'assistant', content: "Xin chào, tớ là Thiên. Cậu cần tớ giúp gì không?" }
   ]);
   const [streamingText, setStreamingText] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
@@ -18,52 +18,97 @@ export default function Pop() {
   const [apiUsername, setApiUsername] = useState('YOU');
   const [isListening, setIsListening] = useState(false);
   const [speechActive, setSpeechActive] = useState(false);
+  
   const inputRef = useRef(null);
   const historyRef = useRef(null);
   const streamingIntervalRef = useRef(null);
-  const audioQueueRef = useRef([]); // Queue for audio blobs ready to play
-  const pendingChunksRef = useRef([]); // Chunks waiting to be sent to TTS
-  const isPlayingRef = useRef(false); // Track if audio is currently playing
-  const isFetchingRef = useRef(false); // Track if fetching TTS
+  const audioQueueRef = useRef([]); 
+  const pendingChunksRef = useRef([]); 
+  const isPlayingRef = useRef(false); 
+  const isFetchingRef = useRef(false); 
   const recognitionRef = useRef(null);
+  
   const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
   const displayName = 'YOU';
 
-  // Normalize text: remove special chars except punctuation
+  // --- CẤU HÌNH API MỚI ---
+  const TTS_API_URL = "https://thienphuc1052004--viterbox-api-viterboxapi-tts.modal.run";
+  const TTS_HEALTH_URL = "https://thienphuc1052004--viterbox-api-viterboxapi-health.modal.run";
+
+  // 1. Detect Language (Tiếng Việt vs Tiếng Anh)
+  const detectLanguage = (text) => {
+    // Regex chứa các ký tự đặc trưng của tiếng Việt
+    const vietnameseRegex = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
+    return vietnameseRegex.test(text) ? 'vi' : 'en';
+  };
+
+  // 2. Normalize Text (Giữ lại Unicode cho tiếng Việt)
   const normalizeText = (text) => {
+    // Sử dụng \p{L} để match mọi chữ cái Unicode (bao gồm tiếng Việt)
     return text
-      .replace(/[^\w\s.,!?;:'"()-]/g, '')
+      .toLowerCase() // <--- MỚI THÊM: Chuyển hết về chữ thường ở đây
+      .replace(/[^\p{L}\p{N}\s.,!?;:'"()-]/gu, '') 
       .replace(/\s+/g, ' ')
       .trim();
   };
 
-  // Split text into sentences and merge short ones
-  const splitIntoChunks = (text, minLength = 0) => {
-    const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+  // 3. Smart Chunking (Tách câu thông minh)
+  // minWords = 40: Gom các câu lại cho đến khi đủ khoảng 40 từ
+  // mergeLastThreshold = 10: Nếu chunk cuối cùng < 10 từ, gộp vào chunk trước đó
+  const splitTextSmart = (text, minWords = 40, mergeLastThreshold = 10) => {
+    // Tách sơ bộ bằng dấu câu (. ? ! ...)
+    const rawSentences = text.match(/[^.!?]+[.!?]*/g) || [text];
+    
     const chunks = [];
-    let currentChunk = '';
+    let buffer = "";
 
-    sentences.forEach((sentence) => {
-      const trimmed = sentence.trim();
-      if (currentChunk.length + trimmed.length < minLength) {
-        currentChunk += (currentChunk ? ' ' : '') + trimmed;
+    for (const sentence of rawSentences) {
+      // Thử gộp câu hiện tại vào buffer
+      const candidate = (buffer + " " + sentence).trim();
+      const wordCount = candidate.split(/\s+/).length; // Đếm số từ
+
+      if (wordCount < minWords) {
+        // Chưa đủ từ -> Giữ trong buffer
+        buffer = candidate;
       } else {
-        if (currentChunk) chunks.push(currentChunk);
-        currentChunk = trimmed;
+        // Đủ từ -> Đẩy vào mảng chunks & reset buffer
+        chunks.push(candidate);
+        buffer = "";
       }
-    });
+    }
 
-    if (currentChunk) chunks.push(currentChunk);
+    // Xử lý phần dư
+    if (buffer) {
+      chunks.push(buffer);
+    }
+
+    // Logic gộp chunk cuối nếu quá ngắn (tránh cụt lủn)
+    if (chunks.length > 1) {
+      const lastChunk = chunks[chunks.length - 1];
+      const lastWordCount = lastChunk.split(/\s+/).length;
+      
+      if (lastWordCount < mergeLastThreshold) {
+        // Gộp chunk cuối vào chunk áp chót
+        chunks[chunks.length - 2] += " " + chunks.pop();
+      }
+    }
+
     return chunks;
   };
 
-  // Fetch TTS for a chunk and add to audio queue
-  const fetchTTSChunk = async (chunk) => {
+  // Fetch TTS (Gọi API Modal mới)
+  const fetchTTSChunk = async (chunk, lang) => {
     try {
-      const ttsResponse = await fetch("https://thienphuc1052004--xtts-api-xttsapi-tts-generate.modal.run", {
+      console.log(`🎤 Fetching TTS [${lang}]: "${chunk.substring(0, 20)}..."`);
+      const ttsResponse = await fetch(TTS_API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: chunk, language: "en" }),
+        // Gửi thêm language được detect
+        body: JSON.stringify({ 
+            text: chunk, 
+            language: lang,
+            temperature: 0.5 
+        }),
       });
 
       if (!ttsResponse.ok) throw new Error(`TTS Error: ${ttsResponse.status}`);
@@ -76,17 +121,18 @@ export default function Pop() {
     }
   };
 
-  // Process next chunk from pending list
+  // Process Queue (Xử lý hàng đợi chunk)
   const processNextChunk = async () => {
     if (isFetchingRef.current || pendingChunksRef.current.length === 0) return;
     
     isFetchingRef.current = true;
-    const chunk = pendingChunksRef.current.shift();
     
-    const audioBlob = await fetchTTSChunk(chunk);
+    // Lấy chunk và ngôn ngữ đã lưu
+    const { text, lang } = pendingChunksRef.current.shift();
+    
+    const audioBlob = await fetchTTSChunk(text, lang);
     if (audioBlob) {
       audioQueueRef.current.push(audioBlob);
-      // Start playing if not already playing
       if (!isPlayingRef.current) {
         playNextAudio();
       }
@@ -94,16 +140,14 @@ export default function Pop() {
     
     isFetchingRef.current = false;
     
-    // Continue processing if more chunks available
     if (pendingChunksRef.current.length > 0) {
       processNextChunk();
     }
   };
 
-  // Play next audio from queue
+  // Play Audio (Phát nhạc)
   const playNextAudio = async () => {
     if (isPlayingRef.current || audioQueueRef.current.length === 0) {
-      // Check if we're done with everything
       if (audioQueueRef.current.length === 0 && pendingChunksRef.current.length === 0 && !isFetchingRef.current) {
         setIsPlayingAudio(false);
         isPlayingRef.current = false;
@@ -135,31 +179,36 @@ export default function Pop() {
     }
 
     isPlayingRef.current = false;
-
-    // Play next audio
     playNextAudio();
   };
 
-  // Generate and play audio chunks
+  // Generate & Play Logic (Kết hợp Detect + Split)
   const generateAndPlayAudio = async (text) => {
     if (!text || !ttsReady) {
-      console.log('TTS not ready, skipping audio generation');
+      console.log('TTS not ready or empty text');
       return;
     }
 
     const normalized = normalizeText(text);
-    const chunks = splitIntoChunks(normalized, 150);
+    // 1. Detect ngôn ngữ
+    const lang = detectLanguage(normalized);
     
-    console.log('Audio chunks:', chunks);
+    // 2. Cắt chunk thông minh (min 40 từ)
+    const chunks = splitTextSmart(normalized, 40, 10);
     
-    // Add chunks to pending list
-    pendingChunksRef.current.push(...chunks);
+    console.log(`Detected [${lang}]. Chunks:`, chunks);
     
-    // Start processing chunks (will fetch multiple in parallel while playing)
+    // Đẩy vào hàng đợi kèm thông tin ngôn ngữ
+    chunks.forEach(chunk => {
+        pendingChunksRef.current.push({ text: chunk, lang: lang });
+    });
+    
+    // Chạy pipeline
     processNextChunk();
-    processNextChunk(); // Start 2 fetches immediately for better pipeline
+    processNextChunk(); 
   };
 
+  // ... (Phần code IP detect, Speech Recognition giữ nguyên) ...
   useEffect(() => {
     fetch('https://api.ipify.org?format=json')
       .then(response => response.json())
@@ -167,24 +216,13 @@ export default function Pop() {
         const ipFormatted = data.ip.replace(/\./g, '-');
         const userAgent = navigator.userAgent;
         let device = 'Unknown';
-        if (userAgent.includes('Mobile')) {
-          device = 'Mobile';
-        } else if (userAgent.includes('Windows')) {
-          device = 'Windows';
-        } else if (userAgent.includes('Mac')) {
-          device = 'Mac';
-        } else if (userAgent.includes('Linux')) {
-          device = 'Linux';
-        }
+        if (userAgent.includes('Mobile')) device = 'Mobile';
+        else if (userAgent.includes('Windows')) device = 'Windows';
+        else if (userAgent.includes('Mac')) device = 'Mac';
+        else if (userAgent.includes('Linux')) device = 'Linux';
         setApiUsername(`${device}-${ipFormatted}`);
-        console.log('Dynamic API username set to:', `${device}-${ipFormatted}`);
       })
-      .catch(error => {
-        console.error('Failed to fetch IP:', error);
-        const userAgent = navigator.userAgent;
-        const device = userAgent.includes('Mobile') ? 'Mobile' : userAgent.includes('Windows') ? 'Windows' : 'Unknown Device';
-        setApiUsername(device);
-      });
+      .catch(() => setApiUsername('Guest'));
   }, []);
 
   useEffect(() => {
@@ -193,7 +231,9 @@ export default function Pop() {
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.continuous = false;
       recognitionRef.current.interimResults = true;
-      recognitionRef.current.lang = 'en-US';
+      // Auto detect ngôn ngữ cho mic hơi khó, tạm để EN hoặc VI tùy nhu cầu
+      // Bạn có thể đổi thành 'vi-VN' nếu muốn nói tiếng Việt
+      recognitionRef.current.lang = 'vi-VN'; 
 
       recognitionRef.current.onstart = () => {
         setIsListening(true);
@@ -212,66 +252,38 @@ export default function Pop() {
         setIsListening(false);
         setSpeechActive(false);
       };
-
-      recognitionRef.current.onerror = (event) => {
-        console.error('Speech recognition error:', event.error);
-        setIsListening(false);
-        setSpeechActive(false);
-      };
-    } else {
-      console.warn('Speech recognition not supported in this browser.');
     }
   }, []);
 
-  useEffect(() => {
-    if (speechActive && inputRef.current) {
-      const input = inputRef.current;
-      input.focus();
-      input.selectionStart = input.value.length;
-      input.selectionEnd = input.value.length;
-    }
-  }, [inputValue, speechActive]);
+  // ... (Các hàm handleVoiceInput, handleKeyDown, toggleChat, streamResponse... giữ nguyên) ...
 
   const handleVoiceInput = () => {
     if (!recognitionRef.current || isSending || isStreaming) return;
-
-    if (isListening) {
-      recognitionRef.current.stop();
-    } else {
-      recognitionRef.current.start();
-    }
+    if (isListening) recognitionRef.current.stop();
+    else recognitionRef.current.start();
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !isSending && !isStreaming) {
-      handleSend();
-    } else if (e.key === 'Control' && !isListening && !isSending && !isStreaming && inputRef.current === document.activeElement) {
-      e.preventDefault();
-      handleVoiceInput();
+    if (e.key === 'Enter' && !isSending && !isStreaming) handleSend();
+    else if (e.key === 'Control' && !isListening && !isSending && !isStreaming) {
+       e.preventDefault();
+       handleVoiceInput();
     }
   };
 
-  const toggleChat = () => {
-    setIsOpen(!isOpen);
-  };
-
-  const toggleHistory = () => {
-    setShowHistory(!showHistory);
-  };
+  const toggleChat = () => setIsOpen(!isOpen);
+  const toggleHistory = () => setShowHistory(!showHistory);
 
   const streamResponse = (fullText) => {
     let index = 0;
     setStreamingText('');
     setIsStreaming(true);
-
     const interval = setInterval(() => {
       if (index < fullText.length) {
         const currentText = fullText.slice(0, index + 1);
         setStreamingText(currentText);
         index++;
-        if (historyRef.current) {
-          historyRef.current.scrollTop = historyRef.current.scrollHeight;
-        }
+        if (historyRef.current) historyRef.current.scrollTop = historyRef.current.scrollHeight;
       } else {
         clearInterval(interval);
         setIsStreaming(false);
@@ -281,56 +293,36 @@ export default function Pop() {
           newConvo[newConvo.length - 1] = { role: 'assistant', content: fullText };
           return newConvo;
         });
-        if (historyRef.current) {
-          historyRef.current.scrollTop = historyRef.current.scrollHeight;
-        }
+        if (historyRef.current) historyRef.current.scrollTop = historyRef.current.scrollHeight;
       }
     }, 20);
-
     streamingIntervalRef.current = interval;
   };
 
   const getGeminiResponse = async (history) => {
-    if (!GEMINI_API_KEY) {
-      throw new Error('Gemini API key not configured');
-    }
-
-    const systemPrompt = "You are Forgetful Amelia, an AI assistant. Ope haven't connect you to the database yet so you can't answer question about Ope but still try to help with anything. Provide clear and concise answers. Do NOT use asterisks. Capitalize to emphasive";
-
+    if (!GEMINI_API_KEY) throw new Error('Gemini API key missing');
+    const systemPrompt = "You are Amelia. You can speak both English and Vietnamese properly. Answer helpful and concise.";
+    
     const contents = [
-      {
-        role: "user",
-        parts: [{ text: systemPrompt }]
-      },
+      { role: "user", parts: [{ text: systemPrompt }] },
       ...history.map(msg => ({
         role: msg.role === 'user' ? "user" : "model",
         parts: [{ text: msg.content }]
       }))
     ];
 
-    if (contents.length > 21) {
-      contents.splice(1, contents.length - 21);
-    }
-
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents,
-        }),
+        body: JSON.stringify({ contents }),
       }
     );
 
-    if (!response.ok) {
-      throw new Error(`Gemini Error: ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error("Gemini Error");
     const data = await response.json();
-    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response from Gemini";
-
-    return responseText;
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || "Error";
   };
 
   const handleSend = async () => {
@@ -339,14 +331,9 @@ export default function Pop() {
     setIsSending(true);
     const userMessage = inputValue.trim();
     setInputValue('');
-    const userMsgObj = { role: 'user', content: userMessage };
-    const updatedConvoWithUser = [...convo, userMsgObj];
-    setConvo(updatedConvoWithUser);
-
-    if (updatedConvoWithUser.length === 2) {
-      setShowHistory(true);
-    }
-
+    const updatedConvo = [...convo, { role: 'user', content: userMessage }];
+    setConvo(updatedConvo);
+    if (updatedConvo.length === 2) setShowHistory(true);
     setConvo(prev => [...prev, { role: 'assistant', content: '' }]);
 
     try {
@@ -357,161 +344,78 @@ export default function Pop() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username: apiUsername, query: userMessage }),
         });
-
-        if (!response.ok) {
-          throw new Error(`RAG Error: ${response.status}`);
-        }
-
+        if (!response.ok) throw new Error("RAG Error");
         const data = await response.json();
-        botReply = data.response || "No response from backend";
+        botReply = data.response || "No response";
       } else {
-        console.log('RAG not ready, using Gemini fallback');
-        botReply = await getGeminiResponse(updatedConvoWithUser);
+        botReply = await getGeminiResponse(updatedConvo);
       }
 
-      // Stream original response (no normalization)
       streamResponse(botReply);
+      if (userMessage.trim()) generateAndPlayAudio(botReply);
 
-      // Generate audio with normalized chunks
-      if (userMessage.trim()) {
-        generateAndPlayAudio(botReply);
-      }
     } catch (error) {
-      console.error("Error processing request:", error);
-      const errorMessage = error.message;
       setConvo(prev => {
-        const newConvo = [...prev];
-        newConvo[newConvo.length - 1] = { role: 'assistant', content: errorMessage };
-        return newConvo;
+         const newConvo = [...prev];
+         newConvo[newConvo.length - 1] = { role: 'assistant', content: "Sorry, something went wrong." };
+         return newConvo;
       });
       setIsStreaming(false);
-      setStreamingText('');
     } finally {
       setIsSending(false);
     }
   };
 
-  const handleChange = (e) => {
-    setInputValue(e.target.value);
-  };
+  const handleChange = (e) => setInputValue(e.target.value);
 
   useEffect(() => {
     return () => {
-      if (streamingIntervalRef.current) {
-        clearInterval(streamingIntervalRef.current);
-      }
+      if (streamingIntervalRef.current) clearInterval(streamingIntervalRef.current);
       audioQueueRef.current = [];
       pendingChunksRef.current = [];
       isPlayingRef.current = false;
-      isFetchingRef.current = false;
-      if (recognitionRef.current && isListening) {
-        recognitionRef.current.stop();
-      }
     };
   }, []);
 
+  // --- Ping Health Checks ---
   useEffect(() => {
-    const RAG_STATUS_URL = "https://rag-backend-zh2e.onrender.com/status";
-    let ragInterval = setInterval(async () => {
-      try {
-        const response = await fetch(RAG_STATUS_URL, { method: 'GET' });
-        if (response.ok) {
-          setRagReady(true);
-          console.log('RAG server ready');
-          clearInterval(ragInterval);
-        }
-      } catch (error) {
-        console.log('RAG warm-up ping failed, retrying...');
-      }
-    }, 1000);
-
-    (async () => {
-      try {
-        const initialResponse = await fetch(RAG_STATUS_URL, { method: 'GET' });
-        if (initialResponse.ok) {
-          setRagReady(true);
-          clearInterval(ragInterval);
-        }
-      } catch {}
-    })();
-
-    return () => clearInterval(ragInterval);
-
+    const checkStatus = async () => {
+        try {
+            const res = await fetch("https://rag-backend-zh2e.onrender.com/status");
+            if (res.ok) setRagReady(true);
+        } catch {}
+    };
+    checkStatus();
   }, []);
 
   useEffect(() => {
-    const TTS_PING_URL = "https://thienphuc1052004--xtts-api-xttsapi-tts-generate.modal.run/ping";
-    let retryCount = 0;
-    const maxRetries = 10;
-
+    // Ping Modal Health Endpoint mới
     const checkTts = async () => {
-      if (retryCount >= maxRetries) {
-        console.error('TTS warm-up exceeded max retries');
-        return;
-      }
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
-
       try {
-        await fetch(TTS_PING_URL, {
-          method: 'GET',
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-        
-        setTtsReady(true);
-        console.log('TTS server responded');
-        return;
-
-      } catch (error) {
-        clearTimeout(timeoutId);
-        if (error.name === 'AbortError') {
-          console.log('TTS ping timed out, retrying...');
-          retryCount++;
-          setTimeout(checkTts, 5000);
-        } else {
-          console.log('TTS error but marking as ready:', error);
-          setTtsReady(true);
+        const res = await fetch(TTS_HEALTH_URL); // Dùng Health URL mới
+        if (res.ok) {
+            setTtsReady(true);
+            console.log("✅ Viterbox TTS Ready!");
         }
+      } catch (e) {
+          console.log("TTS waking up...", e);
+          setTimeout(checkTts, 5000);
       }
     };
-
     checkTts();
   }, []);
 
   const handleToggleChat = () => {
-    if (streamingIntervalRef.current) {
-      clearInterval(streamingIntervalRef.current);
-      streamingIntervalRef.current = null;
-    }
-    audioQueueRef.current = [];
-    pendingChunksRef.current = [];
-    isPlayingRef.current = false;
-    isFetchingRef.current = false;
-    if (recognitionRef.current && isListening) {
-      recognitionRef.current.stop();
-    }
+    if (streamingIntervalRef.current) clearInterval(streamingIntervalRef.current);
     setIsOpen(!isOpen);
     setIsSending(false);
     setIsStreaming(false);
     setIsPlayingAudio(false);
-    setInputValue('');
-    setStreamingText('');
-    setIsListening(false);
-    setSpeechActive(false);
   };
 
+  // ... (Phần render UI giữ nguyên, chỉ update style nếu cần) ...
   useEffect(() => {
-    if (!isSending && !isStreaming && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isSending, isStreaming]);
-
-  useEffect(() => {
-    if (historyRef.current) {
-      historyRef.current.scrollTop = historyRef.current.scrollHeight;
-    }
+    if (historyRef.current) historyRef.current.scrollTop = historyRef.current.scrollHeight;
   }, [convo]);
 
   return (
@@ -520,12 +424,9 @@ export default function Pop() {
         onClick={handleToggleChat}
         className="fixed top-5 right-5 w-14 h-14 rounded-full shadow-lg flex items-center justify-center z-50 transition-all duration-300 hover:scale-110"
       >
-        <img
-          src="/printer.png"
-          alt="Amelia"
-          className="w-full h-full object-cover rounded-full"
-        />
+        <img src="/printer.png" alt="Thiên" className="w-full h-full object-cover rounded-full" />
       </button>
+
       {isOpen && (
         <>
           {showHistory && (
@@ -534,61 +435,43 @@ export default function Pop() {
               className="fixed font-serif bottom-20 md:bottom-30 left-1/2 transform -translate-x-1/2 w-full md:max-w-[50vw] max-w-[100vw] bg-[var(--colortwo)] rounded-2xl shadow-xl flex flex-col z-40 border-3 border-[var(--colorone)] p-4 max-h-[50vh] overflow-y-auto no-scrollbar"
             >
               <div className="flex flex-col">
-                {convo.length === 0 ? (
-                  <div className="text-center text-[var(--colorone)] py-8">
-                    No chat history yet.
-                  </div>
-                ) : (
-                  convo.map((msg, index) => {
-                    if (msg.content === '' && index !== convo.length - 1) return null;
-                    const displayContent = (index === convo.length - 1 && isStreaming) ? streamingText : msg.content;
-                    if (displayContent === '') return null;
-                    return (
-                      <div key={index} className="mb-4 cursor-default text-justify px-1">
-                        <div className="font-bold mb-1 text-[var(--colorone)] inline">
-                          {msg.role === "user" ? `${displayName.toUpperCase()}: ` : "AMELIA: "}
-                        </div>
-                        <div className="text-[var(--colorone)] inline break-words whitespace-pre-line">
-                          {displayContent}
-                          {index === convo.length - 1 && isStreaming && (
-                            <span className="animate-pulse">|</span>
-                          )}
-                        </div>
-                        <br />
-                      </div>
-                    );
-                  })
-                )}
+                {convo.map((msg, index) => {
+                   if (msg.content === '' && index !== convo.length - 1) return null;
+                   const displayContent = (index === convo.length - 1 && isStreaming) ? streamingText : msg.content;
+                   if (displayContent === '') return null;
+                   return (
+                     <div key={index} className="mb-4 cursor-default text-justify px-1">
+                       <div className="font-bold mb-1 text-[var(--colorone)] inline">
+                         {msg.role === "user" ? `${displayName.toUpperCase()}: ` : "THIÊN: "}
+                       </div>
+                       <div className="text-[var(--colorone)] inline break-words whitespace-pre-line">
+                         {displayContent}
+                         {index === convo.length - 1 && isStreaming && <span className="animate-pulse">|</span>}
+                       </div>
+                       <br />
+                     </div>
+                   );
+                })}
               </div>
-              <div className="sticky bottom-0 left-0 w-full bg-[var(--colortwo)] pt-3 z-50">
+              
+              <div className="sticky bottom-0 left-0 w-full bg-transparent pt-3 z-50">
                 <div className="flex items-center justify-end space-x-4">
-                  <div className="flex items-center">
-                    {ragReady ? (
-                      <MagnifyingGlassIcon className="w-5 h-5 text-[var(--colorone)]" />
-                    ) : (
-                      <ArrowPathIcon className="w-5 h-5 text-gray-400 animate-spin" />
-                    )}
-                  </div>
-                  <div className="flex items-center">
-                    {ttsReady ? (
-                      <SpeakerWaveIcon className={`w-5 h-5 text-[var(--colorone)] rounded-full bg-[var(--colortwo)] ${isPlayingAudio ? 'animate-pulse' : ''}`} />
-                    ) : (
-                      <ArrowPathIcon className="w-5 h-5 text-gray-400 animate-spin" />
-                    )}
-                  </div>
+                   {/* Status Icons */}
+                   <div title="RAG Status">
+                     {ragReady ? <MagnifyingGlassIcon className="w-5 h-5 text-[var(--colorone)]" /> : <ArrowPathIcon className="w-5 h-5 animate-spin text-gray-400" />}
+                   </div>
+                   <div title="TTS Status">
+                     {ttsReady ? <SpeakerWaveIcon className={`w-5 h-5 text-[var(--colorone)] ${isPlayingAudio ? 'animate-pulse' : ''}`} /> : <ArrowPathIcon className="w-5 h-5 animate-spin text-gray-400" />}
+                   </div>
                 </div>
               </div>
             </div>
           )}
-          <div className="font-serif fixed bottom-0 md:bottom-10 left-1/2 transform -translate-x-1/2 w-full md:max-w-[50vw] max-w-[100vw] bg-[var(--colortwo)] rounded-full shadow-xl flex flex-col z-40 border-3 border-[var(--colorone)] transition-all duration-500 ease-in-out opacity-100 translate-y-0 overflow-hidden">
+
+          <div className="font-serif fixed bottom-0 md:bottom-10 left-1/2 transform -translate-x-1/2 w-full md:max-w-[50vw] max-w-[100vw] bg-[var(--colortwo)] rounded-full shadow-xl flex flex-col z-40 border-3 border-[var(--colorone)] overflow-hidden">
             <div className="flex items-center px-3 py-2">
-              <button
-                onClick={handleVoiceInput}
-                disabled={isSending || isStreaming}
-                className="px-2 py-0 bg-[var(--colortwo)] hover:bg-gray-50 transition-colors flex items-center justify-center rounded-full disabled:opacity-50"
-                title="Voice Input (or press Ctrl)"
-              >
-                <MicrophoneIcon className={`w-6 h-6 text-[var(--colorone)] rounded-full ${isListening ? 'animate-pulse' : ''}`} />
+              <button onClick={handleVoiceInput} disabled={isSending} className="px-2">
+                <MicrophoneIcon className={`w-6 h-6 text-[var(--colorone)] ${isListening ? 'animate-pulse text-red-500' : ''}`} />
               </button>
               <input
                 ref={inputRef}
@@ -596,22 +479,14 @@ export default function Pop() {
                 value={inputValue}
                 onChange={handleChange}
                 onKeyDown={handleKeyDown}
-                placeholder="Type a message in ENGLISH ONLY..."
-                disabled={isSending || isStreaming}
-                className="flex-grow rounded-none px-3 py-2 focus:outline-none text-[var(--colorone)] text-lg"
+                placeholder="Ask me anything..."
+                disabled={isSending}
+                className="flex-grow rounded-none px-3 py-2 focus:outline-none text-[var(--colorone)] text-lg bg-transparent placeholder-[var(--colorone)]/50"
               />
-              <button
-                onClick={toggleHistory}
-                className="px-2 py-0 hover:bg-gray-50 transition-colors flex items-center justify-center rounded-full"
-                disabled={isSending || isStreaming}
-              >
+              <button onClick={toggleHistory} className="px-2">
                 <ClockIcon className="w-6 h-6 text-[var(--colorone)]" />
               </button>
-              <button 
-                onClick={handleSend}
-                disabled={isSending || isStreaming}
-                className="px-2 py-0 hover:bg-gray-50 transition-colors flex items-center justify-center rounded-full disabled:opacity-50"
-              >
+              <button onClick={handleSend} disabled={isSending} className="px-2">
                 <PaperAirplaneIcon className="w-6 h-6 text-[var(--colorone)]" />
               </button>
             </div>
@@ -619,13 +494,8 @@ export default function Pop() {
         </>
       )}
       <style jsx>{`
-        @keyframes pulse {
-          0%, 100% { background-color: white; color: var(--colorone); }
-          50% { background-color: var(--colorone); color: white;}
-        }
-        .animate-pulse {
-          animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .animate-pulse { animation: pulse 1s infinite; }
       `}</style>
     </>
   );

@@ -8,3 +8,5 @@
 | ![JBR](https://youtu.be/Vwnp-2T3VFg?si=n7bGn5MgIQmpNb_L)       |  ![JBR](https://youtu.be/aSq1cez_flQ?si=VEZh2AHbLnebvMcj)  |
 
 # More at: [My Christmas Playlist](https://youtube.com/playlist?list=PLo2L9JmoQoy9sbJHFXYuBjNNgwGKc405J&si=UXUgy-qWucqfwgFI)
+
+[[Emotional Analysis Extra]]

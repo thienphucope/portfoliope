@@ -31,7 +31,7 @@ export default function Page1() {
   const pronunciationRef = useRef(null);
 
   // You can change this value in the code to scale the image
-  const imageScale = 2.1;
+  const imageScale = 1.8;
 
   const padChar = '\u00A0';
 
@@ -254,7 +254,7 @@ export default function Page1() {
           playerVars: {
             autoplay: 1,
             loop: 1,
-            playlist: '8itIwVBu6os,Vwnp-2T3VFg,09UOuVuFs08,yXQViqx6GMY,j_96mnmGxk0',
+            playlist: '8itIwVBu6os,Vwnp-2T3VFg,09UOuVuFs08,6qSjSqduzeY,4ctcuO8BtDc',
             controls: 0,
             showinfo: 0,
             modestbranding: 1,
@@ -562,9 +562,9 @@ export default function Page1() {
         </div>
 
         {/* Image - z-10 */}
-        <div className="absolute bottom-0 left-0 h-1/2 z-10">
+        <div className="absolute bottom-0 left-10 h-1/2 z-0">
             <img
-                src="/realope.png"
+                src="/realopecrop.png"
                 alt="Portrait of Subject"
                 className="h-full w-auto"
                 style={{

@@ -82,9 +82,14 @@ export default function Page3() {
           sauce: erb
         </h1>
           
-        <img src="/christmastree.png" alt="Christmas Tree" className="absolute bottom-[5%] left-1/2 -translate-x-1/2 w-auto h-[90vh] object-contain z-10" />
-        <img src="/snowman.png" alt="Snowman" className="absolute bottom-[2%] left-[60%] -translate-x-1/2 w-auto h-[50vh] object-contain z-10" />
-        <img src="/sock.png" alt="Sock" className="absolute bottom-[25%] left-[43%] -translate-x-1/2 w-auto h-[20vh] object-contain z-10" />
+        <img src="/christmastree.png" alt="Christmas Tree" className="absolute bottom-[5%] left-[20%] -translate-x-1/2 w-auto h-[70vh] object-contain z-10" />
+        <img src="/christmastree.png" alt="Christmas Tree2" className="absolute bottom-[0%] left-1/2 -translate-x-1/2 w-auto h-[90vh] object-contain z-20" />
+        <img src="/christmastree.png" alt="Christmas Tree3" className="absolute bottom-[5%] left-[80%] -translate-x-1/2 w-auto h-[70vh] object-contain z-10" />
+
+        <img src="/snowman.png" alt="Snowman" className="absolute bottom-[0%] left-[60%] -translate-x-1/2 w-auto h-[50vh] object-contain z-20" />
+        <img src="/snowman.png" alt="Snowman2" className="absolute bottom-[4%] left-[30%] -translate-x-1/2 w-auto h-[25vh] object-contain z-10" />
+
+        <img src="/sock.png" alt="Sock" className="absolute bottom-[25%] left-[43%] -translate-x-1/2 w-auto h-[20vh] object-contain z-20" />
         <img src="/amechrist.png" alt="amechrist" className="absolute bottom-[30%] left-[53%] -translate-x-1/2 w-auto h-[5vh] object-contain z-10" />
 
         <div className="absolute bottom-0 left-0 w-full h-[10vh] bg-white rounded-t-[100%] z-0"></div>
