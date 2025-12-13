@@ -82,16 +82,103 @@ export default function Page3() {
           sauce: erb
         </h1>
           
-        <img src="/christmastree.png" alt="Christmas Tree" className="absolute bottom-[5%] left-[20%] -translate-x-1/2 w-auto h-[70vh] object-contain z-10" />
-        <img src="/christmastree.png" alt="Christmas Tree2" className="absolute bottom-[0%] left-1/2 -translate-x-1/2 w-auto h-[90vh] object-contain z-20" />
-        <img src="/christmastree.png" alt="Christmas Tree3" className="absolute bottom-[5%] left-[80%] -translate-x-1/2 w-auto h-[70vh] object-contain z-10" />
+{/* --- TREE 1 (Left) --- */}
+      <a 
+        href="https://www.youtube.com/watch?v=Y_23xi9ck10" 
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute bottom-[5%] left-[20%] -translate-x-1/2 z-10 h-[70vh] block w-max cursor-pointer"
+      >
+        <img 
+          src="/christmastree.png" 
+          alt="Christmas Tree" 
+          className="w-auto h-full object-contain transition-all duration-300 hover:drop-shadow-[0_0_5px_rgba(255,215,0,0.9)]" 
+        />
+      </a>
 
-        <img src="/snowman.png" alt="Snowman" className="absolute bottom-[0%] left-[60%] -translate-x-1/2 w-auto h-[50vh] object-contain z-20" />
-        <img src="/snowman.png" alt="Snowman2" className="absolute bottom-[4%] left-[30%] -translate-x-1/2 w-auto h-[25vh] object-contain z-10" />
+      {/* --- TREE 2 (Center - Big) --- */}
+      <a 
+        href="https://www.youtube.com/watch?v=7eSnmK7hpjM" 
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute bottom-[0%] left-1/2 -translate-x-1/2 z-20 h-[90vh] block w-max cursor-pointer"
+      >
+        <img 
+          src="/christmastree.png" 
+          alt="Christmas Tree2" 
+          className="w-auto h-full object-contain transition-all duration-300 hover:drop-shadow-[0_0_5px_rgba(255,215,0,0.9)]" 
+        />
+      </a>
 
-        <img src="/sock.png" alt="Sock" className="absolute bottom-[25%] left-[43%] -translate-x-1/2 w-auto h-[20vh] object-contain z-20" />
-        <img src="/amechrist.png" alt="amechrist" className="absolute bottom-[30%] left-[53%] -translate-x-1/2 w-auto h-[5vh] object-contain z-10" />
+      {/* --- TREE 3 (Right) --- */}
+      <a 
+        href="https://www.youtube.com/watch?v=6JeAnrziLLo" 
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute bottom-[5%] left-[80%] -translate-x-1/2 z-10 h-[70vh] block w-max cursor-pointer"
+      >
+        <img 
+          src="/christmastree.png" 
+          alt="Christmas Tree3" 
+          className="w-auto h-full object-contain transition-all duration-300 hover:drop-shadow-[0_0_5px_rgba(255,215,0,0.9)]" 
+        />
+      </a>
 
+      {/* --- SNOWMAN 1 --- */}
+      <a 
+        href="https://youtu.be/Vwnp-2T3VFg?si=_CFcoLNDqV1J55pz" 
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute bottom-[0%] left-[60%] -translate-x-1/2 z-20 h-[50vh] block w-max cursor-pointer"
+      >
+        <img 
+          src="/snowman.png" 
+          alt="Snowman" 
+          className="w-auto h-full object-contain transition-all duration-300 hover:drop-shadow-[0_0_5px_rgba(255,215,0,0.9)]" 
+        />
+      </a>
+
+      {/* --- SNOWMAN 2 --- */}
+      <a 
+        href="https://youtu.be/Vwnp-2T3VFg?si=L9O2NWMRSdbrQAsg" 
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute bottom-[4%] left-[30%] -translate-x-1/2 z-30 h-[25vh] block w-max cursor-pointer"
+      >
+        <img 
+          src="/snowman.png" 
+          alt="Snowman2" 
+          className="w-auto h-full object-contain transition-all duration-300 hover:drop-shadow-[0_0_5px_rgba(255,215,0,0.9)]" 
+        />
+      </a>
+
+      {/* --- SOCK --- */}
+      <a
+        href="https://www.youtube.com/watch?v=7eSnmK7hpjM&pp=ygUgZmVsaXogbmF2aWRhZCB3YWxrIG9mZiB0aGUgZWFydGg%3D"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute bottom-[25%] left-[43%] -translate-x-1/2 z-20 h-[20vh] block w-max cursor-pointer"
+      >
+        <img
+          src="/sock.png"
+          alt="Sock"
+          className="w-auto h-full object-contain transition-all duration-300 hover:drop-shadow-[0_0_5px_rgba(255,215,0,0.9)]"
+        />
+      </a>
+
+      {/* --- AMECHRIST --- */}
+      <a 
+        href="https://www.youtube.com/watch?v=Xk621Am1624" 
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute bottom-[30%] left-[53%] -translate-x-1/2 z-20 h-[5vh] block w-max cursor-pointer"
+      >
+        <img 
+          src="/amechrist.png" 
+          alt="amechrist" 
+          className="w-auto h-full object-contain transition-all duration-300 hover:drop-shadow-[0_0_5px_rgba(255,215,0,0.9)]" 
+        />
+      </a>
         <div className="absolute bottom-0 left-0 w-full h-[10vh] bg-white rounded-t-[100%] z-0"></div>
         <div className="absolute bottom-0 left-0 w-full h-[5vh] bg-white z-0"></div>
       </section>
