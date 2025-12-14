@@ -844,7 +844,7 @@ export default function RedMathVault() {
           font-weight: 600; 
           margin-bottom: 30px; 
           color: var(--text-color); 
-          text-align: center; 
+          text-align: left; 
         }
 
         /* Loading indicator */

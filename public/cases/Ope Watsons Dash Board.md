@@ -70,7 +70,7 @@ I do not own arts and embedded visual contents.
 # R&D
 
 {bg:blue}
-# Reading list
+# Reading List
 
 {bg:blue}
 # Watching List
