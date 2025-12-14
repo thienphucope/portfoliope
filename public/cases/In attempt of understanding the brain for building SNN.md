@@ -30,7 +30,7 @@ Không giống như máy tính lưu file JPG, não lưu trữ thông tin dưới
 
 1. **Population Coding (Mã hóa quần thể):** Georgopoulos và các cộng sự (thập niên 80) đã phát hiện ra rằng não không dùng một neuron đơn lẻ để chỉ hướng chuyển động. Nó dùng một **nhóm** (ensemble). Hướng của vectơ tổng hợp từ hoạt động của cả nhóm chính là thông tin.
     
-    - _Điều bất biến:_ Dù tín hiệu yếu đi (do ánh sáng mờ), thì **tỷ lệ hoạt động** giữa các neuron trong nhóm vẫn giữ nguyên. Nếu Neuron A luôn bắn gấp đôi Neuron B khi thấy quả bóng, thì tỷ lệ $A/B=2$ chính là "dấu vân tay" của quả bóng.
+    - **Điều bất biến**: Dù tín hiệu yếu đi (do ánh sáng mờ), thì **tỷ lệ hoạt động** giữa các neuron trong nhóm vẫn giữ nguyên. Nếu Neuron A luôn bắn gấp đôi Neuron B khi thấy quả bóng, thì tỷ lệ $A/B=2$ chính là "dấu vân tay" của quả bóng.
         
 2. **Cơ chế vật lý:** Não không ngồi tính toán con số tỷ lệ này. Nó dùng cơ chế **Cộng gộp không gian (Spatial Summation)**. Các neuron đích hoạt động như những cái van: chỉ khi nhận đúng "khuôn mẫu" lực kéo từ các neuron nguồn (đúng tỷ lệ mạnh yếu), cái van mới mở (neuron bắn xung).
     

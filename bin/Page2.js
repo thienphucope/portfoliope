@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 
-// --- UTILS: Load Scripts Dynamically (GIỮ NGUYÊN) ---
+// --- UTILS: Load Scripts Dynamically ---
 const loadScript = (src) => {
   return new Promise((resolve, reject) => {
     if (document.querySelector(`script[src="${src}"]`)) {
@@ -24,27 +24,213 @@ const loadStyle = (href) => {
   document.head.appendChild(link);
 };
 
-// --- MARKDOWN VIEWER (GIỮ NGUYÊN) ---
-const MarkdownViewer = ({ content, onLinkClick }) => {
-  const containerRef = useRef(null);
-  const [libsLoaded, setLibsLoaded] = useState(false);
+// --- PROCESS CONTENT INTO BLOCKS (shared logic) ---
+const processContentToBlocks = (lines) => {
+  const blocks = [];
+  let i = 0;
+  
+  while (i < lines.length) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    
+    // Skip empty lines
+    if (trimmed === '') {
+      i++;
+      continue;
+    }
+    
+    let blockContent = [];
+    let bgColor = null;
+    let textColor = null;
+    
+    // Check for background color
+    const bgMatch = trimmed.match(/^\{bg:(red|blue|yellow|green|gray|orange|purple|pink)\}$/);
+    if (bgMatch) {
+      bgColor = bgMatch[1];
+      i++;
+      
+      // Check next line for color
+      if (i < lines.length) {
+        const nextLine = lines[i].trim();
+        const colorMatch = nextLine.match(/^\{color:(red|blue|yellow|green|gray|orange|purple|pink|white|black)\}$/);
+        if (colorMatch) {
+          textColor = colorMatch[1];
+          i++;
+        }
+      }
+      
+      // Collect content until empty line or next special syntax
+      while (i < lines.length) {
+        const nextLine = lines[i];
+        const nextTrimmed = nextLine.trim();
+        
+        if (nextTrimmed === '' || nextTrimmed.match(/^\{bg:/) || nextTrimmed.match(/^\{color:/)) {
+          break;
+        }
+        
+        blockContent.push(nextLine);
+        i++;
+      }
+    } else {
+      // Check for text color only
+      const colorMatch = trimmed.match(/^\{color:(red|blue|yellow|green|gray|orange|purple|pink|white|black)\}$/);
+      if (colorMatch) {
+        textColor = colorMatch[1];
+        i++;
+        
+        // Collect content until empty line or next special syntax
+        while (i < lines.length) {
+          const nextLine = lines[i];
+          const nextTrimmed = nextLine.trim();
+          
+          if (nextTrimmed === '' || nextTrimmed.match(/^\{bg:/) || nextTrimmed.match(/^\{color:/)) {
+            break;
+          }
+          
+          blockContent.push(nextLine);
+          i++;
+        }
+      } else {
+        // Regular content - collect until empty line or special syntax
+        while (i < lines.length) {
+          const nextLine = lines[i];
+          const nextTrimmed = nextLine.trim();
+          
+          if (nextTrimmed === '' || nextTrimmed.match(/^\{bg:/) || nextTrimmed.match(/^\{color:/)) {
+            break;
+          }
+          
+          blockContent.push(nextLine);
+          i++;
+        }
+      }
+    }
+    
+    if (blockContent.length > 0) {
+      blocks.push({
+        type: 'normal',
+        content: blockContent,
+        bgColor: bgColor,
+        color: textColor
+      });
+    }
+  }
+  
+  return blocks;
+};
 
-  useEffect(() => {
-    Promise.all([
-      loadScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js'),
-      loadScript('https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js'),
-      loadStyle('https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css')
-    ]).then(() => {
-      return loadScript('https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js');
-    }).then(() => setLibsLoaded(true)).catch(err => console.error(err));
-  }, []);
+// --- BLOCK-BASED MARKDOWN PROCESSOR ---
+const processBlockMarkdown = (markdown) => {
+  if (!markdown) return [];
+  
+  const lines = markdown.split('\n');
+  const blocks = [];
+  let i = 0;
+  
+  while (i < lines.length) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    
+    // Check for row start
+    if (trimmed === ':::row') {
+      const row = { type: 'row', columns: [] };
+      i++; // Move to next line
+      
+      // Process columns in this row
+      while (i < lines.length) {
+        const colLine = lines[i].trim();
+        
+        // End of row
+        if (colLine === ':::') {
+          i++;
+          break;
+        }
+        
+        // Start of column
+        if (colLine.startsWith(':::col')) {
+          const widthMatch = colLine.match(/:::col\s+(\d+%?)/);
+          const width = widthMatch ? widthMatch[1] : 'auto';
+          
+          const columnLines = [];
+          i++; // Move past :::col line
+          
+          // Collect column content until :::
+          while (i < lines.length) {
+            const contentLine = lines[i];
+            const contentTrimmed = contentLine.trim();
+            
+            // End of column
+            if (contentTrimmed === ':::') {
+              i++;
+              break;
+            }
+            
+            columnLines.push(contentLine);
+            i++;
+          }
+          
+          // Process column lines into blocks (same logic as outside)
+          const columnBlocks = processContentToBlocks(columnLines);
+          
+          row.columns.push({
+            width,
+            blocks: columnBlocks
+          });
+        } else {
+          i++;
+        }
+      }
+      
+      if (row.columns.length > 0) {
+        blocks.push(row);
+      }
+      continue;
+    }
+    
+    // Skip row-related syntax outside of row context
+    if (trimmed === ':::' || trimmed.startsWith(':::col')) {
+      i++;
+      continue;
+    }
+    
+    // Regular block (not in a row)
+    // Collect lines until we hit a row or end
+    const regularLines = [];
+    while (i < lines.length) {
+      const nextLine = lines[i];
+      const nextTrimmed = nextLine.trim();
+      
+      if (nextTrimmed === ':::row') {
+        break;
+      }
+      
+      regularLines.push(nextLine);
+      i++;
+    }
+    
+    // Process regular lines into blocks
+    const regularBlocks = processContentToBlocks(regularLines);
+    blocks.push(...regularBlocks);
+  }
+  
+  return blocks;
+};
 
+// --- MARKDOWN BLOCK COMPONENT ---
+const MarkdownBlock = ({ block, onLinkClick }) => {
+  const blockRef = useRef(null);
+  
   useEffect(() => {
-    if (libsLoaded && containerRef.current && window.marked && window.renderMathInElement) {
+    if (blockRef.current && window.marked && window.renderMathInElement) {
       const renderer = new window.marked.Renderer();
+      
       renderer.image = (arg1, arg2, arg3) => {
         let href = arg1, title = arg2, text = arg3;
-        if (typeof arg1 === 'object' && arg1 !== null) { href = arg1.href; title = arg1.title; text = arg1.text; }
+        if (typeof arg1 === 'object' && arg1 !== null) {
+          href = arg1.href;
+          title = arg1.title;
+          text = arg1.text;
+        }
         const safeHref = (typeof href === 'string') ? href : '';
         const safeText = (typeof text === 'string') ? text : '';
         const safeTitle = (typeof title === 'string') ? title : '';
@@ -60,18 +246,98 @@ const MarkdownViewer = ({ content, onLinkClick }) => {
       };
 
       window.marked.use({ renderer });
-      containerRef.current.innerHTML = window.marked.parse(content);
-      window.renderMathInElement(containerRef.current, {
-        delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}],
+      
+      let content = block.content.join('\n');
+      
+      // Process internal links
+      content = content.replace(/\[\[(.*?)\]\]/g, (match, p1) => {
+        return `<span class="internal-link" data-target="${p1}">${p1}</span>`;
+      });
+      
+      const htmlContent = window.marked.parse(content);
+      blockRef.current.innerHTML = htmlContent;
+      
+      window.renderMathInElement(blockRef.current, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ],
         throwOnError: false
       });
     }
-  }, [content, libsLoaded]);
-
-  return <div ref={containerRef} className="markdown-body" onClick={onLinkClick} />;
+  }, [block]);
+  
+  const bgColorClass = block.bgColor ? `bg-${block.bgColor}` : '';
+  const textColorClass = block.color ? `text-${block.color}` : '';
+  const combinedClasses = `markdown-block ${bgColorClass} ${textColorClass}`;
+  
+  return (
+    <div 
+      ref={blockRef} 
+      className={combinedClasses.trim()}
+      onClick={onLinkClick}
+    />
+  );
 };
 
-// --- COMPONENT CÂY THƯ MỤC (ĐÃ SỬA) ---
+// --- ROW COMPONENT ---
+const MarkdownRow = ({ row, onLinkClick }) => {
+  return (
+    <div className="md-row">
+      {row.columns.map((col, idx) => {
+        const style = col.width !== 'auto' 
+          ? { flex: `0 0 ${col.width}`, maxWidth: col.width }
+          : {};
+        
+        return (
+          <div key={idx} className="md-col" style={style}>
+            {col.blocks.map((block, blockIdx) => (
+              <MarkdownBlock key={blockIdx} block={block} onLinkClick={onLinkClick} />
+            ))}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// --- MARKDOWN VIEWER ---
+const MarkdownViewer = ({ content, onLinkClick }) => {
+  const [blocks, setBlocks] = useState([]);
+  const [libsLoaded, setLibsLoaded] = useState(false);
+
+  useEffect(() => {
+    Promise.all([
+      loadScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js'),
+      loadScript('https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js'),
+      loadStyle('https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css')
+    ]).then(() => {
+      return loadScript('https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js');
+    }).then(() => setLibsLoaded(true)).catch(err => console.error(err));
+  }, []);
+
+  useEffect(() => {
+    if (libsLoaded && window.marked) {
+      const processedBlocks = processBlockMarkdown(content);
+      setBlocks(processedBlocks);
+    }
+  }, [content, libsLoaded]);
+
+  if (!libsLoaded) return <div className="loading-container">Loading...</div>;
+
+  return (
+    <div className="markdown-body">
+      {blocks.map((block, idx) => {
+        if (block.type === 'row') {
+          return <MarkdownRow key={idx} row={block} onLinkClick={onLinkClick} />;
+        }
+        return <MarkdownBlock key={idx} block={block} onLinkClick={onLinkClick} />;
+      })}
+    </div>
+  );
+};
+
+// --- FILE SYSTEM ITEM ---
 const FileSystemItem = ({ item, level = 0, onSelectFile }) => {
   const [isOpen, setIsOpen] = useState(false);
   const paddingLeft = `${level * 12}px`;
@@ -98,7 +364,6 @@ const FileSystemItem = ({ item, level = 0, onSelectFile }) => {
           ) : <span className="spacer"></span>}
         </span>
         <span className={`item-name ${item.kind === 'directory' ? 'font-bold' : ''}`}>
-          {/* Sửa ở đây: replace đuôi .md thành chuỗi rỗng */}
           {item.name.replace('.md', '')}
         </span>
       </div>
@@ -113,15 +378,16 @@ const FileSystemItem = ({ item, level = 0, onSelectFile }) => {
   );
 };
 
-// --- COMPONENT CHÍNH (CÓ THAY ĐỔI FONT + AUTO LOAD FILE ĐẦU TIÊN) ---
+// --- MAIN COMPONENT ---
 export default function RedMathVault() {
   const [fileTree, setFileTree] = useState([]);
   const [content, setContent] = useState('');
   const [currentFileName, setCurrentFileName] = useState('');
+  const [sidebarVisible, setSidebarVisible] = useState(false);
   
   const fileRegistry = useRef({}); 
+  const sidebarHoverAreaRef = useRef(null);
 
-  // Tìm file .md đầu tiên trong cây (đệ quy)
   const findFirstMdFile = (nodes) => {
     for (const node of nodes) {
       if (node.kind === 'file' && node.name.endsWith('.md')) {
@@ -135,31 +401,25 @@ export default function RedMathVault() {
     return null;
   };
 
-  // Load file
   const loadFile = async (path, name) => {
     try {
       const res = await fetch(path);
       const text = await res.text();
       setCurrentFileName(name ? name.replace('.md', '') : '');
-      const processedText = text.replace(/\[\[(.*?)\]\]/g, (match, p1) => {
-        return `<span class="internal-link" data-target="${p1}">${p1}</span>`;
-      });
-      setContent(processedText);
+      setContent(text); 
     } catch (err) {
       console.error(err);
       setContent('# Error\nKhông tải được file.');
     }
   };
 
-  // Fetch tree + tự động mở file đầu tiên
-  useEffect(() => {
+ useEffect(() => {
     const fetchTree = async () => {
       try {
         const res = await fetch('/api/cases');
         if (!res.ok) throw new Error('Failed to fetch cases');
         const tree = await res.json();
 
-        // Build registry
         const buildRegistry = (nodes) => {
           nodes.forEach(node => {
             if (node.kind === 'file') {
@@ -173,17 +433,29 @@ export default function RedMathVault() {
         buildRegistry(tree);
         setFileTree(tree);
 
-        // === TỰ ĐỘNG LOAD FILE ĐẦU TIÊN ===
-        const firstFile = findFirstMdFile(tree);
-        if (firstFile) {
-          loadFile(firstFile.path, firstFile.name);
+        // --- PHẦN CHỈNH SỬA Ở ĐÂY ---
+        
+        // 1. Đặt tên file cậu muốn load đầu tiên
+        const DEFAULT_FILE_NAME = 'Ope Watsons Dash Board.md'; // Hoặc 'intro.md', 'home.md' tùy cậu
+
+        // 2. Tìm path của file đó trong registry (đã build ở trên)
+        const defaultPath = fileRegistry.current[DEFAULT_FILE_NAME.toLowerCase()];
+
+        if (defaultPath) {
+          // Nếu tìm thấy file mặc định, load nó
+          loadFile(defaultPath, DEFAULT_FILE_NAME);
         } else {
-          setContent('# RED VAULT\nChưa có file nào trong thư mục cases.');
+          // Nếu KHÔNG tìm thấy, quay về logic cũ: load file đầu tiên trong cây thư mục
+          const firstFile = findFirstMdFile(tree);
+          if (firstFile) {
+            loadFile(firstFile.path, firstFile.name);
+          }
         }
+        
+        // --- KẾT THÚC PHẦN CHỈNH SỬA ---
 
       } catch (err) {
         console.error("Error loading file tree:", err);
-        setContent("# Error\nKhông tải được danh sách cases.");
       }
     };
 
@@ -201,9 +473,51 @@ export default function RedMathVault() {
     }
   };
 
+  // Handle sidebar hover behavior
+  useEffect(() => {
+    const handleMouseEnter = () => {
+      setSidebarVisible(true);
+    };
+    
+    const handleMouseLeave = (e) => {
+      if (e.relatedTarget && e.relatedTarget.closest('.sidebar')) {
+        return;
+      }
+      setSidebarVisible(false);
+    };
+    
+    const sidebarElement = document.querySelector('.sidebar');
+    const hoverAreaElement = sidebarHoverAreaRef.current;
+    
+    if (hoverAreaElement) {
+      hoverAreaElement.addEventListener('mouseenter', handleMouseEnter);
+    }
+    
+    if (sidebarElement) {
+      sidebarElement.addEventListener('mouseleave', handleMouseLeave);
+    }
+    
+    return () => {
+      if (hoverAreaElement) {
+        hoverAreaElement.removeEventListener('mouseenter', handleMouseEnter);
+      }
+      if (sidebarElement) {
+        sidebarElement.removeEventListener('mouseleave', handleMouseLeave);
+      }
+    };
+  }, []);
+
   return (
     <div className="app-container">
-      <aside className="sidebar">
+      {/* Sidebar hover detection area */}
+      <div 
+        ref={sidebarHoverAreaRef} 
+        className="sidebar-hover-area"
+        aria-label="Hover to show sidebar"
+      />
+      
+      {/* Sidebar */}
+      <aside className={`sidebar ${sidebarVisible ? 'visible' : ''}`}>
         <div className="sidebar-header">
           <span className="brand">RED VAULT</span>
         </div>
@@ -215,6 +529,7 @@ export default function RedMathVault() {
         </div>
       </aside>
 
+      {/* Main Content */}
       <main className="main-viewport">
         <div className="content-wrapper">
           {currentFileName && <h1 className="page-title">{currentFileName}</h1>}
@@ -226,88 +541,343 @@ export default function RedMathVault() {
         @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap');
 
         :root {
-          --bg-color: var(--colortwo);
-          --text-red: var(--colorone);
+          --bg-color: #121212;
+          --text-color: #ffffff;
+          --text-red: #ff4444;
           --bright-red: #ffffff;
           --sidebar-width: 300px;
+          --table-border-color: rgba(255, 255, 255, 0.2);
         }
 
         body { 
-          margin: 0; background: var(--bg-color); color: var(--text-red); 
+          margin: 0; 
+          background: var(--bg-color); 
+          color: var(--text-color); 
           font-family: 'Crimson Text', serif;
-          overflow-y: auto; font-size: 18px; line-height: 1.7;
+          overflow-y: auto; 
+          font-size: 18px; 
+          line-height: 1.7;
         }
 
-        /* Tất cả các style cũ giữ nguyên, chỉ đổi font ở đây */
+        /* --- MARKDOWN BODY --- */
         .markdown-body {
           background-color: transparent !important;
-          color: var(--text-red) !important;
+          color: var(--text-color) !important;
           font-family: 'Crimson Text', serif !important;
-          font-size: 25px; line-height: 2.0; width: 100%;
-          text-align: justify;
+          font-size: 20px;
+          line-height: 1.8;
+          width: 100%;
         }
 
-        .brand, .page-title, .tree-item, .item-name {
-          font-family: 'Crimson Text', serif !important;
+        /* --- BLOCK SYSTEM (Notion-style) --- */
+        .markdown-block {
+          margin-bottom: 4px;
+          padding: 8px 14px;
+          border-radius: 4px;
+          transition: background-color 0.2s;
         }
 
-        /* Giữ nguyên toàn bộ style còn lại... */
-        .app-container { position: relative; min-height: 100vh; width: 100vw; }
-        .sidebar { position: fixed; top: 0; left: 0; height: 100vh; width: var(--sidebar-width); display: flex; flex-direction: column; z-index: 1000; background: #641932; }
-        .sidebar-header { padding: 40px 30px; text-align: left;}
-        .brand { font-size: 20px; letter-spacing: 2px; }
-        .file-tree-scroll { flex: 1; overflow-y: auto; padding: 10px 10px; }
-        .file-tree-scroll::-webkit-scrollbar { width: 4px; }
-        .file-tree-scroll::-webkit-scrollbar-thumb { background: var(--text-red); border-radius: 2px; }
-        .loading-msg { text-align: center; margin-top: 20px; opacity: 0.6; }
-        .tree-item { display: flex; align-items: left; cursor: pointer; font-size: 20px; padding: 8px 0px; color: var(--text-red); opacity: 0.8; transition: opacity 0.2s; }
-        .tree-item:hover { opacity: 1; color: #ffffff; }
-        .arrow-wrapper { width: 20px; display: flex; justify-content: center; }
-        .spacer { width: 20px; }
-        .item-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .font-bold { font-weight: 600; }
-        .main-viewport { width: 100%; padding-left: var(--sidebar-width); box-sizing: border-box; min-height: 100vh; display: flex; justify-content: center; }
-        .content-wrapper { width: 90%; max-width: 900px; padding-top: 30px; padding-bottom: 100px; }
-        .page-title { font-size: 3rem; font-weight: 600; margin-bottom: 40px; color: var(--text-red); text-align: center; }
-        .markdown-body p, .markdown-body ul, .markdown-body ol { margin-bottom: 1em; }
-        /* Gộp chung vào một chỗ cho dễ quản lý */
+        .markdown-block:hover {
+          background-color: rgba(255, 255, 255, 0.03);
+        }
 
-        /* 1. Cấu trúc bảng */
-        .markdown-body table { 
+        /* Background Colors */
+        .bg-red { background-color: rgba(220, 38, 38, 0.15) !important; }
+        .bg-blue { background-color: rgba(59, 130, 246, 0.15) !important; }
+        .bg-yellow { background-color: rgba(234, 179, 8, 0.15) !important; }
+        .bg-green { background-color: rgba(34, 197, 94, 0.15) !important; }
+        .bg-gray { background-color: rgba(156, 163, 175, 0.15) !important; }
+        .bg-orange { background-color: rgba(249, 115, 22, 0.15) !important; }
+        .bg-purple { background-color: rgba(168, 85, 247, 0.15) !important; }
+        .bg-pink { background-color: rgba(236, 72, 153, 0.15) !important; }
+
+        /* Text Colors */
+        .text-red { color: #ff4444 !important; }
+        .text-blue { color: #3b82f6 !important; }
+        .text-yellow { color: #eab308 !important; }
+        .text-green { color: #22c55e !important; }
+        .text-gray { color: #9ca3af !important; }
+        .text-orange { color: #f97316 !important; }
+        .text-purple { color: #a855f7 !important; }
+        .text-pink { color: #ec4899 !important; }
+        .text-white { color: #ffffff !important; }
+        .text-black { color: #000000 !important; }
+
+        /* --- HEADINGS --- */
+        .markdown-block h1, .markdown-block h2, .markdown-block h3, 
+        .markdown-block h4, .markdown-block h5, .markdown-block h6 {
+          border: none !important;
+          color: inherit !important;
+          font-weight: 700;
+          line-height: 1.3 !important;
+          margin: 0.2em 0 !important;
+        }
+
+        .markdown-block h1 { font-size: 2.2em !important; }
+        .markdown-block h2 { font-size: 1.8em !important; }
+        .markdown-block h3 { font-size: 1.5em !important; }
+        .markdown-block h4 { font-size: 1.3em !important; }
+        .markdown-block h5 { font-size: 1.1em !important; }
+        .markdown-block h6 { font-size: 1.0em !important; }
+
+        /* --- TABLES --- */
+        .markdown-block table { 
           display: table !important; 
           width: 100% !important; 
-          margin: 0em 0 !important; /* Margin nhỏ */
-          border-collapse: collapse;  /* Gộp viền lại để xử lý cho dễ */
-          border: none !important;    /* Xóa viền khung ngoài */
+          margin: 1em 0 !important;
+          border-collapse: collapse;
+          border: 1px solid var(--table-border-color) !important;
         }
 
-        /* 2. Các ô bên trong (Nơi chứa các đường kẻ thực sự) */
-        .markdown-body table td, 
-        .markdown-body table th { 
-          border: none !important;    /* QUAN TRỌNG: Xóa đường kẻ giữa các ô */
-          padding: 0px 15px;          /* Thu nhỏ padding lại chút cho gọn */
+        .markdown-block table th, 
+        .markdown-block table td { 
+          border: 1px solid var(--table-border-color) !important;
+          padding: 8px 12px !important;
           line-height: 1.4 !important;
           vertical-align: top;
-        }       
+        }
+
+        .markdown-block table th {
+          font-weight: 700;
+          background: rgba(255, 255, 255, 0.05);
+          text-align: left;
+        }
+
+        /* --- IMAGES & VIDEOS --- */
+        .markdown-block img { 
+          width: 100%; 
+          max-width: 100%; 
+          height: auto; 
+          display: block; 
+          margin: 12px 0; 
+          object-fit: contain;
+          border-radius: 4px;
+        }
+
+        .video-wrapper { 
+          position: relative; 
+          padding-bottom: 56.25%; 
+          height: 0; 
+          overflow: hidden; 
+          max-width: 100%; 
+          margin: 12px 0; 
+        }
+
+        .video-wrapper iframe { 
+          position: absolute; 
+          top: 0; 
+          left: 0; 
+          width: 100%; 
+          height: 100%; 
+        }
+
+        /* --- LISTS --- */
+        .markdown-block ul, .markdown-block ol {
+          margin: 0.3em 0;
+          padding-left: 2em;
+        }
+
+        .markdown-block ul {
+          list-style-type: disc;
+        }
+
+        .markdown-block ol {
+          list-style-type: decimal;
+        }
+
+        /* --- COLUMNS --- */
+        .md-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 24px;
+          margin-bottom: 8px;
+          width: 100%;
+        }
         
-        .markdown-body img { max-width: 100%; height: auto; display: block; margin: 20px auto; }
-        .markdown-body h1 { font-size: 2.0em !important; margin-bottom: 0.2em !important;} /* Tương đương 2.2 x 25px = 55px */
-        .markdown-body h2 { font-size: 1.8em !important; margin-bottom: 0.2em !important;} /* Tương đương 1.8 x 25px = 45px */
-        .markdown-body h3 { font-size: 1.5em !important; margin-bottom: 0.2em !important;} /* Tương đương 1.5 x 25px = 37.5px */
-        .markdown-body h4 { font-size: 1.25em !important; margin-bottom: 0.2em !important;}
-        .markdown-body h5 { font-size: 1.1em !important; margin-bottom: 0.2em !important;}
-        .markdown-body h6 { font-size: 1em !important; margin-bottom: 0.2em !important;}
-        .markdown-body b {font-bold !important;}
-        .video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; margin: 20px 0; background: rgba(0,0,0,0.05); }
-        .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        .markdown-body a { color: var(--bright-red) !important; text-decoration: none; border: none !important; }
-        .internal-link { color: var(--bright-red); cursor: pointer; border: none !important; text-decoration: none; }
-        .markdown-body h1, .markdown-body h2 { border: none !important; color: var(--text-red) !important; padding-bottom: 0.3em; margin-bottom: 1em; font-weight: 600; }
-        .katex { font-family: KaTeX_Main, 'Times New Roman', serif !important; font-size: 1.1em; }
-        .katex-display { overflow-x: auto; overflow-y: hidden; padding: 10px 0; }
+        .md-col {
+          flex: 1;
+          min-width: 0;
+          box-sizing: border-box;
+        }
+
+        @media (max-width: 768px) {
+          .md-row { 
+            flex-direction: column; 
+            gap: 12px;
+          }
+          .md-col { flex: 1 1 100% !important; max-width: 100% !important; }
+        }
+
+        /* --- OTHER ELEMENTS --- */
+        .markdown-block p { margin: 0.3em 0; }
+        .markdown-block blockquote {
+          border-left: 3px solid var(--text-red);
+          padding-left: 1em;
+          margin: 0.5em 0;
+          opacity: 0.8;
+        }
+
+        .markdown-block a { 
+          color: var(--bright-red) !important; 
+          text-decoration: none; 
+          border-bottom: 1px solid var(--bright-red);
+        }
+
+        .internal-link { 
+          color: var(--bright-red); 
+          cursor: pointer; 
+          border-bottom: 1px dashed var(--bright-red);
+        }
+
+        /* --- SIDEBAR --- */
+        .app-container { 
+          position: relative; 
+          min-height: 100vh; 
+          width: 100vw; 
+          overflow-x: hidden;
+        }
+
+        .sidebar-hover-area {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 20px;
+          height: 100vh;
+          z-index: 999;
+          cursor: pointer;
+        }
+
+        .sidebar { 
+          position: fixed; 
+          top: 0; 
+          left: 0; 
+          height: 100vh; 
+          width: var(--sidebar-width); 
+          display: flex; 
+          flex-direction: column; 
+          z-index: 1000; 
+          background: #000000; 
+          color: var(--text-color);
+          transform: translateX(-100%);
+          transition: transform 0.3s ease;
+          box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .sidebar.visible {
+          transform: translateX(0);
+        }
+
+        .sidebar-header { 
+          padding: 40px 30px 20px; 
+          text-align: left;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .brand { 
+          font-family: 'Crimson Text', serif; 
+          font-size: 20px; 
+          letter-spacing: 2px; 
+          color: var(--text-color);
+        }
+
+        .file-tree-scroll { 
+          flex: 1; 
+          overflow-y: auto; 
+          padding: 10px; 
+        }
+
+        .file-tree-scroll::-webkit-scrollbar { width: 4px; }
+        .file-tree-scroll::-webkit-scrollbar-thumb { background: var(--text-white); border-radius: 2px; }
+
+        .loading-msg { 
+          text-align: center; 
+          margin-top: 20px; 
+          opacity: 0.6; 
+        }
+
+        .tree-item { 
+          display: flex; 
+          align-items: center; 
+          cursor: pointer; 
+          font-family: 'Crimson Text', serif; 
+          font-size: 16px; 
+          padding: 6px 0; 
+          color: var(--text-color); 
+          opacity: 0.8; 
+          transition: opacity 0.2s; 
+        }
+
+        .tree-item:hover { 
+          opacity: 1; 
+          color: var(--text-yellow); 
+        }
+
+        .arrow-wrapper { width: 20px; display: flex; justify-content: center; }
+        .spacer { width: 20px; }
+
+        .item-name { 
+          white-space: nowrap; 
+          overflow: hidden; 
+          text-overflow: ellipsis;
+          max-width: 200px;
+        }
+
+        .font-bold { font-weight: 600; }
+
+        /* --- MAIN VIEWPORT --- */
+        .main-viewport { 
+          width: 100%; 
+          box-sizing: border-box; 
+          min-height: 100vh; 
+          display: flex; 
+          justify-content: center; 
+        }
+        
+        .content-wrapper { 
+          width: 100%;
+          padding: 30px 40px 100px; 
+        }
+
+        .page-title { 
+          font-family: 'Crimson Text', serif; 
+          font-size: 2.5rem; 
+          font-weight: 600; 
+          margin-bottom: 30px; 
+          color: var(--text-color); 
+          text-align: center; 
+        }
+
+        /* Loading indicator */
+        .loading-container {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          color: var(--text-color);
+          font-size: 1.2rem;
+        }
+
+        /* --- KATEX --- */
+        .katex { font-size: 1.1em; }
+        .katex-display { overflow-x: auto; padding: 10px 0; }
+        
         ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-thumb { background: rgba(138, 0, 0, 0.2); border-radius: 3px; }
-        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(138, 0, 0, 0.3); border-radius: 3px; }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+          .sidebar {
+            width: 280px;
+          }
+          
+          .content-wrapper {
+            padding: 20px 15px 80px;
+          }
+          
+          .page-title {
+            font-size: 2rem;
+          }
+        }
       `}</style>
     </div>
   );
