@@ -1,3 +1,9 @@
+
+{bg:blue}
+> # It's better being weird than boring!
+
+#  
+
 :::row
 :::col
 {bg:red}
@@ -41,8 +47,9 @@ I do not own arts and embedded visual contents.
 :::
 
 :::col
-{color:red}
+
 # 
+
 {bg:green}
 ## 📘Highlighted Blogs (unhinged notes acktually)
 1. [[Christmas Album]]
