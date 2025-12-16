@@ -75,13 +75,15 @@ I do not own arts and embedded visual contents.
 :::
 
 :::col
-
-{space:100px}
+# 🎉
+# 🎆
 # 🍵[[Ope Watson]]
 
 # 🍭[[Core Memory]]
 
 # 🎄[[Christmas Album]]
+# 🧧
+# 🎁
 
 
 :::

@@ -35,84 +35,64 @@ export default function Pop() {
   const TTS_API_URL = "https://thienphuc1052004--viterbox-api-viterboxapi-tts.modal.run";
   const TTS_HEALTH_URL = "https://thienphuc1052004--viterbox-api-viterboxapi-health.modal.run";
 
-  // 1. Detect Language (Tiếng Việt vs Tiếng Anh)
+  // ... (GIỮ NGUYÊN TOÀN BỘ LOGIC XỬ LÝ BÊN DƯỚI: detectLanguage, normalizeText, splitTextSmart, fetchTTSChunk, processNextChunk, playNextAudio, generateAndPlayAudio, useEffects...) ...
+  // (Phần logic này không đổi nên mình ẩn đi cho gọn code nhé)
+  
+  // 1. Detect Language
   const detectLanguage = (text) => {
-    // Regex chứa các ký tự đặc trưng của tiếng Việt
     const vietnameseRegex = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
     return vietnameseRegex.test(text) ? 'vi' : 'en';
   };
 
-  // 2. Normalize Text (Giữ lại Unicode cho tiếng Việt)
+  // 2. Normalize Text
   const normalizeText = (text) => {
-    // Sử dụng \p{L} để match mọi chữ cái Unicode (bao gồm tiếng Việt)
     return text
-      .toLowerCase() // <--- MỚI THÊM: Chuyển hết về chữ thường ở đây
+      .toLowerCase()
       .replace(/[^\p{L}\p{N}\s.,!?;:'"()-]/gu, '') 
       .replace(/\s+/g, ' ')
       .trim();
   };
 
-  // 3. Smart Chunking (Tách câu thông minh)
-  // minWords = 40: Gom các câu lại cho đến khi đủ khoảng 40 từ
-  // mergeLastThreshold = 10: Nếu chunk cuối cùng < 10 từ, gộp vào chunk trước đó
+  // 3. Smart Chunking
   const splitTextSmart = (text, minWords = 40, mergeLastThreshold = 10) => {
-    // Tách sơ bộ bằng dấu câu (. ? ! ...)
     const rawSentences = text.match(/[^.!?]+[.!?]*/g) || [text];
-    
     const chunks = [];
     let buffer = "";
-
     for (const sentence of rawSentences) {
-      // Thử gộp câu hiện tại vào buffer
       const candidate = (buffer + " " + sentence).trim();
-      const wordCount = candidate.split(/\s+/).length; // Đếm số từ
-
+      const wordCount = candidate.split(/\s+/).length;
       if (wordCount < minWords) {
-        // Chưa đủ từ -> Giữ trong buffer
         buffer = candidate;
       } else {
-        // Đủ từ -> Đẩy vào mảng chunks & reset buffer
         chunks.push(candidate);
         buffer = "";
       }
     }
-
-    // Xử lý phần dư
-    if (buffer) {
-      chunks.push(buffer);
-    }
-
-    // Logic gộp chunk cuối nếu quá ngắn (tránh cụt lủn)
+    if (buffer) chunks.push(buffer);
     if (chunks.length > 1) {
       const lastChunk = chunks[chunks.length - 1];
       const lastWordCount = lastChunk.split(/\s+/).length;
-      
       if (lastWordCount < mergeLastThreshold) {
-        // Gộp chunk cuối vào chunk áp chót
         chunks[chunks.length - 2] += " " + chunks.pop();
       }
     }
-
     return chunks;
   };
 
-  // Fetch TTS (Gọi API Modal mới)
+  // Fetch TTS
   const fetchTTSChunk = async (chunk, lang) => {
     try {
       console.log(`🎤 Fetching TTS [${lang}]: "${chunk.substring(0, 20)}..."`);
       const ttsResponse = await fetch(TTS_API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // Gửi thêm language được detect
         body: JSON.stringify({ 
             text: chunk, 
             language: lang,
             temperature: 0.5 
         }),
       });
-
       if (!ttsResponse.ok) throw new Error(`TTS Error: ${ttsResponse.status}`);
-
       const audioBlob = await ttsResponse.blob();
       return audioBlob;
     } catch (error) {
@@ -121,15 +101,11 @@ export default function Pop() {
     }
   };
 
-  // Process Queue (Xử lý hàng đợi chunk)
+  // Process Queue
   const processNextChunk = async () => {
     if (isFetchingRef.current || pendingChunksRef.current.length === 0) return;
-    
     isFetchingRef.current = true;
-    
-    // Lấy chunk và ngôn ngữ đã lưu
     const { text, lang } = pendingChunksRef.current.shift();
-    
     const audioBlob = await fetchTTSChunk(text, lang);
     if (audioBlob) {
       audioQueueRef.current.push(audioBlob);
@@ -137,15 +113,13 @@ export default function Pop() {
         playNextAudio();
       }
     }
-    
     isFetchingRef.current = false;
-    
     if (pendingChunksRef.current.length > 0) {
       processNextChunk();
     }
   };
 
-  // Play Audio (Phát nhạc)
+  // Play Audio
   const playNextAudio = async () => {
     if (isPlayingRef.current || audioQueueRef.current.length === 0) {
       if (audioQueueRef.current.length === 0 && pendingChunksRef.current.length === 0 && !isFetchingRef.current) {
@@ -154,13 +128,10 @@ export default function Pop() {
       }
       return;
     }
-
     isPlayingRef.current = true;
     setIsPlayingAudio(true);
-
     const audioBlob = audioQueueRef.current.shift();
     const audioUrl = URL.createObjectURL(audioBlob);
-
     try {
       await new Promise((resolve, reject) => {
         const audio = new Audio(audioUrl);
@@ -177,38 +148,28 @@ export default function Pop() {
     } catch (error) {
       console.error("Audio playback failed:", error);
     }
-
     isPlayingRef.current = false;
     playNextAudio();
   };
 
-  // Generate & Play Logic (Kết hợp Detect + Split)
+  // Generate & Play Logic
   const generateAndPlayAudio = async (text) => {
     if (!text || !ttsReady) {
       console.log('TTS not ready or empty text');
       return;
     }
-
     const normalized = normalizeText(text);
-    // 1. Detect ngôn ngữ
     const lang = detectLanguage(normalized);
-    
-    // 2. Cắt chunk thông minh (min 40 từ)
     const chunks = splitTextSmart(normalized, 40, 10);
-    
     console.log(`Detected [${lang}]. Chunks:`, chunks);
-    
-    // Đẩy vào hàng đợi kèm thông tin ngôn ngữ
     chunks.forEach(chunk => {
         pendingChunksRef.current.push({ text: chunk, lang: lang });
     });
-    
-    // Chạy pipeline
     processNextChunk();
     processNextChunk(); 
   };
 
-  // ... (Phần code IP detect, Speech Recognition giữ nguyên) ...
+  // IP Detect & Speech
   useEffect(() => {
     fetch('https://api.ipify.org?format=json')
       .then(response => response.json())
@@ -231,15 +192,11 @@ export default function Pop() {
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.continuous = false;
       recognitionRef.current.interimResults = true;
-      // Auto detect ngôn ngữ cho mic hơi khó, tạm để EN hoặc VI tùy nhu cầu
-      // Bạn có thể đổi thành 'vi-VN' nếu muốn nói tiếng Việt
       recognitionRef.current.lang = 'vi-VN'; 
-
       recognitionRef.current.onstart = () => {
         setIsListening(true);
         setSpeechActive(true);
       };
-
       recognitionRef.current.onresult = (event) => {
         let transcript = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -247,15 +204,12 @@ export default function Pop() {
         }
         setInputValue(transcript);
       };
-
       recognitionRef.current.onend = () => {
         setIsListening(false);
         setSpeechActive(false);
       };
     }
   }, []);
-
-  // ... (Các hàm handleVoiceInput, handleKeyDown, toggleChat, streamResponse... giữ nguyên) ...
 
   const handleVoiceInput = () => {
     if (!recognitionRef.current || isSending || isStreaming) return;
@@ -302,7 +256,6 @@ export default function Pop() {
   const getGeminiResponse = async (history) => {
     if (!GEMINI_API_KEY) throw new Error('Gemini API key missing');
     const systemPrompt = "You are Amelia. You can speak both English and Vietnamese properly. Answer helpful and concise.";
-    
     const contents = [
       { role: "user", parts: [{ text: systemPrompt }] },
       ...history.map(msg => ({
@@ -310,7 +263,6 @@ export default function Pop() {
         parts: [{ text: msg.content }]
       }))
     ];
-
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
@@ -319,7 +271,6 @@ export default function Pop() {
         body: JSON.stringify({ contents }),
       }
     );
-
     if (!response.ok) throw new Error("Gemini Error");
     const data = await response.json();
     return data.candidates?.[0]?.content?.parts?.[0]?.text || "Error";
@@ -327,7 +278,6 @@ export default function Pop() {
 
   const handleSend = async () => {
     if (!inputValue.trim() || isSending) return;
-
     setIsSending(true);
     const userMessage = inputValue.trim();
     setInputValue('');
@@ -335,7 +285,6 @@ export default function Pop() {
     setConvo(updatedConvo);
     if (updatedConvo.length === 2) setShowHistory(true);
     setConvo(prev => [...prev, { role: 'assistant', content: '' }]);
-
     try {
       let botReply;
       if (ragReady) {
@@ -350,10 +299,8 @@ export default function Pop() {
       } else {
         botReply = await getGeminiResponse(updatedConvo);
       }
-
       streamResponse(botReply);
       if (userMessage.trim()) generateAndPlayAudio(botReply);
-
     } catch (error) {
       setConvo(prev => {
          const newConvo = [...prev];
@@ -377,7 +324,6 @@ export default function Pop() {
     };
   }, []);
 
-  // --- Ping Health Checks ---
   useEffect(() => {
     const checkStatus = async () => {
         try {
@@ -389,10 +335,9 @@ export default function Pop() {
   }, []);
 
   useEffect(() => {
-    // Ping Modal Health Endpoint mới
     const checkTts = async () => {
       try {
-        const res = await fetch(TTS_HEALTH_URL); // Dùng Health URL mới
+        const res = await fetch(TTS_HEALTH_URL);
         if (res.ok) {
             setTtsReady(true);
             console.log("✅ Viterbox TTS Ready!");
@@ -413,26 +358,44 @@ export default function Pop() {
     setIsPlayingAudio(false);
   };
 
-  // ... (Phần render UI giữ nguyên, chỉ update style nếu cần) ...
+  // --- STYLE OBJECTS (Đã sửa sang tone Trắng) ---
+  const vaultStyle = {
+    fontFamily: "'Crimson Text', serif",
+    bg: "bg-[#121212]", // Nền vẫn đen để nổi bật chữ trắng
+    border: "border-white", // Viền trắng
+    text: "text-white", // Chữ trắng
+    icon: "text-white", // Icon trắng
+    placeholder: "placeholder-gray-400", // Placeholder xám nhạt
+  };
+
   useEffect(() => {
     if (historyRef.current) historyRef.current.scrollTop = historyRef.current.scrollHeight;
   }, [convo]);
 
   return (
     <>
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap');
+      `}</style>
+
+      {/* Trigger Button */}
       <button
         onClick={handleToggleChat}
-        className="fixed top-5 right-5 w-14 h-14 rounded-full shadow-lg flex items-center justify-center z-50 transition-all duration-300 hover:scale-110"
+        // Sửa shadow sang màu trắng, border dùng biến vaultStyle
+        className={`fixed top-5 right-5 w-10 h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center z-50 transition-all duration-300 hover:scale-110`}
       >
-        <img src="/printer.png" alt="Thiên" className="w-full h-full object-cover rounded-full" />
+        <img src="/printer.png" alt="Thiên" className="w-full h-full object-cover rounded-full opacity-90 hover:opacity-100" />
       </button>
 
       {isOpen && (
         <>
+          {/* --- CHAT HISTORY --- */}
           {showHistory && (
             <div 
               ref={historyRef}
-              className="fixed font-serif bottom-20 md:bottom-30 left-1/2 transform -translate-x-1/2 w-full md:max-w-[50vw] max-w-[100vw] bg-[var(--colortwo)] rounded-2xl shadow-xl flex flex-col z-40 border-3 border-[var(--colorone)] p-4 max-h-[50vh] overflow-y-auto no-scrollbar"
+              // Sửa shadow sang màu trắng nhẹ, dùng các biến style mới
+              className={`fixed bottom-20 md:bottom-30 left-1/2 transform -translate-x-1/2 w-[95vw] md:max-w-[50vw] ${vaultStyle.bg} rounded-xl shadow-[0_0_30px_rgba(255,255,255,0.1)] flex flex-col z-40 border ${vaultStyle.border} p-5 max-h-[50vh] overflow-y-auto custom-scrollbar`}
+              style={{ fontFamily: "'Crimson Text', serif" }}
             >
               <div className="flex flex-col">
                 {convo.map((msg, index) => {
@@ -440,13 +403,16 @@ export default function Pop() {
                    const displayContent = (index === convo.length - 1 && isStreaming) ? streamingText : msg.content;
                    if (displayContent === '') return null;
                    return (
-                     <div key={index} className="mb-4 cursor-default text-justify px-1">
-                       <div className="font-bold mb-1 text-[var(--colorone)] inline">
+                     <div key={index} className="mb-4 cursor-default text-justify px-1 text-lg leading-relaxed">
+                       {/* Role label dùng màu icon trắng */}
+                       <div className={`font-bold mb-1 ${vaultStyle.icon} inline tracking-wider`}>
                          {msg.role === "user" ? `${displayName.toUpperCase()}: ` : "THIÊN: "}
                        </div>
-                       <div className="text-[var(--colorone)] inline break-words whitespace-pre-line">
+                       {/* Nội dung dùng màu text trắng */}
+                       <div className={`${vaultStyle.text} inline break-words whitespace-pre-line`}>
                          {displayContent}
-                         {index === convo.length - 1 && isStreaming && <span className="animate-pulse">|</span>}
+                         {/* Con trỏ streaming cũng màu trắng */}
+                         {index === convo.length - 1 && isStreaming && <span className="animate-pulse text-white">|</span>}
                        </div>
                        <br />
                      </div>
@@ -454,25 +420,35 @@ export default function Pop() {
                 })}
               </div>
               
-              <div className="sticky bottom-0 left-0 w-full bg-transparent pt-3 z-50">
-                <div className="flex items-center justify-end space-x-4">
-                   {/* Status Icons */}
+              {/* Status Footer */}
+              <div className="sticky bottom-0 left-0 w-full bg-transparent pt-3 z-50 flex justify-end">
+                {/* Sửa border và separator sang màu trắng mờ */}
+                <div className="flex items-center space-x-3 bg-black/80 px-3 py-1 rounded-full border border-white/30 backdrop-blur-sm">
                    <div title="RAG Status">
-                     {ragReady ? <MagnifyingGlassIcon className="w-5 h-5 text-[var(--colorone)]" /> : <ArrowPathIcon className="w-5 h-5 animate-spin text-gray-400" />}
+                     {/* Icon loading chuyển sang màu trắng mờ */}
+                     {ragReady ? <MagnifyingGlassIcon className={`w-4 h-4 ${vaultStyle.icon}`} /> : <ArrowPathIcon className="w-4 h-4 animate-spin text-white/50" />}
                    </div>
+                   <div className="w-[1px] h-4 bg-white/30"></div>
                    <div title="TTS Status">
-                     {ttsReady ? <SpeakerWaveIcon className={`w-5 h-5 text-[var(--colorone)] ${isPlayingAudio ? 'animate-pulse' : ''}`} /> : <ArrowPathIcon className="w-5 h-5 animate-spin text-gray-400" />}
+                     {ttsReady ? <SpeakerWaveIcon className={`w-4 h-4 ${vaultStyle.icon} ${isPlayingAudio ? 'animate-pulse' : ''}`} /> : <ArrowPathIcon className="w-4 h-4 animate-spin text-white/50" />}
                    </div>
                 </div>
               </div>
             </div>
           )}
 
-          <div className="font-serif fixed bottom-0 md:bottom-10 left-1/2 transform -translate-x-1/2 w-full md:max-w-[50vw] max-w-[100vw] bg-[var(--colortwo)] rounded-full shadow-xl flex flex-col z-40 border-3 border-[var(--colorone)] overflow-hidden">
-            <div className="flex items-center px-3 py-2">
-              <button onClick={handleVoiceInput} disabled={isSending} className="px-2">
-                <MicrophoneIcon className={`w-6 h-6 text-[var(--colorone)] ${isListening ? 'animate-pulse text-red-500' : ''}`} />
+          {/* --- INPUT BAR --- */}
+          <div 
+            // Sửa shadow sang màu trắng
+            className={`fixed bottom-4 md:bottom-10 left-1/2 transform -translate-x-1/2 w-[95vw] md:max-w-[50vw] ${vaultStyle.bg} rounded-full shadow-[0_5px_20px_rgba(255,255,255,0.1)] flex flex-col z-40 border ${vaultStyle.border} overflow-hidden`}
+            style={{ fontFamily: "'Crimson Text', serif" }}
+          >
+            <div className="flex items-center px-4 py-3">
+              <button onClick={handleVoiceInput} disabled={isSending} className="px-2 transition-transform active:scale-95">
+                {/* Mic khi active sẽ nhấp nháy màu trắng */}
+                <MicrophoneIcon className={`w-6 h-6 ${isListening ? 'animate-pulse text-white' : vaultStyle.icon}`} />
               </button>
+              
               <input
                 ref={inputRef}
                 type="text"
@@ -481,21 +457,42 @@ export default function Pop() {
                 onKeyDown={handleKeyDown}
                 placeholder="Ask me anything..."
                 disabled={isSending}
-                className="flex-grow rounded-none px-3 py-2 focus:outline-none text-[var(--colorone)] text-lg bg-transparent placeholder-[var(--colorone)]/50"
+                // Sử dụng màu text trắng và placeholder xám mới
+                className={`flex-grow rounded-none px-3 py-1 focus:outline-none ${vaultStyle.text} ${vaultStyle.placeholder} text-xl bg-transparent`}
+                style={{ fontFamily: "'Crimson Text', serif" }}
               />
-              <button onClick={toggleHistory} className="px-2">
-                <ClockIcon className="w-6 h-6 text-[var(--colorone)]" />
+              
+              <button onClick={toggleHistory} className="px-2 transition-transform active:scale-95">
+                <ClockIcon className={`w-6 h-6 ${vaultStyle.icon}`} />
               </button>
-              <button onClick={handleSend} disabled={isSending} className="px-2">
-                <PaperAirplaneIcon className="w-6 h-6 text-[var(--colorone)]" />
+              
+              <button onClick={handleSend} disabled={isSending} className="px-2 transition-transform active:scale-95">
+                <PaperAirplaneIcon className={`w-6 h-6 ${vaultStyle.icon} ${isSending ? 'opacity-50' : ''}`} />
               </button>
             </div>
           </div>
         </>
       )}
+
       <style jsx>{`
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .animate-pulse { animation: pulse 1s infinite; }
+        
+        /* Custom WHITE Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.1); /* Track màu trắng mờ */
+          border-radius: 2px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.6); /* Thumb màu trắng đục hơn */
+          border-radius: 2px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.9); /* Hover sáng hơn */
+        }
       `}</style>
     </>
   );
