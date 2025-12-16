@@ -1,8 +1,21 @@
+![](store.png)
+:::row
+:::col
+> # [Ope Watson](https://opewatson.org)
+:::
+:::col
 
-{bg:blue}
-> # It's better being weird than boring!
+{space:20px} 
 
-#  
+{align:right}
+```python
+"Sometimes you gotta run before you walk..."
+```
+:::
+:::
+
+{space:75px}
+
 
 :::row
 :::col
@@ -21,7 +34,7 @@
 
 :::col
 {bg:green}
-## 🎄🎋Merry Christmas!
+## 🎄Merry Christmas! 🎁
 ![Feliz Navidad](https://youtu.be/q9jtLvTrhS8?si=B01mX33ltfH4lwNI)
 :::
 
@@ -47,61 +60,82 @@ I do not own arts and embedded visual contents.
 :::
 
 :::col
+{space:75px}
 
-# 
+###### 🍵[[Ope Watson]]
 
-{bg:green}
-## 📘Highlighted Blogs (unhinged notes acktually)
-1. [[Christmas Album]]
+###### 🍭[[Core Memory]]
 
-2. [[Beautiful]]
-{bg:purple}
-3. [[I Wasted 4M For This Project]]
+###### 🎄[[Christmas Album]]
 
-4. [[Emotional Analysis Extra]]
-5. [[In attempt of understanding the brain for building SNN]]
 :::
 :::
-
-
-
 
 
 {bg:blue}
-# Favourite Channels
-
+# 📘Unhinged notes acktually
 :::row
 :::col
-![](https://yt3.googleusercontent.com/C1_tCrHsOOrdZlNToi5zyYhgH0WPGzUyk8WGMHCq5VC4_y63UBYZxnu-zeLaCNj4ryvpRAS2NYY=s176-c-k-c0x00ffffff-no-rj-mo)
-## Wang OK
+> ## Collection
+
+- [[Beautiful]]
+- [[Mad Gab]]
+- [[Emotional Analysis Vol1]]
+- [[Emotional Analysis Vol2]]
 :::
 :::col
-![](https://yt3.googleusercontent.com/ytc/AIdro_mJPKH--5fik_cMdzTFR2HmID2j2bBMnEe57DKujAbo7Bg5=s176-c-k-c0x00ffffff-no-rj-mo)
-## Reinaery
+> ## Project Documents
+
+- [[Emergence]]
+- [[Features]]
+- [[I Wasted 4M]]
+- [[RMKV]]
+- [[Spike Network]]
 :::
 :::col
-![](https://yt3.googleusercontent.com/6wBVAbpioFptFBchw6jZCXPziaCqykqt0Rl9DfmBUsfeAF8T3T9gI1IwKDZwxkbk87u9ZVEVUA=s176-c-k-c0x00ffffff-no-rj-mo)
-## Joseph Vincent
+> ## Memoir
+
+- [[Flood]]
 :::
 :::col
-![](https://yt3.googleusercontent.com/SvI2UNvKIR5qFAuG6vQw7AWdgUkr-CKqG0NGr4TyG_WgzSM-sRhATu24O4xdBNHez7HQljcvzg=s176-c-k-c0x00ffffff-no-rj-mo)
-## MCK
-:::
-:::col
-![](https://yt3.googleusercontent.com/ytc/AIdro_lH_oZ7Fw7mn4MaKlmtk0XjTzDvsOyAMlAxiXZaaiA9cw=s176-c-k-c0x00ffffff-no-rj-mo)
-## Rap Nhà Làm
+> ## Thoughts
+
+- [[Fuck Boy Diary]]
+- [[In Defence of Edison]]
+- [[Where Are People]]
 :::
 :::
 
 {bg:blue}
-# Gallery
+# 📁Showcase
 
+:::row
+
+:::col
 {bg:blue}
-# R&D
+# 🔗Other Links
 
-{bg:blue}
-# Reading List
+:::
 
-{bg:blue}
-# Watching List
+:::col
+{align:center}
+{bg:gray}
+# [Github](https://github.com/thienphucope)
+:::
+:::col
+{align:center}
+{bg:red}
+# [YouTube](https://github.com/thienphucope)
+:::
+:::col
+{align:center}
+{bg:pink}
+# [Instagram](https://github.com/thienphucope)
+:::
+:::col
+{align:center}
+{bg:gray}
+# [X](https://github.com/thienphucope)
+:::
 
+:::

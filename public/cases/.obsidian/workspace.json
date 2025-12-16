@@ -25,14 +25,10 @@
             "id": "89a7303742cdb039",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "RWKV.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "RWKV"
+              "title": "New tab"
             }
           }
         ],
@@ -200,12 +196,31 @@
   },
   "active": "89a7303742cdb039",
   "lastOpenFiles": [
+    "notes/Ope Watson.md",
+    "notes/Emotional Analysis Vol2.md",
+    "notes/Emotional Analysis Vol1.md",
+    "notes/Mad Gab.md",
+    "notes/Gab List.md",
+    "notes/Emotional Analysis vol2.md",
+    "notes/Emotional Analysis vol1.md",
+    "notes/Emotional Analysis pt1.md",
+    "notes/Emotional Analysis pt2.md",
+    "notes/Fuck Boy Diary.md",
+    "notes/Fuck Boy.md",
+    "notes/I Wasted 4M.md",
+    "notes/In Defence of Edison.md",
+    "notes/Where Are People.md",
+    "notes/Features.md",
+    "notes/Test.md",
+    "notes/Flood.md",
+    "notes/Spike Network.md",
+    "notes/Ope.md",
+    "notes/Emergence.md",
+    "notes/Core Memory.md",
+    "notes/Folk Games.md",
     "In Defence of Ed----.md",
     "In attempt of understanding the brain for building SNN.md",
     "A Christmas Album.md",
-    "RWKV.md",
-    "Biography of Ope Watson.md",
-    "Beyond Quantum — Emergence is the most beautiful concept in the Universe.md",
-    "Beautiful.md"
+    "RWKV.md"
   ]
 }

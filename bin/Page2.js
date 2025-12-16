@@ -38,72 +38,98 @@ const processContentToBlocks = (lines) => {
       i++;
       continue;
     }
+    // --- THÊM ĐOẠN NÀY: Check Spacer ---
+    const spaceMatch = trimmed.match(/^\{space:(\d+px)\}$/);
+    if (spaceMatch) {
+      blocks.push({
+        type: 'spacer',
+        height: spaceMatch[1]
+      });
+      i++;
+      continue; // Xong block này, nhảy sang dòng tiếp
+    }
     
     let blockContent = [];
     let bgColor = null;
     let textColor = null;
+    let textAlign = null; // <--- BIẾN MỚI
     
-    // Check for background color
+    // Helper function để check syntax align
+    // Trả về align value nếu có, và tăng i lên
+    const checkAlign = (currentIndex) => {
+      if (currentIndex >= lines.length) return { val: null, idx: currentIndex };
+      const l = lines[currentIndex].trim();
+      const match = l.match(/^\{align:(left|center|right|justify)\}$/);
+      if (match) {
+        return { val: match[1], idx: currentIndex + 1 };
+      }
+      return { val: null, idx: currentIndex };
+    };
+
+    // Helper function check color
+    const checkColor = (currentIndex) => {
+      if (currentIndex >= lines.length) return { val: null, idx: currentIndex };
+      const l = lines[currentIndex].trim();
+      const match = l.match(/^\{color:(red|blue|yellow|green|gray|orange|purple|pink|white|black)\}$/);
+      if (match) {
+        return { val: match[1], idx: currentIndex + 1 };
+      }
+      return { val: null, idx: currentIndex };
+    };
+
+    // 1. Check BG
     const bgMatch = trimmed.match(/^\{bg:(red|blue|yellow|green|gray|orange|purple|pink)\}$/);
     if (bgMatch) {
       bgColor = bgMatch[1];
       i++;
       
-      // Check next line for color
-      if (i < lines.length) {
-        const nextLine = lines[i].trim();
-        const colorMatch = nextLine.match(/^\{color:(red|blue|yellow|green|gray|orange|purple|pink|white|black)\}$/);
-        if (colorMatch) {
-          textColor = colorMatch[1];
-          i++;
+      // 2. Check Color sau BG
+      const cResult = checkColor(i);
+      textColor = cResult.val;
+      i = cResult.idx;
+
+      // 3. Check Align sau Color (hoặc sau BG)
+      const aResult = checkAlign(i);
+      textAlign = aResult.val;
+      i = aResult.idx;
+
+    } else {
+      // Nếu không có BG, check Color
+      const cResult = checkColor(i);
+      if (cResult.val) {
+        textColor = cResult.val;
+        i = cResult.idx;
+
+        // Check Align sau Color
+        const aResult = checkAlign(i);
+        textAlign = aResult.val;
+        i = aResult.idx;
+      } else {
+        // Nếu không có Color, check Align đứng một mình
+        const aResult = checkAlign(i);
+        if (aResult.val) {
+          textAlign = aResult.val;
+          i = aResult.idx;
         }
+        // Nếu không có gì đặc biệt thì là text thường, i giữ nguyên
+      }
+    }
+
+    // Collect content
+    while (i < lines.length) {
+      const nextLine = lines[i];
+      const nextTrimmed = nextLine.trim();
+      
+      // Dừng lại nếu gặp dòng trống hoặc syntax đặc biệt bắt đầu block mới
+      if (nextTrimmed === '' || 
+          nextTrimmed.match(/^\{bg:/) || 
+          nextTrimmed.match(/^\{color:/) ||
+          nextTrimmed.match(/^\{align:/)) { // <--- NHỚ THÊM ĐK DỪNG NÀY
+        break;
       }
       
-      // Collect content until empty line or next special syntax
-      while (i < lines.length) {
-        const nextLine = lines[i];
-        const nextTrimmed = nextLine.trim();
-        
-        if (nextTrimmed === '' || nextTrimmed.match(/^\{bg:/) || nextTrimmed.match(/^\{color:/)) {
-          break;
-        }
-        
-        blockContent.push(nextLine);
-        i++;
-      }
-    } else {
-      // Check for text color only
-      const colorMatch = trimmed.match(/^\{color:(red|blue|yellow|green|gray|orange|purple|pink|white|black)\}$/);
-      if (colorMatch) {
-        textColor = colorMatch[1];
-        i++;
-        
-        // Collect content until empty line or next special syntax
-        while (i < lines.length) {
-          const nextLine = lines[i];
-          const nextTrimmed = nextLine.trim();
-          
-          if (nextTrimmed === '' || nextTrimmed.match(/^\{bg:/) || nextTrimmed.match(/^\{color:/)) {
-            break;
-          }
-          
-          blockContent.push(nextLine);
-          i++;
-        }
-      } else {
-        // Regular content - collect until empty line or special syntax
-        while (i < lines.length) {
-          const nextLine = lines[i];
-          const nextTrimmed = nextLine.trim();
-          
-          if (nextTrimmed === '' || nextTrimmed.match(/^\{bg:/) || nextTrimmed.match(/^\{color:/)) {
-            break;
-          }
-          
-          blockContent.push(nextLine);
-          i++;
-        }
-      }
+      blockContent.push(nextLine);
+      i++;
     }
     
     if (blockContent.length > 0) {
@@ -111,7 +137,8 @@ const processContentToBlocks = (lines) => {
         type: 'normal',
         content: blockContent,
         bgColor: bgColor,
-        color: textColor
+        color: textColor,
+        align: textAlign // <--- PASS GIÁ TRỊ VÀO BLOCK
       });
     }
   }
@@ -218,12 +245,18 @@ const processBlockMarkdown = (markdown) => {
 
 // --- MARKDOWN BLOCK COMPONENT ---
 const MarkdownBlock = ({ block, onLinkClick }) => {
+  // --- THÊM ĐOẠN NÀY Ở ĐẦU COMPONENT ---
+  if (block.type === 'spacer') {
+    return <div style={{ height: block.height, width: '100%' }} />;
+  }
+  // -------------------------------------
   const blockRef = useRef(null);
   
   useEffect(() => {
     if (blockRef.current && window.marked && window.renderMathInElement) {
       const renderer = new window.marked.Renderer();
       
+      // ... trong component MarkdownBlock ...
       renderer.image = (arg1, arg2, arg3) => {
         let href = arg1, title = arg2, text = arg3;
         if (typeof arg1 === 'object' && arg1 !== null) {
@@ -231,18 +264,29 @@ const MarkdownBlock = ({ block, onLinkClick }) => {
           title = arg1.title;
           text = arg1.text;
         }
-        const safeHref = (typeof href === 'string') ? href : '';
+        let safeHref = (typeof href === 'string') ? href : '';
         const safeText = (typeof text === 'string') ? text : '';
         const safeTitle = (typeof title === 'string') ? title : '';
-        
+
+        // --- LOGIC MỚI: Check xem có #circle không ---
+        let extraClass = '';
+        if (safeHref.endsWith('#circle')) {
+          extraClass = 'img-circle';
+          safeHref = safeHref.replace('#circle', ''); // Xóa cái đuôi đi để link ảnh vẫn chạy đúng
+        }
+        // ---------------------------------------------
+
         const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
         const match = safeHref.match(youtubeRegex);
 
         if (match && match[1]) {
           return `<div class="video-wrapper"><iframe src="https://www.youtube.com/embed/${match[1]}" title="${safeText}" frameborder="0" allowfullscreen></iframe></div>`;
         }
+        
         const titlePart = safeTitle ? ` title="${safeTitle}"` : '';
-        return `<img src="${safeHref}" alt="${safeText}"${titlePart}>`;
+        
+        // Thêm biến ${extraClass} vào thẻ img
+        return `<img src="${safeHref}" alt="${safeText}" class="${extraClass}"${titlePart}>`;
       };
 
       window.marked.use({ renderer });
@@ -269,7 +313,12 @@ const MarkdownBlock = ({ block, onLinkClick }) => {
   
   const bgColorClass = block.bgColor ? `bg-${block.bgColor}` : '';
   const textColorClass = block.color ? `text-${block.color}` : '';
-  const combinedClasses = `markdown-block ${bgColorClass} ${textColorClass}`;
+  
+  // --- THÊM DÒNG NÀY ---
+  const alignClass = block.align ? `text-align-${block.align}` : ''; 
+  
+  // Thêm alignClass vào chuỗi class
+  const combinedClasses = `markdown-block ${bgColorClass} ${textColorClass} ${alignClass}`;
   
   return (
     <div 
@@ -532,7 +581,6 @@ export default function RedMathVault() {
       {/* Main Content */}
       <main className="main-viewport">
         <div className="content-wrapper">
-          {currentFileName && <h1 className="page-title">{currentFileName}</h1>}
           <MarkdownViewer content={content} onLinkClick={handlePreviewClick} />
         </div>
       </main>
@@ -569,12 +617,16 @@ export default function RedMathVault() {
           width: 100%;
         }
 
-        /* --- BLOCK SYSTEM (Notion-style) --- */
+/* --- BLOCK SYSTEM (Notion-style) --- */
         .markdown-block {
-          margin-bottom: 4px;
-          padding: 8px 14px;
+          /* SỬA 2 DÒNG NÀY */
+          margin: 1px 0 !important;      /* Giảm margin trên dưới xuống siêu nhỏ (1px) */
+          padding: 0px 10px !important;  /* Giảm padding trên dưới xuống 2px, giữ nguyên trái phải */
+          
+          /* Giữ nguyên các dòng này */
           border-radius: 4px;
           transition: background-color 0.2s;
+          /* Nhớ XÓA dòng 'width: fit-content' nếu cậu lỡ thêm vào nhé */
         }
 
         .markdown-block:hover {
@@ -618,7 +670,7 @@ export default function RedMathVault() {
         .markdown-block h3 { font-size: 1.5em !important; }
         .markdown-block h4 { font-size: 1.3em !important; }
         .markdown-block h5 { font-size: 1.1em !important; }
-        .markdown-block h6 { font-size: 1.0em !important; }
+        .markdown-block h6 { font-size: 3.0em !important; }
 
         /* --- TABLES --- */
         .markdown-block table { 
@@ -700,18 +752,37 @@ export default function RedMathVault() {
           box-sizing: border-box;
         }
 
+        /* Responsive adjustments */
         @media (max-width: 768px) {
+          /* 1. Ép dòng chuyển thành cột dọc thực sự */
           .md-row { 
-            flex-direction: column; 
-            gap: 12px;
+            display: flex !important;
+            flex-direction: column !important; /* Quan trọng: Xếp chồng dọc thay vì ngang */
+            gap: 20px; /* Tăng khoảng cách giữa các phần tử khi xếp chồng cho thoáng */
+            height: auto !important; /* Đảm bảo chiều cao tự động giãn theo nội dung */
           }
-          .md-col { flex: 1 1 100% !important; max-width: 100% !important; }
+          
+          /* 2. Cột chiếm full chiều ngang */
+          .md-col { 
+            width: 100% !important;
+            flex: 0 0 auto !important; /* Reset flex để không bị co kéo */
+            max-width: 100% !important; 
+            margin-bottom: 12px; /* Thêm margin dưới cho chắc cốp */
+          }
+
+          /* 3. Fix riêng cho hình ảnh/video để không bị đè */
+          .markdown-block img, 
+          .video-wrapper {
+            max-width: 100% !important;
+            height: auto !important;
+            display: block; /* Tránh lỗi inline image tạo khoảng trắng thừa */
+          }
         }
 
         /* --- OTHER ELEMENTS --- */
         .markdown-block p { margin: 0.3em 0; }
         .markdown-block blockquote {
-          border-left: 3px solid var(--text-red);
+          border-left: 10px solid #ffffff !important;
           padding-left: 1em;
           margin: 0.5em 0;
           opacity: 0.8;
@@ -720,13 +791,13 @@ export default function RedMathVault() {
         .markdown-block a { 
           color: var(--bright-red) !important; 
           text-decoration: none; 
-          border-bottom: 1px solid var(--bright-red);
+          color: #FFFACD !important;
         }
 
         .internal-link { 
-          color: var(--bright-red); 
+          color: #FFFACD; 
           cursor: pointer; 
-          border-bottom: 1px dashed var(--bright-red);
+          // border-bottom: 1px solid #FFFACD;
         }
 
         /* --- SIDEBAR --- */
@@ -878,6 +949,21 @@ export default function RedMathVault() {
             font-size: 2rem;
           }
         }
+        /* --- CIRCULAR IMAGE --- */
+        .img-circle {
+          border-radius: 50% !important;
+          object-fit: cover !important; /* Cắt ảnh vừa khung, không bị méo */
+          aspect-ratio: 1 / 1; /* Ép ảnh thành hình vuông tỉ lệ 1:1 để tròn đẹp */
+          
+          /* Tuỳ chọn: Giới hạn kích thước nếu cậu muốn avatar nhỏ */
+          max-width: 100vw !important; 
+          margin: 12px auto !important; /* Căn giữa */
+          display: block;
+        }
+        .text-align-left { text-align: left !important; }
+        .text-align-center { text-align: center !important; }
+        .text-align-right { text-align: right !important; }
+        .text-align-justify { text-align: justify !important; }
       `}</style>
     </div>
   );
