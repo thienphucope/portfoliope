@@ -22,8 +22,10 @@
 
 {space:20px} 
 
-{align:center}
-"Sometimes you gotta run before you walk"
+{align:right}
+
+> "Sometimes you gotta run before you walk"
+
 
 :::
 :::
@@ -75,6 +77,7 @@ I do not own arts and embedded visual contents.
 
 :::col
 
+{space:100px}
 # 🍵[[Ope Watson]]
 
 # 🍭[[Core Memory]]
@@ -88,7 +91,7 @@ I do not own arts and embedded visual contents.
 
 
 {bg:blue}
-# 📘Unhinged notes acktually
+# 📘Unhinged notes
 :::row
 :::col
 > ## Collection

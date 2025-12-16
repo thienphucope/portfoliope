@@ -615,6 +615,7 @@ export default function RedMathVault() {
           font-size: 20px;
           line-height: 1.8;
           width: 100%;
+          text-align: justify;
         }
 
 /* --- BLOCK SYSTEM (Notion-style) --- */
@@ -741,7 +742,7 @@ export default function RedMathVault() {
         .md-row {
           display: flex;
           flex-wrap: wrap;
-          gap: 24px;
+          gap: 12px;
           margin-bottom: 8px;
           width: 100%;
         }
@@ -964,6 +965,57 @@ export default function RedMathVault() {
         .text-align-center { text-align: center !important; }
         .text-align-right { text-align: right !important; }
         .text-align-justify { text-align: justify !important; }
+        /* ... Các code CSS cũ ở trên ... */
+
+      /* --- MOBILE RESPONSIVE TWEAKS --- */
+      @media (max-width: 768px) {
+        
+        /* 1. Giảm size chữ Body xuống mức chuẩn mobile (16px hoặc 17px) */
+        /* Hiện tại PC đang là 20px */
+        .markdown-body {
+          font-size: 16px !important; 
+          line-height: 1.6 !important; /* Giảm giãn dòng chút cho đỡ tốn diện tích */
+          text-align: justify; /* Giữ căn đều cho đẹp */
+        }
+
+        /* 2. Tinh chỉnh lại Heading cho đỡ "hét vào mặt" người xem */
+        /* Vì màn hình nhỏ, tỉ lệ Heading nên giảm đi một chút so với body */
+        .markdown-block h1 { font-size: 1.8em !important; } /* PC: 2.2em */
+        .markdown-block h2 { font-size: 1.5em !important; } /* PC: 1.8em */
+        .markdown-block h3 { font-size: 1.3em !important; } /* PC: 1.5em */
+        .markdown-block h4 { font-size: 1.2em !important; } /* PC: 1.3em */
+
+        /* 3. Mở rộng không gian hiển thị */
+        /* Mobile đất chật người đông, giảm padding lề để chữ có chỗ thở */
+        .content-wrapper {
+          padding: 20px 15px 80px 15px !important; /* Trên - Phải - Dưới - Trái */
+        }
+
+        /* 4. Giảm size tiêu đề trang chính (Page Title) */
+        .page-title {
+          font-size: 1.8rem !important; /* PC: 2.5rem */
+          margin-bottom: 20px !important;
+        }
+        
+        /* 5. Block quote (trích dẫn) nên thụt lề ít hơn */
+        .markdown-block blockquote {
+          margin: 0.5em 0 !important;
+          padding-left: 0.8em !important;
+        }
+        /* 1. Điều khiển khoảng cách ở đây */
+        .md-row {
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 8px !important; /* <--- Sửa số này: Khoảng cách chính thức giữa các khối (8px là đẹp) */
+        }
+
+        /* 2. Xóa margin thừa của khối con */
+        .md-col {
+          width: 100% !important;
+          max-width: 100% !important;
+          margin-bottom: 0 !important; /* <--- QUAN TRỌNG: Set về 0 để không bị cộng dồn với gap ở trên */
+        }
+      }
       `}</style>
     </div>
   );
