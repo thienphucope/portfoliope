@@ -1,3 +1,7 @@
+**./[[Dash Board]]/**
+{align:center}
+# Christmas Album
+
 ![Feliz Navidad](https://youtu.be/7eSnmK7hpjM?si=JLbH1I6QUcT4V_YQ)
 
 # Favourite Christmas Songs

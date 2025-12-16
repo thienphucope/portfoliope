@@ -1,3 +1,7 @@
+**./[[Dash Board]]/**
+{align:center}
+# Emergence
+
 We often look at the universe and think it’s ruled by complex, top-down commands. But look closer. Look at how a flock of birds moves in perfect unison, or how a colony of ants builds a cathedral of dirt without an architect.
 
 This is **Emergence**. And as we discussed, it might just be more profound—and more beautiful—than quantum physics itself.

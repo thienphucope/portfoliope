@@ -1,3 +1,7 @@
+**./[[Dash Board]]/**
+{align:center}
+# Mad Gab
+
 ## 1. Easel Aid Ease Man - E.g: He is a lady man :D
 
 ## 2. Know Sayer

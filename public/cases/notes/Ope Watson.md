@@ -1,3 +1,5 @@
+**./[[Dash Board]]/**
+{align:center}
 # Ope Watson
 
 **Self-proclaimed Master of Procrastination**  

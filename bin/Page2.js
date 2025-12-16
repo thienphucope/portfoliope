@@ -485,7 +485,7 @@ export default function RedMathVault() {
         // --- PHẦN CHỈNH SỬA Ở ĐÂY ---
         
         // 1. Đặt tên file cậu muốn load đầu tiên
-        const DEFAULT_FILE_NAME = 'Ope Watsons Dash Board.md'; // Hoặc 'intro.md', 'home.md' tùy cậu
+        const DEFAULT_FILE_NAME = 'Dash Board.md'; // Hoặc 'intro.md', 'home.md' tùy cậu
 
         // 2. Tìm path của file đó trong registry (đã build ở trên)
         const defaultPath = fileRegistry.current[DEFAULT_FILE_NAME.toLowerCase()];

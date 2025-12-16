@@ -1,20 +1,33 @@
 ![](store.png)
 :::row
 :::col
-> # [Ope Watson](https://opewatson.org)
+
+{align:center}
+# [Ope Watson](https://opewatson.org)
+:::
+
+:::col
+<img 
+  src="christ1.png" 
+  style="
+    display: block;
+    margin: 0 auto;
+    max-width: 150px;
+    width: 100%;
+    align: center;
+  "
+/>
 :::
 :::col
 
 {space:20px} 
 
-{align:right}
-```python
-"Sometimes you gotta run before you walk..."
-```
+{align:center}
+"Sometimes you gotta run before you walk"
+
 :::
 :::
 
-{space:75px}
 
 
 :::row
@@ -34,6 +47,7 @@
 
 :::col
 {bg:green}
+{align:center}
 ## 🎄Merry Christmas! 🎁
 ![Feliz Navidad](https://youtu.be/q9jtLvTrhS8?si=B01mX33ltfH4lwNI)
 :::
@@ -60,15 +74,16 @@ I do not own arts and embedded visual contents.
 :::
 
 :::col
-{space:75px}
 
-###### 🍵[[Ope Watson]]
+# 🍵[[Ope Watson]]
 
-###### 🍭[[Core Memory]]
+# 🍭[[Core Memory]]
 
-###### 🎄[[Christmas Album]]
+# 🎄[[Christmas Album]]
+
 
 :::
+
 :::
 
 
@@ -77,32 +92,28 @@ I do not own arts and embedded visual contents.
 :::row
 :::col
 > ## Collection
-
-- [[Beautiful]]
-- [[Mad Gab]]
-- [[Emotional Analysis Vol1]]
-- [[Emotional Analysis Vol2]]
+> ##### [[Beautiful]]
+> ##### [[Mad Gab]]
+> ##### [[Emotional Analysis Vol 1]]
+> ##### [[Emotional Analysis Vol 2]]
 :::
 :::col
 > ## Project Documents
-
-- [[Emergence]]
-- [[Features]]
-- [[I Wasted 4M]]
-- [[RMKV]]
-- [[Spike Network]]
+> ##### [[Emergence]]
+> ##### [[Features]]
+> ##### [[I Wasted 4M]]
+> ##### [[RMKV]]
+> ##### [[Spike Network]]
 :::
 :::col
 > ## Memoir
-
-- [[Flood]]
+> ##### [[Flood]]
 :::
 :::col
 > ## Thoughts
-
-- [[Fuck Boy Diary]]
-- [[In Defence of Edison]]
-- [[Where Are People]]
+> ##### [[Fuck Boy Diary]]
+> ##### [[In Defence of Edison]]
+> ##### [[Where Are People]]
 :::
 :::
 

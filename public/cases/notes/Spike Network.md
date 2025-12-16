@@ -1,4 +1,6 @@
-
+**./[[Dash Board]]/**
+{align:center}
+# Spike Network
 
 
 Hãy tưởng tượng bạn đang mở một cuốn sách giáo khoa về kiến trúc của bộ não. Đây là chương nói về việc: **"Làm sao một cỗ máy sinh học hỗn loạn lại tạo ra sự ổn định?"**

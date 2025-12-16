@@ -1,3 +1,7 @@
+**./[[Dash Board]]/**
+{align:center}
+# Emotional Analysis Vol 2
+
 In writing...
 
 # Review Section
