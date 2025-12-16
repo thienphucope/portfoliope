@@ -118,24 +118,30 @@ I do not own arts and embedded visual contents.
 :::
 
 :::col
-{align:center}
+
 {bg:gray}
+{align:center}
 # [Github](https://github.com/thienphucope)
 :::
 :::col
-{align:center}
+
 {bg:red}
-# [YouTube](https://github.com/thienphucope)
+{align:center}
+# [YouTube](https://www.youtube.com/@opewatson)
 :::
 :::col
-{align:center}
+
 {bg:pink}
-# [Instagram](https://github.com/thienphucope)
-:::
-:::col
 {align:center}
-{bg:gray}
-# [X](https://github.com/thienphucope)
+# [Instagram](https://www.instagram.com/opewatson/)
 :::
+
+:::col
+
+{bg:yellow}
+{align:center}
+# [Portfolio](https://opewatson.org)
+:::
+
 
 :::
