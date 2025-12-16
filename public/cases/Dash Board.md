@@ -22,9 +22,8 @@
 
 {space:20px} 
 
-{align:right}
-
-> "Sometimes you gotta run before you walk"
+{align:center}
+"Sometimes you gotta run before you walk"
 
 
 :::
