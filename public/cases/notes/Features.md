@@ -1,103 +1,89 @@
-{bg:red}
-# Header 1 
+{align:center}
+# 📕 HƯỚNG DẪN CÚ PHÁP RED VAULT
 
-## Header 2
-### Header 3
-#### Header 4
-##### Header 5
-###### Header 6
-####### Header 7 does not exists
+{space:20px}
 
-Normal size words
-
-![An Embedded Image](https://i.pinimg.com/736x/39/81/63/398163a279035c120474f631d6d66d14.jpg)
-
-![An Embedded Youtube Video](https://youtu.be/u1iuvoamOFQ?si=1yZyo2JzXqFEL3yQ)
-
-Link to other page: [[A Christmas Album]]
-
-
-|Header 1|Content 1|
-|---|---|
-|dài dòng dài dòng dài dòng dài dòng dài dòng dài dòng dài dòng dài dòng dài dòng dài dòng dài dòng dài dòng dài dòng dài dòng dài dòng | dài dòng dài dòng dài dòng dài dòng dài dòng dài dòng dài dòng dài dòng dài dòng dài dòng dài dòng dài dòng dài dòng dài dòng dài dòng dài dòng |
-
-
-
-
-
-# Test Layout Cột
-
-Dưới đây là ví dụ chia cột. Cột bên trái 60%, cột phải 40%.
-
-:::row
-:::col 
-### 📜 Hồ Sơ Vụ Án (Left)
-Đây là nội dung ở cột bên trái.
-
-* **Tên:** John Doe
-* **Tuổi:** 35
-* **Trạng thái:** [[Nghi Phạm]]
-
-Cậu có thể chèn link, **bôi đậm**, hoặc thậm chí công thức toán học:
-$$E = mc^2$$
-:::
-
-:::col 
-### 📸 Hình Ảnh (Right)
-Đây là cột bên phải, thường dùng để để ảnh minh chứng hoặc ghi chú nhỏ.
-
-> "Lời khai của nhân chứng cho thấy hắn đã ở đó."
-
-![Evidence](https://images.unsplash.com/photo-1453728013993-6d66e9c9123a?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60)
-:::
-:::
+{bg:gray}
+{align:center}
+Cú pháp đặc biệt này cho phép tùy biến giao diện giống như Notion nhưng bằng Markdown thuần túy.
 
 ---
 
-### Chia 3 cột đều nhau (Auto Width)
+### 🎨 1. Màu sắc & Căn lề (Colors & Alignment)
 
-:::row
-:::col
-**Cột 1**
-Nội dung ngắn gọn.
-![An Embedded Image](https://i.pinimg.com/736x/39/81/63/398163a279035c120474f631d6d66d14.jpg)
-:::
-
-:::col
-**Cột 2**
-Nội dung có độ dài trung bình để test xem nó có bị tràn không.
-![An Embedded Youtube Video](https://youtu.be/u1iuvoamOFQ?si=1yZyo2JzXqFEL3yQ)
-
-:::
-
-:::col
-{color:blue}
-**Cột 3**
-Danh sách:
-1. Item A
-2. Item B
-:::
-:::
-
-
-:::row
-:::col 
 {bg:red}
-## Tiêu đề đỏ
-Nội dung bên trái
+{color:white}
+{align:center}
+**Block Đỏ - Chữ Trắng - Căn giữa**
+Đây là block dùng để nhấn mạnh các thông báo quan trọng.
+
+{bg:blue}
+{color:yellow}
+{align:right}
+**Block Xanh - Chữ Vàng - Căn phải**
+Thích hợp để làm các ghi chú bên lề hoặc lời thoại.
+
+{space:30px}
+
+### 📐 2. Chia cột linh hoạt (Multi-Column Layout)
+
+:::row
+:::col 60%
+{bg:purple}
+#### 📜 Hồ Sơ Nhân Vật (60%)
+- **Họ tên:** RED Developer
+- **Kỹ năng:** React, Markdown, CSS
+- **Ghi chú:** Có khả năng bẻ lái logic code trong 1 nốt nhạc.
+- **Toán học:** $$\sqrt{x^2 + y^2} = z$$
+:::
+
+:::col 40%
+#### 🖼️ Hình Ảnh Tròn (40%)
+Thêm `#circle` vào sau link ảnh để tạo avatar:
+![Avatar](https://i.pinimg.com/736x/39/81/63/398163a279035c120474f631d6d66d14.jpg#circle)
+:::
+:::
+
+{space:20px}
+
+### 🎞️ 3. Đa phương tiện (Media)
+
+:::row
+:::col
+**Hình ảnh tiêu chuẩn:**
+![Standard Image](https://i.pinimg.com/736x/39/81/63/398163a279035c120474f631d6d66d14.jpg)
 :::
 :::col
-{bg:blue}
-## Tiêu đề xanh
-Nội dung bên phải
+**Nhúng Youtube tự động:**
+![Youtube Video](https://youtu.be/u1iuvoamOFQ)
 :::
 :::
 
+{space:20px}
 
-1.số 1
+### 🔗 4. Wiki Links & Bảng (Tables)
 
-2.số 2
+| Tính năng | Cú pháp | Kết quả |
+| :--- | :--- | :--- |
+| **Wiki Link** | `[[Tên File]]` | [[Dash Board]] |
+| **Spacer** | `{space:px}` | Tạo khoảng trống dọc |
+| **Math** | `$E=mc^2$` | Căn lề công thức toán |
 
--check 1
+{space:30px}
 
--check 2
+### 📝 5. Danh sách & Trích dẫn (Lists & Quotes)
+
+{bg:green}
+{color:black}
+**Ghi chú nhiệm vụ:**
+1. Kiểm tra Responsive trên Mobile
+2. Tối ưu hóa tốc độ load marked.js
+3. Thêm tính năng dark/light mode nếu cần
+
+> "Code là nghệ thuật, và bug là... một phần của nghệ thuật đó." 
+> — *Anonymous Developer*
+
+---
+{align:center}
+{color:gray}
+© 2024 Red Vault System - Built with Passion.

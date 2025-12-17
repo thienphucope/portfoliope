@@ -100,7 +100,7 @@ I do not own arts and embedded visual contents.
 > ## Project Documents
 > ##### [[Emergence]]
 > ##### [[Features]]
-> ##### [[I Wasted 4M]]
+> ##### [[How I Wasted Millions]]
 > ##### [[RWKV]]
 > ##### [[Spike Network]]
 :::
