@@ -702,7 +702,7 @@ export default function RedMathVault() {
           max-width: 100%; 
           height: auto; 
           display: block; 
-          margin: 12px 0; 
+          margin: 10px 0; 
           object-fit: contain;
           border-radius: 4px;
         }
@@ -907,7 +907,7 @@ export default function RedMathVault() {
         
         .content-wrapper { 
           width: 100%;
-          padding: 30px 40px 100px; 
+          padding: 0px 70px 50px; 
         }
 
         .page-title { 
@@ -942,9 +942,6 @@ export default function RedMathVault() {
             width: 280px;
           }
           
-          .content-wrapper {
-            padding: 20px 15px 80px;
-          }
           
           .page-title {
             font-size: 2rem;
@@ -988,7 +985,7 @@ export default function RedMathVault() {
         /* 3. Mở rộng không gian hiển thị */
         /* Mobile đất chật người đông, giảm padding lề để chữ có chỗ thở */
         .content-wrapper {
-          padding: 20px 4px 80px 4px !important;        }
+          padding: 0px 4px 0px 4px !important;        }
 
         /* 4. Giảm size tiêu đề trang chính (Page Title) */
         .page-title {

@@ -75,16 +75,10 @@ I do not own arts and embedded visual contents.
 :::
 
 :::col
-# 🎉
-# 🎆
-# 🍵[[Ope Watson]]
-
-# 🍭[[Core Memory]]
-
-# 🎄[[Christmas Album]]
-# 🧧
-# 🎁
-
+ # ✨Highlighted Notes
+- ## [[Ope Watson]]🍵
+- ## [[Core Memory]]🍭
+- ## [[Christmas Album]]🎄
 
 :::
 
@@ -100,18 +94,22 @@ I do not own arts and embedded visual contents.
 > ##### [[Mad Gab]]
 > ##### [[Emotional Analysis Vol 1]]
 > ##### [[Emotional Analysis Vol 2]]
+> ##### [[Christmas Album]]
 :::
 :::col
 > ## Project Documents
 > ##### [[Emergence]]
 > ##### [[Features]]
 > ##### [[I Wasted 4M]]
-> ##### [[RMKV]]
+> ##### [[RWKV]]
 > ##### [[Spike Network]]
 :::
 :::col
 > ## Memoir
+> ##### [[Ope Watson]]
 > ##### [[Flood]]
+> ##### [[Core Memory]]
+
 :::
 :::col
 > ## Thoughts
@@ -124,14 +122,11 @@ I do not own arts and embedded visual contents.
 {bg:blue}
 # 📁Showcase
 
-:::row
 
-:::col
 {bg:blue}
-# 🔗Other Links
+# 🔗Other links
 
-:::
-
+:::row
 :::col
 
 {bg:gray}

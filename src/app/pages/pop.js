@@ -382,7 +382,7 @@ export default function Pop() {
       <button
         onClick={handleToggleChat}
         // Sửa shadow sang màu trắng, border dùng biến vaultStyle
-        className={`fixed top-5 right-5 w-10 h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center z-50 transition-all duration-300 hover:scale-110`}
+        className={`fixed top-3 right-2 md:top-2 md:right-2 w-10 h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center z-50 transition-all duration-300 hover:scale-110`}
       >
         <img src="/printer.png" alt="Thiên" className="w-full h-full object-cover rounded-full opacity-90 hover:opacity-100" />
       </button>
@@ -394,7 +394,7 @@ export default function Pop() {
             <div 
               ref={historyRef}
               // Sửa shadow sang màu trắng nhẹ, dùng các biến style mới
-              className={`fixed bottom-20 md:bottom-30 left-1/2 transform -translate-x-1/2 w-[95vw] md:max-w-[50vw] ${vaultStyle.bg} rounded-xl shadow-[0_0_30px_rgba(255,255,255,0.1)] flex flex-col z-40 border ${vaultStyle.border} p-5 max-h-[50vh] overflow-y-auto custom-scrollbar`}
+              className={`fixed bottom-20 md:bottom-30 left-1/2 transform -translate-x-1/2 w-[95vw] md:max-w-[50vw] ${vaultStyle.bg} rounded-xl shadow-[0_0_30px_rgba(255,255,255,0.1)] flex flex-col z-40 border ${vaultStyle.border} p-5 max-h-[100vh] overflow-y-auto custom-scrollbar`}
               style={{ fontFamily: "'Crimson Text', serif" }}
             >
               <div className="flex flex-col">
