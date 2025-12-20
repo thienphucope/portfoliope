@@ -25,10 +25,14 @@
             "id": "89a7303742cdb039",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "Dash Board.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "New tab"
+              "title": "Dash Board"
             }
           }
         ],
@@ -196,6 +200,11 @@
   },
   "active": "89a7303742cdb039",
   "lastOpenFiles": [
+    "notes/RWKV.md",
+    "notes/Spike Network.md",
+    "notes/Where Are People.md",
+    "notes/How I Wasted Millions.md",
+    "notes/Research.md",
     "notes/Ope Watson.md",
     "notes/Emotional Analysis Vol2.md",
     "notes/Emotional Analysis Vol1.md",
@@ -209,18 +218,13 @@
     "notes/Fuck Boy.md",
     "notes/I Wasted 4M.md",
     "notes/In Defence of Edison.md",
-    "notes/Where Are People.md",
     "notes/Features.md",
     "notes/Test.md",
-    "notes/Flood.md",
-    "notes/Spike Network.md",
+    "notes/Flood Exp.md",
     "notes/Ope.md",
     "notes/Emergence.md",
     "notes/Core Memory.md",
     "notes/Folk Games.md",
-    "In Defence of Ed----.md",
-    "In attempt of understanding the brain for building SNN.md",
-    "A Christmas Album.md",
-    "RWKV.md"
+    "In Defence of Ed----.md"
   ]
 }

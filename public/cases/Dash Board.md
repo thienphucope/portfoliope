@@ -5,7 +5,6 @@
 {align:center}
 # [Ope Watson](https://opewatson.org)
 :::
-
 :::col
 <img 
   src="christ1.png" 
@@ -47,10 +46,10 @@
 :::
 
 :::col
-{bg:green}
 {align:center}
-## 🎄Merry Christmas! 🎁
-![Feliz Navidad](https://youtu.be/q9jtLvTrhS8?si=B01mX33ltfH4lwNI)
+## [Merry Christmas!](https://www.youtube.com/watch?v=7eSnmK7hpjM&pp=ygUgZmVsaXogbmF2aWRhZCB3YWxrIG9mZiB0aGUgZWFydGg%3D)
+![](amechrist.png)
+
 :::
 
 :::col
@@ -71,7 +70,7 @@ I do not own arts and embedded visual contents.
 :::row
 
 :::col
-![](amechrist.png)
+![i want a perfect soul](https://youtu.be/XFkzRNyygfk?si=W16FGuj6yeOT429m&t=81)
 :::
 
 :::col
@@ -79,6 +78,8 @@ I do not own arts and embedded visual contents.
 - ## [[Ope Watson]]🍵
 - ## [[Core Memory]]🍭
 - ## [[Christmas Album]]🎄
+- ## [[How I Wasted Millions]]
+- ## [[Emotional Analysis Vol 1]]
 
 :::
 
@@ -107,7 +108,7 @@ I do not own arts and embedded visual contents.
 :::col
 > ## Memoir
 > ##### [[Ope Watson]]
-> ##### [[Flood]]
+> ##### [[Flood Exp]]
 > ##### [[Core Memory]]
 
 :::
