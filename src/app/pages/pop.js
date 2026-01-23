@@ -33,7 +33,7 @@ export default function Pop() {
 
   // --- CẤU HÌNH API MỚI ---
   const TTS_API_URL = "https://thienphuc1052004--viterbox-api-viterboxapi-tts.modal.run";
-  const TTS_HEALTH_URL = "https://thienphuc1052004--viterbox-api-viterboxapi-health.modal.run";
+  const TTS_HEALTH_URL = "https://thienphuc1052004--viterbox-api-viterboxapi-health.modal.run/";
 
   // ... (GIỮ NGUYÊN TOÀN BỘ LOGIC XỬ LÝ BÊN DƯỚI: detectLanguage, normalizeText, splitTextSmart, fetchTTSChunk, processNextChunk, playNextAudio, generateAndPlayAudio, useEffects...) ...
   // (Phần logic này không đổi nên mình ẩn đi cho gọn code nhé)

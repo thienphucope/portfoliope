@@ -1,6 +1,7 @@
 **./[[Dash Board]]/**
 {align:center}
 # Mad Gab
+ It's a game that you try to pronounce the phrase made by words with approximate pronunciation and get the actual.
 
 | Code (Read aloud) | Meaning (Click to reveal) |
 | :--- | :--- |

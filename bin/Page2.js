@@ -149,56 +149,63 @@ const processContentToBlocks = (lines) => {
 // --- BLOCK-BASED MARKDOWN PROCESSOR ---
 const processBlockMarkdown = (markdown) => {
   if (!markdown) return [];
-  
+
   const lines = markdown.split('\n');
   const blocks = [];
   let i = 0;
-  
+
   while (i < lines.length) {
     const line = lines[i];
     const trimmed = line.trim();
-    
+
     // Check for row start
     if (trimmed === ':::row') {
       const row = { type: 'row', columns: [] };
       i++; // Move to next line
-      
+
       // Process columns in this row
       while (i < lines.length) {
         const colLine = lines[i].trim();
-        
+
         // End of row
         if (colLine === ':::') {
           i++;
           break;
         }
-        
+
         // Start of column
         if (colLine.startsWith(':::col')) {
           const widthMatch = colLine.match(/:::col\s+(\d+%?)/);
           const width = widthMatch ? widthMatch[1] : 'auto';
-          
+
           const columnLines = [];
           i++; // Move past :::col line
-          
-          // Collect column content until :::
+
+          let rowNestLevel = 0;
+
+          // Collect column content until we find the closing ::: for this column
           while (i < lines.length) {
             const contentLine = lines[i];
             const contentTrimmed = contentLine.trim();
-            
-            // End of column
-            if (contentTrimmed === ':::') {
-              i++;
-              break;
+
+            if (contentTrimmed === ':::row') {
+              rowNestLevel++;
+            } else if (contentTrimmed === ':::') {
+              if (rowNestLevel > 0) {
+                rowNestLevel--; // This ::: closes a nested row
+              } else {
+                i++; // Consume the ':::'
+                break; // This ::: closes the current column
+              }
             }
-            
+
             columnLines.push(contentLine);
             i++;
           }
-          
-          // Process column lines into blocks (same logic as outside)
-          const columnBlocks = processContentToBlocks(columnLines);
-          
+
+          // Process column lines into blocks recursively
+          const columnBlocks = processBlockMarkdown(columnLines.join('\n'));
+
           row.columns.push({
             width,
             blocks: columnBlocks
@@ -207,39 +214,39 @@ const processBlockMarkdown = (markdown) => {
           i++;
         }
       }
-      
+
       if (row.columns.length > 0) {
         blocks.push(row);
       }
       continue;
     }
-    
+
     // Skip row-related syntax outside of row context
     if (trimmed === ':::' || trimmed.startsWith(':::col')) {
       i++;
       continue;
     }
-    
+
     // Regular block (not in a row)
     // Collect lines until we hit a row or end
     const regularLines = [];
     while (i < lines.length) {
       const nextLine = lines[i];
       const nextTrimmed = nextLine.trim();
-      
+
       if (nextTrimmed === ':::row') {
         break;
       }
-      
+
       regularLines.push(nextLine);
       i++;
     }
-    
+
     // Process regular lines into blocks
     const regularBlocks = processContentToBlocks(regularLines);
     blocks.push(...regularBlocks);
   }
-  
+
   return blocks;
 };
 
@@ -330,19 +337,52 @@ const MarkdownBlock = ({ block, onLinkClick }) => {
 };
 
 // --- ROW COMPONENT ---
+// --- ROW COMPONENT (Logic: Trừ Gap trước, chia % sau) ---
 const MarkdownRow = ({ row, onLinkClick }) => {
+  // 1. Cấu hình Gap (số nguyên để dễ tính toán)
+  const GAP_PX = 12; 
+
+  // 2. Tính xem hàng này có bao nhiêu cột để biết có bao nhiêu gap
+  // Ví dụ: 3 cột thì có 2 khoảng trắng ở giữa (3 - 1 = 2)
+  const numCols = row.columns.length;
+  const numGaps = numCols > 0 ? numCols - 1 : 0;
+  
+  // 3. Tính tổng số pixel bị mất vì Gap
+  // Ví dụ: 2 gap * 12px = 24px
+  const totalGapSpace = `${numGaps * GAP_PX}px`;
+
   return (
-    <div className="md-row">
+    <div className="md-row" style={{ columnGap: `${GAP_PX}px` }}>
       {row.columns.map((col, idx) => {
-        const style = col.width !== 'auto' 
-          ? { flex: `0 0 ${col.width}`, maxWidth: col.width }
-          : {};
+        
+        let finalStyle = {};
+        
+        if (col.width !== 'auto') {
+           // Lấy số % thô (ví dụ "50%" -> lấy số 0.5)
+           const percentVal = parseFloat(col.width) / 100;
+           
+           // --- CÔNG THỨC THẦN THÁNH CỦA BẠN ---
+           // Width = (100% - Tổng Gap) * Tỷ lệ
+           // CSS calc hỗ trợ nhân một biểu thức với một con số
+           const calcString = `calc((100% - ${totalGapSpace}) * ${percentVal})`;
+
+           finalStyle = { 
+               flex: `0 0 ${calcString}`, 
+               maxWidth: calcString
+           };
+        } else {
+           // Nếu không set %, tự động chia đều phần còn lại
+           finalStyle = { flex: 1 }; 
+        }
         
         return (
-          <div key={idx} className="md-col" style={style}>
-            {col.blocks.map((block, blockIdx) => (
-              <MarkdownBlock key={blockIdx} block={block} onLinkClick={onLinkClick} />
-            ))}
+          <div key={idx} className="md-col" style={finalStyle}>
+            {col.blocks.map((block, blockIdx) => {
+              if (block.type === 'row') {
+                return <MarkdownRow key={blockIdx} row={block} onLinkClick={onLinkClick} />;
+              }
+              return <MarkdownBlock key={blockIdx} block={block} onLinkClick={onLinkClick} />;
+            })}
           </div>
         );
       })}
@@ -450,12 +490,22 @@ export default function RedMathVault() {
     return null;
   };
 
-  const loadFile = async (path, name) => {
+  const loadFile = async (path, name, updateHistory = true) => {
     try {
       const res = await fetch(path);
       const text = await res.text();
-      setCurrentFileName(name ? name.replace('.md', '') : '');
-      setContent(text); 
+            const cleanName = name ? name.replace('.md', '') : '';
+      setCurrentFileName(cleanName);
+      setContent(text);
+      // --- LOGIC MỚI: PUSH STATE VÀO HISTORY ---
+      if (updateHistory) {
+        // Tạo URL mới có dạng ?file=TenFile.md
+        const newUrl = new URL(window.location);
+        newUrl.searchParams.set('file', name);
+                // Lưu path và name vào state của history để dùng khi nhấn Back
+        window.history.pushState({ path, name }, '', newUrl);
+      }
+      // ------------------------------------------
     } catch (err) {
       console.error(err);
       setContent('# Error\nKhông tải được file.');
@@ -556,6 +606,23 @@ export default function RedMathVault() {
     };
   }, []);
 
+  // --- LOGIC MỚI: XỬ LÝ SỰ KIỆN BACK CỦA TRÌNH DUYỆT ---
+  useEffect(() => {
+    const handlePopState = (event) => {
+      // Nếu có state (do mình đã push ở bước 1), load lại file đó
+      if (event.state && event.state.path && event.state.name) {
+        // Truyền false để không push ngược lại vào history
+        loadFile(event.state.path, event.state.name, false);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
   return (
     <div className="app-container">
       {/* Sidebar hover detection area */}
@@ -636,7 +703,7 @@ export default function RedMathVault() {
 
         /* Background Colors */
         .bg-red { background-color: rgba(220, 38, 38, 0.15) !important; }
-        .bg-blue { background-color: rgba(59, 130, 246, 0.15) !important; }
+        .bg-blue { background-color: rgba(22, 54, 69, 1) !important; }
         .bg-yellow { background-color: rgba(234, 179, 8, 0.15) !important; }
         .bg-green { background-color: rgba(34, 197, 94, 0.15) !important; }
         .bg-gray { background-color: rgba(156, 163, 175, 0.15) !important; }
@@ -646,7 +713,7 @@ export default function RedMathVault() {
 
         /* Text Colors */
         .text-red { color: #ff4444 !important; }
-        .text-blue { color: #3b82f6 !important; }
+        .text-blue { color: #163545 !important; }
         .text-yellow { color: #eab308 !important; }
         .text-green { color: #22c55e !important; }
         .text-gray { color: #9ca3af !important; }
@@ -671,7 +738,7 @@ export default function RedMathVault() {
         .markdown-block h3 { font-size: 1.5em !important; }
         .markdown-block h4 { font-size: 1.3em !important; }
         .markdown-block h5 { font-size: 1.1em !important; }
-        .markdown-block h6 { font-size: 3.0em !important; }
+        .markdown-block h6 { font-size: 4.0em !important; }
 
         /* --- TABLES --- */
         .markdown-block table { 
@@ -907,7 +974,7 @@ export default function RedMathVault() {
         
         .content-wrapper { 
           width: 100%;
-          padding: 0px 70px 50px; 
+          padding: 0px 65px 10px; 
         }
 
         .page-title { 

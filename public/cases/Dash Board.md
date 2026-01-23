@@ -1,11 +1,6 @@
 ![](store.png)
 :::row
-:::col
-
-{align:center}
-# [Ope Watson](https://opewatson.org)
-:::
-:::col
+:::col 30%
 <img 
   src="christ1.png" 
   style="
@@ -17,9 +12,16 @@
   "
 />
 :::
-:::col
+:::col 40%
 
-{space:20px} 
+{align:center}
+✦
+###### Ope Watson
+
+:::
+
+:::col 30%
+
 
 {align:center}
 "Sometimes you gotta run before you walk"
@@ -28,103 +30,65 @@
 :::
 :::
 
-
-
-:::row
-:::col
-{bg:red}
-## 🚀Recent Updates
-
-1. Testing new assistant Thiên with Vietnamese Voice.
-2. Alternate vault's UI
-
-{bg:yellow}
-## 👀Planning 
-
-1. Planning to shift into NOIR theme in the future.
-2. Complete all sections. Add circular frames, row ratio,...
-:::
-
-:::col
 {align:center}
-## [Merry Christmas!](https://www.youtube.com/watch?v=7eSnmK7hpjM&pp=ygUgZmVsaXogbmF2aWRhZCB3YWxrIG9mZiB0aGUgZWFydGg%3D)
-![](amechrist.png)
-
-:::
-
-:::col
-## Why this website?
-It's my playground for writing blogs, share stuff and all.
-## Tips
-1. Hover the left to activate the sidebar.
-2. Click the PRINTER ↗️ to ask bot anything else. 
-## Important: 
-I do not own arts and embedded visual contents.
-:::
-:::
-
-{bg:blue}
-# 📌Pinned
-
-
-:::row
-
-:::col
-![i want a perfect soul](https://youtu.be/XFkzRNyygfk?si=W16FGuj6yeOT429m&t=81)
-:::
-
-:::col
- # ✨Highlighted Notes
-- ## [[Ope Watson]]🍵
-- ## [[Core Memory]]🍭
-- ## [[Christmas Album]]🎄
-- ## [[How I Wasted Millions]]
-- ## [[Emotional Analysis Vol 1]]
-
-:::
-
-:::
-
+# ༼ つ ◕_◕ ༽つ
 
 {bg:blue}
 # 📘Unhinged notes
+
+
 :::row
 :::col
-> ## Collection
-> ##### [[Beautiful]]
-> ##### [[Mad Gab]]
-> ##### [[Emotional Analysis Vol 1]]
-> ##### [[Emotional Analysis Vol 2]]
-> ##### [[Christmas Album]]
+ ## Collection
+ ---
+ ##### [[Beautiful]]
+ ##### [[Mad Gab]]
+ ##### [[Emotional Analysis Vol 1]]
+ ##### [[Emotional Analysis Vol 2]]
+ ##### [[Christmas Album]]
 :::
 :::col
-> ## Project Documents
-> ##### [[Emergence]]
-> ##### [[Features]]
-> ##### [[How I Wasted Millions]]
-> ##### [[RWKV]]
-> ##### [[Spike Network]]
+ ## Document
+ ---
+ ##### [[Emergence]]
+ ##### [[Features]]
+ ##### [[How I Wasted Millions]]
+ ##### [[RWKV]]
+ ##### [[Spike Network]]
+ ##### [[Csm-1b Arch]]
 :::
 :::col
-> ## Memoir
-> ##### [[Ope Watson]]
-> ##### [[Flood Exp]]
-> ##### [[Core Memory]]
+ ## Memoir
+ ---
+ ##### [[Ope Watson]]
+ ##### [[Flood Exp]]
+ ##### [[Core Memory]]
+ ##### [[Internet Diary]]
 
 :::
 :::col
-> ## Thoughts
-> ##### [[Fuck Boy Diary]]
-> ##### [[In Defence of Edison]]
-> ##### [[Where Are People]]
+ ## Actual Blog
+ ---
+ ##### [[Fuck Boy Diary]]
+ ##### [[In Defence of Edison]]
+ ##### [[Where Are People]]
+ ##### [[Sexist Philosopher]]
+ #####
 :::
+:::col
+ ## Internet Diary
+ ---
+ ##### [[VA Assessment]]
+ ##### [[Bombshell]]
+ ##### [[Jailbreak]]
 :::
 
-{bg:blue}
+:::
+{bg:yellow}
 # 📁Showcase
 
 
-{bg:blue}
+
 # 🔗Other links
 
 :::row
@@ -156,3 +120,6 @@ I do not own arts and embedded visual contents.
 
 
 :::
+
+
+
