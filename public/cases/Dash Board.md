@@ -39,62 +39,69 @@
 
 :::row
 :::col
- ## Collection
+## Collection
  ---
- ##### [[Beautiful]]
- ##### [[Mad Gab]]
- ##### [[Emotional Analysis Vol 1]]
- ##### [[Emotional Analysis Vol 2]]
- ##### [[Christmas Album]]
-:::
-:::col
- ## Document
- ---
- ##### [[Emergence]]
- ##### [[Features]]
- ##### [[How I Wasted Millions]]
- ##### [[RWKV]]
- ##### [[Spike Network]]
- ##### [[Csm-1b Arch]]
-:::
-:::col
- ## Memoir
- ---
- ##### [[Ope Watson]]
- ##### [[Flood Exp]]
- ##### [[Core Memory]]
- ##### [[Internet Diary]]
+##### [[Beautiful]]
+##### [[Mad Gab]]
+##### [[Emotional Analysis Vol 1]]
+##### [[Emotional Analysis Vol 2]]
+##### [[Christmas Album]]
 
+## Memoir
+ ---
+##### [[Ope Watson]]
+##### [[Flood Exp]]
+##### [[Core Memory]]
+
+##### [[Thought Dump]]
 :::
 :::col
- ## Actual Blog
+## Document
  ---
- ##### [[Fuck Boy Diary]]
- ##### [[In Defence of Edison]]
- ##### [[Where Are People]]
- ##### [[Sexist Philosopher]]
- #####
-:::
-:::col
- ## Internet Diary
- ---
- ##### [[VA Assessment]]
- ##### [[Bombshell]]
- ##### [[Jailbreak]]
+##### [[Emergence]]
+##### [[Features]]
+##### [[How I Wasted Millions]]
+##### [[RWKV]]
+##### [[Spike Network]]
+##### [[Csm-1B Arch]]
+##### [[World Model V-JEPA 2]]
 :::
 
+:::col
+## Actual Blog
+ ---
+##### [[Fuck Boy Diary]]
+##### [[In Defence of Edison]]
+##### [[Where Are People]]
+##### [[Sexist Philosopher]]
+##### [[Viet's Lunar New Year]]
+##### [[Sherlock Holmes]]
 :::
+:::col
+## Internet Diary
+ ---
+##### [[VA Assessment]]
+##### [[Bombshell]]
+##### [[Jailbreak]]
+##### [[Baalbuddy]]
+##### [[Basement]]
+
+
+:::
+:::
+
 {bg:yellow}
 # 📁Showcase
 
+##  Try my friendly digital pal that talk with a voice ↗️
 
-
+{bg:gray}
 # 🔗Other links
 
 :::row
 :::col
 
-{bg:gray}
+{bg:purple}
 {align:center}
 # [Github](https://github.com/thienphucope)
 :::
@@ -120,6 +127,7 @@
 
 
 :::
+
 
 
 

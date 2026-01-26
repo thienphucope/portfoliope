@@ -1,5 +1,6 @@
 {align:center}
 ###### Jailbreak
+unlock AI's capabilities entirely
 
 # **What is Jailbreaking and why does it exist?** 
 
