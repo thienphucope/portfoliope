@@ -41,5 +41,6 @@ In search of the voice data for the TTS. Some of them have nsfw stuff I won't te
 | Faye Audios       | yes                        | no                              | yes    | Need more inspection                                               | **                                                                |
 
 # Ehem~
-1. https://huggingface.co/datasets/setfunctionenvironment/testnew/viewer
-2. https://huggingface.co/datasets/MrDragonFox/Elise
+1. https://huggingface.co/datasets/MrDragonFox/Elise
+2. https://huggingface.co/datasets/ylacombe/expresso
+3. https://huggingface.co/datasets/setfunctionenvironment/testnew/viewer

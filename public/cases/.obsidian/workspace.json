@@ -55,12 +55,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "notes/Thought Dump.md",
+                "file": "notes/PersonaPlex.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Thought Dump"
+              "title": "PersonaPlex"
             }
           }
         ],
@@ -229,11 +229,15 @@
   },
   "active": "25cba76f086ee472",
   "lastOpenFiles": [
-    "notes/Sherlock Holmes.md",
     "Dash Board.md",
-    "notes/Thought Dump.md",
-    "notes/Basement.md",
+    "notes/PersonaPlex.md",
+    "notes/VA Collection.md",
+    "notes/Transformers.md",
+    "notes/Diffusion.md",
     "notes/Baalbuddy.md",
+    "notes/Basement.md",
+    "notes/Thought Dump.md",
+    "notes/Sherlock Holmes.md",
     "notes/Bombshell.md",
     "notes/Jailbreak.md",
     "notes/Viet's Lunar New Year.md",
@@ -245,16 +249,12 @@
     "notes/Sexist Philosopher.md",
     "Sesame",
     "notes/ꉂ(˵˃ ᗜ ˂˵).md",
-    "notes/VA Assessment.md",
     "Sexist Philosopher.md",
     "notes/Christmas Album.md",
     "notes/Beautiful.md",
     "notes/MCU.md",
     "Tracker.md",
     "notes/Research.md",
-    "notes/Tracker.md",
-    "notes/Search API.md",
-    "Untitled.md",
-    "Search API.md"
+    "notes/Tracker.md"
   ]
 }

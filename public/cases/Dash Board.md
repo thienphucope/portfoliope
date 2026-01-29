@@ -1,37 +1,40 @@
 ![](store.png)
 :::row
 :::col 30%
-<img 
-  src="christ1.png" 
-  style="
-    display: block;
-    margin: 0 auto;
-    max-width: 150px;
-    width: 100%;
-    align: center;
-  "
-/>
+<div style="position: relative;">
+  <img
+    src="saba.png"
+    style="
+      position: absolute;
+      top: -120px;
+      left: 50%;
+      transform: translateX(-50%);
+      max-width: 1000px;
+      width: 50%;
+    "
+  />
+</div>
 :::
 :::col 40%
 
 {align:center}
-✦
 ###### Ope Watson
+
 
 :::
 
 :::col 30%
 
-
 {align:center}
-"Sometimes you gotta run before you walk"
-
+──── ୨୧ ────
+{align:center}
+Sometimes you gotta run before you walk
+{align:center}
+──── ✦ ────
 
 :::
 :::
 
-{align:center}
-# ༼ つ ◕_◕ ༽つ
 
 {bg:blue}
 # 📘Unhinged notes
@@ -65,6 +68,12 @@
 ##### [[Spike Network]]
 ##### [[Csm-1B Arch]]
 ##### [[World Model V-JEPA 2]]
+##### [[Transformers]]
+##### [[Diffusion]]
+##### [[PersonaPlex]]
+
+
+
 :::
 
 :::col
@@ -80,7 +89,7 @@
 :::col
 ## Internet Diary
  ---
-##### [[VA Assessment]]
+##### [[VA Collection]]
 ##### [[Bombshell]]
 ##### [[Jailbreak]]
 ##### [[Baalbuddy]]
