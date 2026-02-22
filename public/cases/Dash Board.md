@@ -100,10 +100,80 @@ Sometimes you gotta run before you walk
 :::
 
 {bg:yellow}
-# 📁Showcase
+# 📁 Voice Showcase
 
-##  Try my friendly digital pal that talk with a voice ↗️
+## 1. Sesame ( [[Csm-1B Arch]] )
+:::row
 
+:::col 50%
+{align:center}
+ Đây là giọng nói nhân tạo, tôi không có thật.
+
+<audio controls style="width: 100%;">
+  <source src="thiencsm2.wav" type="audio/mpeg">
+</audio>
+
+:::
+
+:::col 50%
+{align:center}
+ Ope là một người dễ thương và đẹp trai nhất vùng.
+
+<audio controls style="width: 100%;">
+  <source src="thiencsm1.wav" type="audio/mpeg">
+</audio>
+
+:::
+
+
+:::col 50%
+{align:center}
+ Xin lỗi vì tôi quá tròn và dễ thương nha.
+
+<audio controls style="width: 100%;">
+  <source src="thiencsm3.wav" type="audio/mpeg">
+</audio>
+
+:::
+
+:::col 50%
+{align:center}
+ Um, cho một ly nước nướng.
+
+<audio controls style="width: 100%;">
+  <source src="thiencsm4.wav" type="audio/mpeg">
+</audio>
+
+:::
+
+:::
+
+## 2. Chatterbox ( [[How I Wasted Millions]] )
+:::row
+:::col
+{align:center}
+**Synthesized (My Model)**
+<audio controls style="width: 100%;">
+  <source src="syn.wav" type="audio/mpeg">
+</audio>
+:::
+
+:::col
+{align:center}
+**Reference Audio (Emotion Replication)**
+<audio controls style="width: 100%;">
+  <source src="ref.wav" type="audio/mpeg">
+</audio>
+:::
+
+:::col
+{align:center}
+**Real Voice (Ground Truth)**
+<audio controls style="width: 100%;">
+  <source src="real.wav" type="audio/mpeg">
+</audio>
+:::
+:::
 {bg:gray}
 # 🔗Other links
 
