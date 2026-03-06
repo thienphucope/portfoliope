@@ -60,7 +60,7 @@
             }
           }
         ],
-        "currentTab": 1
+        "currentTab": 3
       }
     ],
     "direction": "vertical"
@@ -133,17 +133,17 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "RWKV.md",
-                "collapseAll": false,
+                "file": "notes/Basement.md",
+                "collapseAll": true,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
-                "showSearch": false,
+                "showSearch": true,
                 "searchQuery": "",
                 "backlinkCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for RWKV"
+              "title": "Backlinks for Basement"
             }
           },
           {
@@ -208,8 +208,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -223,8 +222,9 @@
       "table-editor-obsidian:Advanced Tables Toolbar": false
     }
   },
-  "active": "89a7303742cdb039",
+  "active": "bfc1511eff68090d",
   "lastOpenFiles": [
+    "notes/Christmas Album.md",
     "notes/feature2.md",
     "notes/Why Do Old-Fashioned Things Disappear.md",
     "notes/World Model V-JEPA 2.md",
@@ -249,7 +249,6 @@
     "Sesame",
     "notes/ꉂ(˵˃ ᗜ ˂˵).md",
     "Sexist Philosopher.md",
-    "notes/Christmas Album.md",
     "notes/Beautiful.md",
     "notes/MCU.md"
   ]

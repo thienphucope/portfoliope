@@ -1,6 +1,7 @@
 "use client";
-import React, { useState, useEffect, useRef } from 'react';
-import { ChevronRight, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { ChevronRight, ChevronDown, GripVertical } from 'lucide-react';
+import Pop from '../src/app/pages/pop'; // Đảm bảo đường dẫn đúng
 
 // --- UTILS: Load Scripts Dynamically ---
 const loadScript = (src) => {
@@ -30,7 +31,6 @@ const configureMarked = () => {
 
   const renderer = new window.marked.Renderer();
 
-  // 1. Table Renderer (Strict Container)
   renderer.table = (token) => {
     const headerHtml = token.header.map(cell => {
       const align = cell.align ? ` style="text-align:${cell.align}"` : '';
@@ -55,7 +55,6 @@ const configureMarked = () => {
     `;
   };
 
-  // 2. Code Block Renderer
   renderer.code = (token) => {
     const lang = token.lang || 'text';
     const code = token.text;
@@ -76,7 +75,6 @@ const configureMarked = () => {
     `;
   };
 
-  // 3. Math Extension (Protects $$ and $)
   const mathExtension = {
     name: 'math',
     level: 'inline',
@@ -93,7 +91,6 @@ const configureMarked = () => {
     }
   };
 
-  // 4. Footnote & WikiLinks
   const footnoteExtension = {
     name: 'footnote',
     level: 'inline',
@@ -185,7 +182,7 @@ const MarkdownViewer = ({ content, onLinkClick }) => {
   return <div ref={containerRef} className="markdown-content" onClick={onLinkClick} />;
 };
 
-// --- FILE SYSTEM ---
+// --- FILE SYSTEM ITEM ---
 const FileSystemItem = ({ item, level = 0, onSelectFile }) => {
   const [isOpen, setIsOpen] = useState(false);
   const paddingLeft = `${level * 12}px`;
@@ -214,8 +211,46 @@ const FileSystemItem = ({ item, level = 0, onSelectFile }) => {
 export default function UltimateRedVault() {
   const [fileTree, setFileTree] = useState([]);
   const [content, setContent] = useState('');
-  const [sidebarVisible, setSidebarVisible] = useState(false);
   const fileRegistry = useRef({});
+  
+  // --- RESIZABLE LAYOUT STATE ---
+  const [sidebarWidth, setSidebarWidth] = useState(250);
+  const [chatWidth, setChatWidth] = useState(350);
+  const isResizingSidebar = useRef(false);
+  const isResizingChat = useRef(false);
+
+  const startResizingSidebar = useCallback((e) => {
+    isResizingSidebar.current = true;
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', stopResizing);
+    document.body.style.cursor = 'col-resize';
+  }, []);
+
+  const startResizingChat = useCallback((e) => {
+    isResizingChat.current = true;
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', stopResizing);
+    document.body.style.cursor = 'col-resize';
+  }, []);
+
+  const stopResizing = useCallback(() => {
+    isResizingSidebar.current = false;
+    isResizingChat.current = false;
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', stopResizing);
+    document.body.style.cursor = 'default';
+  }, []);
+
+  const handleMouseMove = useCallback((e) => {
+    if (isResizingSidebar.current) {
+      const newWidth = e.clientX;
+      if (newWidth > 150 && newWidth < 500) setSidebarWidth(newWidth);
+    }
+    if (isResizingChat.current) {
+      const newWidth = window.innerWidth - e.clientX;
+      if (newWidth > 250 && newWidth < 600) setChatWidth(newWidth);
+    }
+  }, []);
 
   const loadFile = async (path, name, updateHistory = true) => {
     try {
@@ -261,12 +296,21 @@ export default function UltimateRedVault() {
 
   return (
     <div className="app-shell">
-      <div className="hover-trigger" onMouseEnter={() => setSidebarVisible(true)} />
-      <aside className={`sidebar ${sidebarVisible ? 'active' : ''}`} onMouseLeave={() => setSidebarVisible(false)}>
+      {/* 1. LEFT: FILE TREE */}
+      <aside className="sidebar-panel" style={{ width: sidebarWidth }}>
         <div className="sidebar-brand">RED VAULT</div>
-        <div className="file-list">{fileTree.map((item, idx) => <FileSystemItem key={idx} item={item} onSelectFile={loadFile} />)}</div>
+        <div className="file-list">
+          {fileTree.map((item, idx) => <FileSystemItem key={idx} item={item} onSelectFile={loadFile} />)}
+        </div>
       </aside>
-      <main className="content-viewport">
+
+      {/* DIVIDER 1 */}
+      <div className="resizer" onMouseDown={startResizingSidebar}>
+        <div className="divider-line">||</div>
+      </div>
+
+      {/* 2. CENTER: MARKDOWN VIEW */}
+      <main className="main-content">
         <article className="markdown-container">
           <MarkdownViewer content={content} onLinkClick={(e) => {
             const link = e.target.closest('.internal-link') || e.target.closest('a');
@@ -278,6 +322,18 @@ export default function UltimateRedVault() {
           }} />
         </article>
       </main>
+
+      {/* DIVIDER 2 */}
+      <div className="resizer" onMouseDown={startResizingChat}>
+        <div className="divider-line">||</div>
+      </div>
+
+      {/* 3. RIGHT: CHAT POPUP (Embedded) */}
+      <aside className="chat-panel" style={{ width: chatWidth }}>
+        <div className="chat-container">
+          <Pop isEmbedded={true} /> {/* Thêm prop isEmbedded để pop.js biết cách render */}
+        </div>
+      </aside>
 
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Inter:wght@400;500;600&display=swap');
@@ -291,22 +347,49 @@ export default function UltimateRedVault() {
         }
 
         body { margin: 0; background: var(--bg); color: var(--txt); font-family: 'Inter', sans-serif; overflow: hidden; }
-        .app-shell { height: 100vh; width: 100vw; display: flex; overflow-y: auto; scrollbar-width: none; }
-        .app-shell::-webkit-scrollbar { display: none; }
-        .hover-trigger { position: fixed; top: 0; left: 0; width: 15px; height: 100vh; z-index: 1001; }
-        .sidebar { position: fixed; top: 0; left: 0; height: 100vh; width: 280px; background: #000; z-index: 1000; transform: translateX(-100%); transition: 0.3s; box-shadow: 5px 0 25px #000; }
-        .sidebar.active { transform: translateX(0); }
-        .sidebar-brand { padding: 30px; font-weight: 600; letter-spacing: 2px; border-bottom: 1px solid var(--border); }
-        .file-list { flex: 1; overflow-y: auto; padding: 15px; }
-        .content-viewport { flex: 1; display: flex; justify-content: center; padding: 40px 20px; }
+        
+        .app-shell { 
+          height: 100vh; 
+          width: 100vw; 
+          display: flex; 
+          background: var(--bg);
+          overflow: hidden;
+        }
+
+        /* PANELS */
+        .sidebar-panel { height: 100vh; background: var(--bg); display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar-brand { padding: 20px; font-weight: 600; letter-spacing: 2px; border-bottom: 1px solid var(--border); font-family: 'Inter', sans-serif; }
+        .file-list { flex: 1; overflow-y: auto; padding: 10px; scrollbar-width: none; }
+        .file-list::-webkit-scrollbar { display: none; }
+
+        .main-content { flex: 1; overflow-y: auto; display: flex; justify-content: center; padding: 40px 20px; scrollbar-width: none; background: var(--bg); }
+        .main-content::-webkit-scrollbar { display: none; }
         .markdown-container { max-width: 800px; width: 100%; box-sizing: border-box; }
+
+        .chat-panel { height: 100vh; background: var(--bg); flex-shrink: 0; border-left: 1px solid var(--border); overflow: hidden; }
+        .chat-container { height: 100%; width: 100%; position: relative; }
+
+        /* RESIZER */
+        .resizer {
+          width: 4px;
+          cursor: col-resize;
+          background: var(--border);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: background 0.2s, width 0.2s;
+          user-select: none;
+          z-index: 10;
+        }
+        .resizer:hover { background: var(--accent); width: 6px; }
+        .divider-line { display: none; }
 
         /* --- TYPOGRAPHY --- */
         .markdown-content { font-family: 'Crimson Text', serif; font-size: 19px; line-height: 1.6; color: var(--txt); }
         .markdown-content h1, .markdown-content h2, .markdown-content h3 { font-family: 'Crimson Text', serif; color: #fff; margin: 1.5em 0 0.6em; border: none; font-weight: 700; }
         .markdown-content p { margin-bottom: 1em; }
 
-        /* --- LINKS (WITH ARROW) --- */
+        /* --- LINKS --- */
         .markdown-content a, .internal-link {
           color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent); padding-right: 14px; position: relative; cursor: pointer;
         }
@@ -314,51 +397,32 @@ export default function UltimateRedVault() {
           content: '↗'; position: absolute; right: 0; top: -2px; font-size: 0.75em; opacity: 0.7;
         }
 
-        /* --- QUOTES (NESTED) --- */
-        blockquote { border-left: 3px solid var(--accent); padding-left: 1.25em; margin: 1.5em 0; font-style: italic; opacity: 0.8; }
-        blockquote blockquote { border-left-color: rgba(255,255,255,0.2); margin-left: 1em; }
-
-        /* --- TABLES (CONTAINED INNER SCROLL) --- */
-        .table-container { 
-          width: 100%; max-width: 100%; overflow-x: auto; margin: 2em 0; 
-          border: 1px solid var(--border); border-radius: 8px; display: block; 
-          box-sizing: border-box;
-        }
+        /* --- TABLES --- */
+        .table-container { width: 100%; max-width: 100%; overflow-x: auto; margin: 2em 0; border: 1px solid var(--border); border-radius: 8px; display: block; box-sizing: border-box; }
         .table-container::-webkit-scrollbar { height: 4px; }
         .table-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
         table { width: 100%; border-collapse: collapse; table-layout: auto; }
         th, td { padding: 12px 18px; border: 1px solid var(--border); text-align: left; white-space: nowrap; }
         th { background: rgba(255,255,255,0.03); color: #fff; font-weight: 600; }
 
-        /* --- TASK LISTS --- */
-        .markdown-content input[type="checkbox"] { appearance: none; width: 18px; height: 18px; border: 2px solid var(--accent); border-radius: 4px; margin-right: 10px; vertical-align: middle; cursor: pointer; position: relative; }
-        .markdown-content input[type="checkbox"]:checked { background: var(--accent); }
-        .markdown-content input[type="checkbox"]:checked::after { content: '✔'; position: absolute; color: #000; font-size: 12px; left: 3px; top: -1px; }
-
-        /* --- MATH --- */
+        /* --- UI ELEMENTS --- */
+        .tree-item { display: flex; align-items: center; padding: 6px 8px; cursor: pointer; border-radius: 4px; transition: 0.2s; font-size: 14px; opacity: 0.7; font-family: 'Crimson Text', serif; }
+        .tree-item:hover { background: rgba(255, 255, 255, 0.05); opacity: 1; color: var(--accent); }
+        .arrow-wrapper { width: 18px; margin-right: 4px; display: flex; justify-content: center; }
+        .spacer { width: 18px; }
+        
         .math-block { margin: 1.5em 0; overflow-x: auto; display: block; width: 100%; }
-        .katex-display { margin: 0 !important; padding: 10px 0; }
-
-        /* --- LISTS --- */
-        .markdown-content ul { list-style-type: disc !important; padding-left: 1.5em; margin-bottom: 1em; display: block; }
-        .markdown-content ol { list-style-type: decimal !important; padding-left: 1.5em; margin-bottom: 1em; display: block; }
-        .markdown-content li { display: list-item !important; margin-bottom: 0.4em; }
-
-        /* --- CODE & MERMAID --- */
         .code-block { background: var(--code-bg); border-radius: 8px; margin: 1.5em 0; border: 1px solid var(--border); overflow: hidden; }
         .code-header { background: #2a2a2a; padding: 5px 15px; display: flex; justify-content: flex-end; border-bottom: 1px solid var(--border); }
         .code-lang { font-size: 11px; color: #888; text-transform: uppercase; }
         pre { margin: 0; padding: 15px; overflow-x: auto; }
         .mermaid { background: rgba(255,255,255,0.02); padding: 20px; border-radius: 8px; margin: 1.5em 0; display: flex; justify-content: center; }
-
-        /* --- FOOTNOTES --- */
-        .fn-ref a { color: var(--accent); font-size: 0.7em; vertical-align: super; margin-left: 2px; }
-        .footnote-item { font-size: 0.9em; opacity: 0.8; margin-top: 1em; padding-top: 1em; border-top: 1px solid var(--border); }
-        .fn-back { color: var(--accent); margin-right: 5px; text-decoration: none; }
-        .fn-id { font-weight: bold; color: var(--accent); }
-
-        img { max-width: 100%; border-radius: 8px; margin: 1.5em 0; }
+        
+        blockquote { border-left: 3px solid var(--accent); padding-left: 1.25em; margin: 1.5em 0; font-style: italic; opacity: 0.8; }
+        blockquote blockquote { border-left-color: rgba(255,255,255,0.2); margin-left: 1em; }
+        
         .img-circle { border-radius: 50%; aspect-ratio: 1/1; object-fit: cover; max-width: 200px; display: block; margin: 2em auto; }
+        img { max-width: 100%; border-radius: 8px; margin: 1.5em 0; }
       `}</style>
     </div>
   );
