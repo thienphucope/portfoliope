@@ -1,10 +1,7 @@
 **./[[Dash Board]]/**
-{align:center}
+
 # How I Wasted Millions
 
-{bg:red}
-{color:white}
-{align:center}
 **WARNING: A memoir of bad financial decisions and GPU abuse.**
 
 You want to know where my money went? Do yourself a favor and don't look at my Google Colab receipts. I stopped counting after 1 million VND because it started to hurt my feelings. But hey, looking back at this journey, it was... well, it was a journey.
@@ -37,25 +34,24 @@ But hey, 7 Million VND later, it speaks.
 
 ### 🎧 The Results
 
-:::row
-:::col
+
+
 **Synthesized (My Model)**
 <audio controls style="width: 100%;">
   <source src="syn.wav" type="audio/mpeg">
 </audio>
-:::
 
-:::col
+
+
 **Reference Audio (Emotion Replication)**
 <audio controls style="width: 100%;">
   <source src="ref.wav" type="audio/mpeg">
 </audio>
-:::
 
-:::col
+
+
 **Real Voice (Ground Truth)**
 <audio controls style="width: 100%;">
   <source src="real.wav" type="audio/mpeg">
 </audio>
-:::
-:::
+

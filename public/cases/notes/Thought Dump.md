@@ -1,5 +1,5 @@
-{align:center}
-###### Thought Dump
+
+# Thought Dump
 records every ideas coming up
 
 # Goals

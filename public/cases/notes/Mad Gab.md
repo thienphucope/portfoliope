@@ -1,5 +1,5 @@
 **./[[Dash Board]]/**
-{align:center}
+
 # Mad Gab
  It's a game that you try to pronounce the phrase made by words with approximate pronunciation and get the actual.
 
@@ -22,7 +22,7 @@
 | Dawned Pea Hugger Limb Ann | <details><summary>Reveal</summary>Don't be a girly man</details> |
 | Mike Ranch Healed Wren | <details><summary>Reveal</summary>My grandchildren</details> |
 | Dwell Fro Sis | <details><summary>Reveal</summary>Twelve roses</details> |
-| Up Arrow Tin Issues | <details><summary>Reveal</summary>A pair of tennis shoes</details> |
+| Up Ar Tin Issues | <details><summary>Reveal</summary>A pair of tennis shoes</details> |
 | Ail Huck Each Arm | <details><summary>Reveal</summary>A lucky charm</details> |
 | Weedy Man Done Ant Sir | <details><summary>Reveal</summary>We demand an answer</details> |
 | Owe Forth Account Herd Rug | <details><summary>Reveal</summary>Over-the-counter drug</details> |
@@ -48,7 +48,7 @@
 | Ace Tray Taste Who Dent | <details><summary>Reveal</summary>A straight A student</details> |
 | Canoe Key Pass Egret | <details><summary>Reveal</summary>Can you keep a secret?</details> |
 | Amos Ooze | <details><summary>Reveal</summary>A Masseusse</details> |
-| Ape Arrows Uncle As His | <details><summary>Reveal</summary>A pair of sunglasses</details> |
+| Ape Ars Uncle As His | <details><summary>Reveal</summary>A pair of sunglasses</details> |
 | Annie Leg Ditto Fish Hull | <details><summary>Reveal</summary>An elected official</details> |
 | Ask Rude Arrive Her | <details><summary>Reveal</summary>A Screwdriver</details> |
 | Dawn dude rugs | <details><summary>Reveal</summary>Don't do drugs</details> |
@@ -75,7 +75,7 @@
 | Hit Stop Add | <details><summary>Reveal</summary>It's too bad</details> |
 | Jog Clay Die Scream | <details><summary>Reveal</summary>Chocolate Ice Cream</details> |
 | el low well | <details><summary>Reveal</summary>lol</details> |
-| sue perm are yo burrow | <details><summary>Reveal</summary>super mario bro</details> |
+| sue perm are yo bur | <details><summary>Reveal</summary>super mario bro</details> |
 | lower dove there rings | <details><summary>Reveal</summary>Lord of the Rings</details> |
 | pie rate softly care hip been | <details><summary>Reveal</summary>Pirate of the Carribean</details> |
 | calm heed at tea | <details><summary>Reveal</summary>call me daddy</details> |

@@ -1,18 +1,18 @@
-{align:center}
-###### Sexist Philosopher
 
-:::row
-:::col
+# Sexist Philosopher
+
+
+
 ![](https://www.youtube.com/watch?v=6CEi7R5lGno)
-:::
-:::col 
+
+ 
 I watched the video and found that it highlights how historical philosophers often held prejudiced views, claiming women lacked the capacity for deep intellectual thought. It also brings up modern IQ data, noting that while averages are similar, men show greater variance. Furthermore, it discusses Ayn Rand’s Objectivism and the idea that true intelligence lies in simplifying the complex rather than hiding behind jargon.
 
 **My Opinion:** In my view, classical philosophers were merely scratching the surface when judging women. The video provides data on IQ distribution showing that while the averages are equal, the male variance is higher. To claim that women are incapable of reaching the depths of philosophy or advanced science without considering—or perhaps even knowing—the biological mechanisms behind it is simply the ignorant judgment of the uninformed. Moreover, considering how heavy gender prejudice was in the past, how could these men possibly know what women were capable of when women were never given the chance to participate?
 
-:::
 
-:::
+
+
 
 
 

@@ -1,5 +1,5 @@
-{align:center}
-###### VA Assessment
+
+# VA Assessment
 In search of the voice data for the TTS. Some of them have nsfw stuff I won't tell who xD
 
 

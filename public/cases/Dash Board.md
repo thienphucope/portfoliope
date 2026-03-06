@@ -8,8 +8,6 @@
   <p>──── ✦ ────</p>
 </div>
 
----
-
 # 📘 Unhinged notes
 
 | Collection | Memoir | Document | Actual Blog | Internet Diary |
@@ -25,31 +23,20 @@
 | | | [[Diffusion]] | | |
 | | | [[PersonaPlex]] | | |
 
----
-
 # 📁 Voice Showcase
 
 ## 1. Sesame ( [[Csm-1B Arch]] )
 
-* **Đây là giọng nói nhân tạo, tôi không có thật.**
-<audio controls src="thiencsm2.wav"></audio>
-
-* **Ope là một người dễ thương và đẹp trai nhất vùng.**
-<audio controls src="thiencsm1.wav"></audio>
-
-* **Xin lỗi vì tôi quá tròn và dễ thương nha.**
-<audio controls src="thiencsm3.wav"></audio>
-
-* **Um, cho một ly nước nướng.**
-<audio controls src="thiencsm4.wav"></audio>
+|  |  |
+| :--- | :--- |
+| **Đây là giọng nói nhân tạo, tôi không có thật.**<br><audio controls src="thiencsm2.wav"></audio> | **Ope là một người dễ thương và đẹp trai nhất vùng.**<br><audio controls src="thiencsm1.wav"></audio> |
+| **Xin lỗi vì tôi quá tròn và dễ thương nha.**<br><audio controls src="thiencsm3.wav"></audio> | **Um, cho một ly nước nướng.**<br><audio controls src="thiencsm4.wav"></audio> |
 
 ## 2. Chatterbox ( [[How I Wasted Millions]] )
 
 | Synthesized (My Model) | Reference Audio | Real Voice |
 | :--- | :--- | :--- |
 | <audio controls src="syn.wav"></audio> | <audio controls src="ref.wav"></audio> | <audio controls src="real.wav"></audio> |
-
----
 
 # 🔗 Other links
 

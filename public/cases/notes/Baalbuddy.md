@@ -1,18 +1,18 @@
-{align:center}
-###### Baalbuddy Comics Dubbed
+
+# Baalbuddy Comics Dubbed
 um, it's kind of inappropriate...make sure you're not underage
 
 # [Solus Astorias](https://youtube.com/playlist?list=PLRNOK1E5gA8Ud8E1duLN_jMnfoTSPtHit&si=tlplI1SRwE9f2_lZ)
-:::row
-:::col
+
+
 ![IvyWilde](https://www.youtube.com/watch?v=e0h3O3qqLPs)
 ## Ivy Wilde
-:::
-:::col
+
+
 ![saexy](https://www.youtube.com/watch?v=Pa0F4qu4Mdc)
 ## saexy
-:::
-:::
+
+
 
 # [Bread-N-Butter](https://youtube.com/playlist?list=PLM6D2rg67Re79aciWWXyLK9n9vg1MMg-D&si=3g7ShDlzsDc-zMxT)
 

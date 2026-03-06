@@ -1,5 +1,5 @@
 **./[[Dash Board]]/**
-{align:center}
+
 # Ký Ức Tuổi Thơ Làng Quê 🪨💎
 
 Ngày xưa chơi với đá sỏi hyped lắm. Capture Squares và Five Stones là hai trò hay ho, cứ tìm được cục gạch, than gỗ hay phấn là chơi với anh em họ ngay. Phải tìm đá nữa, 50 viên sỏi nhỏ làm DÂN và 2 viên lớn làm LÀNG.

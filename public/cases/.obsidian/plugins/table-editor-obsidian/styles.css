@@ -2,7 +2,7 @@
   --advanced-tables-helper-size: 28px;
 }
 
-.HyperMD-table-row span.cm-inline-code {
+.HyperMD-table- span.cm-inline-code {
   font-size: 100%;
   padding: 0px;
 }
@@ -48,7 +48,7 @@
   font-weight: var(--nav-item-weight-hover);
 }
 
-.advanced-tables-row-label {
+.advanced-tables--label {
   width: 50px;
 }
 
