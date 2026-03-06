@@ -416,9 +416,9 @@ export default function UltimateRedVault() {
 
         /* --- TYPOGRAPHY --- */
         .markdown-content { font-family: 'Crimson Text', serif; font-size: 19px; line-height: 1.6; color: var(--txt); }
-        .markdown-content h1 { font-size: 2.4em; margin: 1em 0 0.5em; color: #fff; font-weight: 700; }
-        .markdown-content h2 { font-size: 1.8em; margin: 0.9em 0 0.4em; color: #fff; font-weight: 700; }
-        .markdown-content h3 { font-size: 1.4em; margin: 0.8em 0 0.3em; color: #fff; font-weight: 700; }
+        .markdown-content h1 { font-size: 2.2em; margin: 1em 0 0.5em; color: #fff; font-weight: 700; }
+        .markdown-content h2 { font-size: 1.7em; margin: 0.9em 0 0.4em; color: #fff; font-weight: 700; }
+        .markdown-content h3 { font-size: 1.3em; margin: 0.8em 0 0.3em; color: #fff; font-weight: 700; }
         .markdown-content p { margin-bottom: 1em; }
 
         .markdown-content a, .internal-link {
@@ -482,7 +482,9 @@ export default function UltimateRedVault() {
           .resizer { display: none !important; }
           .main-content { padding: 30px 15px; }
           .markdown-content { font-size: 17px; }
-          .markdown-content h1 { font-size: 2em; }
+          .markdown-content h1 { font-size: 1.8em; margin: 0.8em 0 0.4em; }
+          .markdown-content h2 { font-size: 1.5em; margin: 0.7em 0 0.3em; }
+          .markdown-content h3 { font-size: 1.2em; margin: 0.6em 0 0.2em; }
         }
       `}</style>
     </div>
