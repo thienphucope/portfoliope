@@ -30,55 +30,102 @@ const configureMarked = () => {
 
   const renderer = new window.marked.Renderer();
 
-  // Custom Table Renderer for Horizontal Scroll
-  renderer.table = (header, body) => {
+  // 1. Table Renderer (Strict Container)
+  renderer.table = (token) => {
+    const headerHtml = token.header.map(cell => {
+      const align = cell.align ? ` style="text-align:${cell.align}"` : '';
+      return `<th${align}>${window.marked.parseInline(cell.text)}</th>`;
+    }).join('');
+
+    const bodyHtml = token.rows.map(row => {
+      const rowContent = row.map(cell => {
+        const align = cell.align ? ` style="text-align:${cell.align}"` : '';
+        return `<td${align}>${window.marked.parseInline(cell.text)}</td>`;
+      }).join('');
+      return `<tr>${rowContent}</tr>`;
+    }).join('');
+
     return `
-      <div class="table-wrapper">
+      <div class="table-container">
         <table>
-          <thead>${header}</thead>
-          <tbody>${body}</tbody>
+          <thead><tr>${headerHtml}</tr></thead>
+          <tbody>${bodyHtml}</tbody>
         </table>
       </div>
     `;
   };
 
-  // Custom Image Renderer with #circle and YouTube support
-  renderer.image = (arg1, arg2, arg3) => {
-    let href = arg1, title = arg2, text = arg3;
-    if (typeof arg1 === 'object' && arg1 !== null) {
-      href = arg1.href;
-      title = arg1.title;
-      text = arg1.text;
+  // 2. Code Block Renderer
+  renderer.code = (token) => {
+    const lang = token.lang || 'text';
+    const code = token.text;
+    if (lang === 'mermaid') return `<div class="mermaid">${code}</div>`;
+    let highlighted = code;
+    if (window.hljs) {
+      try {
+        highlighted = window.hljs.getLanguage(lang) 
+          ? window.hljs.highlight(code, { language: lang }).value 
+          : window.hljs.highlightAuto(code).value;
+      } catch (e) {}
     }
-    let safeHref = (typeof href === 'string') ? href : '';
-    const safeText = (typeof text === 'string') ? text : '';
-    const safeTitle = (typeof title === 'string') ? title : '';
-
-    let extraClass = '';
-    if (safeHref.endsWith('#circle')) {
-      extraClass = 'img-circle';
-      safeHref = safeHref.replace('#circle', '');
-    }
-
-    const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-    const match = safeHref.match(youtubeRegex);
-
-    if (match && match[1]) {
-      return `<div class="video-wrapper"><iframe src="https://www.youtube.com/embed/${match[1]}" title="${safeText}" frameborder="0" allowfullscreen></iframe></div>`;
-    }
-    
-    const titlePart = safeTitle ? ` title="${safeTitle}"` : '';
-    return `<img src="${safeHref}" alt="${safeText}" class="${extraClass}"${titlePart}>`;
+    return `
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">${lang}</span></div>
+        <pre><code class="hljs language-${lang}">${highlighted}</code></pre>
+      </div>
+    `;
   };
 
-  // Support for WikiLinks [[...]]
+  // 3. Math Extension (Protects $$ and $)
+  const mathExtension = {
+    name: 'math',
+    level: 'inline',
+    start(src) { return src.match(/\$/)?.index; },
+    tokenizer(src) {
+      const blockMatch = /^\$\$([\s\S]+?)\$\$/.exec(src);
+      if (blockMatch) return { type: 'math', raw: blockMatch[0], text: blockMatch[1], displayMode: true };
+      const inlineMatch = /^\$((?:\\\$|[^$])+)\$/.exec(src);
+      if (inlineMatch) return { type: 'math', raw: inlineMatch[0], text: inlineMatch[1], displayMode: false };
+    },
+    renderer(token) {
+      if (token.displayMode) return `<div class="math-block">$$\n${token.text}\n$$</div>`;
+      return `<span class="math-inline">$${token.text}$</span>`;
+    }
+  };
+
+  // 4. Footnote & WikiLinks
+  const footnoteExtension = {
+    name: 'footnote',
+    level: 'inline',
+    start(src) { return src.match(/\[\^/)?.index; },
+    tokenizer(src) {
+      const match = /^\[\^([^\]]+)\]/.exec(src);
+      if (match) return { type: 'footnote', raw: match[0], id: match[1] };
+    },
+    renderer(token) {
+      return `<sup class="fn-ref"><a href="#fn-${token.id}" id="fnref-${token.id}">${token.id}</a></sup>`;
+    }
+  };
+
+  const footnoteDefExtension = {
+    name: 'footnoteDef',
+    level: 'block',
+    start(src) { return src.match(/^\[\^/)?.index; },
+    tokenizer(src) {
+      const match = /^\[\^([^\]]+)\]:\s+(.*)/.exec(src);
+      if (match) return { type: 'footnoteDef', raw: match[0], id: match[1], text: match[2] };
+    },
+    renderer(token) {
+      return `<div class="footnote-item" id="fn-${token.id}"><a href="#fnref-${token.id}" class="fn-back">↩</a> <span class="fn-id">${token.id}:</span> ${token.text}</div>`;
+    }
+  };
+
   const wikiLinkExtension = {
     name: 'wikiLink',
     level: 'inline',
     start(src) { return src.match(/\[\[/)?.index; },
-    tokenizer(src, tokens) {
-      const rule = /^\[\[(.*?)\]\]/;
-      const match = rule.exec(src);
+    tokenizer(src) {
+      const match = /^\[\[(.*?)\]\]/.exec(src);
       if (match) return { type: 'wikiLink', raw: match[0], text: match[1] };
     },
     renderer(token) {
@@ -86,38 +133,9 @@ const configureMarked = () => {
     }
   };
 
-  // Support for Footnotes
-  const footnoteExtension = {
-    name: 'footnote',
-    level: 'inline',
-    start(src) { return src.match(/\[\^/)?.index; },
-    tokenizer(src, tokens) {
-      const rule = /^\[\^([^\]]+)\]/;
-      const match = rule.exec(src);
-      if (match) return { type: 'footnote', raw: match[0], id: match[1] };
-    },
-    renderer(token) {
-      return `<sup><a href="#fn-${token.id}" id="fnref-${token.id}" class="footnote-ref">${token.id}</a></sup>`;
-    }
-  };
-
-  const footnoteDefExtension = {
-    name: 'footnoteDef',
-    level: 'block',
-    start(src) { return src.match(/^\[\^/m)?.index; },
-    tokenizer(src, tokens) {
-      const rule = /^\[\^([^\]]+)\]:\s+(.*)(?:\n|$)/;
-      const match = rule.exec(src);
-      if (match) return { type: 'footnoteDef', raw: match[0], id: match[1], text: match[2] };
-    },
-    renderer(token) {
-      return `<div class="footnote-def" id="fn-${token.id}"><a href="#fnref-${token.id}">[^]</a> ${token.id}: ${token.text}</div>`;
-    }
-  };
-
   window.marked.use({ 
     renderer, 
-    extensions: [wikiLinkExtension, footnoteExtension, footnoteDefExtension],
+    extensions: [mathExtension, footnoteExtension, footnoteDefExtension, wikiLinkExtension],
     gfm: true,
     breaks: true
   });
@@ -125,287 +143,91 @@ const configureMarked = () => {
   window.markedConfigured = true;
 };
 
-// --- CONTENT PROCESSOR ---
-// Splits content into a tree of sections (rows, columns, or attribute-blocks)
-const processMarkdownToTree = (markdown) => {
-  if (!markdown) return [];
-
-  const lines = markdown.split('\n');
-  const sections = [];
-  let i = 0;
-
-  while (i < lines.length) {
-    const line = lines[i];
-    const trimmed = line.trim();
-
-    // Skip empty lines at the start of sections
-    if (trimmed === '' && sections.length === 0) {
-      i++;
-      continue;
-    }
-
-    // --- ROW HANDLING ---
-    if (trimmed === ':::row') {
-      const row = { type: 'row', columns: [] };
-      i++;
-
-      while (i < lines.length) {
-        const colLine = lines[i].trim();
-        if (colLine === ':::') {
-          i++;
-          break;
-        }
-
-        if (colLine.startsWith(':::col')) {
-          const widthMatch = colLine.match(/:::col\s+(\d+%?)/);
-          const width = widthMatch ? widthMatch[1] : 'auto';
-          const columnLines = [];
-          i++;
-
-          let rowNestLevel = 0;
-          while (i < lines.length) {
-            const contentLine = lines[i];
-            const contentTrimmed = contentLine.trim();
-
-            if (contentTrimmed === ':::row') rowNestLevel++;
-            else if (contentTrimmed === ':::') {
-              if (rowNestLevel > 0) rowNestLevel--;
-              else { i++; break; }
-            }
-            columnLines.push(contentLine);
-            i++;
-          }
-
-          row.columns.push({
-            width,
-            content: processMarkdownToTree(columnLines.join('\n'))
-          });
-        } else {
-          i++;
-        }
-      }
-      sections.push(row);
-      continue;
-    }
-
-    // --- SPACER HANDLING ---
-    const spaceMatch = trimmed.match(/^\{space:(\d+px)\}$/);
-    if (spaceMatch) {
-      sections.push({ type: 'spacer', height: spaceMatch[1] });
-      i++;
-      continue;
-    }
-
-    // --- NORMAL BLOCK WITH ATTRIBUTES ---
-    let blockAttributes = { bgColor: null, color: null, align: null };
-    let hasAttributes = false;
-
-    // Peek and collect attributes
-    while (i < lines.length) {
-      const l = lines[i].trim();
-      const bgMatch = l.match(/^\{bg:(red|blue|yellow|green|gray|orange|purple|pink)\}$/);
-      const colorMatch = l.match(/^\{color:(red|blue|yellow|green|gray|orange|purple|pink|white|black)\}$/);
-      const alignMatch = l.match(/^\{align:(left|center|right|justify)\}$/);
-
-      if (bgMatch) { blockAttributes.bgColor = bgMatch[1]; hasAttributes = true; i++; }
-      else if (colorMatch) { blockAttributes.color = colorMatch[1]; hasAttributes = true; i++; }
-      else if (alignMatch) { blockAttributes.align = alignMatch[1]; hasAttributes = true; i++; }
-      else break;
-    }
-
-    // Collect content for this block until a new row or attribute block starts
-    // NOTE: We don't stop at blank lines anymore to keep standard MD intact
-    const blockContent = [];
-    while (i < lines.length) {
-      const nextLine = lines[i];
-      const nextTrimmed = nextLine.trim();
-
-      if (nextTrimmed === ':::row' || 
-          nextTrimmed.match(/^\{bg:/) || 
-          nextTrimmed.match(/^\{color:/) ||
-          nextTrimmed.match(/^\{align:/) ||
-          nextTrimmed.match(/^\{space:/)) {
-        break;
-      }
-      blockContent.push(nextLine);
-      i++;
-    }
-
-    if (blockContent.length > 0 || hasAttributes) {
-      sections.push({
-        type: 'block',
-        attributes: blockAttributes,
-        content: blockContent.join('\n')
-      });
-    } else if (i < lines.length) {
-      // Just skip empty line if we somehow got stuck
-      i++;
-    }
-  }
-
-  return sections;
-};
-
-// --- COMPONENTS ---
-
-const MarkdownBlock = ({ block, onLinkClick }) => {
-  if (block.type === 'spacer') {
-    return <div style={{ height: block.height, width: '100%' }} />;
-  }
-
-  const blockRef = useRef(null);
-  const { bgColor, color, align } = block.attributes;
-  
-  useEffect(() => {
-    if (blockRef.current && window.marked) {
-      configureMarked();
-      const htmlContent = window.marked.parse(block.content);
-      blockRef.current.innerHTML = htmlContent;
-      
-      if (window.renderMathInElement) {
-        window.renderMathInElement(blockRef.current, {
-          delimiters: [
-            {left: '$$', right: '$$', display: true},
-            {left: '$', right: '$', display: false}
-          ],
-          throwOnError: false
-        });
-      }
-    }
-  }, [block.content]);
-
-  const classes = [
-    'markdown-block',
-    bgColor ? `bg-${bgColor}` : '',
-    color ? `text-${color}` : '',
-    align ? `text-align-${align}` : ''
-  ].filter(Boolean).join(' ');
-
-  return <div ref={blockRef} className={classes} onClick={onLinkClick} />;
-};
-
-const MarkdownRow = ({ row, onLinkClick }) => {
-  const GAP_PX = 12;
-  const numCols = row.columns.length;
-  const totalGapSpace = `${(numCols - 1) * GAP_PX}px`;
-
-  return (
-    <div className="md-row" style={{ columnGap: `${GAP_PX}px` }}>
-      {row.columns.map((col, idx) => {
-        let style = col.width !== 'auto' 
-          ? { flex: `0 0 calc((100% - ${totalGapSpace}) * ${parseFloat(col.width)/100})`, maxWidth: `calc((100% - ${totalGapSpace}) * ${parseFloat(col.width)/100})` }
-          : { flex: 1 };
-        
-        return (
-          <div key={idx} className="md-col" style={style}>
-            {col.content.map((item, i) => (
-              item.type === 'row' 
-                ? <MarkdownRow key={i} row={item} onLinkClick={onLinkClick} />
-                : <MarkdownBlock key={i} block={item} onLinkClick={onLinkClick} />
-            ))}
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
+// --- MARKDOWN VIEWER ---
 const MarkdownViewer = ({ content, onLinkClick }) => {
-  const [sections, setSections] = useState([]);
+  const containerRef = useRef(null);
   const [libsLoaded, setLibsLoaded] = useState(false);
 
   useEffect(() => {
     Promise.all([
       loadScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js'),
+      loadScript('https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js'),
+      loadStyle('https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css'),
       loadScript('https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js'),
-      loadStyle('https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css')
+      loadStyle('https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css'),
+      loadScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js')
     ]).then(() => loadScript('https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js'))
-      .then(() => setLibsLoaded(true))
-      .catch(err => console.error("Lib load error:", err));
+      .then(() => {
+        if (window.mermaid) window.mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+        setLibsLoaded(true);
+      })
+      .catch(err => console.error(err));
   }, []);
 
   useEffect(() => {
-    if (libsLoaded) {
-      setSections(processMarkdownToTree(content));
+    if (libsLoaded && containerRef.current && window.marked) {
+      configureMarked();
+      const htmlContent = window.marked.parse(content);
+      containerRef.current.innerHTML = htmlContent;
+      
+      if (window.renderMathInElement) {
+        window.renderMathInElement(containerRef.current, {
+          delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}],
+          throwOnError: false
+        });
+      }
+      if (window.mermaid) window.mermaid.run({ nodes: containerRef.current.querySelectorAll('.mermaid') });
     }
   }, [content, libsLoaded]);
 
-  if (!libsLoaded) return <div className="loading-container">Loading Engine...</div>;
+  if (!libsLoaded) return <div className="status-msg">Booting Vault Engine...</div>;
 
-  return (
-    <div className="markdown-body">
-      {sections.map((section, idx) => (
-        section.type === 'row' 
-          ? <MarkdownRow key={idx} row={section} onLinkClick={onLinkClick} />
-          : <MarkdownBlock key={idx} block={section} onLinkClick={onLinkClick} />
-      ))}
-    </div>
-  );
+  return <div ref={containerRef} className="markdown-content" onClick={onLinkClick} />;
 };
 
-// --- FILE SYSTEM ITEM ---
+// --- FILE SYSTEM ---
 const FileSystemItem = ({ item, level = 0, onSelectFile }) => {
   const [isOpen, setIsOpen] = useState(false);
   const paddingLeft = `${level * 12}px`;
-
-  const handleClick = (e) => {
-    e.stopPropagation();
-    if (item.kind === 'directory') setIsOpen(!isOpen);
-    else onSelectFile(item.path, item.name);
-  };
-
   return (
     <div className="select-none">
-      <div 
-        className={`tree-item ${item.kind === 'file' ? 'is-file' : 'is-folder'}`}
-        style={{ paddingLeft }}
-        onClick={handleClick}
-      >
+      <div className={`tree-item ${item.kind === 'file' ? 'is-file' : 'is-folder'}`} style={{ paddingLeft }} onClick={(e) => {
+        e.stopPropagation();
+        if (item.kind === 'directory') setIsOpen(!isOpen);
+        else onSelectFile(item.path, item.name);
+      }}>
         <span className="arrow-wrapper">
-          {item.kind === 'directory' ? (
-            isOpen ? <ChevronDown size={14} strokeWidth={2} /> : <ChevronRight size={14} strokeWidth={2} />
-          ) : <span className="spacer"></span>}
+          {item.kind === 'directory' ? (isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />) : <span className="spacer"></span>}
         </span>
-        <span className={`item-name ${item.kind === 'directory' ? 'font-bold' : ''}`}>
-          {item.name.replace('.md', '')}
-        </span>
+        <span className="item-name">{item.name.replace('.md', '')}</span>
       </div>
       {item.kind === 'directory' && isOpen && item.children && (
         <div className="tree-children">
-          {item.children.map((child, index) => (
-            <FileSystemItem key={`${child.name}-${index}`} item={child} level={level + 1} onSelectFile={onSelectFile} />
-          ))}
+          {item.children.map((child, idx) => <FileSystemItem key={idx} item={child} level={level + 1} onSelectFile={onSelectFile} />)}
         </div>
       )}
     </div>
   );
 };
 
-// --- MAIN COMPONENT ---
-export default function RedMathVault() {
+// --- MAIN VAULT ---
+export default function UltimateRedVault() {
   const [fileTree, setFileTree] = useState([]);
   const [content, setContent] = useState('');
-  const [currentFileName, setCurrentFileName] = useState('');
   const [sidebarVisible, setSidebarVisible] = useState(false);
-  
-  const fileRegistry = useRef({}); 
-  const sidebarHoverAreaRef = useRef(null);
+  const fileRegistry = useRef({});
 
   const loadFile = async (path, name, updateHistory = true) => {
     try {
       const res = await fetch(path);
       const text = await res.text();
-      setCurrentFileName(name ? name.replace('.md', '') : '');
       setContent(text);
       if (updateHistory) {
         const newUrl = new URL(window.location);
         newUrl.searchParams.set('file', name);
         window.history.pushState({ path, name }, '', newUrl);
       }
-    } catch (err) {
-      console.error(err);
-      setContent('# Error\nKhông tải được file.');
-    }
+    } catch (err) { setContent('# Error\nFailed to load.'); }
   };
 
   useEffect(() => {
@@ -423,155 +245,120 @@ export default function RedMathVault() {
         };
         buildRegistry(tree);
         setFileTree(tree);
-
-        const DEFAULT_FILE_NAME = 'Dash Board.md';
-        const defaultPath = fileRegistry.current[DEFAULT_FILE_NAME.toLowerCase()];
-        if (defaultPath) loadFile(defaultPath, DEFAULT_FILE_NAME);
-        else if (tree.length > 0) {
-          const first = tree[0].kind === 'file' ? tree[0] : (tree[0].children?.[0] || tree[0]);
-          if (first.path) loadFile(first.path, first.name);
-        }
-      } catch (err) { console.error("Error loading file tree:", err); }
+        const DEFAULT = 'Dash Board.md';
+        const path = fileRegistry.current[DEFAULT.toLowerCase()];
+        if (path) loadFile(path, DEFAULT);
+      } catch (err) { console.error(err); }
     };
     fetchTree();
   }, []);
 
-  const handlePreviewClick = (e) => {
-    const target = e.target.closest('.internal-link');
-    if (target) {
-      const fileName = target.getAttribute('data-target');
-      const filePath = fileRegistry.current[fileName.toLowerCase()];
-      if (filePath) loadFile(filePath, fileName);
-    }
-  };
-
   useEffect(() => {
-    const handlePopState = (event) => {
-      if (event.state && event.state.path) loadFile(event.state.path, event.state.name, false);
-    };
+    const handlePopState = (e) => { if (e.state && e.state.path) loadFile(e.state.path, e.state.name, false); };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   return (
-    <div className="app-container">
-      <div ref={sidebarHoverAreaRef} className="sidebar-hover-area" onMouseEnter={() => setSidebarVisible(true)} />
-      
-      <aside className={`sidebar ${sidebarVisible ? 'visible' : ''}`} onMouseLeave={() => setSidebarVisible(false)}>
-        <div className="sidebar-header"><span className="brand">RED VAULT</span></div>
-        <div className="file-tree-scroll">
-          {fileTree.map((item, idx) => <FileSystemItem key={idx} item={item} onSelectFile={loadFile} />)}
-        </div>
+    <div className="app-shell">
+      <div className="hover-trigger" onMouseEnter={() => setSidebarVisible(true)} />
+      <aside className={`sidebar ${sidebarVisible ? 'active' : ''}`} onMouseLeave={() => setSidebarVisible(false)}>
+        <div className="sidebar-brand">RED VAULT</div>
+        <div className="file-list">{fileTree.map((item, idx) => <FileSystemItem key={idx} item={item} onSelectFile={loadFile} />)}</div>
       </aside>
-
-      <main className="main-viewport">
-        <div className="content-wrapper">
-          <MarkdownViewer content={content} onLinkClick={handlePreviewClick} />
-        </div>
+      <main className="content-viewport">
+        <article className="markdown-container">
+          <MarkdownViewer content={content} onLinkClick={(e) => {
+            const link = e.target.closest('.internal-link') || e.target.closest('a');
+            if (link) {
+              const name = link.getAttribute('data-target') || link.innerText;
+              const path = fileRegistry.current[name.toLowerCase()];
+              if (path) { e.preventDefault(); loadFile(path, name); }
+            }
+          }} />
+        </article>
       </main>
 
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Inter:wght@400;500;600&display=swap');
 
         :root {
-          --bg-color: #121212;
-          --text-color: #ffffff;
-          --sidebar-width: 300px;
-          --table-border-color: rgba(255, 255, 255, 0.2);
-          --accent-yellow: #FFFACD;
+          --bg: #121212;
+          --txt: #e0e0e0;
+          --accent: #FFFACD;
+          --border: rgba(255, 255, 255, 0.1);
+          --code-bg: #1e1e1e;
         }
 
-        body { 
-          margin: 0; background: var(--bg-color); color: var(--text-color); 
-          font-family: 'Crimson Text', serif; font-size: 18px; line-height: 1.7;
+        body { margin: 0; background: var(--bg); color: var(--txt); font-family: 'Inter', sans-serif; overflow: hidden; }
+        .app-shell { height: 100vh; width: 100vw; display: flex; overflow-y: auto; scrollbar-width: none; }
+        .app-shell::-webkit-scrollbar { display: none; }
+        .hover-trigger { position: fixed; top: 0; left: 0; width: 15px; height: 100vh; z-index: 1001; }
+        .sidebar { position: fixed; top: 0; left: 0; height: 100vh; width: 280px; background: #000; z-index: 1000; transform: translateX(-100%); transition: 0.3s; box-shadow: 5px 0 25px #000; }
+        .sidebar.active { transform: translateX(0); }
+        .sidebar-brand { padding: 30px; font-weight: 600; letter-spacing: 2px; border-bottom: 1px solid var(--border); }
+        .file-list { flex: 1; overflow-y: auto; padding: 15px; }
+        .content-viewport { flex: 1; display: flex; justify-content: center; padding: 40px 20px; }
+        .markdown-container { max-width: 800px; width: 100%; box-sizing: border-box; }
+
+        /* --- TYPOGRAPHY --- */
+        .markdown-content { font-family: 'Crimson Text', serif; font-size: 19px; line-height: 1.6; color: var(--txt); }
+        .markdown-content h1, .markdown-content h2, .markdown-content h3 { font-family: 'Crimson Text', serif; color: #fff; margin: 1.5em 0 0.6em; border: none; font-weight: 700; }
+        .markdown-content p { margin-bottom: 1em; }
+
+        /* --- LINKS (WITH ARROW) --- */
+        .markdown-content a, .internal-link {
+          color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent); padding-right: 14px; position: relative; cursor: pointer;
+        }
+        .markdown-content a::after, .internal-link::after {
+          content: '↗'; position: absolute; right: 0; top: -2px; font-size: 0.75em; opacity: 0.7;
         }
 
-        .markdown-body {
-          font-size: 20px; line-height: 1.8; width: 100%; text-align: justify;
+        /* --- QUOTES (NESTED) --- */
+        blockquote { border-left: 3px solid var(--accent); padding-left: 1.25em; margin: 1.5em 0; font-style: italic; opacity: 0.8; }
+        blockquote blockquote { border-left-color: rgba(255,255,255,0.2); margin-left: 1em; }
+
+        /* --- TABLES (CONTAINED INNER SCROLL) --- */
+        .table-container { 
+          width: 100%; max-width: 100%; overflow-x: auto; margin: 2em 0; 
+          border: 1px solid var(--border); border-radius: 8px; display: block; 
+          box-sizing: border-box;
         }
+        .table-container::-webkit-scrollbar { height: 4px; }
+        .table-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+        table { width: 100%; border-collapse: collapse; table-layout: auto; }
+        th, td { padding: 12px 18px; border: 1px solid var(--border); text-align: left; white-space: nowrap; }
+        th { background: rgba(255,255,255,0.03); color: #fff; font-weight: 600; }
 
-        .markdown-block {
-          margin: 4px 0 !important; padding: 4px 12px !important; border-radius: 4px;
-        }
+        /* --- TASK LISTS --- */
+        .markdown-content input[type="checkbox"] { appearance: none; width: 18px; height: 18px; border: 2px solid var(--accent); border-radius: 4px; margin-right: 10px; vertical-align: middle; cursor: pointer; position: relative; }
+        .markdown-content input[type="checkbox"]:checked { background: var(--accent); }
+        .markdown-content input[type="checkbox"]:checked::after { content: '✔'; position: absolute; color: #000; font-size: 12px; left: 3px; top: -1px; }
 
-        /* Colors & Alignment */
-        .bg-red { background-color: rgba(220, 38, 38, 0.15) !important; }
-        .bg-blue { background-color: rgba(22, 54, 69, 0.8) !important; }
-        .bg-yellow { background-color: rgba(234, 179, 8, 0.15) !important; }
-        .bg-green { background-color: rgba(34, 197, 94, 0.15) !important; }
-        .bg-gray { background-color: rgba(156, 163, 175, 0.15) !important; }
-        .text-red { color: #ff4444 !important; }
-        .text-yellow { color: #eab308 !important; }
-        .text-white { color: #ffffff !important; }
-        .text-align-center { text-align: center !important; }
-        .text-align-right { text-align: right !important; }
+        /* --- MATH --- */
+        .math-block { margin: 1.5em 0; overflow-x: auto; display: block; width: 100%; }
+        .katex-display { margin: 0 !important; padding: 10px 0; }
 
-        /* Headings */
-        .markdown-block h1 { font-size: 2.5em; border-bottom: 1px solid var(--table-border-color); padding-bottom: 0.3em; }
-        .markdown-block h2 { font-size: 2em; border-bottom: 1px solid var(--table-border-color); padding-bottom: 0.3em; }
-        .markdown-block h3 { font-size: 1.5em; }
+        /* --- LISTS --- */
+        .markdown-content ul { list-style-type: disc !important; padding-left: 1.5em; margin-bottom: 1em; display: block; }
+        .markdown-content ol { list-style-type: decimal !important; padding-left: 1.5em; margin-bottom: 1em; display: block; }
+        .markdown-content li { display: list-item !important; margin-bottom: 0.4em; }
 
-        /* TABLES - CRITICAL FIX */
-        .table-wrapper {
-          width: 100%; overflow-x: auto; margin: 1.5em 0; border-radius: 4px;
-          border: 1px solid var(--table-border-color);
-        }
-        table { 
-          width: 100%; border-collapse: collapse; min-width: 600px;
-        }
-        th, td { 
-          border: 1px solid var(--table-border-color); padding: 12px 15px; text-align: left;
-          word-break: break-word;
-        }
-        th { background: rgba(255, 255, 255, 0.05); font-weight: 700; }
+        /* --- CODE & MERMAID --- */
+        .code-block { background: var(--code-bg); border-radius: 8px; margin: 1.5em 0; border: 1px solid var(--border); overflow: hidden; }
+        .code-header { background: #2a2a2a; padding: 5px 15px; display: flex; justify-content: flex-end; border-bottom: 1px solid var(--border); }
+        .code-lang { font-size: 11px; color: #888; text-transform: uppercase; }
+        pre { margin: 0; padding: 15px; overflow-x: auto; }
+        .mermaid { background: rgba(255,255,255,0.02); padding: 20px; border-radius: 8px; margin: 1.5em 0; display: flex; justify-content: center; }
 
-        /* Images & Videos */
-        img { max-width: 100%; height: auto; border-radius: 4px; margin: 1em 0; }
-        .img-circle { border-radius: 50%; aspect-ratio: 1/1; object-fit: cover; max-width: 250px; margin: 1em auto; display: block; }
-        .video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; margin: 1.5em 0; }
-        .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 8px; }
+        /* --- FOOTNOTES --- */
+        .fn-ref a { color: var(--accent); font-size: 0.7em; vertical-align: super; margin-left: 2px; }
+        .footnote-item { font-size: 0.9em; opacity: 0.8; margin-top: 1em; padding-top: 1em; border-top: 1px solid var(--border); }
+        .fn-back { color: var(--accent); margin-right: 5px; text-decoration: none; }
+        .fn-id { font-weight: bold; color: var(--accent); }
 
-        /* Lists & Quotes */
-        ul, ol { padding-left: 2em; margin: 1em 0; }
-        blockquote { border-left: 4px solid var(--accent-yellow); padding-left: 1.5em; margin: 1.5em 0; font-style: italic; opacity: 0.9; }
-        
-        /* Links */
-        a { color: var(--accent-yellow); text-decoration: none; border-bottom: 1px solid transparent; transition: 0.2s; }
-        a:hover { border-bottom-color: var(--accent-yellow); }
-        .internal-link { color: var(--accent-yellow); cursor: pointer; text-decoration: underline dotted; }
-
-        /* Layout */
-        .md-row { display: flex; flex-wrap: wrap; gap: 12px; margin: 1em 0; }
-        .md-col { min-width: 0; }
-        .app-container { min-height: 100vh; display: flex; }
-        .sidebar-hover-area { position: fixed; top: 0; left: 0; width: 15px; height: 100vh; z-index: 1001; }
-        .sidebar { 
-          position: fixed; top: 0; left: 0; height: 100vh; width: var(--sidebar-width); 
-          background: #000; z-index: 1000; transform: translateX(-100%); transition: 0.3s;
-          box-shadow: 2px 0 15px rgba(0,0,0,0.5);
-        }
-        .sidebar.visible { transform: translateX(0); }
-        .main-viewport { flex: 1; padding: 40px 60px; display: flex; justify-content: center; }
-        .content-wrapper { max-width: 1000px; width: 100%; }
-
-        /* Task Lists */
-        .task-list-item { list-style-type: none; }
-        .task-list-item input { margin-right: 0.5em; }
-
-        /* Footnotes */
-        .footnote-ref { font-size: 0.8em; vertical-align: super; }
-        .footnote-def { font-size: 0.9em; opacity: 0.7; margin-top: 2em; border-top: 1px solid var(--table-border-color); padding-top: 1em; }
-
-        /* Code Blocks */
-        pre { background: #1e1e1e; padding: 1.5em; border-radius: 8px; overflow-x: auto; margin: 1.5em 0; }
-        code { font-family: 'Courier New', monospace; font-size: 0.9em; }
-
-        @media (max-width: 768px) {
-          .main-viewport { padding: 20px; }
-          .markdown-body { font-size: 17px; }
-          .md-row { flex-direction: column; }
-          .md-col { width: 100% !important; max-width: 100% !important; }
-        }
+        img { max-width: 100%; border-radius: 8px; margin: 1.5em 0; }
+        .img-circle { border-radius: 50%; aspect-ratio: 1/1; object-fit: cover; max-width: 200px; display: block; margin: 2em auto; }
       `}</style>
     </div>
   );
