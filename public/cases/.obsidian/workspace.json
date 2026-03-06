@@ -11,14 +11,10 @@
             "id": "a601c7963c8bc39d",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "In attempt of understanding the brain for building SNN.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "In attempt of understanding the brain for building SNN"
+              "title": "New tab"
             }
           },
           {
@@ -27,12 +23,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "notes/Where Are People.md",
+                "file": "notes/Christmas Album.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Where Are People"
+              "title": "Christmas Album"
             }
           },
           {
@@ -41,12 +37,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "notes/Baalbuddy.md",
+                "file": "Dash Board.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Baalbuddy"
+              "title": "Dash Board"
             }
           },
           {
@@ -64,7 +60,7 @@
             }
           }
         ],
-        "currentTab": 3
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -227,22 +223,25 @@
       "table-editor-obsidian:Advanced Tables Toolbar": false
     }
   },
-  "active": "25cba76f086ee472",
+  "active": "89a7303742cdb039",
   "lastOpenFiles": [
+    "notes/feature2.md",
+    "notes/Why Do Old-Fashioned Things Disappear.md",
+    "notes/World Model V-JEPA 2.md",
     "Dash Board.md",
-    "notes/PersonaPlex.md",
     "notes/VA Collection.md",
-    "notes/Transformers.md",
-    "notes/Diffusion.md",
+    "notes/Where Are People.md",
     "notes/Baalbuddy.md",
     "notes/Basement.md",
+    "notes/PersonaPlex.md",
+    "notes/Transformers.md",
+    "notes/Diffusion.md",
     "notes/Thought Dump.md",
     "notes/Sherlock Holmes.md",
     "notes/Bombshell.md",
     "notes/Jailbreak.md",
     "notes/Viet's Lunar New Year.md",
     "notes/Csm-1B Arch.md",
-    "notes/World Model V-JEPA 2.md",
     "notes/Internet Diary.md",
     "notes/Emotional Analysis Vol 1.md",
     "notes/Mad Gab.md",
@@ -252,9 +251,6 @@
     "Sexist Philosopher.md",
     "notes/Christmas Album.md",
     "notes/Beautiful.md",
-    "notes/MCU.md",
-    "Tracker.md",
-    "notes/Research.md",
-    "notes/Tracker.md"
+    "notes/MCU.md"
   ]
 }

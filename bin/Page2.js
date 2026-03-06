@@ -24,365 +24,285 @@ const loadStyle = (href) => {
   document.head.appendChild(link);
 };
 
-// --- PROCESS CONTENT INTO BLOCKS (shared logic) ---
-const processContentToBlocks = (lines) => {
-  const blocks = [];
-  let i = 0;
+// --- MARKDOWN ENGINE SETUP ---
+const configureMarked = () => {
+  if (typeof window === 'undefined' || !window.marked || window.markedConfigured) return;
+
+  const renderer = new window.marked.Renderer();
+
+  // Custom Table Renderer for Horizontal Scroll
+  renderer.table = (header, body) => {
+    return `
+      <div class="table-wrapper">
+        <table>
+          <thead>${header}</thead>
+          <tbody>${body}</tbody>
+        </table>
+      </div>
+    `;
+  };
+
+  // Custom Image Renderer with #circle and YouTube support
+  renderer.image = (arg1, arg2, arg3) => {
+    let href = arg1, title = arg2, text = arg3;
+    if (typeof arg1 === 'object' && arg1 !== null) {
+      href = arg1.href;
+      title = arg1.title;
+      text = arg1.text;
+    }
+    let safeHref = (typeof href === 'string') ? href : '';
+    const safeText = (typeof text === 'string') ? text : '';
+    const safeTitle = (typeof title === 'string') ? title : '';
+
+    let extraClass = '';
+    if (safeHref.endsWith('#circle')) {
+      extraClass = 'img-circle';
+      safeHref = safeHref.replace('#circle', '');
+    }
+
+    const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const match = safeHref.match(youtubeRegex);
+
+    if (match && match[1]) {
+      return `<div class="video-wrapper"><iframe src="https://www.youtube.com/embed/${match[1]}" title="${safeText}" frameborder="0" allowfullscreen></iframe></div>`;
+    }
+    
+    const titlePart = safeTitle ? ` title="${safeTitle}"` : '';
+    return `<img src="${safeHref}" alt="${safeText}" class="${extraClass}"${titlePart}>`;
+  };
+
+  // Support for WikiLinks [[...]]
+  const wikiLinkExtension = {
+    name: 'wikiLink',
+    level: 'inline',
+    start(src) { return src.match(/\[\[/)?.index; },
+    tokenizer(src, tokens) {
+      const rule = /^\[\[(.*?)\]\]/;
+      const match = rule.exec(src);
+      if (match) return { type: 'wikiLink', raw: match[0], text: match[1] };
+    },
+    renderer(token) {
+      return `<span class="internal-link" data-target="${token.text}">${token.text}</span>`;
+    }
+  };
+
+  // Support for Footnotes
+  const footnoteExtension = {
+    name: 'footnote',
+    level: 'inline',
+    start(src) { return src.match(/\[\^/)?.index; },
+    tokenizer(src, tokens) {
+      const rule = /^\[\^([^\]]+)\]/;
+      const match = rule.exec(src);
+      if (match) return { type: 'footnote', raw: match[0], id: match[1] };
+    },
+    renderer(token) {
+      return `<sup><a href="#fn-${token.id}" id="fnref-${token.id}" class="footnote-ref">${token.id}</a></sup>`;
+    }
+  };
+
+  const footnoteDefExtension = {
+    name: 'footnoteDef',
+    level: 'block',
+    start(src) { return src.match(/^\[\^/m)?.index; },
+    tokenizer(src, tokens) {
+      const rule = /^\[\^([^\]]+)\]:\s+(.*)(?:\n|$)/;
+      const match = rule.exec(src);
+      if (match) return { type: 'footnoteDef', raw: match[0], id: match[1], text: match[2] };
+    },
+    renderer(token) {
+      return `<div class="footnote-def" id="fn-${token.id}"><a href="#fnref-${token.id}">[^]</a> ${token.id}: ${token.text}</div>`;
+    }
+  };
+
+  window.marked.use({ 
+    renderer, 
+    extensions: [wikiLinkExtension, footnoteExtension, footnoteDefExtension],
+    gfm: true,
+    breaks: true
+  });
   
-  while (i < lines.length) {
-    const line = lines[i];
-    const trimmed = line.trim();
-    
-    // Skip empty lines
-    if (trimmed === '') {
-      i++;
-      continue;
-    }
-    // --- THÊM ĐOẠN NÀY: Check Spacer ---
-    const spaceMatch = trimmed.match(/^\{space:(\d+px)\}$/);
-    if (spaceMatch) {
-      blocks.push({
-        type: 'spacer',
-        height: spaceMatch[1]
-      });
-      i++;
-      continue; // Xong block này, nhảy sang dòng tiếp
-    }
-    
-    let blockContent = [];
-    let bgColor = null;
-    let textColor = null;
-    let textAlign = null; // <--- BIẾN MỚI
-    
-    // Helper function để check syntax align
-    // Trả về align value nếu có, và tăng i lên
-    const checkAlign = (currentIndex) => {
-      if (currentIndex >= lines.length) return { val: null, idx: currentIndex };
-      const l = lines[currentIndex].trim();
-      const match = l.match(/^\{align:(left|center|right|justify)\}$/);
-      if (match) {
-        return { val: match[1], idx: currentIndex + 1 };
-      }
-      return { val: null, idx: currentIndex };
-    };
-
-    // Helper function check color
-    const checkColor = (currentIndex) => {
-      if (currentIndex >= lines.length) return { val: null, idx: currentIndex };
-      const l = lines[currentIndex].trim();
-      const match = l.match(/^\{color:(red|blue|yellow|green|gray|orange|purple|pink|white|black)\}$/);
-      if (match) {
-        return { val: match[1], idx: currentIndex + 1 };
-      }
-      return { val: null, idx: currentIndex };
-    };
-
-    // 1. Check BG
-    const bgMatch = trimmed.match(/^\{bg:(red|blue|yellow|green|gray|orange|purple|pink)\}$/);
-    if (bgMatch) {
-      bgColor = bgMatch[1];
-      i++;
-      
-      // 2. Check Color sau BG
-      const cResult = checkColor(i);
-      textColor = cResult.val;
-      i = cResult.idx;
-
-      // 3. Check Align sau Color (hoặc sau BG)
-      const aResult = checkAlign(i);
-      textAlign = aResult.val;
-      i = aResult.idx;
-
-    } else {
-      // Nếu không có BG, check Color
-      const cResult = checkColor(i);
-      if (cResult.val) {
-        textColor = cResult.val;
-        i = cResult.idx;
-
-        // Check Align sau Color
-        const aResult = checkAlign(i);
-        textAlign = aResult.val;
-        i = aResult.idx;
-      } else {
-        // Nếu không có Color, check Align đứng một mình
-        const aResult = checkAlign(i);
-        if (aResult.val) {
-          textAlign = aResult.val;
-          i = aResult.idx;
-        }
-        // Nếu không có gì đặc biệt thì là text thường, i giữ nguyên
-      }
-    }
-
-    // Collect content
-    while (i < lines.length) {
-      const nextLine = lines[i];
-      const nextTrimmed = nextLine.trim();
-      
-      // Dừng lại nếu gặp dòng trống hoặc syntax đặc biệt bắt đầu block mới
-      if (nextTrimmed === '' || 
-          nextTrimmed.match(/^\{bg:/) || 
-          nextTrimmed.match(/^\{color:/) ||
-          nextTrimmed.match(/^\{align:/)) { // <--- NHỚ THÊM ĐK DỪNG NÀY
-        break;
-      }
-      
-      blockContent.push(nextLine);
-      i++;
-    }
-    
-    if (blockContent.length > 0) {
-      blocks.push({
-        type: 'normal',
-        content: blockContent,
-        bgColor: bgColor,
-        color: textColor,
-        align: textAlign // <--- PASS GIÁ TRỊ VÀO BLOCK
-      });
-    }
-  }
-  
-  return blocks;
+  window.markedConfigured = true;
 };
 
-// --- BLOCK-BASED MARKDOWN PROCESSOR ---
-const processBlockMarkdown = (markdown) => {
+// --- CONTENT PROCESSOR ---
+// Splits content into a tree of sections (rows, columns, or attribute-blocks)
+const processMarkdownToTree = (markdown) => {
   if (!markdown) return [];
 
   const lines = markdown.split('\n');
-  const blocks = [];
+  const sections = [];
   let i = 0;
 
   while (i < lines.length) {
     const line = lines[i];
     const trimmed = line.trim();
 
-    // Check for row start
+    // Skip empty lines at the start of sections
+    if (trimmed === '' && sections.length === 0) {
+      i++;
+      continue;
+    }
+
+    // --- ROW HANDLING ---
     if (trimmed === ':::row') {
       const row = { type: 'row', columns: [] };
-      i++; // Move to next line
+      i++;
 
-      // Process columns in this row
       while (i < lines.length) {
         const colLine = lines[i].trim();
-
-        // End of row
         if (colLine === ':::') {
           i++;
           break;
         }
 
-        // Start of column
         if (colLine.startsWith(':::col')) {
           const widthMatch = colLine.match(/:::col\s+(\d+%?)/);
           const width = widthMatch ? widthMatch[1] : 'auto';
-
           const columnLines = [];
-          i++; // Move past :::col line
+          i++;
 
           let rowNestLevel = 0;
-
-          // Collect column content until we find the closing ::: for this column
           while (i < lines.length) {
             const contentLine = lines[i];
             const contentTrimmed = contentLine.trim();
 
-            if (contentTrimmed === ':::row') {
-              rowNestLevel++;
-            } else if (contentTrimmed === ':::') {
-              if (rowNestLevel > 0) {
-                rowNestLevel--; // This ::: closes a nested row
-              } else {
-                i++; // Consume the ':::'
-                break; // This ::: closes the current column
-              }
+            if (contentTrimmed === ':::row') rowNestLevel++;
+            else if (contentTrimmed === ':::') {
+              if (rowNestLevel > 0) rowNestLevel--;
+              else { i++; break; }
             }
-
             columnLines.push(contentLine);
             i++;
           }
 
-          // Process column lines into blocks recursively
-          const columnBlocks = processBlockMarkdown(columnLines.join('\n'));
-
           row.columns.push({
             width,
-            blocks: columnBlocks
+            content: processMarkdownToTree(columnLines.join('\n'))
           });
         } else {
           i++;
         }
       }
-
-      if (row.columns.length > 0) {
-        blocks.push(row);
-      }
+      sections.push(row);
       continue;
     }
 
-    // Skip row-related syntax outside of row context
-    if (trimmed === ':::' || trimmed.startsWith(':::col')) {
+    // --- SPACER HANDLING ---
+    const spaceMatch = trimmed.match(/^\{space:(\d+px)\}$/);
+    if (spaceMatch) {
+      sections.push({ type: 'spacer', height: spaceMatch[1] });
       i++;
       continue;
     }
 
-    // Regular block (not in a row)
-    // Collect lines until we hit a row or end
-    const regularLines = [];
+    // --- NORMAL BLOCK WITH ATTRIBUTES ---
+    let blockAttributes = { bgColor: null, color: null, align: null };
+    let hasAttributes = false;
+
+    // Peek and collect attributes
+    while (i < lines.length) {
+      const l = lines[i].trim();
+      const bgMatch = l.match(/^\{bg:(red|blue|yellow|green|gray|orange|purple|pink)\}$/);
+      const colorMatch = l.match(/^\{color:(red|blue|yellow|green|gray|orange|purple|pink|white|black)\}$/);
+      const alignMatch = l.match(/^\{align:(left|center|right|justify)\}$/);
+
+      if (bgMatch) { blockAttributes.bgColor = bgMatch[1]; hasAttributes = true; i++; }
+      else if (colorMatch) { blockAttributes.color = colorMatch[1]; hasAttributes = true; i++; }
+      else if (alignMatch) { blockAttributes.align = alignMatch[1]; hasAttributes = true; i++; }
+      else break;
+    }
+
+    // Collect content for this block until a new row or attribute block starts
+    // NOTE: We don't stop at blank lines anymore to keep standard MD intact
+    const blockContent = [];
     while (i < lines.length) {
       const nextLine = lines[i];
       const nextTrimmed = nextLine.trim();
 
-      if (nextTrimmed === ':::row') {
+      if (nextTrimmed === ':::row' || 
+          nextTrimmed.match(/^\{bg:/) || 
+          nextTrimmed.match(/^\{color:/) ||
+          nextTrimmed.match(/^\{align:/) ||
+          nextTrimmed.match(/^\{space:/)) {
         break;
       }
-
-      regularLines.push(nextLine);
+      blockContent.push(nextLine);
       i++;
     }
 
-    // Process regular lines into blocks
-    const regularBlocks = processContentToBlocks(regularLines);
-    blocks.push(...regularBlocks);
+    if (blockContent.length > 0 || hasAttributes) {
+      sections.push({
+        type: 'block',
+        attributes: blockAttributes,
+        content: blockContent.join('\n')
+      });
+    } else if (i < lines.length) {
+      // Just skip empty line if we somehow got stuck
+      i++;
+    }
   }
 
-  return blocks;
+  return sections;
 };
 
-// --- MARKDOWN BLOCK COMPONENT ---
+// --- COMPONENTS ---
+
 const MarkdownBlock = ({ block, onLinkClick }) => {
-  // --- THÊM ĐOẠN NÀY Ở ĐẦU COMPONENT ---
   if (block.type === 'spacer') {
     return <div style={{ height: block.height, width: '100%' }} />;
   }
-  // -------------------------------------
+
   const blockRef = useRef(null);
+  const { bgColor, color, align } = block.attributes;
   
   useEffect(() => {
-    if (blockRef.current && window.marked && window.renderMathInElement) {
-      const renderer = new window.marked.Renderer();
-      
-      // ... trong component MarkdownBlock ...
-      renderer.image = (arg1, arg2, arg3) => {
-        let href = arg1, title = arg2, text = arg3;
-        if (typeof arg1 === 'object' && arg1 !== null) {
-          href = arg1.href;
-          title = arg1.title;
-          text = arg1.text;
-        }
-        let safeHref = (typeof href === 'string') ? href : '';
-        const safeText = (typeof text === 'string') ? text : '';
-        const safeTitle = (typeof title === 'string') ? title : '';
-
-        // --- LOGIC MỚI: Check xem có #circle không ---
-        let extraClass = '';
-        if (safeHref.endsWith('#circle')) {
-          extraClass = 'img-circle';
-          safeHref = safeHref.replace('#circle', ''); // Xóa cái đuôi đi để link ảnh vẫn chạy đúng
-        }
-        // ---------------------------------------------
-
-        const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-        const match = safeHref.match(youtubeRegex);
-
-        if (match && match[1]) {
-          return `<div class="video-wrapper"><iframe src="https://www.youtube.com/embed/${match[1]}" title="${safeText}" frameborder="0" allowfullscreen></iframe></div>`;
-        }
-        
-        const titlePart = safeTitle ? ` title="${safeTitle}"` : '';
-        
-        // Thêm biến ${extraClass} vào thẻ img
-        return `<img src="${safeHref}" alt="${safeText}" class="${extraClass}"${titlePart}>`;
-      };
-
-      window.marked.use({ renderer });
-      
-      let content = block.content.join('\n');
-      
-      // Process internal links
-      content = content.replace(/\[\[(.*?)\]\]/g, (match, p1) => {
-        return `<span class="internal-link" data-target="${p1}">${p1}</span>`;
-      });
-      
-      const htmlContent = window.marked.parse(content);
+    if (blockRef.current && window.marked) {
+      configureMarked();
+      const htmlContent = window.marked.parse(block.content);
       blockRef.current.innerHTML = htmlContent;
       
-      window.renderMathInElement(blockRef.current, {
-        delimiters: [
-          {left: '$$', right: '$$', display: true},
-          {left: '$', right: '$', display: false}
-        ],
-        throwOnError: false
-      });
+      if (window.renderMathInElement) {
+        window.renderMathInElement(blockRef.current, {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '$', right: '$', display: false}
+          ],
+          throwOnError: false
+        });
+      }
     }
-  }, [block]);
-  
-  const bgColorClass = block.bgColor ? `bg-${block.bgColor}` : '';
-  const textColorClass = block.color ? `text-${block.color}` : '';
-  
-  // --- THÊM DÒNG NÀY ---
-  const alignClass = block.align ? `text-align-${block.align}` : ''; 
-  
-  // Thêm alignClass vào chuỗi class
-  const combinedClasses = `markdown-block ${bgColorClass} ${textColorClass} ${alignClass}`;
-  
-  return (
-    <div 
-      ref={blockRef} 
-      className={combinedClasses.trim()}
-      onClick={onLinkClick}
-    />
-  );
+  }, [block.content]);
+
+  const classes = [
+    'markdown-block',
+    bgColor ? `bg-${bgColor}` : '',
+    color ? `text-${color}` : '',
+    align ? `text-align-${align}` : ''
+  ].filter(Boolean).join(' ');
+
+  return <div ref={blockRef} className={classes} onClick={onLinkClick} />;
 };
 
-// --- ROW COMPONENT ---
-// --- ROW COMPONENT (Logic: Trừ Gap trước, chia % sau) ---
 const MarkdownRow = ({ row, onLinkClick }) => {
-  // 1. Cấu hình Gap (số nguyên để dễ tính toán)
-  const GAP_PX = 12; 
-
-  // 2. Tính xem hàng này có bao nhiêu cột để biết có bao nhiêu gap
-  // Ví dụ: 3 cột thì có 2 khoảng trắng ở giữa (3 - 1 = 2)
+  const GAP_PX = 12;
   const numCols = row.columns.length;
-  const numGaps = numCols > 0 ? numCols - 1 : 0;
-  
-  // 3. Tính tổng số pixel bị mất vì Gap
-  // Ví dụ: 2 gap * 12px = 24px
-  const totalGapSpace = `${numGaps * GAP_PX}px`;
+  const totalGapSpace = `${(numCols - 1) * GAP_PX}px`;
 
   return (
     <div className="md-row" style={{ columnGap: `${GAP_PX}px` }}>
       {row.columns.map((col, idx) => {
-        
-        let finalStyle = {};
-        
-        if (col.width !== 'auto') {
-           // Lấy số % thô (ví dụ "50%" -> lấy số 0.5)
-           const percentVal = parseFloat(col.width) / 100;
-           
-           // --- CÔNG THỨC THẦN THÁNH CỦA BẠN ---
-           // Width = (100% - Tổng Gap) * Tỷ lệ
-           // CSS calc hỗ trợ nhân một biểu thức với một con số
-           const calcString = `calc((100% - ${totalGapSpace}) * ${percentVal})`;
-
-           finalStyle = { 
-               flex: `0 0 ${calcString}`, 
-               maxWidth: calcString
-           };
-        } else {
-           // Nếu không set %, tự động chia đều phần còn lại
-           finalStyle = { flex: 1 }; 
-        }
+        let style = col.width !== 'auto' 
+          ? { flex: `0 0 calc((100% - ${totalGapSpace}) * ${parseFloat(col.width)/100})`, maxWidth: `calc((100% - ${totalGapSpace}) * ${parseFloat(col.width)/100})` }
+          : { flex: 1 };
         
         return (
-          <div key={idx} className="md-col" style={finalStyle}>
-            {col.blocks.map((block, blockIdx) => {
-              if (block.type === 'row') {
-                return <MarkdownRow key={blockIdx} row={block} onLinkClick={onLinkClick} />;
-              }
-              return <MarkdownBlock key={blockIdx} block={block} onLinkClick={onLinkClick} />;
-            })}
+          <div key={idx} className="md-col" style={style}>
+            {col.content.map((item, i) => (
+              item.type === 'row' 
+                ? <MarkdownRow key={i} row={item} onLinkClick={onLinkClick} />
+                : <MarkdownBlock key={i} block={item} onLinkClick={onLinkClick} />
+            ))}
           </div>
         );
       })}
@@ -390,9 +310,8 @@ const MarkdownRow = ({ row, onLinkClick }) => {
   );
 };
 
-// --- MARKDOWN VIEWER ---
 const MarkdownViewer = ({ content, onLinkClick }) => {
-  const [blocks, setBlocks] = useState([]);
+  const [sections, setSections] = useState([]);
   const [libsLoaded, setLibsLoaded] = useState(false);
 
   useEffect(() => {
@@ -400,28 +319,26 @@ const MarkdownViewer = ({ content, onLinkClick }) => {
       loadScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js'),
       loadScript('https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js'),
       loadStyle('https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css')
-    ]).then(() => {
-      return loadScript('https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js');
-    }).then(() => setLibsLoaded(true)).catch(err => console.error(err));
+    ]).then(() => loadScript('https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js'))
+      .then(() => setLibsLoaded(true))
+      .catch(err => console.error("Lib load error:", err));
   }, []);
 
   useEffect(() => {
-    if (libsLoaded && window.marked) {
-      const processedBlocks = processBlockMarkdown(content);
-      setBlocks(processedBlocks);
+    if (libsLoaded) {
+      setSections(processMarkdownToTree(content));
     }
   }, [content, libsLoaded]);
 
-  if (!libsLoaded) return <div className="loading-container">Loading...</div>;
+  if (!libsLoaded) return <div className="loading-container">Loading Engine...</div>;
 
   return (
     <div className="markdown-body">
-      {blocks.map((block, idx) => {
-        if (block.type === 'row') {
-          return <MarkdownRow key={idx} row={block} onLinkClick={onLinkClick} />;
-        }
-        return <MarkdownBlock key={idx} block={block} onLinkClick={onLinkClick} />;
-      })}
+      {sections.map((section, idx) => (
+        section.type === 'row' 
+          ? <MarkdownRow key={idx} row={section} onLinkClick={onLinkClick} />
+          : <MarkdownBlock key={idx} block={section} onLinkClick={onLinkClick} />
+      ))}
     </div>
   );
 };
@@ -433,11 +350,8 @@ const FileSystemItem = ({ item, level = 0, onSelectFile }) => {
 
   const handleClick = (e) => {
     e.stopPropagation();
-    if (item.kind === 'directory') {
-      setIsOpen(!isOpen);
-    } else {
-      onSelectFile(item.path, item.name);
-    }
+    if (item.kind === 'directory') setIsOpen(!isOpen);
+    else onSelectFile(item.path, item.name);
   };
 
   return (
@@ -477,87 +391,48 @@ export default function RedMathVault() {
   const fileRegistry = useRef({}); 
   const sidebarHoverAreaRef = useRef(null);
 
-  const findFirstMdFile = (nodes) => {
-    for (const node of nodes) {
-      if (node.kind === 'file' && node.name.endsWith('.md')) {
-        return { path: node.path, name: node.name };
-      }
-      if (node.kind === 'directory' && node.children) {
-        const found = findFirstMdFile(node.children);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
-
   const loadFile = async (path, name, updateHistory = true) => {
     try {
       const res = await fetch(path);
       const text = await res.text();
-            const cleanName = name ? name.replace('.md', '') : '';
-      setCurrentFileName(cleanName);
+      setCurrentFileName(name ? name.replace('.md', '') : '');
       setContent(text);
-      // --- LOGIC MỚI: PUSH STATE VÀO HISTORY ---
       if (updateHistory) {
-        // Tạo URL mới có dạng ?file=TenFile.md
         const newUrl = new URL(window.location);
         newUrl.searchParams.set('file', name);
-                // Lưu path và name vào state của history để dùng khi nhấn Back
         window.history.pushState({ path, name }, '', newUrl);
       }
-      // ------------------------------------------
     } catch (err) {
       console.error(err);
       setContent('# Error\nKhông tải được file.');
     }
   };
 
- useEffect(() => {
+  useEffect(() => {
     const fetchTree = async () => {
       try {
         const res = await fetch('/api/cases');
-        if (!res.ok) throw new Error('Failed to fetch cases');
         const tree = await res.json();
-
         const buildRegistry = (nodes) => {
           nodes.forEach(node => {
             if (node.kind === 'file') {
               fileRegistry.current[node.name.toLowerCase()] = node.path;
               fileRegistry.current[node.name.replace('.md', '').toLowerCase()] = node.path;
-            } else if (node.children) {
-              buildRegistry(node.children);
-            }
+            } else if (node.children) buildRegistry(node.children);
           });
         };
         buildRegistry(tree);
         setFileTree(tree);
 
-        // --- PHẦN CHỈNH SỬA Ở ĐÂY ---
-        
-        // 1. Đặt tên file cậu muốn load đầu tiên
-        const DEFAULT_FILE_NAME = 'Dash Board.md'; // Hoặc 'intro.md', 'home.md' tùy cậu
-
-        // 2. Tìm path của file đó trong registry (đã build ở trên)
+        const DEFAULT_FILE_NAME = 'Dash Board.md';
         const defaultPath = fileRegistry.current[DEFAULT_FILE_NAME.toLowerCase()];
-
-        if (defaultPath) {
-          // Nếu tìm thấy file mặc định, load nó
-          loadFile(defaultPath, DEFAULT_FILE_NAME);
-        } else {
-          // Nếu KHÔNG tìm thấy, quay về logic cũ: load file đầu tiên trong cây thư mục
-          const firstFile = findFirstMdFile(tree);
-          if (firstFile) {
-            loadFile(firstFile.path, firstFile.name);
-          }
+        if (defaultPath) loadFile(defaultPath, DEFAULT_FILE_NAME);
+        else if (tree.length > 0) {
+          const first = tree[0].kind === 'file' ? tree[0] : (tree[0].children?.[0] || tree[0]);
+          if (first.path) loadFile(first.path, first.name);
         }
-        
-        // --- KẾT THÚC PHẦN CHỈNH SỬA ---
-
-      } catch (err) {
-        console.error("Error loading file tree:", err);
-      }
+      } catch (err) { console.error("Error loading file tree:", err); }
     };
-
     fetchTree();
   }, []);
 
@@ -566,86 +441,29 @@ export default function RedMathVault() {
     if (target) {
       const fileName = target.getAttribute('data-target');
       const filePath = fileRegistry.current[fileName.toLowerCase()];
-      if (filePath) {
-        loadFile(filePath, fileName);
-      }
+      if (filePath) loadFile(filePath, fileName);
     }
   };
 
-  // Handle sidebar hover behavior
-  useEffect(() => {
-    const handleMouseEnter = () => {
-      setSidebarVisible(true);
-    };
-    
-    const handleMouseLeave = (e) => {
-      if (e.relatedTarget && e.relatedTarget.closest('.sidebar')) {
-        return;
-      }
-      setSidebarVisible(false);
-    };
-    
-    const sidebarElement = document.querySelector('.sidebar');
-    const hoverAreaElement = sidebarHoverAreaRef.current;
-    
-    if (hoverAreaElement) {
-      hoverAreaElement.addEventListener('mouseenter', handleMouseEnter);
-    }
-    
-    if (sidebarElement) {
-      sidebarElement.addEventListener('mouseleave', handleMouseLeave);
-    }
-    
-    return () => {
-      if (hoverAreaElement) {
-        hoverAreaElement.removeEventListener('mouseenter', handleMouseEnter);
-      }
-      if (sidebarElement) {
-        sidebarElement.removeEventListener('mouseleave', handleMouseLeave);
-      }
-    };
-  }, []);
-
-  // --- LOGIC MỚI: XỬ LÝ SỰ KIỆN BACK CỦA TRÌNH DUYỆT ---
   useEffect(() => {
     const handlePopState = (event) => {
-      // Nếu có state (do mình đã push ở bước 1), load lại file đó
-      if (event.state && event.state.path && event.state.name) {
-        // Truyền false để không push ngược lại vào history
-        loadFile(event.state.path, event.state.name, false);
-      }
+      if (event.state && event.state.path) loadFile(event.state.path, event.state.name, false);
     };
-
     window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   return (
     <div className="app-container">
-      {/* Sidebar hover detection area */}
-      <div 
-        ref={sidebarHoverAreaRef} 
-        className="sidebar-hover-area"
-        aria-label="Hover to show sidebar"
-      />
+      <div ref={sidebarHoverAreaRef} className="sidebar-hover-area" onMouseEnter={() => setSidebarVisible(true)} />
       
-      {/* Sidebar */}
-      <aside className={`sidebar ${sidebarVisible ? 'visible' : ''}`}>
-        <div className="sidebar-header">
-          <span className="brand">RED VAULT</span>
-        </div>
+      <aside className={`sidebar ${sidebarVisible ? 'visible' : ''}`} onMouseLeave={() => setSidebarVisible(false)}>
+        <div className="sidebar-header"><span className="brand">RED VAULT</span></div>
         <div className="file-tree-scroll">
-          {fileTree.length === 0 && <div className="loading-msg">Loading files...</div>}
-          {fileTree.map((item, idx) => (
-            <FileSystemItem key={idx} item={item} onSelectFile={loadFile} />
-          ))}
+          {fileTree.map((item, idx) => <FileSystemItem key={idx} item={item} onSelectFile={loadFile} />)}
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="main-viewport">
         <div className="content-wrapper">
           <MarkdownViewer content={content} onLinkClick={handlePreviewClick} />
@@ -658,431 +476,102 @@ export default function RedMathVault() {
         :root {
           --bg-color: #121212;
           --text-color: #ffffff;
-          --text-red: #ff4444;
-          --bright-red: #ffffff;
           --sidebar-width: 300px;
           --table-border-color: rgba(255, 255, 255, 0.2);
+          --accent-yellow: #FFFACD;
         }
 
         body { 
-          margin: 0; 
-          background: var(--bg-color); 
-          color: var(--text-color); 
-          font-family: 'Crimson Text', serif;
-          overflow-y: auto; 
-          font-size: 18px; 
-          line-height: 1.7;
+          margin: 0; background: var(--bg-color); color: var(--text-color); 
+          font-family: 'Crimson Text', serif; font-size: 18px; line-height: 1.7;
         }
 
-        /* --- MARKDOWN BODY --- */
         .markdown-body {
-          background-color: transparent !important;
-          color: var(--text-color) !important;
-          font-family: 'Crimson Text', serif !important;
-          font-size: 20px;
-          line-height: 1.8;
-          width: 100%;
-          text-align: justify;
+          font-size: 20px; line-height: 1.8; width: 100%; text-align: justify;
         }
 
-/* --- BLOCK SYSTEM (Notion-style) --- */
         .markdown-block {
-          /* SỬA 2 DÒNG NÀY */
-          margin: 1px 0 !important;      /* Giảm margin trên dưới xuống siêu nhỏ (1px) */
-          padding: 0px 10px !important;  /* Giảm padding trên dưới xuống 2px, giữ nguyên trái phải */
-          
-          /* Giữ nguyên các dòng này */
-          border-radius: 4px;
-          transition: background-color 0.2s;
-          /* Nhớ XÓA dòng 'width: fit-content' nếu cậu lỡ thêm vào nhé */
+          margin: 4px 0 !important; padding: 4px 12px !important; border-radius: 4px;
         }
 
-        .markdown-block:hover {
-          background-color: rgba(255, 255, 255, 0.03);
-        }
-
-        /* Background Colors */
+        /* Colors & Alignment */
         .bg-red { background-color: rgba(220, 38, 38, 0.15) !important; }
-        .bg-blue { background-color: rgba(22, 54, 69, 1) !important; }
+        .bg-blue { background-color: rgba(22, 54, 69, 0.8) !important; }
         .bg-yellow { background-color: rgba(234, 179, 8, 0.15) !important; }
         .bg-green { background-color: rgba(34, 197, 94, 0.15) !important; }
         .bg-gray { background-color: rgba(156, 163, 175, 0.15) !important; }
-        .bg-orange { background-color: rgba(249, 115, 22, 0.15) !important; }
-        .bg-purple { background-color: rgba(168, 85, 247, 0.15) !important; }
-        .bg-pink { background-color: rgba(236, 72, 153, 0.15) !important; }
-
-        /* Text Colors */
         .text-red { color: #ff4444 !important; }
-        .text-blue { color: #163545 !important; }
         .text-yellow { color: #eab308 !important; }
-        .text-green { color: #22c55e !important; }
-        .text-gray { color: #9ca3af !important; }
-        .text-orange { color: #f97316 !important; }
-        .text-purple { color: #a855f7 !important; }
-        .text-pink { color: #ec4899 !important; }
         .text-white { color: #ffffff !important; }
-        .text-black { color: #000000 !important; }
-
-        /* --- HEADINGS --- */
-        .markdown-block h1, .markdown-block h2, .markdown-block h3, 
-        .markdown-block h4, .markdown-block h5, .markdown-block h6 {
-          border: none !important;
-          color: inherit !important;
-          font-weight: 700;
-          line-height: 1.3 !important;
-          margin: 0.2em 0 !important;
-        }
-
-        .markdown-block h1 { font-size: 2.2em !important; }
-        .markdown-block h2 { font-size: 1.8em !important; }
-        .markdown-block h3 { font-size: 1.5em !important; }
-        .markdown-block h4 { font-size: 1.3em !important; }
-        .markdown-block h5 { font-size: 1.1em !important; }
-        .markdown-block h6 { font-size: 4.0em !important; }
-
-        /* --- TABLES --- */
-        .markdown-block table { 
-          display: table !important; 
-          width: 100% !important; 
-          margin: 1em 0 !important;
-          border-collapse: collapse;
-          border: 1px solid var(--table-border-color) !important;
-        }
-
-        .markdown-block table th, 
-        .markdown-block table td { 
-          border: 1px solid var(--table-border-color) !important;
-          padding: 8px 12px !important;
-          line-height: 1.4 !important;
-          vertical-align: top;
-        }
-
-        .markdown-block table th {
-          font-weight: 700;
-          background: rgba(255, 255, 255, 0.05);
-          text-align: left;
-        }
-
-        /* --- IMAGES & VIDEOS --- */
-        .markdown-block img { 
-          width: 100%; 
-          max-width: 100%; 
-          height: auto; 
-          display: block; 
-          margin: 10px 0; 
-          object-fit: contain;
-          border-radius: 4px;
-        }
-
-        .video-wrapper { 
-          position: relative; 
-          padding-bottom: 56.25%; 
-          height: 0; 
-          overflow: hidden; 
-          max-width: 100%; 
-          margin: 12px 0; 
-        }
-
-        .video-wrapper iframe { 
-          position: absolute; 
-          top: 0; 
-          left: 0; 
-          width: 100%; 
-          height: 100%; 
-        }
-
-        /* --- LISTS --- */
-        .markdown-block ul, .markdown-block ol {
-          margin: 0.3em 0;
-          padding-left: 2em;
-        }
-
-        .markdown-block ul {
-          list-style-type: disc;
-        }
-
-        .markdown-block ol {
-          list-style-type: decimal;
-        }
-
-        /* --- COLUMNS --- */
-        .md-row {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 12px;
-          margin-bottom: 8px;
-          width: 100%;
-        }
-        
-        .md-col {
-          flex: 1;
-          min-width: 0;
-          box-sizing: border-box;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-          /* 1. Ép dòng chuyển thành cột dọc thực sự */
-          .md-row { 
-            display: flex !important;
-            flex-direction: column !important; /* Quan trọng: Xếp chồng dọc thay vì ngang */
-            gap: 20px; /* Tăng khoảng cách giữa các phần tử khi xếp chồng cho thoáng */
-            height: auto !important; /* Đảm bảo chiều cao tự động giãn theo nội dung */
-          }
-          
-          /* 2. Cột chiếm full chiều ngang */
-          .md-col { 
-            width: 100% !important;
-            flex: 0 0 auto !important; /* Reset flex để không bị co kéo */
-            max-width: 100% !important; 
-            margin-bottom: 12px; /* Thêm margin dưới cho chắc cốp */
-          }
-
-          /* 3. Fix riêng cho hình ảnh/video để không bị đè */
-          .markdown-block img, 
-          .video-wrapper {
-            max-width: 100% !important;
-            height: auto !important;
-            display: block; /* Tránh lỗi inline image tạo khoảng trắng thừa */
-          }
-        }
-
-        /* --- OTHER ELEMENTS --- */
-        .markdown-block p { margin: 0.3em 0; }
-        .markdown-block blockquote {
-          border-left: 10px solid #ffffff !important;
-          padding-left: 1em;
-          margin: 0.5em 0;
-          opacity: 0.8;
-        }
-
-        .markdown-block a { 
-          color: var(--bright-red) !important; 
-          text-decoration: none; 
-          color: #FFFACD !important;
-        }
-
-        .internal-link { 
-          color: #FFFACD; 
-          cursor: pointer; 
-          // border-bottom: 1px solid #FFFACD;
-        }
-
-        /* --- SIDEBAR --- */
-        .app-container { 
-          position: relative; 
-          min-height: 100vh; 
-          width: 100vw; 
-          overflow-x: hidden;
-        }
-
-        .sidebar-hover-area {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 20px;
-          height: 100vh;
-          z-index: 999;
-          cursor: pointer;
-        }
-
-        .sidebar { 
-          position: fixed; 
-          top: 0; 
-          left: 0; 
-          height: 100vh; 
-          width: var(--sidebar-width); 
-          display: flex; 
-          flex-direction: column; 
-          z-index: 1000; 
-          background: #000000; 
-          color: var(--text-color);
-          transform: translateX(-100%);
-          transition: transform 0.3s ease;
-          box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
-        }
-
-        .sidebar.visible {
-          transform: translateX(0);
-        }
-
-        .sidebar-header { 
-          padding: 40px 30px 20px; 
-          text-align: left;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .brand { 
-          font-family: 'Crimson Text', serif; 
-          font-size: 20px; 
-          letter-spacing: 2px; 
-          color: var(--text-color);
-        }
-
-        .file-tree-scroll { 
-          flex: 1; 
-          overflow-y: auto; 
-          padding: 10px; 
-        }
-
-        .file-tree-scroll::-webkit-scrollbar { width: 4px; }
-        .file-tree-scroll::-webkit-scrollbar-thumb { background: var(--text-white); border-radius: 2px; }
-
-        .loading-msg { 
-          text-align: center; 
-          margin-top: 20px; 
-          opacity: 0.6; 
-        }
-
-        .tree-item { 
-          display: flex; 
-          align-items: center; 
-          cursor: pointer; 
-          font-family: 'Crimson Text', serif; 
-          font-size: 16px; 
-          padding: 6px 0; 
-          color: var(--text-color); 
-          opacity: 0.8; 
-          transition: opacity 0.2s; 
-        }
-
-        .tree-item:hover { 
-          opacity: 1; 
-          color: var(--text-yellow); 
-        }
-
-        .arrow-wrapper { width: 20px; display: flex; justify-content: center; }
-        .spacer { width: 20px; }
-
-        .item-name { 
-          white-space: nowrap; 
-          overflow: hidden; 
-          text-overflow: ellipsis;
-          max-width: 200px;
-        }
-
-        .font-bold { font-weight: 600; }
-
-        /* --- MAIN VIEWPORT --- */
-        .main-viewport { 
-          width: 100%; 
-          box-sizing: border-box; 
-          min-height: 100vh; 
-          display: flex; 
-          justify-content: center; 
-        }
-        
-        .content-wrapper { 
-          width: 100%;
-          padding: 0px 65px 10px; 
-        }
-
-        .page-title { 
-          font-family: 'Crimson Text', serif; 
-          font-size: 2.5rem; 
-          font-weight: 600; 
-          margin-bottom: 30px; 
-          color: var(--text-color); 
-          text-align: left; 
-        }
-
-        /* Loading indicator */
-        .loading-container {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          height: 100vh;
-          color: var(--text-color);
-          font-size: 1.2rem;
-        }
-
-        /* --- KATEX --- */
-        .katex { font-size: 1.1em; }
-        .katex-display { overflow-x: auto; padding: 10px 0; }
-        
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-thumb { background: rgba(138, 0, 0, 0.3); border-radius: 3px; }
-
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-          .sidebar {
-            width: 280px;
-          }
-          
-          
-          .page-title {
-            font-size: 2rem;
-          }
-        }
-        /* --- CIRCULAR IMAGE --- */
-        .img-circle {
-          border-radius: 50% !important;
-          object-fit: cover !important; /* Cắt ảnh vừa khung, không bị méo */
-          aspect-ratio: 1 / 1; /* Ép ảnh thành hình vuông tỉ lệ 1:1 để tròn đẹp */
-          
-          /* Tuỳ chọn: Giới hạn kích thước nếu cậu muốn avatar nhỏ */
-          max-width: 100vw !important; 
-          margin: 12px auto !important; /* Căn giữa */
-          display: block;
-        }
-        .text-align-left { text-align: left !important; }
         .text-align-center { text-align: center !important; }
         .text-align-right { text-align: right !important; }
-        .text-align-justify { text-align: justify !important; }
-        /* ... Các code CSS cũ ở trên ... */
 
-      /* --- MOBILE RESPONSIVE TWEAKS --- */
-      @media (max-width: 768px) {
+        /* Headings */
+        .markdown-block h1 { font-size: 2.5em; border-bottom: 1px solid var(--table-border-color); padding-bottom: 0.3em; }
+        .markdown-block h2 { font-size: 2em; border-bottom: 1px solid var(--table-border-color); padding-bottom: 0.3em; }
+        .markdown-block h3 { font-size: 1.5em; }
+
+        /* TABLES - CRITICAL FIX */
+        .table-wrapper {
+          width: 100%; overflow-x: auto; margin: 1.5em 0; border-radius: 4px;
+          border: 1px solid var(--table-border-color);
+        }
+        table { 
+          width: 100%; border-collapse: collapse; min-width: 600px;
+        }
+        th, td { 
+          border: 1px solid var(--table-border-color); padding: 12px 15px; text-align: left;
+          word-break: break-word;
+        }
+        th { background: rgba(255, 255, 255, 0.05); font-weight: 700; }
+
+        /* Images & Videos */
+        img { max-width: 100%; height: auto; border-radius: 4px; margin: 1em 0; }
+        .img-circle { border-radius: 50%; aspect-ratio: 1/1; object-fit: cover; max-width: 250px; margin: 1em auto; display: block; }
+        .video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; margin: 1.5em 0; }
+        .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 8px; }
+
+        /* Lists & Quotes */
+        ul, ol { padding-left: 2em; margin: 1em 0; }
+        blockquote { border-left: 4px solid var(--accent-yellow); padding-left: 1.5em; margin: 1.5em 0; font-style: italic; opacity: 0.9; }
         
-        /* 1. Giảm size chữ Body xuống mức chuẩn mobile (16px hoặc 17px) */
-        /* Hiện tại PC đang là 20px */
-        .markdown-body {
-          font-size: 16px !important; 
-          line-height: 1.6 !important; /* Giảm giãn dòng chút cho đỡ tốn diện tích */
-          text-align: justify; /* Giữ căn đều cho đẹp */
-        }
+        /* Links */
+        a { color: var(--accent-yellow); text-decoration: none; border-bottom: 1px solid transparent; transition: 0.2s; }
+        a:hover { border-bottom-color: var(--accent-yellow); }
+        .internal-link { color: var(--accent-yellow); cursor: pointer; text-decoration: underline dotted; }
 
-        /* 2. Tinh chỉnh lại Heading cho đỡ "hét vào mặt" người xem */
-        /* Vì màn hình nhỏ, tỉ lệ Heading nên giảm đi một chút so với body */
-        .markdown-block h1 { font-size: 1.8em !important; } /* PC: 2.2em */
-        .markdown-block h2 { font-size: 1.5em !important; } /* PC: 1.8em */
-        .markdown-block h3 { font-size: 1.3em !important; } /* PC: 1.5em */
-        .markdown-block h4 { font-size: 1.2em !important; } /* PC: 1.3em */
+        /* Layout */
+        .md-row { display: flex; flex-wrap: wrap; gap: 12px; margin: 1em 0; }
+        .md-col { min-width: 0; }
+        .app-container { min-height: 100vh; display: flex; }
+        .sidebar-hover-area { position: fixed; top: 0; left: 0; width: 15px; height: 100vh; z-index: 1001; }
+        .sidebar { 
+          position: fixed; top: 0; left: 0; height: 100vh; width: var(--sidebar-width); 
+          background: #000; z-index: 1000; transform: translateX(-100%); transition: 0.3s;
+          box-shadow: 2px 0 15px rgba(0,0,0,0.5);
+        }
+        .sidebar.visible { transform: translateX(0); }
+        .main-viewport { flex: 1; padding: 40px 60px; display: flex; justify-content: center; }
+        .content-wrapper { max-width: 1000px; width: 100%; }
 
-        /* 3. Mở rộng không gian hiển thị */
-        /* Mobile đất chật người đông, giảm padding lề để chữ có chỗ thở */
-        .content-wrapper {
-          padding: 0px 4px 0px 4px !important;        }
+        /* Task Lists */
+        .task-list-item { list-style-type: none; }
+        .task-list-item input { margin-right: 0.5em; }
 
-        /* 4. Giảm size tiêu đề trang chính (Page Title) */
-        .page-title {
-          font-size: 1.8rem !important; /* PC: 2.5rem */
-          margin-bottom: 20px !important;
-        }
-        
-        /* 5. Block quote (trích dẫn) nên thụt lề ít hơn */
-        .markdown-block blockquote {
-          margin: 0.5em 0 !important;
-          padding-left: 0.8em !important;
-        }
-        /* 1. Điều khiển khoảng cách ở đây */
-        .md-row {
-          display: flex !important;
-          flex-direction: column !important;
-          gap: 8px !important; /* <--- Sửa số này: Khoảng cách chính thức giữa các khối (8px là đẹp) */
-        }
+        /* Footnotes */
+        .footnote-ref { font-size: 0.8em; vertical-align: super; }
+        .footnote-def { font-size: 0.9em; opacity: 0.7; margin-top: 2em; border-top: 1px solid var(--table-border-color); padding-top: 1em; }
 
-        /* 2. Xóa margin thừa của khối con */
-        .md-col {
-          width: 100% !important;
-          max-width: 100% !important;
-          margin-bottom: 0 !important; /* <--- QUAN TRỌNG: Set về 0 để không bị cộng dồn với gap ở trên */
+        /* Code Blocks */
+        pre { background: #1e1e1e; padding: 1.5em; border-radius: 8px; overflow-x: auto; margin: 1.5em 0; }
+        code { font-family: 'Courier New', monospace; font-size: 0.9em; }
+
+        @media (max-width: 768px) {
+          .main-viewport { padding: 20px; }
+          .markdown-body { font-size: 17px; }
+          .md-row { flex-direction: column; }
+          .md-col { width: 100% !important; max-width: 100% !important; }
         }
-        .markdown-block {
-          padding-left: 5px !important;
-          padding-right: 5px !important;
-        }
-      }
       `}</style>
     </div>
   );
