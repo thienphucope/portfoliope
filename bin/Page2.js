@@ -75,6 +75,21 @@ const configureMarked = () => {
     `;
   };
 
+  // 3. Image & YouTube Renderer
+  renderer.image = (token) => {
+    let { href, title, text } = token;
+    let safeHref = href || '';
+    const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const ytMatch = safeHref.match(ytRegex);
+    if (ytMatch) {
+      return `<div class="video-container"><iframe src="https://www.youtube.com/embed/${ytMatch[1]}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
+    }
+    if (safeHref.endsWith('#circle')) {
+      return `<img src="${safeHref.replace('#circle', '')}" alt="${text || ''}" class="img-circle">`;
+    }
+    return `<img src="${safeHref}" alt="${text || ''}" title="${title || ''}">`;
+  };
+
   const mathExtension = {
     name: 'math',
     level: 'inline',
@@ -362,9 +377,9 @@ export default function UltimateRedVault() {
         .file-list { flex: 1; overflow-y: auto; padding: 10px; scrollbar-width: none; }
         .file-list::-webkit-scrollbar { display: none; }
 
-        .main-content { flex: 1; overflow-y: auto; display: flex; justify-content: center; padding: 40px 20px; scrollbar-width: none; background: var(--bg); }
+        .main-content { flex: 1; overflow-y: auto; display: flex; justify-content: center; padding: 30px 15px; scrollbar-width: none; background: var(--bg); }
         .main-content::-webkit-scrollbar { display: none; }
-        .markdown-container { max-width: 800px; width: 100%; box-sizing: border-box; }
+        .markdown-container { max-width: 1000px; width: 100%; box-sizing: border-box; }
 
         .chat-panel { height: 100vh; background: var(--bg); flex-shrink: 0; border-left: 1px solid var(--border); overflow: hidden; }
         .chat-container { height: 100%; width: 100%; position: relative; }
@@ -386,7 +401,9 @@ export default function UltimateRedVault() {
 
         /* --- TYPOGRAPHY --- */
         .markdown-content { font-family: 'Crimson Text', serif; font-size: 19px; line-height: 1.6; color: var(--txt); }
-        .markdown-content h1, .markdown-content h2, .markdown-content h3 { font-family: 'Crimson Text', serif; color: #fff; margin: 1.5em 0 0.6em; border: none; font-weight: 700; }
+        .markdown-content h1 { font-size: 2.4em; margin: 1em 0 0.5em; color: #fff; font-weight: 700; }
+        .markdown-content h2 { font-size: 1.8em; margin: 0.9em 0 0.4em; color: #fff; font-weight: 700; }
+        .markdown-content h3 { font-size: 1.4em; margin: 0.8em 0 0.3em; color: #fff; font-weight: 700; }
         .markdown-content p { margin-bottom: 1em; }
 
         /* --- LINKS --- */
@@ -397,13 +414,18 @@ export default function UltimateRedVault() {
           content: '↗'; position: absolute; right: 0; top: -2px; font-size: 0.75em; opacity: 0.7;
         }
 
-        /* --- TABLES --- */
-        .table-container { width: 100%; max-width: 100%; overflow-x: auto; margin: 2em 0; border: 1px solid var(--border); border-radius: 8px; display: block; box-sizing: border-box; }
-        .table-container::-webkit-scrollbar { height: 4px; }
-        .table-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+        /* --- TABLES (ULTRA MINIMAL) --- */
+        .table-container { 
+          width: 100%; max-width: 100%; overflow-x: auto; margin: 1.5em 0; display: block; 
+          scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;
+        }
+        .table-container::-webkit-scrollbar { height: 2px; }
+        .table-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        
         table { width: 100%; border-collapse: collapse; table-layout: auto; }
-        th, td { padding: 12px 18px; border: 1px solid var(--border); text-align: left; white-space: nowrap; }
-        th { background: rgba(255,255,255,0.03); color: #fff; font-weight: 600; }
+        th, td { padding: 10px 14px; border: none; text-align: left; white-space: nowrap; }
+        thead { border-bottom: 1px solid var(--border); }
+        th { color: #fff; font-weight: 700; }
 
         /* --- UI ELEMENTS --- */
         .tree-item { display: flex; align-items: center; padding: 6px 8px; cursor: pointer; border-radius: 4px; transition: 0.2s; font-size: 14px; opacity: 0.7; font-family: 'Crimson Text', serif; }

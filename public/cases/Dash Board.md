@@ -1,209 +1,60 @@
-![](store.png)
-:::row
-:::col 30%
-<div style="position: relative;">
-  <img
-    src="saba.png"
-    style="
-      position: absolute;
-      top: -120px;
-      left: 50%;
-      transform: translateX(-50%);
-      max-width: 1000px;
-      width: 50%;
-    "
-  />
+<div align="center">
+  <img src="store.png" width="100%" />
 </div>
-:::
-:::col 40%
+<div align="center">
+  <h1>Ope Watson</h1>
+  <p>──── ୨୧ ────</p>
+  <p><i>Sometimes you gotta run before you walk</i></p>
+  <p>──── ✦ ────</p>
+</div>
 
-{align:center}
-###### Ope Watson
+---
 
+# 📘 Unhinged notes
 
-:::
+| Collection | Memoir | Document | Actual Blog | Internet Diary |
+| :--- | :--- | :--- | :--- | :--- |
+| [[Beautiful]] | [[Ope Watson]] | [[Emergence]] | [[Fuck Boy Diary]] | [[VA Collection]] |
+| [[Mad Gab]] | [[Flood Exp]] | [[Features]] | [[In Defence of Edison]] | [[Bombshell]] |
+| [[Emotional Analysis Vol 1]] | [[Core Memory]] | [[How I Wasted Millions]] | [[Where Are People]] | [[Jailbreak]] |
+| [[Emotional Analysis Vol 2]] | [[Thought Dump]] | [[RWKV]] | [[Sexist Philosopher]] | [[Baalbuddy]] |
+| [[Christmas Album]] | | [[Spike Network]] | [[Viet's Lunar New Year]] | [[Basement]] |
+| | | [[Csm-1B Arch]] | [[Sherlock Holmes]] | |
+| | | [[World Model V-JEPA 2]] | | |
+| | | [[Transformers]] | | |
+| | | [[Diffusion]] | | |
+| | | [[PersonaPlex]] | | |
 
-:::col 30%
+---
 
-{align:center}
-──── ୨୧ ────
-{align:center}
-Sometimes you gotta run before you walk
-{align:center}
-──── ✦ ────
-
-:::
-:::
-
-
-{bg:blue}
-# 📘Unhinged notes
-
-
-:::row
-:::col
-## Collection
- ---
-##### [[Beautiful]]
-##### [[Mad Gab]]
-##### [[Emotional Analysis Vol 1]]
-##### [[Emotional Analysis Vol 2]]
-##### [[Christmas Album]]
-
-## Memoir
- ---
-##### [[Ope Watson]]
-##### [[Flood Exp]]
-##### [[Core Memory]]
-
-##### [[Thought Dump]]
-:::
-:::col
-## Document
- ---
-##### [[Emergence]]
-##### [[Features]]
-##### [[How I Wasted Millions]]
-##### [[RWKV]]
-##### [[Spike Network]]
-##### [[Csm-1B Arch]]
-##### [[World Model V-JEPA 2]]
-##### [[Transformers]]
-##### [[Diffusion]]
-##### [[PersonaPlex]]
-
-
-
-:::
-
-:::col
-## Actual Blog
- ---
-##### [[Fuck Boy Diary]]
-##### [[In Defence of Edison]]
-##### [[Where Are People]]
-##### [[Sexist Philosopher]]
-##### [[Viet's Lunar New Year]]
-##### [[Sherlock Holmes]]
-:::
-:::col
-## Internet Diary
- ---
-##### [[VA Collection]]
-##### [[Bombshell]]
-##### [[Jailbreak]]
-##### [[Baalbuddy]]
-##### [[Basement]]
-
-
-:::
-:::
-
-{bg:yellow}
 # 📁 Voice Showcase
 
 ## 1. Sesame ( [[Csm-1B Arch]] )
-:::row
 
-:::col 50%
-{align:center}
- Đây là giọng nói nhân tạo, tôi không có thật.
+* **Đây là giọng nói nhân tạo, tôi không có thật.**
+<audio controls src="thiencsm2.wav"></audio>
 
-<audio controls style="width: 100%;">
-  <source src="thiencsm2.wav" type="audio/mpeg">
-</audio>
+* **Ope là một người dễ thương và đẹp trai nhất vùng.**
+<audio controls src="thiencsm1.wav"></audio>
 
-:::
+* **Xin lỗi vì tôi quá tròn và dễ thương nha.**
+<audio controls src="thiencsm3.wav"></audio>
 
-:::col 50%
-{align:center}
- Ope là một người dễ thương và đẹp trai nhất vùng.
-
-<audio controls style="width: 100%;">
-  <source src="thiencsm1.wav" type="audio/mpeg">
-</audio>
-
-:::
-
-
-:::col 50%
-{align:center}
- Xin lỗi vì tôi quá tròn và dễ thương nha.
-
-<audio controls style="width: 100%;">
-  <source src="thiencsm3.wav" type="audio/mpeg">
-</audio>
-
-:::
-
-:::col 50%
-{align:center}
- Um, cho một ly nước nướng.
-
-<audio controls style="width: 100%;">
-  <source src="thiencsm4.wav" type="audio/mpeg">
-</audio>
-
-:::
-
-:::
+* **Um, cho một ly nước nướng.**
+<audio controls src="thiencsm4.wav"></audio>
 
 ## 2. Chatterbox ( [[How I Wasted Millions]] )
-:::row
-:::col
-{align:center}
-**Synthesized (My Model)**
-<audio controls style="width: 100%;">
-  <source src="syn.wav" type="audio/mpeg">
-</audio>
-:::
 
-:::col
-{align:center}
-**Reference Audio (Emotion Replication)**
-<audio controls style="width: 100%;">
-  <source src="ref.wav" type="audio/mpeg">
-</audio>
-:::
+| Synthesized (My Model) | Reference Audio | Real Voice |
+| :--- | :--- | :--- |
+| <audio controls src="syn.wav"></audio> | <audio controls src="ref.wav"></audio> | <audio controls src="real.wav"></audio> |
 
-:::col
-{align:center}
-**Real Voice (Ground Truth)**
-<audio controls style="width: 100%;">
-  <source src="real.wav" type="audio/mpeg">
-</audio>
-:::
-:::
-{bg:gray}
-# 🔗Other links
+---
 
-:::row
-:::col
+# 🔗 Other links
 
-{bg:purple}
-{align:center}
-# [Github](https://github.com/thienphucope)
-:::
-:::col
+<div align="center">
 
-{bg:red}
-{align:center}
-# [YouTube](https://www.youtube.com/@opewatson)
-:::
-:::col
+[**Github**](https://github.com/thienphucope) | [**YouTube**](https://www.youtube.com/@opewatson) | [**Instagram**](https://www.instagram.com/opewatson/) | [**Portfolio**](https://opewatson.org)
 
-{bg:pink}
-{align:center}
-# [Instagram](https://www.instagram.com/opewatson/)
-:::
-
-:::col
-
-{bg:yellow}
-{align:center}
-# [Portfolio](https://opewatson.org)
-:::
-
-
-:::
-
+</div>
