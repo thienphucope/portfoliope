@@ -75,7 +75,6 @@ const configureMarked = () => {
     `;
   };
 
-  // 3. Image & YouTube Renderer
   renderer.image = (token) => {
     let { href, title, text } = token;
     let safeHref = href || '';
@@ -227,6 +226,8 @@ export default function UltimateRedVault() {
   const [fileTree, setFileTree] = useState([]);
   const [content, setContent] = useState('');
   const fileRegistry = useRef({});
+  const appShellRef = useRef(null);
+  const mainContentRef = useRef(null);
   
   // --- RESIZABLE LAYOUT STATE ---
   const [sidebarWidth, setSidebarWidth] = useState(250);
@@ -277,6 +278,10 @@ export default function UltimateRedVault() {
         newUrl.searchParams.set('file', name);
         window.history.pushState({ path, name }, '', newUrl);
       }
+      // On mobile, scroll back to main content after selecting file
+      if (window.innerWidth <= 768 && appShellRef.current) {
+        appShellRef.current.scrollTo({ left: window.innerWidth, behavior: 'smooth' });
+      }
     } catch (err) { setContent('# Error\nFailed to load.'); }
   };
 
@@ -303,6 +308,15 @@ export default function UltimateRedVault() {
     fetchTree();
   }, []);
 
+  // Initial scroll to middle on mobile
+  useEffect(() => {
+    if (window.innerWidth <= 768 && appShellRef.current) {
+      setTimeout(() => {
+        appShellRef.current.scrollTo({ left: window.innerWidth, behavior: 'instant' });
+      }, 100);
+    }
+  }, []);
+
   useEffect(() => {
     const handlePopState = (e) => { if (e.state && e.state.path) loadFile(e.state.path, e.state.name, false); };
     window.addEventListener('popstate', handlePopState);
@@ -310,7 +324,7 @@ export default function UltimateRedVault() {
   }, []);
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" ref={appShellRef}>
       {/* 1. LEFT: FILE TREE */}
       <aside className="sidebar-panel" style={{ width: sidebarWidth }}>
         <div className="sidebar-brand">RED VAULT</div>
@@ -325,7 +339,7 @@ export default function UltimateRedVault() {
       </div>
 
       {/* 2. CENTER: MARKDOWN VIEW */}
-      <main className="main-content">
+      <main className="main-content" ref={mainContentRef}>
         <article className="markdown-container">
           <MarkdownViewer content={content} onLinkClick={(e) => {
             const link = e.target.closest('.internal-link') || e.target.closest('a');
@@ -346,7 +360,7 @@ export default function UltimateRedVault() {
       {/* 3. RIGHT: CHAT POPUP (Embedded) */}
       <aside className="chat-panel" style={{ width: chatWidth }}>
         <div className="chat-container">
-          <Pop isEmbedded={true} /> {/* Thêm prop isEmbedded để pop.js biết cách render */}
+          <Pop isEmbedded={true} />
         </div>
       </aside>
 
@@ -368,7 +382,8 @@ export default function UltimateRedVault() {
           width: 100vw; 
           display: flex; 
           background: var(--bg);
-          overflow: hidden;
+          overflow-y: hidden;
+          overflow-x: hidden; /* Standard for Desktop */
         }
 
         /* PANELS */
@@ -406,7 +421,6 @@ export default function UltimateRedVault() {
         .markdown-content h3 { font-size: 1.4em; margin: 0.8em 0 0.3em; color: #fff; font-weight: 700; }
         .markdown-content p { margin-bottom: 1em; }
 
-        /* --- LINKS --- */
         .markdown-content a, .internal-link {
           color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent); padding-right: 14px; position: relative; cursor: pointer;
         }
@@ -414,7 +428,6 @@ export default function UltimateRedVault() {
           content: '↗'; position: absolute; right: 0; top: -2px; font-size: 0.75em; opacity: 0.7;
         }
 
-        /* --- TABLES (ULTRA MINIMAL) --- */
         .table-container { 
           width: 100%; max-width: 100%; overflow-x: auto; margin: 1.5em 0; display: block; 
           scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;
@@ -427,7 +440,6 @@ export default function UltimateRedVault() {
         thead { border-bottom: 1px solid var(--border); }
         th { color: #fff; font-weight: 700; }
 
-        /* --- UI ELEMENTS --- */
         .tree-item { display: flex; align-items: center; padding: 6px 8px; cursor: pointer; border-radius: 4px; transition: 0.2s; font-size: 14px; opacity: 0.7; font-family: 'Crimson Text', serif; }
         .tree-item:hover { background: rgba(255, 255, 255, 0.05); opacity: 1; color: var(--accent); }
         .arrow-wrapper { width: 18px; margin-right: 4px; display: flex; justify-content: center; }
@@ -445,6 +457,33 @@ export default function UltimateRedVault() {
         
         .img-circle { border-radius: 50%; aspect-ratio: 1/1; object-fit: cover; max-width: 200px; display: block; margin: 2em auto; }
         img { max-width: 100%; border-radius: 8px; margin: 1.5em 0; }
+        .video-container { position: relative; padding-bottom: 56.25%; height: 0; margin: 1.5em 0; }
+        .video-container iframe { position: absolute; top:0; left:0; width:100%; height:100%; border-radius: 8px; }
+
+        /* MOBILE OPTIMIZATION: HORIZONTAL SLIDE */
+        @media (max-width: 768px) {
+          .app-shell {
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            display: flex !important;
+            flex-wrap: nowrap !important;
+          }
+          .sidebar-panel, .main-content, .chat-panel {
+            width: 100vw !important;
+            min-width: 100vw !important;
+            flex-shrink: 0 !important;
+            scroll-snap-align: center;
+            position: relative !important;
+            height: 100vh !important;
+          }
+          .resizer { display: none !important; }
+          .main-content { padding: 30px 15px; }
+          .markdown-content { font-size: 17px; }
+          .markdown-content h1 { font-size: 2em; }
+        }
       `}</style>
     </div>
   );
