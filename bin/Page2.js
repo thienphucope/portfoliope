@@ -424,7 +424,7 @@ export default function UltimateRedVault() {
         .divider-line { display: none; }
 
         /* --- TYPOGRAPHY --- */
-        .markdown-content { font-family: 'Crimson Text', serif; font-size: 19px; line-height: 1.6; color: var(--txt); }
+        .markdown-content { font-family: 'Crimson Text', serif; font-size: clamp(18px, 0.8vw + 12px, 24px); line-height: 1.6; color: var(--txt); }
         .markdown-content h1 { font-size: 2.0em; margin: 0.8em 0 0.4em; color: #fff; font-weight: 700; }
         .markdown-content h2 { font-size: 1.6em; margin: 0.7em 0 0.3em; color: #fff; font-weight: 700; }
         .markdown-content h3 { font-size: 1.2em; margin: 0.6em 0 0.2em; color: #fff; font-weight: 700; }
