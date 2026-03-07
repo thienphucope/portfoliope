@@ -293,8 +293,16 @@ export default function UltimateRedVault() {
   useEffect(() => {
     const fetchTree = async () => {
       try {
+        console.log("📡 Fetching tree from /api/cases...");
         const res = await fetch('/api/cases');
         const tree = await res.json();
+        
+        if (!Array.isArray(tree)) {
+          console.error("❌ Expected tree to be an array, but got:", tree);
+          setContent(`# API Error\n${tree.error || 'Unknown error'}\n\nCheck terminal for details.`);
+          return;
+        }
+
         const buildRegistry = (nodes) => {
           nodes.forEach(node => {
             if (node.kind === 'file') {
@@ -308,7 +316,10 @@ export default function UltimateRedVault() {
         const DEFAULT = 'Dash Board.md';
         const path = fileRegistry.current[DEFAULT.toLowerCase()];
         if (path) loadFile(path, DEFAULT);
-      } catch (err) { console.error(err); }
+      } catch (err) { 
+        console.error("❌ Fetch tree failed:", err);
+        setContent('# Connection Error\nFailed to connect to API.');
+      }
     };
     fetchTree();
   }, []);
