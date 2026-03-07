@@ -235,6 +235,11 @@ export default function UltimateRedVault() {
   const isResizingSidebar = useRef(false);
   const isResizingChat = useRef(false);
 
+  const isMobileView = () => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth <= 1024 || window.matchMedia("(orientation: portrait)").matches;
+  };
+
   const startResizingSidebar = useCallback((e) => {
     isResizingSidebar.current = true;
     document.addEventListener('mousemove', handleMouseMove);
@@ -278,9 +283,9 @@ export default function UltimateRedVault() {
         newUrl.searchParams.set('file', name);
         window.history.pushState({ path, name }, '', newUrl);
       }
-      // On mobile, scroll back to main content after selecting file
-      if (window.innerWidth <= 768 && appShellRef.current) {
-        appShellRef.current.scrollTo({ left: window.innerWidth, behavior: 'smooth' });
+      // On mobile/tablet portrait, scroll back to main content after selecting file
+      if (isMobileView() && appShellRef.current) {
+        appShellRef.current.scrollTo({ left: appShellRef.current.clientWidth, behavior: 'smooth' });
       }
     } catch (err) { setContent('# Error\nFailed to load.'); }
   };
@@ -308,13 +313,17 @@ export default function UltimateRedVault() {
     fetchTree();
   }, []);
 
-  // Initial scroll to middle on mobile
+  // Initial scroll to middle on mobile/tablet portrait
   useEffect(() => {
-    if (window.innerWidth <= 768 && appShellRef.current) {
-      setTimeout(() => {
-        appShellRef.current.scrollTo({ left: window.innerWidth, behavior: 'instant' });
-      }, 100);
-    }
+    const centerView = () => {
+      if (isMobileView() && appShellRef.current) {
+        appShellRef.current.scrollTo({ left: appShellRef.current.clientWidth, behavior: 'instant' });
+      }
+    };
+    
+    centerView();
+    window.addEventListener('resize', centerView);
+    return () => window.removeEventListener('resize', centerView);
   }, []);
 
   useEffect(() => {
@@ -383,7 +392,7 @@ export default function UltimateRedVault() {
           display: flex; 
           background: var(--bg);
           overflow-y: hidden;
-          overflow-x: hidden; /* Standard for Desktop */
+          overflow-x: hidden;
         }
 
         /* PANELS */
@@ -428,6 +437,7 @@ export default function UltimateRedVault() {
           content: '↗'; position: absolute; right: 0; top: -2px; font-size: 0.75em; opacity: 0.7;
         }
 
+        /* --- TABLES (ULTRA MINIMAL) --- */
         .table-container { 
           width: 100%; max-width: 100%; overflow-x: auto; margin: 1.5em 0; display: block; 
           scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.03) transparent;
@@ -440,6 +450,7 @@ export default function UltimateRedVault() {
         thead { border-bottom: 1px solid var(--border); }
         th { color: #fff; font-weight: 700; }
 
+        /* --- UI ELEMENTS --- */
         .tree-item { display: flex; align-items: center; padding: 6px 8px; cursor: pointer; border-radius: 4px; transition: 0.2s; font-size: 14px; opacity: 0.7; font-family: 'Crimson Text', serif; }
         .tree-item:hover { background: rgba(255, 255, 255, 0.05); opacity: 1; color: var(--accent); }
         .arrow-wrapper { width: 18px; margin-right: 4px; display: flex; justify-content: center; }
@@ -460,8 +471,8 @@ export default function UltimateRedVault() {
         .video-container { position: relative; padding-bottom: 56.25%; height: 0; margin: 1.5em 0; }
         .video-container iframe { position: absolute; top:0; left:0; width:100%; height:100%; border-radius: 8px; }
 
-        /* MOBILE OPTIMIZATION: HORIZONTAL SLIDE */
-        @media (max-width: 768px) {
+        /* MOBILE & TABLET PORTRAIT OPTIMIZATION */
+        @media (max-width: 1024px), (orientation: portrait) {
           .app-shell {
             overflow-x: auto !important;
             overflow-y: hidden !important;

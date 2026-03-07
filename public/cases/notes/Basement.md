@@ -67,4 +67,3 @@ no child is harmed here—trust me
 
 # ☕Others
 
-![](https://www.youtube.com/watch?v=4tDYMayp6Dk&pp=ygUNd2VkZGluZyBtYXJjaA%3D%3D)

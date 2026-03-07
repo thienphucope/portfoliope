@@ -163,7 +163,7 @@ export default function Pop({ isEmbedded = false }) {
   };
 
   if (!isOpen && !isEmbedded) return (
-    <button onClick={() => setIsOpen(true)} className="fixed top-3 right-2 w-12 h-12 rounded-full z-50 hover:scale-110 transition-all">
+    <button onClick={() => setIsOpen(true)} className="fixed top-0 right-0 w-12 h-12 rounded-full z-50 hover:scale-110 transition-all">
       <img src="/printer.png" className="w-full h-full rounded-full opacity-80" />
     </button>
   );
