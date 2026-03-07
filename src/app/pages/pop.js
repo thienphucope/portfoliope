@@ -193,8 +193,8 @@ export default function Pop({ isEmbedded = false }) {
 
       {/* Status */}
       <div className="px-5 py-2 flex justify-end space-x-4 opacity-30">
-        {ragReady ? <MagnifyingGlassIcon className="w-3 h-3" /> : <ArrowPathIcon className="w-3 h-3 animate-spin" />}
-        {ttsReady ? <SpeakerWaveIcon className={`w-3 h-3 ${isPlayingAudio ? 'animate-pulse' : ''}`} /> : <ArrowPathIcon className="w-3 h-3 animate-spin" />}
+        {ragReady ? <MagnifyingGlassIcon className="w-4 h-4" /> : <ArrowPathIcon className="w-4 h-4 animate-spin" />}
+        {ttsReady ? <SpeakerWaveIcon className={`w-4 h-4 ${isPlayingAudio ? 'animate-pulse' : ''}`} /> : <ArrowPathIcon className="w-4 h-4 animate-spin" />}
       </div>
 
       {/* Input */}

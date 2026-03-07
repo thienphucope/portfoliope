@@ -378,7 +378,7 @@ export default function UltimateRedVault() {
         body { margin: 0; background: var(--bg); color: var(--txt); font-family: 'Inter', sans-serif; overflow: hidden; }
         
         .app-shell { 
-          height: 100vh; 
+          height: 100dvh; 
           width: 100vw; 
           display: flex; 
           background: var(--bg);
@@ -387,7 +387,7 @@ export default function UltimateRedVault() {
         }
 
         /* PANELS */
-        .sidebar-panel { height: 100vh; background: var(--bg); display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar-panel { height: 100dvh; background: var(--bg); display: flex; flex-direction: column; flex-shrink: 0; }
         .sidebar-brand { padding: 20px; font-weight: 600; letter-spacing: 2px; border-bottom: 1px solid var(--border); font-family: 'Inter', sans-serif; }
         .file-list { flex: 1; overflow-y: auto; padding: 10px; scrollbar-width: none; }
         .file-list::-webkit-scrollbar { display: none; }
@@ -396,7 +396,7 @@ export default function UltimateRedVault() {
         .main-content::-webkit-scrollbar { display: none; }
         .markdown-container { max-width: 1000px; width: 100%; box-sizing: border-box; }
 
-        .chat-panel { height: 100vh; background: var(--bg); flex-shrink: 0; border-left: 1px solid var(--border); overflow: hidden; }
+        .chat-panel { height: 100dvh; background: var(--bg); flex-shrink: 0; border-left: 1px solid var(--border); overflow: hidden; }
         .chat-container { height: 100%; width: 100%; position: relative; }
 
         /* RESIZER */
@@ -416,9 +416,9 @@ export default function UltimateRedVault() {
 
         /* --- TYPOGRAPHY --- */
         .markdown-content { font-family: 'Crimson Text', serif; font-size: 19px; line-height: 1.6; color: var(--txt); }
-        .markdown-content h1 { font-size: 2.2em; margin: 1em 0 0.5em; color: #fff; font-weight: 700; }
-        .markdown-content h2 { font-size: 1.7em; margin: 0.9em 0 0.4em; color: #fff; font-weight: 700; }
-        .markdown-content h3 { font-size: 1.3em; margin: 0.8em 0 0.3em; color: #fff; font-weight: 700; }
+        .markdown-content h1 { font-size: 2.0em; margin: 0.8em 0 0.4em; color: #fff; font-weight: 700; }
+        .markdown-content h2 { font-size: 1.6em; margin: 0.7em 0 0.3em; color: #fff; font-weight: 700; }
+        .markdown-content h3 { font-size: 1.2em; margin: 0.6em 0 0.2em; color: #fff; font-weight: 700; }
         .markdown-content p { margin-bottom: 1em; }
 
         .markdown-content a, .internal-link {
@@ -430,10 +430,10 @@ export default function UltimateRedVault() {
 
         .table-container { 
           width: 100%; max-width: 100%; overflow-x: auto; margin: 1.5em 0; display: block; 
-          scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;
+          scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.03) transparent;
         }
-        .table-container::-webkit-scrollbar { height: 2px; }
-        .table-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        .table-container::-webkit-scrollbar { height: 1px; }
+        .table-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.03); border-radius: 10px; }
         
         table { width: 100%; border-collapse: collapse; table-layout: auto; }
         th, td { padding: 10px 14px; border: none; text-align: left; white-space: nowrap; }
@@ -477,7 +477,7 @@ export default function UltimateRedVault() {
             flex-shrink: 0 !important;
             scroll-snap-align: center;
             position: relative !important;
-            height: 100vh !important;
+            height: 100dvh !important;
           }
           .resizer { display: none !important; }
           .main-content { padding: 30px 15px; }
