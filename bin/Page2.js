@@ -423,8 +423,8 @@ export default function UltimateRedVault() {
         .resizer:hover { background: var(--accent); width: 6px; }
         .divider-line { display: none; }
 
-        /* --- TYPOGRAPHY --- */
-        .markdown-content { font-family: 'Crimson Text', serif; font-size: clamp(18px, 0.8vw + 12px, 24px); line-height: 1.6; color: var(--txt); }
+        /* --- TYPOGRAPHY (PC DEFAULT) --- */
+        .markdown-content { font-family: 'Crimson Text', serif; font-size: 19px; line-height: 1.6; color: var(--txt); }
         .markdown-content h1 { font-size: 2.0em; margin: 0.8em 0 0.4em; color: #fff; font-weight: 700; }
         .markdown-content h2 { font-size: 1.6em; margin: 0.7em 0 0.3em; color: #fff; font-weight: 700; }
         .markdown-content h3 { font-size: 1.2em; margin: 0.6em 0 0.2em; color: #fff; font-weight: 700; }
@@ -437,7 +437,7 @@ export default function UltimateRedVault() {
           content: '↗'; position: absolute; right: 0; top: -2px; font-size: 0.75em; opacity: 0.7;
         }
 
-        /* --- TABLES (ULTRA MINIMAL) --- */
+        /* --- TABLES --- */
         .table-container { 
           width: 100%; max-width: 100%; overflow-x: auto; margin: 1.5em 0; display: block; 
           scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.03) transparent;
@@ -471,7 +471,7 @@ export default function UltimateRedVault() {
         .video-container { position: relative; padding-bottom: 56.25%; height: 0; margin: 1.5em 0; }
         .video-container iframe { position: absolute; top:0; left:0; width:100%; height:100%; border-radius: 8px; }
 
-        /* MOBILE & TABLET PORTRAIT OPTIMIZATION */
+        /* MOBILE & TABLET PORTRAIT (Responsive Sizing) */
         @media (max-width: 1024px), (orientation: portrait) {
           .app-shell {
             overflow-x: auto !important;
@@ -492,10 +492,13 @@ export default function UltimateRedVault() {
           }
           .resizer { display: none !important; }
           .main-content { padding: 30px 15px; }
-          .markdown-content { font-size: 17px; }
+          
+          /* TABLET SMART SIZING: Use clamp only for mid-range devices */
+          .markdown-content { font-size: clamp(17px, 1.5vw + 10px, 22px); }
           .markdown-content h1 { font-size: 1.8em; margin: 0.8em 0 0.4em; }
           .markdown-content h2 { font-size: 1.5em; margin: 0.7em 0 0.3em; }
           .markdown-content h3 { font-size: 1.2em; margin: 0.6em 0 0.2em; }
+          .tree-item { font-size: clamp(13px, 1vw + 10px, 16px); }
         }
       `}</style>
     </div>
