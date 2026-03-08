@@ -556,12 +556,11 @@ const ActiveBlock = ({ block, onSave, onDeactivate, onCreateAfter, onNavigate, c
 
 // ─── BLOCK EDITOR ─────────────────────────────────────────────────────────────
 
-const BlockEditor = ({ content, fileName, onLinkClick }) => {
+const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile }) => {
   const [blocks, setBlocks]           = useState([]);
   const [activeBlockIndex, setActive] = useState(null);
   const [isEditing, setIsEditing]     = useState(false);
   const [libsReady, setLibsReady]     = useState(false);
-
   useEffect(() => { ensureLibsLoaded().then(() => setLibsReady(true)); }, []);
 
   useEffect(() => {
@@ -577,11 +576,10 @@ const BlockEditor = ({ content, fileName, onLinkClick }) => {
       return;
     }
 
-    const tokens    = window.marked.lexer(content || '');
+    const tokens = window.marked.lexer(content || '');
     const newBlocks = tokens
       .filter(t => t.type !== 'space')
       .map(t => mkBlock(t.raw.trimEnd(), t.type));
-
     setBlocks(newBlocks.length > 0 ? newBlocks : [mkBlock('', 'paragraph')]);
   }, [content, fileName, libsReady]);
 
@@ -630,6 +628,21 @@ const BlockEditor = ({ content, fileName, onLinkClick }) => {
     }
   }, [blocks.length]);
 
+  const [saveStatus, setSaveStatus] = useState('idle');
+
+  const handleSave = useCallback(async () => {
+    const raw = blocks.map(b => b.raw).join('\n\n');
+    setSaveStatus('saving');
+    try {
+      await onSaveFile(raw);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch {
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    }
+  }, [blocks, onSaveFile]);
+
   const toggleEditing = useCallback(() => {
     setIsEditing(e => !e);
     setActive(null);
@@ -639,9 +652,18 @@ const BlockEditor = ({ content, fileName, onLinkClick }) => {
 
   return (
     <div className="block-editor">
-      <button className="mode-toggle-btn" onClick={toggleEditing}>
-        {isEditing ? '👁 Read' : '✏ Edit'}
-      </button>
+      <div className="toolbar">
+        <button className="mode-toggle-btn" onClick={toggleEditing}>
+          {isEditing ? '👁 Read' : '✏ Edit'}
+        </button>
+        <button
+          className={`save-btn save-btn--${saveStatus}`}
+          onClick={handleSave}
+          disabled={saveStatus === 'saving'}
+        >
+          {saveStatus === 'saving' ? '⏳' : saveStatus === 'saved' ? '✓ Saved' : saveStatus === 'error' ? '✗ Error' : '💾 Save'}
+        </button>
+      </div>
 
       {blocks.map((block, index) => {
         const isActive = activeBlockIndex === index && isEditing;
@@ -674,12 +696,13 @@ const BlockEditor = ({ content, fileName, onLinkClick }) => {
 
 // ─── FILE SYSTEM ITEM ─────────────────────────────────────────────────────────
 
-const FileSystemItem = ({ item, level = 0, onSelectFile }) => {
+const FileSystemItem = ({ item, level = 0, onSelectFile, activeFile }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const isActive = item.kind === 'file' && item.name.toLowerCase() === activeFile?.toLowerCase();
   return (
     <div className="select-none">
       <div
-        className={`tree-item ${item.kind === 'file' ? 'is-file' : 'is-folder'}`}
+        className={`tree-item ${item.kind === 'file' ? 'is-file' : 'is-folder'}${isActive ? ' is-active' : ''}${item.isLocal ? ' is-local' : ''}`}
         style={{ paddingLeft: `${level * 12}px` }}
         onClick={(e) => {
           e.stopPropagation();
@@ -693,9 +716,10 @@ const FileSystemItem = ({ item, level = 0, onSelectFile }) => {
             : <span className="spacer" />}
         </span>
         <span className="item-name">{item.name.replace('.md', '')}</span>
+        {item.isLocal && <span className="local-badge">●</span>}
       </div>
       {item.kind === 'directory' && isOpen && item.children?.map((child, i) => (
-        <FileSystemItem key={i} item={child} level={level + 1} onSelectFile={onSelectFile} />
+        <FileSystemItem key={i} item={child} level={level + 1} onSelectFile={onSelectFile} activeFile={activeFile} />
       ))}
     </div>
   );
@@ -707,6 +731,7 @@ export default function UltimateRedVault() {
   const [fileTree,    setFileTree]    = useState([]);
   const [content,     setContent]     = useState('');
   const [fileName,    setFileName]    = useState('');
+  const [contentKey,  setContentKey]  = useState(0);  // bumped on every file open to force BlockEditor reset
   const fileRegistry  = useRef({});
   const appShellRef   = useRef(null);
 
@@ -745,12 +770,27 @@ export default function UltimateRedVault() {
     document.body.style.cursor = 'col-resize';
   }, [handleMouseMove, stopResizing]);
 
-  const loadFile = useCallback(async (path, name, updateHistory = true) => {
+  const loadFile = useCallback(async (path, name, serverPath = null, updateHistory = true) => {
+    // Local-only file (not saved to server yet) — restore from cache
+    if (!path) {
+      const key = serverPath || name;
+      const cached = readCache(key);
+      const raw = Array.isArray(cached) && cached.length > 0
+        ? cached.map(b => b.raw).join('\n\n')
+        : `# ${name.replace('.md', '')}\n`;
+      setContent(raw);
+      setFileName(key);
+      setContentKey(k => k + 1);
+      if (isMobileView() && appShellRef.current)
+        appShellRef.current.scrollTo({ left: appShellRef.current.clientWidth, behavior: 'smooth' });
+      return;
+    }
     try {
       const res  = await fetch(path);
       const text = await res.text();
       setContent(text);
       setFileName(name);
+      setContentKey(k => k + 1);
       if (updateHistory) {
         const u = new URL(window.location);
         u.searchParams.set('file', name);
@@ -793,13 +833,136 @@ export default function UltimateRedVault() {
     return () => window.removeEventListener('popstate', onPop);
   }, [loadFile]);
 
+  // Before unload: check if localStorage cache differs from last known server content.
+  // If so, show native browser confirm. If user chooses to leave → flush cache so
+  // next load gets clean server content. If user cancels → stay on page, nothing changes.
+  useEffect(() => {
+    const onBeforeUnload = (e) => {
+      // Collect all vault cache keys
+      const dirtyKeys = [];
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('vault_v3::')) dirtyKeys.push(k);
+        }
+      } catch {}
+      if (dirtyKeys.length === 0) return;
+
+      // Show native browser dialog — "changes may not be saved"
+      e.preventDefault();
+      e.returnValue = '';   // required for Chrome to show dialog
+
+      // When user confirms leaving, flush all vault caches
+      // (returnValue trick: we can't know their choice synchronously,
+      //  so we use a tiny setTimeout — if page unloads the flush runs
+      //  just before; if they cancel it's a no-op since page stays)
+      const flush = () => {
+        dirtyKeys.forEach(k => { try { localStorage.removeItem(k); } catch {} });
+      };
+      // schedule flush — fires if page actually unloads
+      window.addEventListener('unload', flush, { once: true });
+    };
+
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, []);
+
+  // Re-fetch tree and rebuild registry
+  const refreshTree = useCallback(async () => {
+    const tree = await fetch('/api/cases').then(r => r.json());
+    if (!Array.isArray(tree)) return;
+    const buildReg = (nodes) => nodes.forEach(n => {
+      if (n.kind === 'file') {
+        fileRegistry.current[n.name.toLowerCase()] = n.path;
+        fileRegistry.current[n.name.replace('.md','').toLowerCase()] = n.path;
+      } else if (n.children) buildReg(n.children);
+    });
+    buildReg(tree);
+    setFileTree(tree);
+  }, []);
+
+  // Create file locally in memory and open it — no server call until Save
+  // target examples: "MyNote" → cases/notes/MyNote.md
+  //                  "folder/MyNote" → cases/folder/MyNote.md
+  //                  "cases/x/MyNote" → cases/x/MyNote.md (used as-is if starts with cases/)
+  // Resolve [[target]] to a server path:
+  //   [[note]]          → notes/note.md      (default folder)
+  //   [[folder/note]]   → folder/note.md     (explicit path)
+  const resolveWikiPath = (target) => {
+    const withExt = target.endsWith('.md') ? target : `${target}.md`;
+    return withExt.includes('/') ? withExt : `notes/${withExt}`;
+  };
+
+  const createAndOpenFile = useCallback((target) => {
+    const serverPath  = resolveWikiPath(target);              // e.g. "notes/MyNote.md"
+    const displayName = serverPath.split('/').pop();          // "MyNote.md"
+    const title       = displayName.replace('.md', '');
+
+    // Register with null = local only
+    fileRegistry.current[serverPath.toLowerCase()] = null;
+    fileRegistry.current[displayName.toLowerCase()] = null;
+    fileRegistry.current[target.toLowerCase()] = null;
+
+    // Insert into tree, creating folder nodes as needed
+    const parts = serverPath.split('/');
+    setFileTree(prev => {
+      const insert = (nodes, [head, ...rest]) => {
+        if (rest.length === 0) {
+          if (nodes.some(n => n.name.toLowerCase() === head.toLowerCase())) return nodes;
+          return [...nodes, { kind: 'file', name: head, path: null, isLocal: true }];
+        }
+        const folder = nodes.find(n => n.kind === 'directory' && n.name.toLowerCase() === head.toLowerCase());
+        if (folder) return nodes.map(n => n === folder ? { ...n, children: insert(n.children || [], rest) } : n);
+        return [...nodes, { kind: 'directory', name: head, isOpen: true, children: insert([], rest) }];
+      };
+      return insert(prev, parts);
+    });
+
+    // Clear any stale cache so BlockEditor starts fresh
+    try { localStorage.removeItem(`vault_v3::${serverPath}`); } catch {}
+    setContent(`# ${title}\n`);
+    setFileName(serverPath);
+    setContentKey(k => k + 1);
+  }, []);
+
   const handleLinkClick = useCallback((e) => {
     const link = e.target.closest('.internal-link') || e.target.closest('a');
     if (!link) return;
-    const name = link.getAttribute('data-target') || link.innerText;
-    const path = fileRegistry.current[name.toLowerCase()];
-    if (path) { e.preventDefault(); loadFile(path, name); }
-  }, [loadFile]);
+    const target = link.getAttribute('data-target') || link.innerText;
+    const serverPath = resolveWikiPath(target);
+    const key        = serverPath.toLowerCase();
+    const baseName   = serverPath.split('/').pop().toLowerCase();
+
+    // Check registry: string value = real path, null = local-only, undefined = not found
+    const realPath = fileRegistry.current[key] ?? fileRegistry.current[baseName];
+
+    e.preventDefault();
+    if (typeof realPath === 'string') {
+      loadFile(realPath, serverPath.split('/').pop());
+    } else if (realPath === null) {
+      // already open/created locally — just set fileName to navigate back
+      setFileName(serverPath);
+    } else {
+      createAndOpenFile(target);
+    }
+  }, [loadFile, createAndOpenFile]);
+
+  // Save current file — create:true if file only exists locally (new [[wikilink]] file)
+  const handleSaveFile = useCallback(async (raw) => {
+    if (!fileName) throw new Error('No file open');
+    // If registry has null for this file it means it was created locally and not yet on server
+    const isNew = fileRegistry.current[fileName.toLowerCase()] === null;
+    const res = await fetch('/api/cases', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: fileName, content: raw, create: isNew }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    // After first successful save, refresh tree — replaces local-only entry with real server path
+    if (isNew) {
+      await refreshTree();
+    }
+  }, [fileName, refreshTree]);
 
   return (
     <div className="app-shell" ref={appShellRef}>
@@ -808,7 +971,7 @@ export default function UltimateRedVault() {
       <aside className="sidebar-panel" style={{ width: sidebarWidth }}>
         <div className="sidebar-brand">RED VAULT</div>
         <div className="file-list">
-          {fileTree.map((item, i) => <FileSystemItem key={i} item={item} onSelectFile={loadFile} />)}
+          {fileTree.map((item, i) => <FileSystemItem key={i} item={item} onSelectFile={loadFile} activeFile={fileName} />)}
         </div>
       </aside>
 
@@ -817,7 +980,7 @@ export default function UltimateRedVault() {
       {/* CENTER: BLOCK EDITOR */}
       <main className="main-content">
         <article className="markdown-container">
-          <BlockEditor content={content} fileName={fileName} onLinkClick={handleLinkClick} />
+          <BlockEditor key={contentKey} content={content} fileName={fileName} onLinkClick={handleLinkClick} onSaveFile={handleSaveFile} />
         </article>
       </main>
 
@@ -970,15 +1133,45 @@ export default function UltimateRedVault() {
 
         .status-msg { opacity:.4; font-family:'Inter',sans-serif; font-size:13px; padding:20px 0; }
 
-        /* Mode toggle */
-        .mode-toggle-btn {
+        /* Unsaved cache prompt banner */
+        .unsaved-prompt {
+          display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+          background: rgba(255,250,205,0.06);
+          border: 1px solid rgba(255,250,205,0.25);
+          border-radius: 8px;
+          padding: 10px 14px;
+          margin-bottom: 16px;
+          font-family: 'Inter', sans-serif;
+          font-size: 13px;
+        }
+        .unsaved-prompt__msg { flex: 1; color: var(--accent); opacity: 0.9; min-width: 200px; }
+        .unsaved-prompt__actions { display: flex; gap: 8px; }
+        .unsaved-prompt__btn {
+          border-radius: 16px; padding: 4px 12px; font-size: 12px;
+          font-family: 'Inter', sans-serif; cursor: pointer;
+          border: 1px solid var(--border); background: rgba(255,255,255,0.06);
+          color: var(--txt); transition: background .15s;
+        }
+        .unsaved-prompt__btn:hover { background: rgba(255,255,255,0.12); }
+        .unsaved-prompt__btn--save  { border-color: rgba(100,220,100,0.4); color: #7dda7d; }
+        .unsaved-prompt__btn--discard { border-color: rgba(220,80,80,0.35); color: #e07070; }
+
+        /* Toolbar */
+        .toolbar {
           position: sticky; top: 8px; float: right; z-index: 100;
+          display: flex; gap: 6px; align-items: center;
+        }
+        .mode-toggle-btn, .save-btn {
           background: rgba(255,255,255,0.07); border: 1px solid var(--border);
           border-radius: 20px; padding: 4px 12px; font-size: 12px;
           font-family: 'Inter', sans-serif; color: var(--txt);
-          cursor: pointer; user-select: none; transition: background .15s;
+          cursor: pointer; user-select: none; transition: background .15s, border-color .15s;
         }
         .mode-toggle-btn:hover { background: rgba(255,255,255,0.12); }
+        .save-btn--idle:hover  { background: rgba(255,255,255,0.12); }
+        .save-btn--saving      { opacity: 0.6; cursor: default; }
+        .save-btn--saved       { border-color: rgba(100,220,100,0.5); color: #7dda7d; }
+        .save-btn--error       { border-color: rgba(220,80,80,0.5);  color: #e07070; }
 
         /* ── MARKDOWN TYPOGRAPHY ────────────────────────────────────────────── */
         .markdown-content { font-family:var(--md-font); font-size:var(--md-size); line-height:var(--md-line); color:var(--txt); }
@@ -1034,6 +1227,9 @@ export default function UltimateRedVault() {
 
         .tree-item { display:flex; align-items:center; padding:6px 8px; cursor:pointer; border-radius:4px; transition:.2s; font-size:14px; opacity:.7; font-family:'Crimson Text',serif; }
         .tree-item:hover { background:rgba(255,255,255,.05); opacity:1; color:var(--accent); }
+        .tree-item.is-active { background:rgba(255,250,205,0.08); opacity:1; color:var(--accent); border-left:2px solid var(--accent); padding-left:6px; }
+        .tree-item.is-local { opacity:0.85; font-style:italic; }
+        .local-badge { margin-left:auto; font-size:8px; color:var(--accent); opacity:0.7; flex-shrink:0; }
         .arrow-wrapper { width:18px; margin-right:4px; display:flex; justify-content:center; }
         .spacer { width:18px; }
 
