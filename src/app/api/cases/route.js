@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  const backendUrl = process.env.BACKEND_URL || 'https://rag-backend-zh2e.onrender.com';
+  const backendUrl = process.env.BACKEND_URL || 'http://127.0.0.1:5000';
   
   console.log(`📡 [API Route] Fetching from backend: ${backendUrl}/cases`);
 

@@ -51,12 +51,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "notes/Basement.md",
+                "file": "notes/Bombshell.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Basement"
+              "title": "Bombshell"
             }
           }
         ],
@@ -133,7 +133,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "notes/Basement.md",
+                "file": "notes/Bombshell.md",
                 "collapseAll": true,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -143,7 +143,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for Basement"
+              "title": "Backlinks for Bombshell"
             }
           },
           {
@@ -222,17 +222,18 @@
       "table-editor-obsidian:Advanced Tables Toolbar": false
     }
   },
-  "active": "bfc1511eff68090d",
+  "active": "25cba76f086ee472",
   "lastOpenFiles": [
+    "notes/VA Collection.md",
+    "Dash Board.md",
     "notes/Christmas Album.md",
+    "notes/Mad Gab.md",
+    "notes/Basement.md",
     "notes/feature2.md",
     "notes/Why Do Old-Fashioned Things Disappear.md",
     "notes/World Model V-JEPA 2.md",
-    "Dash Board.md",
-    "notes/VA Collection.md",
     "notes/Where Are People.md",
     "notes/Baalbuddy.md",
-    "notes/Basement.md",
     "notes/PersonaPlex.md",
     "notes/Transformers.md",
     "notes/Diffusion.md",
@@ -244,7 +245,6 @@
     "notes/Csm-1B Arch.md",
     "notes/Internet Diary.md",
     "notes/Emotional Analysis Vol 1.md",
-    "notes/Mad Gab.md",
     "notes/Sexist Philosopher.md",
     "Sesame",
     "notes/ꉂ(˵˃ ᗜ ˂˵).md",
