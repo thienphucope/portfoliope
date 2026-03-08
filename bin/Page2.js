@@ -1273,7 +1273,7 @@ export default function UltimateRedVault() {
 
         /* Toolbar */
         .toolbar {
-          position: sticky; top: 8px; float: left; z-index: 100;
+          position: sticky; top: 8px; float: right; z-index: 100;
           display: flex; gap: 6px; align-items: center;
         }
         .mode-toggle-btn, .save-btn {
