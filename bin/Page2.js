@@ -556,10 +556,9 @@ const ActiveBlock = ({ block, onSave, onDeactivate, onCreateAfter, onNavigate, c
 
 // ─── BLOCK EDITOR ─────────────────────────────────────────────────────────────
 
-const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile }) => {
+const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, onToggleEditing }) => {
   const [blocks, setBlocks]           = useState([]);
   const [activeBlockIndex, setActive] = useState(null);
-  const [isEditing, setIsEditing]     = useState(false);
   const [libsReady, setLibsReady]     = useState(false);
   useEffect(() => { ensureLibsLoaded().then(() => setLibsReady(true)); }, []);
 
@@ -643,17 +642,14 @@ const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile }) => {
     }
   }, [blocks, onSaveFile]);
 
-  const toggleEditing = useCallback(() => {
-    setIsEditing(e => !e);
-    setActive(null);
-  }, []);
+  // isEditing and toggle come from parent vault
 
   if (!libsReady) return <div className="status-msg">Booting Vault Engine…</div>;
 
   return (
     <div className="block-editor">
       <div className="toolbar">
-        <button className="mode-toggle-btn" onClick={toggleEditing}>
+        <button className="mode-toggle-btn" onClick={onToggleEditing}>
           {isEditing ? '👁 Read' : '✏ Edit'}
         </button>
         <button
@@ -731,9 +727,13 @@ export default function UltimateRedVault() {
   const [fileTree,    setFileTree]    = useState([]);
   const [content,     setContent]     = useState('');
   const [fileName,    setFileName]    = useState('');
-  const [contentKey,  setContentKey]  = useState(0);  // bumped on every file open to force BlockEditor reset
-  const fileRegistry  = useRef({});
-  const appShellRef   = useRef(null);
+  const [contentKey,  setContentKey]  = useState(0);
+  const [isEditing,   setIsEditing]   = useState(false); // sticky across file switches
+  const [editPass,    setEditPass]    = useState(() => { try { return sessionStorage.getItem('vault_edit_pass') || ''; } catch { return ''; } });
+  const [passPrompt,  setPassPrompt]  = useState(null);
+  const fileRegistry   = useRef({});
+  const serverRawCache = useRef({}); // stores last-known server content per filePath
+  const appShellRef    = useRef(null);
 
   const [sidebarWidth, setSidebarWidth] = useState(250);
   const [chatWidth,    setChatWidth]    = useState(350);
@@ -788,13 +788,19 @@ export default function UltimateRedVault() {
     try {
       const res  = await fetch(path);
       const text = await res.text();
+      // repoKey = full repo-relative path e.g. "notes/MyNote.md"
+      // path is raw.githubusercontent.com URL: /owner/repo/branch/...
+      // Split after branch segment (index 4 = branch after owner/repo)
+      const urlParts = new URL(path).pathname.split('/').slice(1); // ['owner','repo','branch','rest','...']
+      const repoKey = urlParts.slice(3).join('/'); // everything after owner/repo/branch
+      serverRawCache.current[repoKey] = text;
       setContent(text);
-      setFileName(name);
+      setFileName(repoKey);   // ← full path like "notes/file.md"
       setContentKey(k => k + 1);
       if (updateHistory) {
         const u = new URL(window.location);
-        u.searchParams.set('file', name);
-        window.history.pushState({ path, name }, '', u);
+        u.searchParams.set('file', repoKey);
+        window.history.pushState({ path, name: repoKey }, '', u);
       }
       if (isMobileView() && appShellRef.current)
         appShellRef.current.scrollTo({ left: appShellRef.current.clientWidth, behavior: 'smooth' });
@@ -806,11 +812,16 @@ export default function UltimateRedVault() {
       try {
         const tree = await fetch('/api/cases').then(r => r.json());
         if (!Array.isArray(tree)) { setContent(`# API Error\n${tree.error || 'Unknown'}`); return; }
-        const buildRegistry = (nodes) => nodes.forEach(n => {
+        const buildRegistry = (nodes, repoPath = '') => nodes.forEach(n => {
           if (n.kind === 'file') {
+            const fullRepoPath = repoPath ? `${repoPath}/${n.name}` : n.name;
+            // index by: full repo path, basename, basename without .md
+            fileRegistry.current[fullRepoPath.toLowerCase()] = n.path;
             fileRegistry.current[n.name.toLowerCase()] = n.path;
             fileRegistry.current[n.name.replace('.md', '').toLowerCase()] = n.path;
-          } else if (n.children) buildRegistry(n.children);
+          } else if (n.children) {
+            buildRegistry(n.children, repoPath ? `${repoPath}/${n.name}` : n.name);
+          }
         });
         buildRegistry(tree);
         setFileTree(tree);
@@ -838,28 +849,30 @@ export default function UltimateRedVault() {
   // next load gets clean server content. If user cancels → stay on page, nothing changes.
   useEffect(() => {
     const onBeforeUnload = (e) => {
-      // Collect all vault cache keys
+      // Only warn if any cached file actually differs from server content
       const dirtyKeys = [];
       try {
         for (let i = 0; i < localStorage.length; i++) {
           const k = localStorage.key(i);
-          if (k && k.startsWith('vault_v3::')) dirtyKeys.push(k);
+          if (!k || !k.startsWith('vault_v3::')) continue;
+          const fp = k.replace('vault_v3::', '');
+          const cached = (() => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } })();
+          if (!Array.isArray(cached) || cached.length === 0) continue;
+          const cachedRaw = cached.map(b => b.raw).join('\n\n');
+          const serverRaw = serverRawCache.current[fp] ?? null;
+          // null = file never loaded from server (new local file) — always dirty
+          if (serverRaw === null || serverRaw.trim() !== cachedRaw.trim()) {
+            dirtyKeys.push(k);
+          }
         }
       } catch {}
-      if (dirtyKeys.length === 0) return;
+      if (dirtyKeys.length === 0) return; // nothing dirty — allow reload silently
 
-      // Show native browser dialog — "changes may not be saved"
       e.preventDefault();
-      e.returnValue = '';   // required for Chrome to show dialog
-
-      // When user confirms leaving, flush all vault caches
-      // (returnValue trick: we can't know their choice synchronously,
-      //  so we use a tiny setTimeout — if page unloads the flush runs
-      //  just before; if they cancel it's a no-op since page stays)
+      e.returnValue = '';
       const flush = () => {
         dirtyKeys.forEach(k => { try { localStorage.removeItem(k); } catch {} });
       };
-      // schedule flush — fires if page actually unloads
       window.addEventListener('unload', flush, { once: true });
     };
 
@@ -871,11 +884,15 @@ export default function UltimateRedVault() {
   const refreshTree = useCallback(async () => {
     const tree = await fetch('/api/cases').then(r => r.json());
     if (!Array.isArray(tree)) return;
-    const buildReg = (nodes) => nodes.forEach(n => {
+    const buildReg = (nodes, repoPath = '') => nodes.forEach(n => {
       if (n.kind === 'file') {
+        const fullRepoPath = repoPath ? `${repoPath}/${n.name}` : n.name;
+        fileRegistry.current[fullRepoPath.toLowerCase()] = n.path;
         fileRegistry.current[n.name.toLowerCase()] = n.path;
         fileRegistry.current[n.name.replace('.md','').toLowerCase()] = n.path;
-      } else if (n.children) buildReg(n.children);
+      } else if (n.children) {
+        buildReg(n.children, repoPath ? `${repoPath}/${n.name}` : n.name);
+      }
     });
     buildReg(tree);
     setFileTree(tree);
@@ -947,22 +964,70 @@ export default function UltimateRedVault() {
     }
   }, [loadFile, createAndOpenFile]);
 
-  // Save current file — create:true if file only exists locally (new [[wikilink]] file)
-  const handleSaveFile = useCallback(async (raw) => {
-    if (!fileName) throw new Error('No file open');
-    // If registry has null for this file it means it was created locally and not yet on server
-    const isNew = fileRegistry.current[fileName.toLowerCase()] === null;
+  // Ask for password via modal, returns entered password
+  const askPassword = useCallback(() => new Promise((resolve, reject) => {
+    setPassPrompt({ resolve, reject });
+  }), []);
+
+  // Save a single file by path+raw, using cached or asked password
+  const doPost = useCallback(async (filePath, raw, pass) => {
+    const isNew = fileRegistry.current[filePath.toLowerCase()] === null;
     const res = await fetch('/api/cases', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path: fileName, content: raw, create: isNew }),
+      body: JSON.stringify({ path: filePath, content: raw, create: isNew, password: pass }),
     });
+    if (res.status === 403) return { wrongPass: true };
     if (!res.ok) throw new Error(await res.text());
-    // After first successful save, refresh tree — replaces local-only entry with real server path
-    if (isNew) {
-      await refreshTree();
+    if (isNew) await refreshTree();
+    return { ok: true };
+  }, [refreshTree]);
+
+  const saveOneFile = useCallback(async (filePath, raw) => {
+    // Skip if no actual change vs server content
+    // (server content is not cached here, but we check rawServer stored at load time)
+    // We always push — but backend/GitHub will only create a new commit if content changed
+    // (GitHub API does NOT deduplicate, so we compare locally using serverRawCache)
+    const serverRaw = serverRawCache.current[filePath] ?? null;
+    if (serverRaw !== null && serverRaw.trim() === raw.trim()) return; // no change
+
+    let pass = editPass;
+    if (!pass) {
+      pass = await askPassword();
+      setEditPass(pass);
+      try { sessionStorage.setItem('vault_edit_pass', pass); } catch {}
     }
-  }, [fileName, refreshTree]);
+    const result = await doPost(filePath, raw, pass);
+    if (result.wrongPass) {
+      setEditPass('');
+      try { sessionStorage.removeItem('vault_edit_pass'); } catch {}
+      const newPass = await askPassword();
+      setEditPass(newPass);
+      try { sessionStorage.setItem('vault_edit_pass', newPass); } catch {}
+      const retry = await doPost(filePath, raw, newPass);
+      if (!retry.ok) throw new Error('Wrong password');
+    }
+  }, [editPass, askPassword, doPost]);
+
+  // Save current file + all other dirty files in localStorage
+  const handleSaveFile = useCallback(async (raw) => {
+    if (!fileName) throw new Error('No file open');
+    // Save current file first
+    await saveOneFile(fileName, raw);
+    // Then save all other dirty files in cache
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k || !k.startsWith('vault_v3::')) continue;
+        const fp = k.replace('vault_v3::', '');
+        if (fp === fileName) continue; // already saved above
+        const cached = readCache(fp);
+        if (!Array.isArray(cached) || cached.length === 0) continue;
+        const cachedRaw = cached.map(b => b.raw).join('\n\n');
+        await saveOneFile(fp, cachedRaw);
+      }
+    } catch {}
+  }, [fileName, saveOneFile]);
 
   return (
     <div className="app-shell" ref={appShellRef}>
@@ -980,7 +1045,7 @@ export default function UltimateRedVault() {
       {/* CENTER: BLOCK EDITOR */}
       <main className="main-content">
         <article className="markdown-container">
-          <BlockEditor key={contentKey} content={content} fileName={fileName} onLinkClick={handleLinkClick} onSaveFile={handleSaveFile} />
+          <BlockEditor key={contentKey} content={content} fileName={fileName} onLinkClick={handleLinkClick} onSaveFile={handleSaveFile} isEditing={isEditing} onToggleEditing={() => { setIsEditing(e => !e); }} />
         </article>
       </main>
 
@@ -990,6 +1055,34 @@ export default function UltimateRedVault() {
       <aside className="chat-panel" style={{ width: chatWidth }}>
         <div className="chat-container"><Pop isEmbedded={true} /></div>
       </aside>
+
+      {/* PASSWORD MODAL */}
+      {passPrompt && (
+        <div className="pass-overlay" onClick={() => { passPrompt.reject(new Error('cancelled')); setPassPrompt(null); }}>
+          <div className="pass-modal" onClick={e => e.stopPropagation()}>
+            <div className="pass-modal__title">🔐 Nhập mật khẩu để lưu</div>
+            <input
+              className="pass-modal__input"
+              type="password"
+              placeholder="Edit password…"
+              autoFocus
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  const val = e.target.value.trim();
+                  if (!val) return;
+                  passPrompt.resolve(val);
+                  setPassPrompt(null);
+                }
+                if (e.key === 'Escape') {
+                  passPrompt.reject(new Error('cancelled'));
+                  setPassPrompt(null);
+                }
+              }}
+            />
+            <div className="pass-modal__hint">Enter để xác nhận · Esc để huỷ</div>
+          </div>
+        </div>
+      )}
 
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Inter:wght@400;500;600&display=swap');
@@ -1132,6 +1225,28 @@ export default function UltimateRedVault() {
         }
 
         .status-msg { opacity:.4; font-family:'Inter',sans-serif; font-size:13px; padding:20px 0; }
+
+        /* Password modal */
+        .pass-overlay {
+          position: fixed; inset: 0; z-index: 9999;
+          background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+          display: flex; align-items: center; justify-content: center;
+        }
+        .pass-modal {
+          background: #1a1a1a; border: 1px solid rgba(255,250,205,0.25);
+          border-radius: 12px; padding: 24px 28px; min-width: 300px;
+          display: flex; flex-direction: column; gap: 12px;
+          box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+        }
+        .pass-modal__title { font-family:'Inter',sans-serif; font-size:14px; font-weight:600; color:var(--accent); }
+        .pass-modal__input {
+          background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+          border-radius: 8px; padding: 10px 14px; color: var(--txt);
+          font-family: 'Inter', sans-serif; font-size: 14px; outline: none;
+          caret-color: var(--accent);
+        }
+        .pass-modal__input:focus { border-color: rgba(255,250,205,0.4); }
+        .pass-modal__hint { font-size: 11px; opacity: 0.4; font-family:'Inter',sans-serif; }
 
         /* Unsaved cache prompt banner */
         .unsaved-prompt {

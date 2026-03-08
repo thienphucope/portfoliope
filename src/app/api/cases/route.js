@@ -1,7 +1,7 @@
 // src/app/api/cases/route.js
 import { NextResponse } from 'next/server';
 
-const BACKEND = process.env.BACKEND_URL || 'http://127.0.0.1:5000';
+const BACKEND = process.env.BACKEND_URL || 'https://rag-backend-zh2e.onrender.com';
 
 // ─── GET: fetch file tree ─────────────────────────────────────────────────────
 
@@ -31,12 +31,8 @@ export async function GET() {
 }
 
 // ─── POST: save or create a .md file ─────────────────────────────────────────
-// Body: { path: "filename.md", content: "...", create: true|false }
-//
-// Forwards to Python backend POST /cases
-// Your Python server should handle:
-//   create=true  → create new file (fail if exists, or upsert — your choice)
-//   create=false → overwrite/save existing file
+// Body: { path, content, create, password }
+// Forwards password to Python backend for validation.
 
 export async function POST(request) {
   let body;
@@ -46,14 +42,14 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { path, content, create = false } = body;
+  const { path, content, create = false, password } = body;
 
-  if (!path || typeof path !== 'string') {
+  if (!path || typeof path !== 'string')
     return NextResponse.json({ error: 'Missing or invalid "path"' }, { status: 400 });
-  }
-  if (typeof content !== 'string') {
+  if (typeof content !== 'string')
     return NextResponse.json({ error: 'Missing or invalid "content"' }, { status: 400 });
-  }
+  if (!password)
+    return NextResponse.json({ error: 'Password required' }, { status: 401 });
 
   console.log(`📝 [API Route] ${create ? 'Creating' : 'Saving'} file: ${path}`);
 
@@ -61,7 +57,7 @@ export async function POST(request) {
     const response = await fetch(`${BACKEND}/cases`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path, content, create }),
+      body: JSON.stringify({ path, content, create, password }),
     });
 
     if (!response.ok) {
