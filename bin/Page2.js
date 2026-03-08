@@ -156,30 +156,9 @@ const cursorToEnd = (el) => {
   sel.addRange(range);
 };
 
-// ─── LINE TYPE HELPERS ────────────────────────────────────────────────────────
-
-const getLineType = (line) => {
-  if (/^# /.test(line))            return 'h1';
-  if (/^## /.test(line))           return 'h2';
-  if (/^#{3,6} /.test(line))       return 'h3';
-  if (/^[-*+] /.test(line))        return 'li';
-  if (/^\d+\. /.test(line))        return 'oli';
-  if (/^> /.test(line))            return 'quote';
-  if (/^`{3}/.test(line))          return 'codefence';
-  if (/^---+$|^\*\*\*+$/.test(line.trim())) return 'hr';
-  if (!line.trim())                return 'empty';
-  return 'p';
-};
-
-const renderLineAsHtml = (line) => {
-  if (!line.trim()) return '<br>';
-  return window.marked.parse(line)
-    .replace(/^\s*<p>([\s\S]*?)<\/p>\s*$/, '$1').trim();
-};
-
 // ─── BLOCK VIEW (inactive block) ─────────────────────────────────────────────
 
-const BlockView = ({ block, isEditing, onActivate, onLinkClick }) => {
+const BlockView = ({ block, isEditing, isActive, onActivate, onLinkClick }) => {
   const divRef = useRef(null);
 
   useEffect(() => {
@@ -189,15 +168,16 @@ const BlockView = ({ block, isEditing, onActivate, onLinkClick }) => {
   }, [block.raw]);
 
   const handleClick = useCallback((e) => {
+    if (isActive) return;
     const link = e.target.closest('a, .internal-link');
     if (link) { onLinkClick(e); return; }
     if (isEditing) onActivate();
-  }, [isEditing, onActivate, onLinkClick]);
+  }, [isActive, isEditing, onActivate, onLinkClick]);
 
   return (
     <div
       ref={divRef}
-      className={`block-content markdown-content block-view${isEditing ? ' editable-mode' : ''}`}
+      className={`block-content markdown-content block-view${isEditing ? ' editable-mode' : ''}${isActive ? ' block-view-hidden' : ''}`}
       onClick={handleClick}
     />
   );
@@ -205,28 +185,69 @@ const BlockView = ({ block, isEditing, onActivate, onLinkClick }) => {
 
 // ─── CODE RAW EDITOR ─────────────────────────────────────────────────────────
 
-const CodeRawEditor = ({ block, onSave, onDeactivate, onLinkClick }) => {
+const CodeRawEditor = ({ block, onSave, onDeactivate, onNavigate, cursorPosition = "end" }) => {
   const ref = useRef(null);
 
   useEffect(() => {
     if (!ref.current) return;
-    ref.current.textContent = block.raw;
-    cursorToEnd(ref.current);
+    ref.current.value = block.raw;
+    ref.current.focus();
+    const pos = cursorPosition === 'start' ? 0 : ref.current.value.length;
+    ref.current.setSelectionRange(pos, pos);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleBlur = useCallback(() => {
-    if (ref.current) onSave(ref.current.textContent);
+    if (ref.current) onSave(ref.current.value);
     onDeactivate();
   }, [onSave, onDeactivate]);
 
   const handleKeyDown = useCallback(async (e) => {
+    if (e.key === 'Escape') {
+      if (ref.current) onSave(ref.current.value);
+      onDeactivate();
+      return;
+    }
+
+    if (e.key === 'Backspace') {
+      const ta = ref.current;
+      if (ta && ta.value === '') {
+        e.preventDefault();
+        onSave('');
+        onNavigate('up', true);
+        return;
+      }
+    }
+
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      const ta = ref.current;
+      if (!ta) return;
+      const val = ta.value;
+      const pos = ta.selectionStart;
+      const beforeCursor = val.slice(0, pos);
+      const afterCursor  = val.slice(pos);
+      const onFirstLine  = !beforeCursor.includes('\n');
+      const onLastLine   = !afterCursor.includes('\n');
+      if (e.key === 'ArrowUp' && onFirstLine) {
+        e.preventDefault();
+        onSave(ta.value);
+        onNavigate('up');
+        return;
+      }
+      if (e.key === 'ArrowDown' && onLastLine) {
+        e.preventDefault();
+        onSave(ta.value);
+        onNavigate('down');
+        return;
+      }
+    }
+
     if (e.key === 'Enter' && !e.shiftKey) {
-      const text = ref.current?.textContent?.trim() ?? '';
+      const text = ref.current?.value?.trim() ?? '';
       if (text.startsWith('/ai ')) {
         e.preventDefault();
         const query = text.slice(4).trim();
         if (!query) return;
-        ref.current.textContent = '⏳ AI is thinking…';
+        ref.current.value = '⏳ AI is thinking…';
         try {
           const res  = await fetch('https://rag-backend-zh2e.onrender.com/rag', {
             method: 'POST',
@@ -238,167 +259,210 @@ const CodeRawEditor = ({ block, onSave, onDeactivate, onLinkClick }) => {
           onSave(reply);
           onDeactivate();
         } catch {
-          ref.current.textContent = '⚠ Could not reach AI.';
+          ref.current.value = '⚠ Could not reach AI.';
         }
-        return;
       }
     }
   }, [onSave, onDeactivate]);
 
+  // Auto-resize textarea
+  const handleInput = useCallback(() => {
+    if (!ref.current) return;
+    ref.current.style.height = 'auto';
+    ref.current.style.height = ref.current.scrollHeight + 'px';
+  }, []);
+
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.style.height = 'auto';
+      ref.current.style.height = ref.current.scrollHeight + 'px';
+    }
+  }, []);
+
   return (
-    <pre
+    <textarea
       ref={ref}
-      className="block-content markdown-content active-block code-raw-editor"
-      contentEditable
-      suppressContentEditableWarning
+      className="block-content code-raw-editor active-block"
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
+      onInput={handleInput}
+      spellCheck={false}
     />
   );
 };
 
-// ─── LINE EDITOR ──────────────────────────────────────────────────────────────
+// ─── LINE TYPE HELPERS ────────────────────────────────────────────────────────
 
-const LineEditor = ({ block, onSave, onDeactivate, onCreateAfter, onLinkClick }) => {
-  const containerRef  = useRef(null);
-  const cursorLineRef = useRef(null);
-  const isReadyRef    = useRef(false);
+const getLineClass = (line) => {
+  if (/^###### /.test(line)) return 'rte-h6';
+  if (/^##### /.test(line))  return 'rte-h5';
+  if (/^#### /.test(line))   return 'rte-h4';
+  if (/^### /.test(line))    return 'rte-h3';
+  if (/^## /.test(line))     return 'rte-h2';
+  if (/^# /.test(line))      return 'rte-h1';
+  if (/^[-*+] /.test(line))  return 'rte-ul';
+  if (/^\d+\. /.test(line))  return 'rte-ol';
+  if (/^> /.test(line))      return 'rte-blockquote';
+  if (/^`{3}/.test(line))    return 'rte-codefence';
+  if (/^---+$|^\*\*\*+$/.test(line.trim())) return 'rte-hr';
+  return 'rte-p';
+};
 
-  const flushAndSave = useCallback(() => {
-    if (cursorLineRef.current)
-      cursorLineRef.current.dataset.raw = cursorLineRef.current.textContent;
-    if (!containerRef.current) return;
-    const rawLines = Array.from(
-      containerRef.current.querySelectorAll('.md-line')
-    ).map(d => d.dataset.raw ?? '');
-    onSave(rawLines.join('\n'));
-  }, [onSave]);
+// ─── RAW TEXT EDITOR ─────────────────────────────────────────────────────────
+// contentEditable with per-line CSS classes styled to match rendered output.
+// Each line = one <div class="rte-line rte-XX"> holding raw text.
+// Empty lines rendered as <div class="rte-line rte-empty"><br></div> for height.
+
+const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNavigate, cursorPosition = 'end' }) => {
+  const containerRef = useRef(null);
+
+  // Build a single line div from raw string
+  const buildLineDiv = (line) => {
+    const d = document.createElement('div');
+    const cls = getLineClass(line);
+    d.className = `rte-line ${cls}`;
+    if (line === '') {
+      d.classList.add('rte-empty');
+      d.innerHTML = '<br>';
+    } else {
+      d.textContent = line;
+    }
+    return d;
+  };
+
+  // Build all line divs from raw string
+  const buildLines = (raw) => (raw || '').split('\n').map(buildLineDiv);
+
+  // Collect raw text — reads textContent per line, empty = ''
+  const collectRaw = () => {
+    if (!containerRef.current) return '';
+    return Array.from(containerRef.current.querySelectorAll('.rte-line'))
+      .map(d => {
+        if (d.classList.contains('rte-empty')) return '';
+        // textContent is always the raw markdown text (no pseudo-element content)
+        return d.textContent || '';
+      })
+      .join('\n');
+  };
 
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container || !window.marked) return;
-
-    isReadyRef.current = false;
-    container.innerHTML = '';
-
-    const lines = (block.raw || '').split('\n');
-    const divs = lines.map((line, i) => {
-      const d = document.createElement('div');
-      d.className = `md-line md-${getLineType(line)}`;
-      d.dataset.raw = line;
-      d.dataset.lineIndex = String(i);
-      d.innerHTML = renderLineAsHtml(line);
-      return d;
-    });
-
-    divs.forEach(d => container.appendChild(d));
-
-    // Last line becomes cursor line (raw text)
-    const lastDiv = divs[divs.length - 1];
-    if (lastDiv) {
-      lastDiv.textContent = lastDiv.dataset.raw;
-      lastDiv.classList.add('cursor-line');
-      cursorLineRef.current = lastDiv;
-    }
-
-    isReadyRef.current = true;
-    if (lastDiv) cursorToEnd(lastDiv);
-
-    const handleSelectionChange = () => {
-      if (!isReadyRef.current) return;
+    const el = containerRef.current;
+    if (!el) return;
+    el.innerHTML = '';
+    buildLines(block.raw || '').forEach(d => el.appendChild(d));
+    if (cursorPosition === 'start') {
+      const first = el.firstElementChild || el;
+      first.focus();
+      const range = document.createRange();
+      range.setStart(first, 0);
+      range.collapse(true);
       const sel = window.getSelection();
-      if (!sel || !sel.anchorNode) return;
-
-      // Walk up to find .md-line inside container
-      let node = sel.anchorNode;
-      let newDiv = null;
-      while (node && node !== document.body) {
-        if (node.classList && node.classList.contains('md-line') && container.contains(node)) {
-          newDiv = node;
-          break;
-        }
-        node = node.parentNode;
-      }
-
-      if (!newDiv || newDiv === cursorLineRef.current) return;
-
-      // Outgoing: sync raw, re-render, remove cursor-line
-      const outgoing = cursorLineRef.current;
-      if (outgoing) {
-        outgoing.dataset.raw = outgoing.textContent;
-        outgoing.innerHTML = renderLineAsHtml(outgoing.dataset.raw);
-        outgoing.classList.remove('cursor-line');
-      }
-
-      // Incoming: set textContent = raw, add cursor-line
-      newDiv.textContent = newDiv.dataset.raw;
-      newDiv.classList.add('cursor-line');
-      cursorLineRef.current = newDiv;
-    };
-
-    document.addEventListener('selectionchange', handleSelectionChange);
-
-    return () => {
-      isReadyRef.current = false;
-      document.removeEventListener('selectionchange', handleSelectionChange);
-    };
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } else {
+      cursorToEnd(el.lastElementChild || el);
+    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // On every keystroke: re-classify current line CSS only (no innerHTML touch)
   const handleInput = useCallback(() => {
-    const cur = cursorLineRef.current;
-    if (!cur) return;
-    cur.dataset.raw = cur.textContent;
-    // Update line type CSS class
-    const lt = getLineType(cur.textContent);
-    cur.className = `md-line md-${lt} cursor-line`;
+    const sel = window.getSelection();
+    if (!sel || !sel.anchorNode) return;
+    let node = sel.anchorNode;
+    while (node && node !== containerRef.current) {
+      if (node.nodeType === 1 && node.classList && node.classList.contains('rte-line')) break;
+      node = node.parentNode;
+    }
+    if (!node || node === containerRef.current) return;
+    const text = node.textContent || '';
+    const isEmpty = text === '' || node.innerHTML === '<br>';
+    node.className = `rte-line ${getLineClass(text)}${isEmpty ? ' rte-empty' : ''}`;
+    // Ensure empty line has <br> so it holds height
+    if (isEmpty && !node.querySelector('br')) {
+      node.innerHTML = '<br>';
+    }
   }, []);
 
-  const handleKeyDown = useCallback(async (e) => {
-    const cur = cursorLineRef.current;
-    if (!cur) return;
+  const handleBlur = useCallback(() => {
+    onSave(collectRaw());
+    onDeactivate();
+  }, [onSave, onDeactivate]);
 
-    // Backspace at offset 0 — merge with previous line
-    if (e.key === 'Backspace') {
-      const sel = window.getSelection();
-      if (sel && sel.anchorOffset === 0 && sel.focusOffset === 0) {
-        const prev = cur.previousElementSibling;
-        if (prev) {
-          e.preventDefault();
-          const prevRaw = prev.dataset.raw ?? '';
-          const curRaw  = cur.dataset.raw ?? cur.textContent;
-          const merged  = prevRaw + curRaw;
-          prev.dataset.raw = merged;
-          prev.textContent = merged;
-          prev.classList.add('cursor-line');
-          prev.classList.remove(`md-${getLineType(prevRaw)}`);
-          prev.classList.add(`md-${getLineType(merged)}`);
-          cur.remove();
-          cursorLineRef.current = prev;
-          // Place cursor at junction
-          const range = document.createRange();
-          const textNode = prev.firstChild || prev;
-          const offset = Math.min(prevRaw.length, textNode.textContent?.length ?? 0);
-          try { range.setStart(textNode, offset); range.collapse(true); } catch {}
-          const s = window.getSelection();
-          s.removeAllRanges();
-          s.addRange(range);
-        }
-      }
+  // Helper: find the rte-line div containing the current cursor
+  const getCurrentLineDiv = () => {
+    const sel = window.getSelection();
+    if (!sel || !sel.anchorNode) return null;
+    let node = sel.anchorNode;
+    const container = containerRef.current;
+    while (node && node !== container) {
+      if (node.nodeType === 1 && node.classList && node.classList.contains('rte-line')) return node;
+      node = node.parentNode;
+    }
+    // fallback: if cursor is directly inside container (e.g. on <br>), return first/last child
+    if (node === container) {
+      const lines = container.querySelectorAll('.rte-line');
+      return lines.length > 0 ? lines[sel.anchorOffset === 0 ? 0 : lines.length - 1] : null;
+    }
+    return null;
+  };
+
+  const handleKeyDown = useCallback(async (e) => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    if (e.key === 'Escape') {
+      onSave(collectRaw());
+      onDeactivate();
       return;
     }
 
-    // Shift+Enter — allow default
-    if (e.key === 'Enter' && e.shiftKey) return;
+    // Backspace on empty block → delete block and move to previous
+    if (e.key === 'Backspace') {
+      const raw = collectRaw();
+      if (raw === '') {
+        e.preventDefault();
+        onSave(raw);
+        onNavigate('up', true); // true = delete this block
+        return;
+      }
+    }
 
-    if (e.key === 'Enter') {
-      const rawText = cur.textContent.trim();
+    // Arrow up/down — navigate between blocks at first/last line
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      const lineDiv = getCurrentLineDiv();
+      const lines = el.querySelectorAll('.rte-line');
+      const firstLine = lines[0];
+      const lastLine  = lines[lines.length - 1];
+      const isFirst = !lineDiv || lineDiv === firstLine || !lineDiv.previousElementSibling;
+      const isLast  = !lineDiv || lineDiv === lastLine  || !lineDiv.nextElementSibling;
+      if (e.key === 'ArrowUp' && isFirst) {
+        e.preventDefault();
+        onSave(collectRaw());
+        onNavigate('up');
+        return;
+      }
+      if (e.key === 'ArrowDown' && isLast) {
+        e.preventDefault();
+        onSave(collectRaw());
+        onNavigate('down');
+        return;
+      }
+    }
+
+    if (e.key === 'Enter' && !e.shiftKey) {
+      // Get current line div
+      const sel = window.getSelection();
+      let lineDiv = sel?.anchorNode;
+      while (lineDiv && !(lineDiv.classList && lineDiv.classList.contains('rte-line'))) lineDiv = lineDiv?.parentNode;
+
+      const lineText = lineDiv ? (lineDiv.textContent || '') : '';
 
       // /ai command
-      if (rawText.startsWith('/ai ')) {
+      if (lineText.trim().startsWith('/ai ')) {
         e.preventDefault();
-        const query = rawText.slice(4).trim();
+        const query = lineText.trim().slice(4).trim();
         if (!query) return;
-        cur.textContent = '⏳ AI is thinking…';
+        if (lineDiv) lineDiv.textContent = '⏳ AI is thinking…';
         try {
           const res  = await fetch('https://rag-backend-zh2e.onrender.com/rag', {
             method: 'POST',
@@ -406,8 +470,7 @@ const LineEditor = ({ block, onSave, onDeactivate, onCreateAfter, onLinkClick })
             body: JSON.stringify({ username: 'BlockEditor', query }),
           });
           const data = await res.json();
-          const reply = data.response || '*No response from AI.*';
-          onSave(reply);
+          onSave(data.response || '*No response from AI.*');
         } catch {
           onSave('⚠ Could not reach AI.');
         }
@@ -415,80 +478,78 @@ const LineEditor = ({ block, onSave, onDeactivate, onCreateAfter, onLinkClick })
         return;
       }
 
-      const lt = getLineType(cur.textContent);
-
       // List continuation
-      if (lt === 'li' || lt === 'oli') {
+      const ulMatch = /^([-*+] )/.exec(lineText);
+      const olMatch = /^(\d+)\. /.exec(lineText);
+
+      if (ulMatch && lineText.trim() !== '-' && lineText.trim() !== '*' && lineText.trim() !== '+' && lineText.trim() !== ulMatch[1].trim()) {
         e.preventDefault();
-        cur.dataset.raw = cur.textContent;
         const newDiv = document.createElement('div');
-        const prefix = lt === 'li' ? '- ' : (() => {
-          const m = cur.textContent.match(/^(\d+)\./);
-          return m ? `${parseInt(m[1]) + 1}. ` : '1. ';
-        })();
-        newDiv.className = `md-line md-${lt} cursor-line`;
-        newDiv.dataset.raw = prefix;
-        newDiv.textContent = prefix;
-        cur.classList.remove('cursor-line');
-        cur.after(newDiv);
-        cursorLineRef.current = newDiv;
+        newDiv.className = `rte-line ${getLineClass(ulMatch[1])}`;
+        newDiv.dataset.raw = ulMatch[1];
+        newDiv.textContent = ulMatch[1];
+        lineDiv.after(newDiv);
         cursorToEnd(newDiv);
         return;
       }
 
-      // Default: save and create new block after
+      if (olMatch) {
+        const num = parseInt(olMatch[1]);
+        if (lineText.trim() !== `${num}.`) {
+          e.preventDefault();
+          const prefix = `${num + 1}. `;
+          const newDiv = document.createElement('div');
+          newDiv.className = 'rte-line rte-ol';
+          newDiv.textContent = prefix;
+          lineDiv.after(newDiv);
+          cursorToEnd(newDiv);
+          return;
+        }
+      }
+
+      // Default: save and create new block
       e.preventDefault();
-      flushAndSave();
+      onSave(collectRaw());
       onCreateAfter();
     }
-  }, [onSave, onDeactivate, onCreateAfter, flushAndSave]);
-
-  const handleBlur = useCallback((e) => {
-    // Don't deactivate if focus moved to another child within container
-    if (containerRef.current && containerRef.current.contains(e.relatedTarget)) return;
-    flushAndSave();
-    onDeactivate();
-  }, [flushAndSave, onDeactivate]);
-
-  const handleClick = useCallback((e) => {
-    const link = e.target.closest('a, .internal-link');
-    if (link) { onLinkClick(e); }
-  }, [onLinkClick]);
+  }, [onSave, onDeactivate, onCreateAfter]);
 
   return (
     <div
       ref={containerRef}
-      className="block-content markdown-content active-block line-editor-container"
+      className="block-content markdown-content raw-text-editor active-block"
       contentEditable
       suppressContentEditableWarning
       onInput={handleInput}
-      onKeyDown={handleKeyDown}
       onBlur={handleBlur}
-      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      spellCheck={false}
     />
   );
 };
 
 // ─── ACTIVE BLOCK ─────────────────────────────────────────────────────────────
 
-const ActiveBlock = ({ block, onSave, onDeactivate, onCreateAfter, onLinkClick }) => {
+const ActiveBlock = ({ block, onSave, onDeactivate, onCreateAfter, onNavigate, cursorPosition, onLinkClick }) => {
   if (block.type === 'code' || block.type === 'table') {
     return (
       <CodeRawEditor
         block={block}
         onSave={onSave}
         onDeactivate={onDeactivate}
-        onLinkClick={onLinkClick}
+        onNavigate={onNavigate}
+        cursorPosition={cursorPosition}
       />
     );
   }
   return (
-    <LineEditor
+    <RawTextEditor
       block={block}
       onSave={onSave}
       onDeactivate={onDeactivate}
       onCreateAfter={onCreateAfter}
-      onLinkClick={onLinkClick}
+      onNavigate={onNavigate}
+      cursorPosition={cursorPosition}
     />
   );
 };
@@ -509,7 +570,6 @@ const BlockEditor = ({ content, fileName, onLinkClick }) => {
 
     const cached = readCache(fileName);
     if (Array.isArray(cached) && cached.length > 0) {
-      // Migrate old v2 blocks (had .html instead of .raw)
       const migrated = cached.map(b =>
         b.raw !== undefined ? b : mkBlock(b.html ? b.html.replace(/<[^>]+>/g, '') : '', 'paragraph')
       );
@@ -545,6 +605,31 @@ const BlockEditor = ({ content, fileName, onLinkClick }) => {
     setActive(index + 1);
   }, []);
 
+  const [cursorPos, setCursorPos] = useState('end');
+
+  const navigateBlock = useCallback((index, direction, deleteBlock = false) => {
+    if (deleteBlock) {
+      // Remove this block and move to previous
+      setBlocks(prev => {
+        if (prev.length <= 1) return prev; // never delete last block
+        const n = [...prev];
+        n.splice(index, 1);
+        return n;
+      });
+      setCursorPos('end');
+      setActive(Math.max(0, index - 1));
+      return;
+    }
+    if (direction === 'up' && index > 0) {
+      setCursorPos('end');
+      setActive(index - 1);
+    }
+    if (direction === 'down' && index < blocks.length - 1) {
+      setCursorPos('start');
+      setActive(index + 1);
+    }
+  }, [blocks.length]);
+
   const toggleEditing = useCallback(() => {
     setIsEditing(e => !e);
     setActive(null);
@@ -558,26 +643,31 @@ const BlockEditor = ({ content, fileName, onLinkClick }) => {
         {isEditing ? '👁 Read' : '✏ Edit'}
       </button>
 
-      {blocks.map((block, index) => (
-        activeBlockIndex === index && isEditing ? (
-          <ActiveBlock
-            key={block.id}
-            block={block}
-            onSave={(raw) => saveBlock(index, raw)}
-            onDeactivate={() => setActive(null)}
-            onCreateAfter={() => createBlockAfter(index)}
-            onLinkClick={onLinkClick}
-          />
-        ) : (
-          <BlockView
-            key={block.id}
-            block={block}
-            isEditing={isEditing}
-            onActivate={() => setActive(index)}
-            onLinkClick={onLinkClick}
-          />
-        )
-      ))}
+      {blocks.map((block, index) => {
+        const isActive = activeBlockIndex === index && isEditing;
+        return (
+          <div key={block.id} className="block-wrapper">
+            <BlockView
+              block={block}
+              isEditing={isEditing}
+              isActive={isActive}
+              onActivate={() => { setCursorPos('end'); setActive(index); }}
+              onLinkClick={onLinkClick}
+            />
+            {isActive && (
+              <ActiveBlock
+                block={block}
+                onSave={(raw) => saveBlock(index, raw)}
+                onDeactivate={() => setActive(null)}
+                onCreateAfter={() => createBlockAfter(index)}
+                onNavigate={(dir, del) => navigateBlock(index, dir, del)}
+                cursorPosition={cursorPos}
+                onLinkClick={onLinkClick}
+              />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -777,7 +867,6 @@ export default function UltimateRedVault() {
           padding: 2px 4px;
           margin: 0 -4px;
           transition: background .12s;
-          min-height: calc(var(--md-line) * var(--md-size));
         }
 
         .block-content p:first-child { margin-top: 0; }
@@ -787,10 +876,95 @@ export default function UltimateRedVault() {
         .block-view.editable-mode { cursor: text; }
         .block-view.editable-mode:hover { background: rgba(255,255,255,0.025); }
 
+        /* Block wrapper — holds BlockView + optional overlay textarea */
+        .block-wrapper {
+          position: relative;
+        }
+
+        .block-view-hidden {
+          visibility: hidden;
+          pointer-events: none;
+          user-select: none;
+        }
+
         .active-block {
+          position: absolute;
+          top: 0;
+          left: -4px;
+          right: -4px;
+          width: calc(100% + 8px);
+          min-height: 100%;
           background: rgba(255,255,255,0.02);
           border-radius: 4px;
-          padding: 2px 4px;
+          outline: none;
+          z-index: 10;
+          box-sizing: border-box;
+        }
+
+        /* ── TEXTAREA EDITORS ──────────────────────────────────────────────── */
+
+        /* Raw text editor — contentEditable with styled lines */
+        .raw-text-editor {
+          background: rgba(18,18,18,0.98);
+          border: 1px solid rgba(255,250,205,0.2);
+          border-radius: 4px;
+          padding: 4px 8px;
+          caret-color: var(--accent);
+          box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+          cursor: text;
+        }
+
+        .raw-text-editor:focus-within {
+          border-color: rgba(255, 250, 205, 0.35);
+          outline: none;
+        }
+
+        /* Per-line divs — inherit font/size/color from .markdown-content parent */
+        .rte-line {
+          display: block;
+          white-space: pre-wrap;
+          word-break: break-word;
+          min-height: 1.6em;
+          outline: none;
+          caret-color: var(--accent);
+        }
+        .rte-empty {
+          min-height: 1.6em;
+          display: block;
+        }
+        /* Mirror .markdown-content h1/h2/h3 exactly — use px so em doesn't compound */
+        .rte-h1 { font-size: 2.0em;  font-weight: 700; color: #fff; line-height: 1.2; margin-top: .8em;  margin-bottom: .4em; }
+        .rte-h2 { font-size: 1.6em;  font-weight: 700; color: #fff; line-height: 1.2; margin-top: .7em;  margin-bottom: .3em; }
+        .rte-h3 { font-size: 1.2em;  font-weight: 700; color: #fff; line-height: 1.2; margin-top: .6em;  margin-bottom: .2em; }
+        .rte-h4 { font-size: 1.05em; font-weight: 700; color: #fff; }
+        .rte-h5 { font-size: 1em;    font-weight: 700; color: #ddd; }
+        .rte-h6 { font-size: 0.9em;  font-weight: 700; color: #bbb; }
+        /* Lists — hanging indent: marker in gutter, text wraps aligned */
+        .rte-ul, .rte-ol { padding-left: 1.8em; text-indent: -1.8em; margin-bottom: 0.3em; }
+        /* Blockquote */
+        .rte-blockquote { border-left: 3px solid var(--accent); padding-left: 1.25em; margin-left: 0; font-style: italic; opacity: 0.8; }
+        /* Code fence line */
+        .rte-codefence { font-family: monospace; font-size: 0.85em; opacity: 0.55; background: rgba(255,255,255,0.03); border-radius: 3px; }
+        .rte-hr { border: none; border-bottom: 1px solid var(--border); margin: 0.4em 0; }
+
+        .code-raw-editor {
+          resize: none;
+          overflow: hidden;
+          font-family: monospace;
+          font-size: 14px;
+          line-height: 1.5;
+          background: var(--code-bg);
+          border: 1px solid rgba(255,250,205,0.2);
+          border-radius: 4px;
+          padding: 10px;
+          color: var(--txt);
+          caret-color: var(--accent);
+          white-space: pre;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+        }
+
+        .code-raw-editor:focus {
+          border-color: rgba(255, 250, 205, 0.4);
           outline: none;
         }
 
@@ -806,31 +980,41 @@ export default function UltimateRedVault() {
         }
         .mode-toggle-btn:hover { background: rgba(255,255,255,0.12); }
 
-        /* Line divs inside LineEditor */
-        .md-line { display: block; outline: none; min-height: 1.4em; white-space: pre-wrap; }
-        .md-line.md-h1  { font-size: 2em; font-weight: 700; color: #fff; line-height: 1.2; }
-        .md-line.md-h2  { font-size: 1.6em; font-weight: 700; color: #fff; line-height: 1.2; }
-        .md-line.md-h3  { font-size: 1.2em; font-weight: 700; color: #fff; line-height: 1.2; }
-        .md-line.md-li  { padding-left: 1.5em; position: relative; }
-        .md-line.md-li::before { content: '•'; position: absolute; left: 0.3em; }
-        .md-line.md-oli { padding-left: 1.5em; }
-        .md-line.md-quote { border-left: 3px solid var(--accent); padding-left: 1em; font-style: italic; opacity: 0.8; }
-        .md-line.md-codefence { font-family: monospace; opacity: 0.6; }
-        .md-line.cursor-line { caret-color: var(--accent); }
-
-        /* CodeRawEditor */
-        .code-raw-editor {
-          font-family: monospace; font-size: 14px;
-          background: var(--code-bg); border-radius: 4px; padding: 10px;
-          white-space: pre; overflow-x: auto; min-height: 3em; outline: none;
-        }
-
         /* ── MARKDOWN TYPOGRAPHY ────────────────────────────────────────────── */
         .markdown-content { font-family:var(--md-font); font-size:var(--md-size); line-height:var(--md-line); color:var(--txt); }
         .markdown-content h1 { font-size:2.0em; margin:.8em 0 .4em; color:#fff; font-weight:700; }
         .markdown-content h2 { font-size:1.6em; margin:.7em 0 .3em; color:#fff; font-weight:700; }
         .markdown-content h3 { font-size:1.2em; margin:.6em 0 .2em; color:#fff; font-weight:700; }
         .markdown-content p  { margin-bottom:1em; }
+
+        /* ── LISTS ────────────────────────────────────────────────────────── */
+        .markdown-content ul {
+          list-style-type: disc;
+          margin: 0.5em 0 1em 0;
+          padding-left: 1.8em;
+        }
+        .markdown-content ol {
+          list-style-type: decimal;
+          margin: 0.5em 0 1em 0;
+          padding-left: 1.8em;
+        }
+        .markdown-content li {
+          margin-bottom: 0.3em;
+          line-height: var(--md-line);
+        }
+        .markdown-content li > ul,
+        .markdown-content li > ol {
+          margin-top: 0.3em;
+          margin-bottom: 0.3em;
+        }
+        .markdown-content ul ul { list-style-type: circle; }
+        .markdown-content ul ul ul { list-style-type: square; }
+
+        /* Task list checkboxes */
+        .markdown-content li input[type="checkbox"] {
+          margin-right: 0.5em;
+          accent-color: var(--accent);
+        }
 
         .markdown-content a, .internal-link {
           color:var(--accent); text-decoration:none; border-bottom:1px dotted var(--accent);

@@ -40,8 +40,4 @@
 
 # 🔗 Other links
 
-<div align="center">
-
 [**Github**](https://github.com/thienphucope) | [**YouTube**](https://www.youtube.com/@opewatson) | [**Instagram**](https://www.instagram.com/opewatson/) | [**Portfolio**](https://opewatson.org)
-
-</div>
