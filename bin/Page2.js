@@ -1102,7 +1102,7 @@ export default function UltimateRedVault() {
         .file-list { flex:1; overflow-y:auto; padding:10px; scrollbar-width:none; }
         .file-list::-webkit-scrollbar { display:none; }
 
-        .main-content { flex:1; overflow-y:auto; display:flex; justify-content:center; padding:30px 15px; scrollbar-width:none; background:var(--bg); }
+        .main-content { flex:1; overflow-y:auto; display:flex; justify-content:center; padding:0px 15px; scrollbar-width:none; background:var(--bg); }
         .main-content::-webkit-scrollbar { display:none; }
         .markdown-container { max-width:1000px; width:100%; box-sizing:border-box; }
 
@@ -1273,7 +1273,7 @@ export default function UltimateRedVault() {
 
         /* Toolbar */
         .toolbar {
-          position: sticky; top: 8px; float: right; z-index: 100;
+          position: sticky; top: 8px; float: left; z-index: 100;
           display: flex; gap: 6px; align-items: center;
         }
         .mode-toggle-btn, .save-btn {
@@ -1366,7 +1366,7 @@ export default function UltimateRedVault() {
           .app-shell { overflow-x:auto !important; overflow-y:hidden !important; scroll-snap-type:x mandatory; scroll-behavior:smooth; -webkit-overflow-scrolling:touch; display:flex !important; flex-wrap:nowrap !important; }
           .sidebar-panel,.main-content,.chat-panel { width:100vw !important; min-width:100vw !important; flex-shrink:0 !important; scroll-snap-align:center; position:relative !important; height:100dvh !important; }
           .resizer { display:none !important; }
-          .main-content { padding:30px 15px; }
+          .main-content { padding:0px 15px; }
           :root { --md-size: clamp(17px, 1.5vw + 10px, 22px); }
           .markdown-content h1 { font-size:1.8em; }
           .markdown-content h2 { font-size:1.5em; }
