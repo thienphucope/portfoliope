@@ -1272,9 +1272,30 @@ export default function UltimateRedVault() {
         .unsaved-prompt__btn--discard { border-color: rgba(220,80,80,0.35); color: #e07070; }
 
         /* Toolbar */
+        /* Toolbar - Nổi lơ lửng và căn giữa */
         .toolbar {
-          position: sticky; top: 8px; float: right; z-index: 100;
-          display: flex; gap: 6px; align-items: center;
+          position: sticky; 
+          top: 15px; 
+          z-index: 1000;         /* Đảm bảo nằm trên cùng */
+          
+          display: flex; 
+          justify-content: center; 
+          gap: 10px; 
+          
+          /* Tuyệt chiêu: */
+          height: 0;             /* Ép chiều cao block bằng 0 để không đẩy chữ xuống */
+          overflow: visible;     /* Để các nút bên trong vẫn hiện ra dù cha cao 0 */
+          pointer-events: none;  /* Click xuyên qua vùng trống xung quanh nút */
+          
+          /* Nếu bạn muốn căn giữa tuyệt đối trong container */
+          width: 100%;
+        }
+
+        .toolbar button {
+          pointer-events: auto;  /* Riêng các nút thì vẫn nhận click */
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); /* Đổ bóng cho nổi hẳn lên */
+          background: rgba(30, 30, 30, 0.8) !important; /* Thêm nền tối để nhìn rõ trên nền chữ */
+          backdrop-filter: blur(8px); /* Hiệu ứng kính mờ xịn sò */
         }
         .mode-toggle-btn, .save-btn {
           background: rgba(255,255,255,0.07); border: 1px solid var(--border);
