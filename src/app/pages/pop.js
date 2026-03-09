@@ -8,7 +8,7 @@ export default function Pop({ isEmbedded = false }) {
   const [inputValue, setInputValue] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [convo, setConvo] = useState([
-    { role: 'assistant', content: "Xin chào, tớ là Thiên. Cậu cần tớ giúp gì không? (tag @ope to message me)" }
+    { role: 'assistant', content: "This is Ope's AI assistant! It has a memory. It can search the web for information. For now, it's in experimental mode, only responding in English with texts and audios. Voice responses can be so slow. " }
   ]);
   const [streamingText, setStreamingText] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
@@ -30,8 +30,8 @@ export default function Pop({ isEmbedded = false }) {
   const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
   const displayName = 'YOU';
 
-  const TTS_API_URL = "https://thienphuc1052004--viterbox-api-viterboxapi-tts.modal.run";
-  const TTS_HEALTH_URL = "https://thienphuc1052004--viterbox-api-viterboxapi-health.modal.run/";
+  const TTS_API_URL = "https://thienphuc1052004--xtts-api-xttsapi-tts-generate.modal.run";
+  const TTS_HEALTH_URL = "https://thienphuc1052004--xtts-api-xttsapi-ping.modal.run";
 
   // --- LOGIC HELPER ---
   const detectLanguage = (text) => /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i.test(text) ? 'vi' : 'en';
@@ -56,7 +56,7 @@ export default function Pop({ isEmbedded = false }) {
       const res = await fetch(TTS_API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: chunk, language: lang, temperature: 0.5 }),
+        body: JSON.stringify({ text: chunk, language: lang }),
       });
       return res.ok ? await res.blob() : null;
     } catch { return null; }
