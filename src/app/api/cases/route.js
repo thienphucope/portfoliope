@@ -1,79 +1,178 @@
 // src/app/api/cases/route.js
 import { NextResponse } from 'next/server';
 
-const BACKEND = process.env.BACKEND_URL || 'https://rag-backend-zh2e.onrender.com';
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN || ''; 
+const GITHUB_REPO = 'thienphucope/cases';
+const EDIT_PASS = process.env.EDIT_PASS || 'default_hardcoded_pass';
+
+// ─── HELPER: build tree from github ──────────────────────────────────────────
+
+async function getGithubCasesTree() {
+  if (!GITHUB_TOKEN) {
+    console.error("❌ [GitHub] GITHUB_TOKEN is not configured.");
+    return null;
+  }
+  const branches = ["main", "master"];
+  let data = null;
+  let activeBranch = null;
+
+  const headers = {
+    "Accept": "application/vnd.github+json",
+    "User-Agent": "Portfolio-NextJS",
+    "Authorization": `token ${GITHUB_TOKEN}`
+  };
+
+  for (const branch of branches) {
+    const url = `https://api.github.com/repos/${GITHUB_REPO}/git/trees/${branch}?recursive=1`;
+    try {
+      const resp = await fetch(url, { headers, cache: 'no-store' });
+      if (resp.status === 200) {
+        data = await resp.json();
+        activeBranch = branch;
+        break;
+      }
+    } catch (e) {
+      console.error(`⚠️ [GitHub] Error on branch '${branch}':`, e.message);
+    }
+  }
+
+  if (!data || !activeBranch) return null;
+
+  try {
+    const rawBaseUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/${activeBranch}`;
+    const root = [];
+    const nodes = { "": root };
+    const items = data.tree.sort((a, b) => a.path.localeCompare(b.path));
+
+    for (const item of items) {
+      const pathParts = item.path.split('/');
+      const name = pathParts[pathParts.length - 1];
+      const parentPath = pathParts.slice(0, -1).join('/');
+      if (pathParts.some(p => p.startsWith('.'))) continue;
+
+      if (item.type === "tree") {
+        const newFolder = { kind: "directory", name: name, children: [] };
+        nodes[item.path] = newFolder.children;
+        if (nodes[parentPath]) nodes[parentPath].push(newFolder);
+      } else if (item.path.endsWith(".md")) {
+        const newFile = { kind: "file", name: name, path: `${rawBaseUrl}/${item.path}` };
+        if (nodes[parentPath]) nodes[parentPath].push(newFile);
+      }
+    }
+
+    const sortTree = (tree) => {
+      tree.sort((a, b) => {
+        const typeA = a.kind === "directory" ? 0 : 1;
+        const typeB = b.kind === "directory" ? 0 : 1;
+        if (typeA !== typeB) return typeA - typeB;
+        return a.name.localeCompare(b.name);
+      });
+      for (const item of tree) {
+        if (item.kind === "directory") sortTree(item.children);
+      }
+      return tree;
+    };
+    return sortTree(root);
+  } catch (e) {
+    console.error(`❌ [GitHub] Process error:`, e.message);
+    return null;
+  }
+}
+
+// ─── HELPER: save to github ──────────────────────────────────────────────────
+
+async function saveToGithub(path, content, create = false) {
+  if (!GITHUB_TOKEN) return { error: "Missing GITHUB_TOKEN" };
+  
+  const headers = {
+    "Accept": "application/vnd.github+json",
+    "User-Agent": "Portfolio-NextJS",
+    "Authorization": `token ${GITHUB_TOKEN}`,
+    "Content-Type": "application/json",
+  };
+
+  let activeBranch = null;
+  for (const branch of ["main", "master"]) {
+    try {
+      const r = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/branches/${branch}`, { headers });
+      if (r.ok) { activeBranch = branch; break; }
+    } catch {}
+  }
+
+  if (!activeBranch) return { error: "Could not detect GitHub branch" };
+
+  const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`;
+  let existingSha = null;
+
+  try {
+    const getResp = await fetch(`${url}?ref=${activeBranch}`, { headers, cache: 'no-store' });
+    if (getResp.ok) {
+      const data = await getResp.json();
+      existingSha = data.sha;
+    }
+  } catch {}
+
+  if (create && existingSha) return { error: "File already exists" };
+  if (!create && !existingSha) return { error: "File not found for update" };
+
+  const encodedContent = Buffer.from(content).toString('base64');
+  const payload = {
+    message: `${existingSha ? 'Update' : 'Create'} ${path} via Red Vault`,
+    content: encodedContent,
+    branch: activeBranch,
+  };
+  if (existingSha) payload.sha = existingSha;
+
+  const putResp = await fetch(url, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(payload)
+  });
+
+  if (putResp.ok) return { ok: true, path };
+  const errorText = await putResp.text();
+  return { error: `GitHub PUT error: ${errorText}` };
+}
 
 // ─── GET: fetch file tree ─────────────────────────────────────────────────────
 
 export async function GET() {
-  console.log(`📡 [API Route] Fetching from backend: ${BACKEND}/cases`);
-  try {
-    const response = await fetch(`${BACKEND}/cases`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-    });
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`❌ [API Route] Backend error: ${response.status} - ${errorText}`);
-      return NextResponse.json(
-        { error: `Backend error: ${response.status}`, details: errorText },
-        { status: response.status }
-      );
-    }
-    const tree = await response.json();
-    console.log(`✅ [API Route] Successfully fetched tree with ${tree.length} root items`);
+  console.log(`📡 [API Route] GET Cases: Fetching from GitHub...`);
+  const tree = await getGithubCasesTree();
+  if (tree) {
+    console.log(`✅ [API Route] Successfully fetched tree from GitHub`);
     return NextResponse.json(tree);
-  } catch (error) {
-    console.error(`❌ [API Route] Fetch failed:`, error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  return NextResponse.json({ error: "Failed to fetch cases from GitHub. Check GITHUB_TOKEN and repository." }, { status: 500 });
 }
 
 // ─── POST: save or create a .md file ─────────────────────────────────────────
-// Body: { path, content, create, password }
-// Forwards password to Python backend for validation.
 
 export async function POST(request) {
   let body;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
+  try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
 
   const { path, content, create = false, password } = body;
+  if (!path || typeof content !== 'string') return NextResponse.json({ error: 'Missing path or content' }, { status: 400 });
+  if (!password) return NextResponse.json({ error: 'Password required' }, { status: 401 });
 
-  if (!path || typeof path !== 'string')
-    return NextResponse.json({ error: 'Missing or invalid "path"' }, { status: 400 });
-  if (typeof content !== 'string')
-    return NextResponse.json({ error: 'Missing or invalid "content"' }, { status: 400 });
-  if (!password)
-    return NextResponse.json({ error: 'Password required' }, { status: 401 });
+  // Kiểm tra mật khẩu EDIT_PASS
+  if (password !== EDIT_PASS) {
+    console.warn(`❌ [API Route] Wrong password attempt.`);
+    return NextResponse.json({ error: 'Wrong password' }, { status: 403 });
+  }
 
-  console.log(`📝 [API Route] ${create ? 'Creating' : 'Saving'} file: ${path}`);
+  const finalPath = path.endsWith('.md') ? path : `${path}.md`;
 
-  try {
-    const response = await fetch(`${BACKEND}/cases`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path, content, create, password }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`❌ [API Route] Backend save error: ${response.status} - ${errorText}`);
-      return NextResponse.json(
-        { error: `Backend error: ${response.status}`, details: errorText },
-        { status: response.status }
-      );
-    }
-
-    const result = await response.json().catch(() => ({ ok: true }));
-    console.log(`✅ [API Route] File ${create ? 'created' : 'saved'}: ${path}`);
+  console.log(`📝 [API Route] POST: Saving directly to GitHub...`);
+  const result = await saveToGithub(finalPath, content, create);
+  
+  if (result.ok) {
+    console.log(`✅ [API Route] Saved to GitHub successfully.`);
     return NextResponse.json(result);
-  } catch (error) {
-    console.error(`❌ [API Route] Save failed:`, error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } else {
+    console.error(`❌ [API Route] GitHub save failed: ${result.error}`);
+    return NextResponse.json({ error: result.error }, { status: 500 });
   }
 }
