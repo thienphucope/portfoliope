@@ -183,7 +183,7 @@ export default function Pop({ isEmbedded = false }) {
           if (!content && i !== convo.length-1) return null;
           return (
             <div key={i} className={`${isEmbedded ? 'text-base' : 'text-lg'} leading-relaxed text-justify opacity-90`}>
-              <span className="font-bold text-white mr-2">{msg.role === 'user' ? 'YOU:' : 'THIÊN:'}</span>
+              <span className="font-bold text-white mr-2">{msg.role === 'user' ? 'You:' : 'Elia:'}</span>
               <span className="whitespace-pre-wrap">{content}</span>
               {i === convo.length - 1 && isStreaming && <span className="animate-pulse">|</span>}
             </div>
