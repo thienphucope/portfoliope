@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
 
-export default function Page3() {
+export default function Obsessions() {
   const sectionRef = useRef(null);
   // Khởi tạo ở xa để tránh flash ban đầu
   const [spotlightPos, setSpotlightPos] = useState({ x: -9999, y: -9999 });

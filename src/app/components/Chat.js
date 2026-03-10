@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { ClockIcon, PaperAirplaneIcon, ArrowPathIcon, MagnifyingGlassIcon, SpeakerWaveIcon, MicrophoneIcon } from '@heroicons/react/24/outline';
 
-export default function Pop({ isEmbedded = false }) {
+export default function Chat({ isEmbedded = false }) {
   const [isOpen, setIsOpen] = useState(isEmbedded ? true : false);
   const [showHistory, setShowHistory] = useState(true);
   const [inputValue, setInputValue] = useState('');

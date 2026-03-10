@@ -1,6 +1,6 @@
 "use client";
-import Page1 from './pages/Page1';
-import Page3 from '../../bin/Page3';
+import Hero from './components/Hero';
+import Obsessions from './components/Obsessions';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 
 export default function Home() {
@@ -226,12 +226,12 @@ export default function Home() {
 
         {/* Hero Section */}
         <div className="w-full min-h-screen flex-shrink-0 snap-start relative">
-          <Page1 />
+          <Hero />
         </div>
 
         {/* Obsessions */}
         <div className="w-full min-h-screen flex-shrink-0 snap-start relative z-10">
-          <Page3 />
+          <Obsessions />
         </div>
 
         {/* Fog Effect - at the bottom of the page */}

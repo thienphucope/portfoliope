@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { FaYoutube, FaInstagram, FaGithub, FaEnvelope, FaTwitter } from 'react-icons/fa';
 
-export default function Page1() {
+export default function Hero() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isIconHovered, setIsIconHovered] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
