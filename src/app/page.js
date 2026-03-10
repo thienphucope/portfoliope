@@ -1,9 +1,11 @@
 "use client";
 import Hero from './components/Hero';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
+  const router = useRouter();
   const [spotlightEnabled, setSpotlightEnabled] = useState(false);
   const [mousePos, setMousePos] = useState({ x: -999, y: -999 });
   const [mounted, setMounted] = useState(false); // Add this to track client-side mount
@@ -20,7 +22,11 @@ export default function Home() {
       const userAgent = window.navigator.userAgent.toLowerCase();
       const mobileKeywords = ['mobile', 'tablet', 'android', 'iphone', 'ipad', 'windows phone'];
       const isMobileDevice = mobileKeywords.some(keyword => userAgent.includes(keyword)) ||
-        window.innerWidth < 768; // Additional check for small screens
+        window.innerWidth < 768; 
+      
+      if (isMobileDevice) {
+        router.replace('/case');
+      }
       setIsMobile(isMobileDevice);
     };
 
