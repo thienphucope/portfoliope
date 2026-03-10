@@ -328,47 +328,58 @@ export default function Hero() {
 
   useEffect(() => {
     if (isIntroStarted) {
-      const tag = document.createElement('script');
-      tag.src = "https://www.youtube.com/iframe_api";
-      const firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-      window.onYouTubeIframeAPIReady = () => {
-        playerRef.current = new window.YT.Player('youtube-player', {
-          height: '0',
-          width: '0',
-          videoId: '8itIwVBu6os',
-          playerVars: {
-            autoplay: 1,
-            loop: 1,
-            playlist: 'JEUf8nTl5aU,pL35m337Qa4',
-            controls: 0,
-            showinfo: 0,
-            modestbranding: 1,
-          },
-          events: {
-            onReady: (event) => {
-              event.target.setVolume(50);
+      const initPlayer = () => {
+        if (window.YT && window.YT.Player && !playerRef.current) {
+          playerRef.current = new window.YT.Player('youtube-player', {
+            height: '0',
+            width: '0',
+            videoId: '8itIwVBu6os',
+            playerVars: {
+              autoplay: 1,
+              loop: 1,
+              playlist: 'JEUf8nTl5aU,pL35m337Qa4',
+              controls: 0,
+              showinfo: 0,
+              modestbranding: 1,
             },
-            onStateChange: (event) => {
-              if (event.data === window.YT.PlayerState.PLAYING) {
-                const newTitle = event.target.getVideoData().title;
-                setVideoTitle(oldTitle => {
-                  if (oldTitle !== newTitle) { 
-                    if (newSongTimerRef.current) clearTimeout(newSongTimerRef.current);
-                    setAnimationClass('fly-cycle');
-                    setAnimationKey(k => k + 1);
-                    newSongTimerRef.current = setTimeout(() => {
-                      setAnimationClass(''); 
-                    }, 5500);
-                  }
-                  return newTitle; 
-                });
-              }
+            events: {
+              onReady: (event) => {
+                event.target.setVolume(50);
+                event.target.playVideo();
+              },
+              onStateChange: (event) => {
+                if (event.data === window.YT.PlayerState.PLAYING) {
+                  setIsPlaying(true);
+                  const newTitle = event.target.getVideoData().title;
+                  setVideoTitle(oldTitle => {
+                    if (oldTitle !== newTitle) { 
+                      if (newSongTimerRef.current) clearTimeout(newSongTimerRef.current);
+                      setAnimationClass('fly-cycle');
+                      setAnimationKey(k => k + 1);
+                      newSongTimerRef.current = setTimeout(() => {
+                        setAnimationClass(''); 
+                      }, 5500);
+                    }
+                    return newTitle; 
+                  });
+                } else {
+                  setIsPlaying(false);
+                }
+              },
             },
-          },
-        });
+          });
+        }
       };
+
+      if (!window.YT || !window.YT.Player) {
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        window.onYouTubeIframeAPIReady = initPlayer;
+      } else {
+        initPlayer();
+      }
     }
   }, [isIntroStarted]);
 
@@ -473,7 +484,7 @@ export default function Hero() {
       {!isIntroStarted && (
         <div className="mask">
           <img
-            src="/cursor.png"
+            src="/printer.png"
             alt="Magnifier"
             className="magnifier absolute left-1/2 top-1/2 transform -translate-y-1/2 -translate-x-[40%]"
             onClick={handleMaskClick}
