@@ -770,7 +770,7 @@ export default function CasePage() {
     document.body.style.cursor = 'col-resize';
   }, [handleMouseMove, stopResizing]);
 
-  const loadFile = useCallback(async (path, name, serverPath = null, updateHistory = true) => {
+  const loadFile = useCallback(async (path, name, serverPath = null, historyMode = 'push') => {
     // Local-only file (not saved to server yet) — restore from cache
     if (!path) {
       const key = serverPath || name;
@@ -797,10 +797,14 @@ export default function CasePage() {
       setContent(text);
       setFileName(repoKey);   // ← full path like "notes/file.md"
       setContentKey(k => k + 1);
-      if (updateHistory) {
+      if (historyMode === 'push') {
         const u = new URL(window.location);
         u.searchParams.set('file', repoKey);
         window.history.pushState({ path, name: repoKey }, '', u);
+      } else if (historyMode === 'replace') {
+        const u = new URL(window.location);
+        u.searchParams.set('file', repoKey);
+        window.history.replaceState({ path, name: repoKey }, '', u);
       }
       if (isMobileView() && appShellRef.current)
         appShellRef.current.scrollTo({ left: appShellRef.current.clientWidth, behavior: 'smooth' });
@@ -826,7 +830,7 @@ export default function CasePage() {
         buildRegistry(tree);
         setFileTree(tree);
         const p = fileRegistry.current['dash board.md'];
-        if (p) loadFile(p, 'Dash Board.md');
+        if (p) loadFile(p, 'Dash Board.md', null, 'replace');
       } catch { setContent('# Connection Error\nFailed to connect to API.'); }
     })();
   }, [loadFile]);
@@ -839,7 +843,7 @@ export default function CasePage() {
   }, []);
 
   useEffect(() => {
-    const onPop = (e) => { if (e.state?.path) loadFile(e.state.path, e.state.name, false); };
+    const onPop = (e) => { if (e.state?.path) loadFile(e.state.path, e.state.name, null, 'none'); };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, [loadFile]);
@@ -858,10 +862,10 @@ export default function CasePage() {
           const fp = k.replace('vault_v3::', '');
           const cached = (() => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } })();
           if (!Array.isArray(cached) || cached.length === 0) continue;
-          const cachedRaw = cached.map(b => b.raw).join('\n\n');
-          const serverRaw = serverRawCache.current[fp] ?? null;
-          // null = file never loaded from server (new local file) — always dirty
-          if (serverRaw === null || serverRaw.trim() !== cachedRaw.trim()) {
+          const cachedRaw = cached.map(b => b.raw).join('\n\n').trim();
+          const serverRaw = (serverRawCache.current[fp] || "").trim();
+          // Only prompt if server content exists and differs significantly
+          if (serverRaw && serverRaw !== cachedRaw) {
             dirtyKeys.push(k);
           }
         }
