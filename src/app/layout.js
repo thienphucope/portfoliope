@@ -13,7 +13,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/watsoncrop.png" />
+        <link rel="icon" href="/ope.png" />
         {/* Nếu muốn dùng ảnh khác, đổi href thành đường dẫn ảnh, ví dụ /logo.png */}
       </head>
       <body>{children}<Chat /></body>

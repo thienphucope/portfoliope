@@ -1,6 +1,5 @@
 "use client";
 import Hero from './components/Hero';
-import Obsessions from './components/Obsessions';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 
 export default function Home() {
@@ -56,7 +55,7 @@ export default function Home() {
       flakes.forEach((flake) => {
         const startTop = Math.random() * -scrollHeight;
         flake.style.top = `${startTop}px`;
-        const baseFallDuration = Math.random() * 100 + 48; // More variation: 8-23s base
+        const baseFallDuration = Math.random() * 1 + 1; // Rơi rất nhanh: 2-5s base
         const fallDuration = baseFallDuration * numScreens;
         flake.style.setProperty('--fall-duration', `${fallDuration}s`);
       });
@@ -101,20 +100,18 @@ export default function Home() {
     }
   }, [updateSnow]);
 
-  const snowflakeCount = 100;
+  const snowflakeCount = 50;
   const snowflakes = useMemo(() => {
     return Array.from({ length: snowflakeCount }).map((_, i) => {
       const randomImage = Math.floor(Math.random() * 3) + 1;
-      const swayDuration = Math.random() * 10 + 16; // 6-10s
-      const swayAmplitude = Math.random() * 10 - 10; // -10 to 10px
-      const size = Math.random() * 10 + 100; // 10-310px
-      const rotationDuration = Math.random() * 3 + 10; // 4-12s for gentle spin
-      const rotationDirection = Math.random() > 0.5 ? 1 : -1; // Random direction
+      const size = Math.random() * 10 + 100; // 100-110px
+      const rotationDuration = Math.random() * 2 + 2; // Xoay nhanh hơn: 2-4s
+      const rotationDirection = Math.random() > 0.5 ? 1 : -1;
+      const initialLeft = Math.random() * 150; // Bắt đầu rộng hơn để khi dạt vào không bị trống bên phải
       const style = {
-        left: `${Math.random() * 100}vw`,
+        left: `${initialLeft}vw`,
         opacity: Math.random() * 0.5 + 0.5,
-        '--sway-duration': `${swayDuration}s`,
-        '--sway-amplitude': `${swayAmplitude}px`,
+        '--base-left': `${initialLeft}vw`,
         '--rotation-duration': `${rotationDuration}s`,
         '--rotation-direction': rotationDirection,
         width: `${size}px`,
@@ -137,6 +134,51 @@ export default function Home() {
   return (
     <>
       <style jsx global>{`
+        .video-background {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          z-index: -2;
+          pointer-events: none;
+          overflow: hidden;
+          background: black;
+        }
+        
+        .video-background iframe {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 100vw;
+          height: 100vh;
+          transform: translate(-50%, -50%) scale(1.2); /* Scale nhẹ để tránh lộ biên */
+        }
+        
+        @media (min-aspect-ratio: 16/9) {
+          .video-background iframe {
+            height: 56.25vw;
+          }
+        }
+        
+        @media (max-aspect-ratio: 16/9) {
+          .video-background iframe {
+            width: 177.78vh;
+          }
+        }
+
+        /* Lớp phủ để video tối xuống, Noir hơn */
+        .video-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          z-index: -1;
+          background: rgba(0, 0, 0, 0.4);
+          pointer-events: none;
+        }
+
         .snow-container {
           pointer-events: none;
           overflow: hidden;
@@ -145,7 +187,6 @@ export default function Home() {
         .snowflake {
           position: absolute;
           animation: fall var(--fall-duration) linear infinite, 
-                     sway var(--sway-duration) ease-in-out infinite, 
                      tumble var(--rotation-duration) linear infinite;
           transform-origin: center;
           filter: brightness(1.5);
@@ -153,14 +194,7 @@ export default function Home() {
         @keyframes fall {
           to {
             top: var(--page-height);
-          }
-        }
-        @keyframes sway {
-          0%, 100% {
-            transform: translateX(0);
-          }
-          50% {
-            transform: translateX(var(--sway-amplitude));
+            left: calc(var(--base-left) - 50vw); /* Dạt mạnh sang trái 50vw */
           }
         }
         @keyframes tumble {
@@ -172,12 +206,23 @@ export default function Home() {
           }
         }
         .fog {
-          background: linear-gradient(to top, rgba(255, 255, 255, 0.5), transparent);
-          opacity: 0.3;
+          background: linear-gradient(to top, rgba(194, 163, 138, 0.2), transparent);
+          opacity: 0.4;
           pointer-events: none;
           z-index: 39;
         }
       `}</style>
+
+      {/* Background Video */}
+      <div className="video-background">
+        <iframe
+          src="https://www.youtube.com/embed/305Uc8i5RJM?autoplay=1&mute=1&controls=0&loop=1&playlist=305Uc8i5RJM&showinfo=0&modestbranding=1&rel=0&iv_load_policy=3&disablekb=1&start=37&end=124"
+          frameBorder="0"
+          allow="autoplay; encrypted-media"
+          allowFullScreen
+        ></iframe>
+      </div>
+      <div className="video-overlay"></div>
 
       {/* Spotlight Overlay - Global Dark Mode Effect */}
       {spotlightEnabled && (
@@ -191,51 +236,37 @@ export default function Home() {
           `}
           style={{
             maskImage: `radial-gradient(
-              circle 75vmax at ${mousePos.x}px ${mousePos.y}px, 
+              circle 500px at ${mousePos.x}px ${mousePos.y}px, 
               transparent 0%, 
-              transparent 20%, 
-              rgba(0,0,0,0.3) 40%, 
-              rgba(0,0,0,0.7) 70%, 
-              black 100%
+              transparent 35%, 
+              rgba(0,0,0,0.3) 60%, 
+              rgba(0,0,0,0.8) 100%
             )`,
             WebkitMaskImage: `radial-gradient(
-              circle 75vmax at ${mousePos.x}px ${mousePos.y}px, 
+              circle 500px at ${mousePos.x}px ${mousePos.y}px, 
               transparent 0%, 
-              transparent 20%, 
-              rgba(0,0,0,0.3) 40%, 
-              rgba(0,0,0,0.7) 70%, 
-              black 100%
+              transparent 35%, 
+              rgba(0,0,0,0.3) 60%, 
+              rgba(0,0,0,0.8) 100%
             )`,
           }}
         />
       )}
 
-      {/* Toggle Button - Fixed Position */}
-      <button
-        onClick={() => setSpotlightEnabled(!spotlightEnabled)}
-        className="fixed top-23 right-2 text-6xl px-0 py-0 z-30 bg-transparent text-[var(--colorone)] rounded-full rounded-full cursor-pointer"
-      >
-        {spotlightEnabled ? '🌙' : '☀️'}
-      </button>
-
-      <div ref={scrollRef} className="w-full min-h-screen flex flex-col overflow-y-auto no-scrollbar bg-[var(--background)]">
+      <div ref={scrollRef} className="w-full min-h-screen flex flex-col overflow-y-auto no-scrollbar">
         {/* Snow Effect - Render snowflakes only after mount to avoid hydration mismatch */}
         <div ref={snowRef} className="absolute top-0 left-0 w-full snow-container">
           {mounted && snowflakes}
         </div>
 
         {/* Hero Section */}
-        <div className="w-full min-h-screen flex-shrink-0 snap-start relative">
+        <div 
+          className="w-full min-h-screen flex-shrink-0 snap-start relative"
+          onMouseEnter={() => setSpotlightEnabled(true)}
+          onMouseLeave={() => setSpotlightEnabled(false)}
+        >
           <Hero />
         </div>
-
-        {/* Obsessions */}
-        <div className="w-full min-h-screen flex-shrink-0 snap-start relative z-10">
-          <Obsessions />
-        </div>
-
-        {/* Fog Effect - at the bottom of the page */}
-        <div className="fog absolute bottom-0 left-0 right-0 h-[50%] " />
       </div>
     </>
   );

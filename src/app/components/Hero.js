@@ -127,7 +127,7 @@ export default function Hero() {
 
   // Scramble text animation
   const scrambleText = (original, target, setDisplay, duration = 200) => {
-    const chars = "iljtfrsciljtfr"; 
+    const chars = "itfrmwclfr"; 
     let seed = 1234; 
     const m = 2147483647; 
     const a = 1103515245; 
@@ -254,14 +254,14 @@ export default function Hero() {
           playerVars: {
             autoplay: 1,
             loop: 1,
-            playlist: '8itIwVBu6os,Vwnp-2T3VFg,09UOuVuFs08,6qSjSqduzeY,4ctcuO8BtDc',
+            playlist: 'JEUf8nTl5aU,pL35m337Qa4',
             controls: 0,
             showinfo: 0,
             modestbranding: 1,
           },
           events: {
             onReady: (event) => {
-              event.target.setVolume(5);
+              event.target.setVolume(50);
               // ĐÃ XÓA: setVideoTitle(event.target.getVideoData().title);
               // Để onStateChange trigger animation ngay lần đầu
             },
@@ -351,7 +351,7 @@ export default function Hero() {
   };
 
   return (
-    <section id="gallery" className="w-full min-h-screen bg-[var(--background)] snap-start font-[family-Fredericka_the_Great] box-border relative z-10 flex justify-center items-center">
+    <section id="gallery" className="w-full min-h-screen snap-start font-[family-Fredericka_the_Great] box-border relative z-10 flex justify-center items-center">
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Fredericka+the+Great&display=swap');
       `}</style>
@@ -502,12 +502,12 @@ export default function Hero() {
         </div>
       )}
       <div id="youtube-player" style={{ display: 'none' }}></div>
-      <div className={`w-[80vw] h-[90vh] bg-[var(--colortwo)] rounded-2xl shadow-[0_25px_30px_-12px_rgba(0,0,0,0.7)] text-gray-800 transition-opacity duration-1000 relative ${isIntroStarted ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`w-[80vw] h-[90vh] bg-[var(--colortwo)] rounded-2xl border border-[var(--colorone)]/10 shadow-[0_35px_60px_-15px_rgba(0,0,0,0.9)] text-gray-800 transition-opacity duration-1000 relative ${isIntroStarted ? 'opacity-100' : 'opacity-0'}`}>
         <svg className="absolute w-0 h-0 opacity-0 pointer-events-none" aria-hidden="true">
           <defs>
             <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="rgb(236 72 153)" />
-              <stop offset="100%" stopColor="rgb(234 179 8)" />
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="100%" stopColor="var(--colorone)" />
             </linearGradient>
           </defs>
         </svg>
@@ -548,12 +548,12 @@ export default function Hero() {
             <div className="flex items-center justify-end gap-6 md:gap-10 text-3xl font-semibold pr-4 md:pr-10 text-[var(--colorone)] font-fredericka">
                 <Link
                   href="/case"
-                  className="hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300 hover:drop-shadow-lg cursor-pointer"
+                  className="hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 hover:drop-shadow-lg cursor-pointer"
                 >
                   Case Archives
                 </Link>
                 <div 
-                  className="hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300 hover:drop-shadow-lg cursor-pointer"
+                  className="hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 hover:drop-shadow-lg cursor-pointer"
                   onClick={() => setIsStoryOpen(true)}
                 >
                   Tell your story!
@@ -564,13 +564,14 @@ export default function Hero() {
         {/* Image - z-10 */}
         <div className="absolute bottom-0 left-10 h-1/2 z-0">
             <img
-                src="/realopecrop.png"
+                src="/ope.png"
                 alt="Portrait of Subject"
                 className="h-full w-auto"
                 style={{
                     transform: `scale(${imageScale})`,
                     transformOrigin: 'bottom left',
-                    transition: 'transform 0.3s ease-in-out'
+                    transition: 'transform 0.3s ease-in-out',
+                    filter: 'brightness(0.65) contrast(1.1) saturate(0.9)'
                 }}
             />
         </div>
@@ -579,7 +580,7 @@ export default function Hero() {
         {!isStoryOpen && (
           <div className="absolute top-1/2 -translate-y-1/2 right-4 md:right-10 w-4/9 text-justify z-0 font-bold font-fredericka">
               <h2
-                  className="block w-full text-right text-7xl md:text-8xl text-[var(--colorone)] font-bold mb-2 font-fredericka hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300"
+                  className="block w-full text-right text-6xl md:text-7xl text-[var(--colorone)] font-bold mb-2 font-fredericka hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300"
                   ref={titleRef}
                   onMouseEnter={handleMouseEnterTitle}
                   onMouseLeave={handleMouseLeaveTitle}
@@ -588,7 +589,7 @@ export default function Hero() {
               </h2>
               <div>
                   <span
-                      className="block w-full text-right text-base md:text-2xl text-[var(--colorone)] italic inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300 font-fredericka"
+                      className="block w-full text-right text-base md:text-2xl text-[var(--colorone)] italic inline-block hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 font-fredericka"
                       ref={pronunciationRef}
                       onMouseEnter={handleMouseEnterPronunciation}
                       onMouseLeave={handleMouseLeavePronunciation}
@@ -602,7 +603,7 @@ export default function Hero() {
                   onMouseEnter={handleMouseEnterDescription}
                   onMouseLeave={handleMouseLeaveDescription}
               >
-                  <span className="inline-block hover:bg-gradient-to-r hover:from-pink-300 hover:to-yellow-300 hover:text-transparent hover:bg-clip-text transition-all duration-300">
+                  <span className="inline-block hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300">
                       {displayText}
                   </span>
               </div>
