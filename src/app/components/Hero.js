@@ -61,7 +61,7 @@ export default function Hero({ isStoryOpen }) {
   };
 
   return (
-    <section className="relative w-full h-full flex items-center justify-center pt-4 pb-32 lg:pt-24 lg:pb-20">
+    <section className="relative w-full h-full flex items-center justify-center pt-0 pb-32 lg:pt-24 lg:pb-20">
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Fredericka+the+Great&display=swap');
         .font-fredericka { font-family: 'Fredericka the Great', cursive; }
@@ -71,11 +71,11 @@ export default function Hero({ isStoryOpen }) {
           backdrop-filter: none;
           border: none;
           border-radius: 16px;
-          padding: 12px; /* Giảm padding trên Mobile/iPad */
+          padding: 0; /* Xóa padding hoàn toàn trên Mobile */
           display: flex;
           flex-direction: column;
           align-items: center;
-          width: 95%;
+          width: 98%;
           max-width: 1100px;
           transition: all 0.5s ease;
         }
@@ -85,7 +85,7 @@ export default function Hero({ isStoryOpen }) {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 25px; /* Giảm padding trên Desktop từ 40px xuống 25px */
+            padding: 25px;
             flex-direction: row;
             align-items: center;
             gap: 40px;
@@ -95,8 +95,8 @@ export default function Hero({ isStoryOpen }) {
 
         .polaroid-container {
           position: relative;
-          padding: 10px;
-          border: 10px solid #f5f5dc;
+          padding: 0 !important; /* Force xóa padding */
+          border: 10px solid var(--colorone);
           border-bottom-width: 55px;
           background: #ffffff;
           transition: all 0.7s cubic-bezier(0.23, 1, 0.32, 1);
@@ -106,14 +106,15 @@ export default function Hero({ isStoryOpen }) {
           cursor: pointer;
           box-shadow: 0 8px 16px rgba(0,0,0,0.3);
           flex-shrink: 0;
-          width: 280px; /* Mobile */
+          width: 300px; /* Mobile */
+          overflow: hidden;
         }
 
         @media (min-width: 768px) {
-          .polaroid-container { width: min(500px, 85vw); } /* iPad: Dãn rộng tối đa */
+          .polaroid-container { width: min(500px, 85vw); }
         }
         @media (min-width: 1024px) {
-          .polaroid-container { width: 380px; padding: 15px; } /* Laptop: Thu lại để cân đối 40/60 */
+          .polaroid-container { width: 380px; padding: 0 !important; } /* Laptop cũng không có padding */
         }
 
         .polaroid-container:hover {
@@ -179,7 +180,7 @@ export default function Hero({ isStoryOpen }) {
                   }}
                 />
               </div>
-              <span className="polaroid-label">#SUBJECT-0910</span>
+              <span className="polaroid-label">#SUBJECT-510</span>
             </div>
           </div>
 
