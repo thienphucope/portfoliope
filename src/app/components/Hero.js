@@ -32,7 +32,7 @@ export default function Hero({ isStoryOpen }) {
   }, []);
 
   const scrambleText = (original, target, setDisplay, duration = 200) => {
-    const chars = "itfrmwclfr";
+    const chars = "itfrmiclfr";
     let seed = 1234;
     const m = 2147483647;
     const a = 1103515245;
