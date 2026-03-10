@@ -61,7 +61,7 @@ export default function Hero({ isStoryOpen }) {
   };
 
   return (
-    <section className="relative w-full h-full flex items-center justify-center pt-28 pb-20">
+    <section className="relative w-full h-full flex items-center justify-center pt-16 pb-12 lg:pt-24 lg:pb-20">
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Fredericka+the+Great&display=swap');
         .font-fredericka { font-family: 'Fredericka the Great', cursive; }
