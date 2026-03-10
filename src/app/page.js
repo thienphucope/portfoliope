@@ -282,9 +282,31 @@ export default function Home() {
     <>
       <style jsx global>{`
         .video-background { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; pointer-events: none; overflow: hidden; background: black; }
-        .video-background iframe { position: absolute; top: 50%; left: 50%; width: 100vw; height: 100vh; transform: translate(-50%, -50%) scale(1.2); }
-        @media (min-aspect-ratio: 16/9) { .video-background iframe { height: 56.25vw; } }
-        @media (max-aspect-ratio: 16/9) { .video-background iframe { width: 177.78vh; } }
+        
+        .video-background iframe { 
+          position: absolute; 
+          top: 50%; 
+          left: 50%; 
+          width: 100vw; 
+          height: 100vh; 
+          transform: translate(-50%, -50%) scale(1.5); /* Tăng scale để đảm bảo phủ kín và che logo YT */
+        }
+        
+        /* Đối với màn hình dọc (điện thoại) */
+        @media (max-aspect-ratio: 16/9) {
+          .video-background iframe {
+            width: 177.78vh; /* 100 * 16 / 9 */
+            height: 100vh;
+          }
+        }
+        
+        /* Đối với màn hình ngang (desktop) */
+        @media (min-aspect-ratio: 16/9) {
+          .video-background iframe {
+            width: 100vw;
+            height: 56.25vw; /* 100 * 9 / 16 */
+          }
+        }
         .video-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; background: rgba(0, 0, 0, 0.4); pointer-events: none; }
         .snow-container { pointer-events: none; overflow: hidden; z-index: 40; }
         .snowflake { position: absolute; animation: fall var(--fall-duration) linear infinite, tumble var(--rotation-duration) linear infinite; transform-origin: center; filter: brightness(1.5); }
