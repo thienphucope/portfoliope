@@ -380,14 +380,14 @@ export default function Home() {
         )}
 
         {/* Hero Section */}
-        <main className="w-full min-h-screen flex-shrink-0 relative flex items-center justify-center" onMouseEnter={() => setSpotlightEnabled(true)} onMouseLeave={() => setSpotlightEnabled(false)}>
-          <div className={`w-full h-full transition-opacity duration-1000 ${isIntroStarted ? 'opacity-100' : 'opacity-0'}`}>
+        <main className="w-full min-h-screen flex-shrink-0 relative flex items-start lg:items-center justify-center pt-24 lg:pt-0 pb-32 lg:pb-0" onMouseEnter={() => setSpotlightEnabled(true)} onMouseLeave={() => setSpotlightEnabled(false)}>
+          <div className={`w-full transition-opacity duration-1000 ${isIntroStarted ? 'opacity-100' : 'opacity-0'}`}>
             <Hero isStoryOpen={isStoryOpen} />
           </div>
         </main>
 
         {/* Footer */}
-        <footer className={`fixed bottom-0 left-0 right-0 p-6 md:p-10 flex flex-col lg:flex-row justify-center lg:justify-between items-center gap-4 lg:gap-0 z-[60] transition-opacity duration-1000 ${isIntroStarted && !isStoryOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        <footer className={`fixed bottom-0 left-0 right-0 p-6 md:p-10 flex flex-col lg:flex-row justify-center lg:justify-between items-center gap-4 lg:gap-0 z-[60] bg-gradient-to-t from-black/80 to-transparent transition-opacity duration-1000 ${isIntroStarted && !isStoryOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           <div className="order-2 lg:order-1 text-[var(--colorone)] font-fredericka text-xs md:text-sm opacity-60">
             I do not own media
           </div>
