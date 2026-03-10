@@ -6,7 +6,7 @@ export default function Hero({ isStoryOpen }) {
   const [displayTitle, setDisplayTitle] = useState("");
   const [displayPronunciation, setDisplayPronunciation] = useState("");
 
-  const padChar = '\u00A0';
+  const padChar = ' ';
   const originalText = "A counselling detective who helps people make sense of their stories, whether they are struggling with love, confusion, loss, or a mystery that refuses to rest.";
   const replacementText = "An unmotivated sloth in human form, dedicated to avoiding effort, solving nothing, and uninterested in anything beyond the nearest snack or nap.";
   const textMaxLen = Math.max(originalText.length, replacementText.length);
@@ -32,7 +32,7 @@ export default function Hero({ isStoryOpen }) {
   }, []);
 
   const scrambleText = (original, target, setDisplay, duration = 200) => {
-    const chars = "itfrmiclfr";
+    const chars = "itfrliclfr";
     let seed = 1234;
     const m = 2147483647;
     const a = 1103515245;
@@ -67,35 +67,37 @@ export default function Hero({ isStoryOpen }) {
         .font-fredericka { font-family: 'Fredericka the Great', cursive; }
         
         .detective-card {
-          background: rgba(255, 255, 255, 0.03);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: transparent;
+          backdrop-filter: none;
+          border: none;
           border-radius: 16px;
-          padding: 24px;
+          padding: 12px; /* Giảm padding trên Mobile/iPad */
           display: flex;
           flex-direction: column;
           align-items: center;
-          width: 92%;
+          width: 95%;
           max-width: 1100px;
-          box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4);
           transition: all 0.5s ease;
         }
 
-        /* Chỉ chuyển sang hàng ngang từ màn hình Laptop (1024px trở lên) */
         @media (min-width: 1024px) {
           .detective-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 25px; /* Giảm padding trên Desktop từ 40px xuống 25px */
             flex-direction: row;
             align-items: center;
-            padding: 40px;
-            gap: 50px;
+            gap: 40px;
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4);
           }
         }
 
         .polaroid-container {
           position: relative;
-          padding: 8px;
-          border: 8px solid #f5f5dc;
-          border-bottom-width: 50px;
+          padding: 10px;
+          border: 10px solid #f5f5dc;
+          border-bottom-width: 55px;
           background: #ffffff;
           transition: all 0.7s cubic-bezier(0.23, 1, 0.32, 1);
           display: flex;
@@ -104,6 +106,14 @@ export default function Hero({ isStoryOpen }) {
           cursor: pointer;
           box-shadow: 0 8px 16px rgba(0,0,0,0.3);
           flex-shrink: 0;
+          width: 280px; /* Mobile */
+        }
+
+        @media (min-width: 768px) {
+          .polaroid-container { width: min(500px, 85vw); } /* iPad: Dãn rộng tối đa */
+        }
+        @media (min-width: 1024px) {
+          .polaroid-container { width: 380px; padding: 15px; } /* Laptop: Thu lại để cân đối 40/60 */
         }
 
         .polaroid-container:hover {
@@ -113,23 +123,37 @@ export default function Hero({ isStoryOpen }) {
           transform: scale(1.03) rotate(-1deg);
         }
 
-        .polaroid-container img {
+        .image-wrapper {
+          width: 100%;
+          aspect-ratio: 1/1;
+          overflow: hidden;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          background: transparent;
+        }
+
+        .image-wrapper img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
           transition: filter 0.6s ease;
-          display: block;
-          max-height: 100%;
-          width: auto;
+        }
+
+        .polaroid-container:hover img {
+          filter: brightness(1.1) contrast(1.1) saturate(1.1) !important;
         }
 
         .polaroid-label {
           position: absolute;
-          bottom: -35px;
+          bottom: -42px;
           left: 50%;
           transform: translateX(-50%);
           font-family: 'Courier New', monospace;
           font-weight: 900;
           color: #1a1a1a;
-          font-size: 13px;
-          letter-spacing: 0.5px;
+          font-size: clamp(12px, 2vw, 15px);
+          letter-spacing: 1px;
           white-space: nowrap;
           transition: opacity 0.4s ease;
         }
@@ -137,38 +161,33 @@ export default function Hero({ isStoryOpen }) {
         .polaroid-container:hover .polaroid-label {
           opacity: 0;
         }
-
-        .intro-text-content {
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-        }
       `}</style>
 
       {/* Detective Dossier Card */}
       <div className="w-full flex justify-center">
         <div className="detective-card">
           
-          {/* Left side: Polaroid (40% on Desktop) */}
-          <div className="w-full lg:w-[35%] flex justify-center items-center">
+          {/* Left side: Polaroid (Square) */}
+          <div className="w-full lg:w-[40%] flex justify-center items-center">
             <div className="polaroid-container">
-              <img
-                src="/ope.png"
-                alt="Ope"
-                className="h-[25vh] md:h-[35vh] lg:h-[45vh] w-auto object-contain"
-                style={{
-                  filter: 'brightness(0.7) contrast(1.1) saturate(0.8)'
-                }}
-              />
+              <div className="image-wrapper">
+                <img
+                  src="/ope.png"
+                  alt="Ope"
+                  style={{
+                    filter: 'brightness(0.7) contrast(1.1) saturate(0.8)'
+                  }}
+                />
+              </div>
               <span className="polaroid-label">#SUBJECT-0910</span>
             </div>
           </div>
 
-          {/* Right side: Text Intro (65% on Desktop) */}
+          {/* Right side: Text Intro */}
           {!isStoryOpen && (
-            <div className="w-full lg:w-[65%] intro-text-content font-fredericka mt-8 lg:mt-0">
+            <div className="w-full lg:w-[60%] intro-text-content font-fredericka mt-8 lg:mt-0">
               <h2
-                className="text-3xl md:text-5xl lg:text-7xl xl:text-8xl text-[var(--colorone)] font-bold mb-3 hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default text-center lg:text-left"
+                className="text-3xl md:text-5xl lg:text-7xl xl:text-8xl text-[var(--colorone)] font-bold mb-3 hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default text-center lg:text-left whitespace-pre-wrap"
                 onMouseEnter={() => scrambleText(originalTitlePadded, replacementTitlePadded, setDisplayTitle)}
                 onMouseLeave={() => scrambleText(replacementTitlePadded, originalTitlePadded, setDisplayTitle)}
               >
@@ -177,7 +196,7 @@ export default function Hero({ isStoryOpen }) {
               
               <div className="mb-4 text-center lg:text-left">
                 <span
-                  className="text-sm md:text-lg lg:text-2xl xl:text-3xl text-[var(--colorone)] italic hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default"
+                  className="text-sm md:text-xl lg:text-2xl xl:text-3xl text-[var(--colorone)] italic hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default whitespace-pre-wrap"
                   onMouseEnter={() => scrambleText(originalPronPadded, replacementPronPadded, setDisplayPronunciation)}
                   onMouseLeave={() => scrambleText(replacementPronPadded, originalPronPadded, setDisplayPronunciation)}
                 >
@@ -186,7 +205,7 @@ export default function Hero({ isStoryOpen }) {
               </div>
 
               <div
-                className="text-xs md:text-base lg:text-xl xl:text-2xl leading-relaxed text-[var(--colorone)] hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default lg:text-left text-justify"
+                className="text-xs md:text-base lg:text-xl xl:text-2xl leading-relaxed text-[var(--colorone)] hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default lg:text-left max-w-[85vw] md:max-w-[70vw] lg:max-w-none mx-auto lg:mx-0 whitespace-pre-wrap"
                 onMouseEnter={() => scrambleText(originalTextPadded, replacementTextPadded, setDisplayText)}
                 onMouseLeave={() => scrambleText(replacementTextPadded, originalTextPadded, setDisplayText)}
               >

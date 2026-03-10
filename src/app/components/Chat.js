@@ -162,11 +162,7 @@ export default function Chat({ isEmbedded = false }) {
     accent: "text-white"
   };
 
-  if (!isOpen && !isEmbedded) return (
-    <button onClick={() => setIsOpen(true)} className="fixed top-0 left-0 w-10 h-10 rounded-full z-50 hover:scale-110 transition-all">
-      <img src="/printer.png" className="w-full h-full rounded-full opacity-20" />
-    </button>
-  );
+  if (!isOpen && !isEmbedded) return null;
 
   return (
     <div className={`${isEmbedded ? 'relative h-full w-full' : 'fixed inset-0 z-50'} flex flex-col bg-[#121212] overflow-hidden`} style={{ fontFamily: style.fontFamily }}>

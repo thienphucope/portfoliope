@@ -387,12 +387,17 @@ export default function Home() {
         </main>
 
         {/* Footer */}
-        <footer className={`fixed bottom-0 left-0 right-0 p-6 md:p-10 flex justify-center md:justify-end gap-6 z-[60] transition-opacity duration-1000 ${isIntroStarted && !isStoryOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-          <a href="https://www.youtube.com/@opewatson" target="_blank" rel="noopener noreferrer"><FaYoutube className="text-[var(--colorone)] text-4xl md:text-5xl hover:text-white transition-colors" /></a>
-          <a href="https://www.instagram.com/opewatson/" target="_blank" rel="noopener noreferrer"><FaInstagram className="text-[var(--colorone)] text-4xl md:text-5xl hover:text-white transition-colors" /></a>
-          <a href="https://github.com/thienphucope" target="_blank" rel="noopener noreferrer"><FaGithub className="text-[var(--colorone)] text-4xl md:text-5xl hover:text-white transition-colors" /></a>
-          <a href="mailto:thienphucmain@gmail.com"><FaEnvelope className="text-[var(--colorone)] text-4xl md:text-5xl hover:text-white transition-colors" /></a>
-          <a href="https://x.com/a" target="_blank" rel="noopener noreferrer"><FaTwitter className="text-[var(--colorone)] text-4xl md:text-5xl hover:text-white transition-colors" /></a>
+        <footer className={`fixed bottom-0 left-0 right-0 p-6 md:p-10 flex flex-col lg:flex-row justify-center lg:justify-between items-center gap-4 lg:gap-0 z-[60] transition-opacity duration-1000 ${isIntroStarted && !isStoryOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          <div className="order-2 lg:order-1 text-[var(--colorone)] font-fredericka text-xs md:text-sm opacity-60">
+            I do not own media
+          </div>
+          <div className="order-1 lg:order-2 flex gap-6 z-20">
+            <a href="https://www.youtube.com/@opewatson" target="_blank" rel="noopener noreferrer"><FaYoutube className="text-[var(--colorone)] text-4xl md:text-5xl hover:text-white transition-colors" /></a>
+            <a href="https://www.instagram.com/opewatson/" target="_blank" rel="noopener noreferrer"><FaInstagram className="text-[var(--colorone)] text-4xl md:text-5xl hover:text-white transition-colors" /></a>
+            <a href="https://github.com/thienphucope" target="_blank" rel="noopener noreferrer"><FaGithub className="text-[var(--colorone)] text-4xl md:text-5xl hover:text-white transition-colors" /></a>
+            <a href="mailto:thienphucmain@gmail.com"><FaEnvelope className="text-[var(--colorone)] text-4xl md:text-5xl hover:text-white transition-colors" /></a>
+            <a href="https://x.com/a" target="_blank" rel="noopener noreferrer"><FaTwitter className="text-[var(--colorone)] text-4xl md:text-5xl hover:text-white transition-colors" /></a>
+          </div>
         </footer>
       </div>
     </>
