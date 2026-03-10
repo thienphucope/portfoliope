@@ -95,7 +95,7 @@ export default function Hero({ isStoryOpen }) {
 
         .polaroid-container {
           position: relative;
-          padding: 0 !important; /* Force xóa padding */
+          padding: 0 !important;
           border: 10px solid var(--colorone);
           border-bottom-width: 55px;
           background: #ffffff;
@@ -107,14 +107,14 @@ export default function Hero({ isStoryOpen }) {
           box-shadow: 0 8px 16px rgba(0,0,0,0.3);
           flex-shrink: 0;
           width: 300px; /* Mobile */
-          overflow: hidden;
+          /* overflow: hidden; */ /* Xóa để nhãn không bị cắt */
         }
 
         @media (min-width: 768px) {
           .polaroid-container { width: min(500px, 85vw); }
         }
         @media (min-width: 1024px) {
-          .polaroid-container { width: 380px; padding: 0 !important; } /* Laptop cũng không có padding */
+          .polaroid-container { width: 380px; padding: 0 !important; }
         }
 
         .polaroid-container:hover {
@@ -147,16 +147,17 @@ export default function Hero({ isStoryOpen }) {
 
         .polaroid-label {
           position: absolute;
-          bottom: -42px;
+          bottom: -40px; /* Nằm trong phần border-bottom 55px */
           left: 50%;
           transform: translateX(-50%);
           font-family: 'Courier New', monospace;
           font-weight: 900;
-          color: #1a1a1a;
+          color: #ffffff; /* Chữ trắng */
           font-size: clamp(12px, 2vw, 15px);
           letter-spacing: 1px;
           white-space: nowrap;
           transition: opacity 0.4s ease;
+          z-index: 10;
         }
 
         .polaroid-container:hover .polaroid-label {
