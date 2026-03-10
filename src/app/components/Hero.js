@@ -380,6 +380,17 @@ export default function Hero() {
       } else {
         initPlayer();
       }
+
+      // MỚI: Bất kỳ cú click nào vào window cũng sẽ kích hoạt nhạc nếu chưa phát
+      const handleGlobalClick = () => {
+        if (playerRef.current && typeof playerRef.current.playVideo === 'function') {
+          playerRef.current.playVideo();
+          // Sau khi đã mồi được nhạc, gỡ bỏ listener này
+          window.removeEventListener('click', handleGlobalClick);
+        }
+      };
+      window.addEventListener('click', handleGlobalClick);
+      return () => window.removeEventListener('click', handleGlobalClick);
     }
   }, [isIntroStarted]);
 
