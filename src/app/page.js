@@ -129,14 +129,6 @@ export default function Home() {
     });
   }, []);
 
-  if (isMobile) {
-    return (
-      <div className="w-full h-screen flex items-center justify-center bg-[var(--background)] text-white text-xl p-4 text-center">
-        This site is not accessible on mobile devices. Please use a desktop browser. Youre still able use the AI features.
-      </div>
-    );
-  }
-
   return (
     <>
       <style jsx global>{`
