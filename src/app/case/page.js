@@ -309,14 +309,10 @@ const getLineClass = (line) => {
 };
 
 // ─── RAW TEXT EDITOR ─────────────────────────────────────────────────────────
-// contentEditable with per-line CSS classes styled to match rendered output.
-// Each line = one <div class="rte-line rte-XX"> holding raw text.
-// Empty lines rendered as <div class="rte-line rte-empty"><br></div> for height.
 
 const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNavigate, cursorPosition = 'end' }) => {
   const containerRef = useRef(null);
 
-  // Build a single line div from raw string
   const buildLineDiv = (line) => {
     const d = document.createElement('div');
     const cls = getLineClass(line);
@@ -330,16 +326,13 @@ const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNavigate,
     return d;
   };
 
-  // Build all line divs from raw string
   const buildLines = (raw) => (raw || '').split('\n').map(buildLineDiv);
 
-  // Collect raw text — reads textContent per line, empty = ''
   const collectRaw = () => {
     if (!containerRef.current) return '';
     return Array.from(containerRef.current.querySelectorAll('.rte-line'))
       .map(d => {
         if (d.classList.contains('rte-empty')) return '';
-        // textContent is always the raw markdown text (no pseudo-element content)
         return d.textContent || '';
       })
       .join('\n');
@@ -364,7 +357,6 @@ const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNavigate,
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // On every keystroke: re-classify current line CSS only (no innerHTML touch)
   const handleInput = useCallback(() => {
     const sel = window.getSelection();
     if (!sel || !sel.anchorNode) return;
@@ -377,7 +369,6 @@ const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNavigate,
     const text = node.textContent || '';
     const isEmpty = text === '' || node.innerHTML === '<br>';
     node.className = `rte-line ${getLineClass(text)}${isEmpty ? ' rte-empty' : ''}`;
-    // Ensure empty line has <br> so it holds height
     if (isEmpty && !node.querySelector('br')) {
       node.innerHTML = '<br>';
     }
@@ -388,7 +379,6 @@ const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNavigate,
     onDeactivate();
   }, [onSave, onDeactivate]);
 
-  // Helper: find the rte-line div containing the current cursor
   const getCurrentLineDiv = () => {
     const sel = window.getSelection();
     if (!sel || !sel.anchorNode) return null;
@@ -398,7 +388,6 @@ const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNavigate,
       if (node.nodeType === 1 && node.classList && node.classList.contains('rte-line')) return node;
       node = node.parentNode;
     }
-    // fallback: if cursor is directly inside container (e.g. on <br>), return first/last child
     if (node === container) {
       const lines = container.querySelectorAll('.rte-line');
       return lines.length > 0 ? lines[sel.anchorOffset === 0 ? 0 : lines.length - 1] : null;
@@ -416,18 +405,16 @@ const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNavigate,
       return;
     }
 
-    // Backspace on empty block → delete block and move to previous
     if (e.key === 'Backspace') {
       const raw = collectRaw();
       if (raw === '') {
         e.preventDefault();
         onSave(raw);
-        onNavigate('up', true); // true = delete this block
+        onNavigate('up', true);
         return;
       }
     }
 
-    // Arrow up/down — navigate between blocks at first/last line
     if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
       const lineDiv = getCurrentLineDiv();
       const lines = el.querySelectorAll('.rte-line');
@@ -450,14 +437,12 @@ const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNavigate,
     }
 
     if (e.key === 'Enter' && !e.shiftKey) {
-      // Get current line div
       const sel = window.getSelection();
       let lineDiv = sel?.anchorNode;
       while (lineDiv && !(lineDiv.classList && lineDiv.classList.contains('rte-line'))) lineDiv = lineDiv?.parentNode;
 
       const lineText = lineDiv ? (lineDiv.textContent || '') : '';
 
-      // /ai command
       if (lineText.trim().startsWith('/ai ')) {
         e.preventDefault();
         const query = lineText.trim().slice(4).trim();
@@ -478,7 +463,6 @@ const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNavigate,
         return;
       }
 
-      // List continuation
       const ulMatch = /^([-*+] )/.exec(lineText);
       const olMatch = /^(\d+)\. /.exec(lineText);
 
@@ -507,7 +491,6 @@ const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNavigate,
         }
       }
 
-      // Default: save and create new block
       e.preventDefault();
       onSave(collectRaw());
       onCreateAfter();
@@ -556,7 +539,7 @@ const ActiveBlock = ({ block, onSave, onDeactivate, onCreateAfter, onNavigate, c
 
 // ─── BLOCK EDITOR ─────────────────────────────────────────────────────────────
 
-const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, onToggleEditing }) => {
+const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, onToggleEditing, onSaveRef }) => {
   const [blocks, setBlocks]           = useState([]);
   const [activeBlockIndex, setActive] = useState(null);
   const [libsReady, setLibsReady]     = useState(false);
@@ -606,9 +589,8 @@ const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, on
 
   const navigateBlock = useCallback((index, direction, deleteBlock = false) => {
     if (deleteBlock) {
-      // Remove this block and move to previous
       setBlocks(prev => {
-        if (prev.length <= 1) return prev; // never delete last block
+        if (prev.length <= 1) return prev;
         const n = [...prev];
         n.splice(index, 1);
         return n;
@@ -627,40 +609,23 @@ const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, on
     }
   }, [blocks.length]);
 
-  const [saveStatus, setSaveStatus] = useState('idle');
+  // Expose save handler to parent via ref
+  const blocksRef = useRef(blocks);
+  useEffect(() => { blocksRef.current = blocks; }, [blocks]);
 
-  const handleSave = useCallback(async () => {
-    const raw = blocks.map(b => b.raw).join('\n\n');
-    setSaveStatus('saving');
-    try {
-      await onSaveFile(raw);
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2000);
-    } catch {
-      setSaveStatus('error');
-      setTimeout(() => setSaveStatus('idle'), 3000);
+  useEffect(() => {
+    if (onSaveRef) {
+      onSaveRef.current = async () => {
+        const raw = blocksRef.current.map(b => b.raw).join('\n\n');
+        await onSaveFile(raw);
+      };
     }
-  }, [blocks, onSaveFile]);
-
-  // isEditing and toggle come from parent vault
+  }, [onSaveRef, onSaveFile]);
 
   if (!libsReady) return <div className="status-msg">Booting Vault Engine…</div>;
 
   return (
     <div className="block-editor">
-      <div className="toolbar">
-        <button className="mode-toggle-btn" onClick={onToggleEditing}>
-          {isEditing ? '👁 Read' : '✏ Edit'}
-        </button>
-        <button
-          className={`save-btn save-btn--${saveStatus}`}
-          onClick={handleSave}
-          disabled={saveStatus === 'saving'}
-        >
-          {saveStatus === 'saving' ? '⏳' : saveStatus === 'saved' ? '✓ Saved' : saveStatus === 'error' ? '✗ Error' : '💾 Save'}
-        </button>
-      </div>
-
       {blocks.map((block, index) => {
         const isActive = activeBlockIndex === index && isEditing;
         return (
@@ -728,12 +693,14 @@ export default function CasePage() {
   const [content,     setContent]     = useState('');
   const [fileName,    setFileName]    = useState('');
   const [contentKey,  setContentKey]  = useState(0);
-  const [isEditing,   setIsEditing]   = useState(false); // sticky across file switches
+  const [isEditing,   setIsEditing]   = useState(false);
+  const [saveStatus,  setSaveStatus]  = useState('idle');
   const [editPass,    setEditPass]    = useState(() => { try { return sessionStorage.getItem('vault_edit_pass') || ''; } catch { return ''; } });
   const [passPrompt,  setPassPrompt]  = useState(null);
   const fileRegistry   = useRef({});
-  const serverRawCache = useRef({}); // stores last-known server content per filePath
+  const serverRawCache = useRef({});
   const appShellRef    = useRef(null);
+  const saveHandlerRef = useRef(null); // ref to BlockEditor's save fn
 
   const [sidebarWidth, setSidebarWidth] = useState(250);
   const [chatWidth,    setChatWidth]    = useState(350);
@@ -771,7 +738,6 @@ export default function CasePage() {
   }, [handleMouseMove, stopResizing]);
 
   const loadFile = useCallback(async (path, name, serverPath = null, historyMode = 'push') => {
-    // Local-only file (not saved to server yet) — restore from cache
     if (!path) {
       const key = serverPath || name;
       const cached = readCache(key);
@@ -788,14 +754,11 @@ export default function CasePage() {
     try {
       const res  = await fetch(path);
       const text = await res.text();
-      // repoKey = full repo-relative path e.g. "notes/MyNote.md"
-      // path is raw.githubusercontent.com URL: /owner/repo/branch/...
-      // Split after branch segment (index 4 = branch after owner/repo)
-      const urlParts = new URL(path).pathname.split('/').slice(1); // ['owner','repo','branch','rest','...']
-      const repoKey = urlParts.slice(3).join('/'); // everything after owner/repo/branch
+      const urlParts = new URL(path).pathname.split('/').slice(1);
+      const repoKey = urlParts.slice(3).join('/');
       serverRawCache.current[repoKey] = text;
       setContent(text);
-      setFileName(repoKey);   // ← full path like "notes/file.md"
+      setFileName(repoKey);
       setContentKey(k => k + 1);
       if (historyMode === 'push') {
         const u = new URL(window.location);
@@ -819,7 +782,6 @@ export default function CasePage() {
         const buildRegistry = (nodes, repoPath = '') => nodes.forEach(n => {
           if (n.kind === 'file') {
             const fullRepoPath = repoPath ? `${repoPath}/${n.name}` : n.name;
-            // index by: full repo path, basename, basename without .md
             fileRegistry.current[fullRepoPath.toLowerCase()] = n.path;
             fileRegistry.current[n.name.toLowerCase()] = n.path;
             fileRegistry.current[n.name.replace('.md', '').toLowerCase()] = n.path;
@@ -848,12 +810,8 @@ export default function CasePage() {
     return () => window.removeEventListener('popstate', onPop);
   }, [loadFile]);
 
-  // Before unload: check if localStorage cache differs from last known server content.
-  // If so, show native browser confirm. If user chooses to leave → flush cache so
-  // next load gets clean server content. If user cancels → stay on page, nothing changes.
   useEffect(() => {
     const onBeforeUnload = (e) => {
-      // Only warn if any cached file actually differs from server content
       const dirtyKeys = [];
       try {
         for (let i = 0; i < localStorage.length; i++) {
@@ -864,13 +822,12 @@ export default function CasePage() {
           if (!Array.isArray(cached) || cached.length === 0) continue;
           const cachedRaw = cached.map(b => b.raw).join('\n\n').trim();
           const serverRaw = (serverRawCache.current[fp] || "").trim();
-          // Only prompt if server content exists and differs significantly
           if (serverRaw && serverRaw !== cachedRaw) {
             dirtyKeys.push(k);
           }
         }
       } catch {}
-      if (dirtyKeys.length === 0) return; // nothing dirty — allow reload silently
+      if (dirtyKeys.length === 0) return;
 
       e.preventDefault();
       e.returnValue = '';
@@ -884,7 +841,6 @@ export default function CasePage() {
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
   }, []);
 
-  // Re-fetch tree and rebuild registry
   const refreshTree = useCallback(async () => {
     const tree = await fetch('/api/cases').then(r => r.json());
     if (!Array.isArray(tree)) return;
@@ -902,29 +858,20 @@ export default function CasePage() {
     setFileTree(tree);
   }, []);
 
-  // Create file locally in memory and open it — no server call until Save
-  // target examples: "MyNote" → cases/notes/MyNote.md
-  //                  "folder/MyNote" → cases/folder/MyNote.md
-  //                  "cases/x/MyNote" → cases/x/MyNote.md (used as-is if starts with cases/)
-  // Resolve [[target]] to a server path:
-  //   [[note]]          → notes/note.md      (default folder)
-  //   [[folder/note]]   → folder/note.md     (explicit path)
   const resolveWikiPath = (target) => {
     const withExt = target.endsWith('.md') ? target : `${target}.md`;
     return withExt.includes('/') ? withExt : `notes/${withExt}`;
   };
 
   const createAndOpenFile = useCallback((target) => {
-    const serverPath  = resolveWikiPath(target);              // e.g. "notes/MyNote.md"
-    const displayName = serverPath.split('/').pop();          // "MyNote.md"
+    const serverPath  = resolveWikiPath(target);
+    const displayName = serverPath.split('/').pop();
     const title       = displayName.replace('.md', '');
 
-    // Register with null = local only
     fileRegistry.current[serverPath.toLowerCase()] = null;
     fileRegistry.current[displayName.toLowerCase()] = null;
     fileRegistry.current[target.toLowerCase()] = null;
 
-    // Insert into tree, creating folder nodes as needed
     const parts = serverPath.split('/');
     setFileTree(prev => {
       const insert = (nodes, [head, ...rest]) => {
@@ -939,7 +886,6 @@ export default function CasePage() {
       return insert(prev, parts);
     });
 
-    // Clear any stale cache so BlockEditor starts fresh
     try { localStorage.removeItem(`vault_v3::${serverPath}`); } catch {}
     setContent(`# ${title}\n`);
     setFileName(serverPath);
@@ -954,26 +900,22 @@ export default function CasePage() {
     const key        = serverPath.toLowerCase();
     const baseName   = serverPath.split('/').pop().toLowerCase();
 
-    // Check registry: string value = real path, null = local-only, undefined = not found
     const realPath = fileRegistry.current[key] ?? fileRegistry.current[baseName];
 
     e.preventDefault();
     if (typeof realPath === 'string') {
       loadFile(realPath, serverPath.split('/').pop());
     } else if (realPath === null) {
-      // already open/created locally — just set fileName to navigate back
       setFileName(serverPath);
     } else {
       createAndOpenFile(target);
     }
   }, [loadFile, createAndOpenFile]);
 
-  // Ask for password via modal, returns entered password
   const askPassword = useCallback(() => new Promise((resolve, reject) => {
     setPassPrompt({ resolve, reject });
   }), []);
 
-  // Save a single file by path+raw, using cached or asked password
   const doPost = useCallback(async (filePath, raw, pass) => {
     const isNew = fileRegistry.current[filePath.toLowerCase()] === null;
     const res = await fetch('/api/cases', {
@@ -988,12 +930,8 @@ export default function CasePage() {
   }, [refreshTree]);
 
   const saveOneFile = useCallback(async (filePath, raw) => {
-    // Skip if no actual change vs server content
-    // (server content is not cached here, but we check rawServer stored at load time)
-    // We always push — but backend/GitHub will only create a new commit if content changed
-    // (GitHub API does NOT deduplicate, so we compare locally using serverRawCache)
     const serverRaw = serverRawCache.current[filePath] ?? null;
-    if (serverRaw !== null && serverRaw.trim() === raw.trim()) return; // no change
+    if (serverRaw !== null && serverRaw.trim() === raw.trim()) return;
 
     let pass = editPass;
     if (!pass) {
@@ -1013,18 +951,15 @@ export default function CasePage() {
     }
   }, [editPass, askPassword, doPost]);
 
-  // Save current file + all other dirty files in localStorage
   const handleSaveFile = useCallback(async (raw) => {
     if (!fileName) throw new Error('No file open');
-    // Save current file first
     await saveOneFile(fileName, raw);
-    // Then save all other dirty files in cache
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
         if (!k || !k.startsWith('vault_v3::')) continue;
         const fp = k.replace('vault_v3::', '');
-        if (fp === fileName) continue; // already saved above
+        if (fp === fileName) continue;
         const cached = readCache(fp);
         if (!Array.isArray(cached) || cached.length === 0) continue;
         const cachedRaw = cached.map(b => b.raw).join('\n\n');
@@ -1033,12 +968,76 @@ export default function CasePage() {
     } catch {}
   }, [fileName, saveOneFile]);
 
+  // Sidebar-level save handler
+  const handleSidebarSave = useCallback(async () => {
+    if (!saveHandlerRef.current) return;
+    setSaveStatus('saving');
+    try {
+      await saveHandlerRef.current();
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch {
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    }
+  }, []);
+
   return (
     <div className="app-shell" ref={appShellRef}>
 
       {/* LEFT: FILE TREE */}
       <aside className="sidebar-panel" style={{ width: sidebarWidth }}>
-        <div className="sidebar-brand">RED VAULT</div>
+        <div className="sidebar-brand">
+          <span className="brand-text">RED VAULT</span>
+          <div className="brand-actions">
+            {/* Edit toggle icon */}
+            <button
+              className={`icon-btn${isEditing ? ' icon-btn--active' : ''}`}
+              onClick={() => setIsEditing(e => !e)}
+              title={isEditing ? 'Switch to Read mode' : 'Switch to Edit mode'}
+            >
+              {isEditing ? (
+                // Eye icon (read mode)
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              ) : (
+                // Pencil icon (edit mode)
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              )}
+            </button>
+            {/* Save icon */}
+            <button
+              className={`icon-btn icon-btn--save${saveStatus === 'saved' ? ' icon-btn--saved' : saveStatus === 'error' ? ' icon-btn--error' : saveStatus === 'saving' ? ' icon-btn--saving' : ''}`}
+              onClick={handleSidebarSave}
+              disabled={saveStatus === 'saving'}
+              title="Save"
+            >
+              {saveStatus === 'saving' ? (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{opacity:0.5}}>
+                  <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.06-5.96"/>
+                </svg>
+              ) : saveStatus === 'saved' ? (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              ) : saveStatus === 'error' ? (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+              ) : (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                  <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+                </svg>
+              )}
+            </button>
+          </div>
+        </div>
         <div className="file-list">
           {fileTree.map((item, i) => <FileSystemItem key={i} item={item} onSelectFile={loadFile} activeFile={fileName} />)}
         </div>
@@ -1049,7 +1048,16 @@ export default function CasePage() {
       {/* CENTER: BLOCK EDITOR */}
       <main className="main-content">
         <article className="markdown-container">
-          <BlockEditor key={contentKey} content={content} fileName={fileName} onLinkClick={handleLinkClick} onSaveFile={handleSaveFile} isEditing={isEditing} onToggleEditing={() => { setIsEditing(e => !e); }} />
+          <BlockEditor
+            key={contentKey}
+            content={content}
+            fileName={fileName}
+            onLinkClick={handleLinkClick}
+            onSaveFile={handleSaveFile}
+            isEditing={isEditing}
+            onToggleEditing={() => setIsEditing(e => !e)}
+            onSaveRef={saveHandlerRef}
+          />
         </article>
       </main>
 
@@ -1102,7 +1110,50 @@ export default function CasePage() {
         .app-shell { height:100dvh; width:100vw; display:flex; background:var(--bg); overflow:hidden; }
 
         .sidebar-panel { height:100dvh; background:var(--bg); display:flex; flex-direction:column; flex-shrink:0; }
-        .sidebar-brand { padding:20px; font-weight:600; letter-spacing:2px; border-bottom:1px solid var(--border); font-family:'Inter',sans-serif; }
+        .sidebar-brand {
+          padding: 14px 16px;
+          font-weight: 600;
+          letter-spacing: 2px;
+          border-bottom: 1px solid var(--border);
+          font-family: 'Inter', sans-serif;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+        }
+        .brand-text { flex: 1; font-size: 13px; }
+        .brand-actions { display: flex; align-items: center; gap: 4px; }
+
+        .icon-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 28px;
+          height: 28px;
+          border-radius: 6px;
+          border: 1px solid transparent;
+          background: transparent;
+          color: rgba(255,255,255,0.45);
+          cursor: pointer;
+          transition: color .15s, background .15s, border-color .15s;
+          padding: 0;
+          flex-shrink: 0;
+        }
+        .icon-btn:hover {
+          color: var(--txt);
+          background: rgba(255,255,255,0.07);
+          border-color: var(--border);
+        }
+        .icon-btn--active {
+          color: var(--accent);
+          background: rgba(255,250,205,0.08);
+          border-color: rgba(255,250,205,0.2);
+        }
+        .icon-btn--saved { color: #7dda7d; }
+        .icon-btn--error { color: #e07070; }
+        .icon-btn--saving { opacity: 0.5; cursor: default; }
+        .icon-btn:disabled { cursor: default; }
+
         .file-list { flex:1; overflow-y:auto; padding:10px; scrollbar-width:none; }
         .file-list::-webkit-scrollbar { display:none; }
 
@@ -1136,7 +1187,6 @@ export default function CasePage() {
         .block-view.editable-mode { cursor: text; }
         .block-view.editable-mode:hover { background: rgba(255,255,255,0.025); }
 
-        /* Block wrapper — holds BlockView + optional overlay textarea */
         .block-wrapper {
           position: relative;
         }
@@ -1163,7 +1213,6 @@ export default function CasePage() {
 
         /* ── TEXTAREA EDITORS ──────────────────────────────────────────────── */
 
-        /* Raw text editor — contentEditable with styled lines */
         .raw-text-editor {
           background: rgba(18,18,18,0.98);
           border: 1px solid rgba(255,250,205,0.2);
@@ -1179,7 +1228,6 @@ export default function CasePage() {
           outline: none;
         }
 
-        /* Per-line divs — inherit font/size/color from .markdown-content parent */
         .rte-line {
           display: block;
           white-space: pre-wrap;
@@ -1192,18 +1240,14 @@ export default function CasePage() {
           min-height: 1.6em;
           display: block;
         }
-        /* Mirror .markdown-content h1/h2/h3 exactly — use px so em doesn't compound */
         .rte-h1 { font-size: 2.0em;  font-weight: 700; color: #fff; line-height: 1.2; margin-top: .8em;  margin-bottom: .4em; }
         .rte-h2 { font-size: 1.6em;  font-weight: 700; color: #fff; line-height: 1.2; margin-top: .7em;  margin-bottom: .3em; }
         .rte-h3 { font-size: 1.2em;  font-weight: 700; color: #fff; line-height: 1.2; margin-top: .6em;  margin-bottom: .2em; }
         .rte-h4 { font-size: 1.05em; font-weight: 700; color: #fff; }
         .rte-h5 { font-size: 1em;    font-weight: 700; color: #ddd; }
         .rte-h6 { font-size: 0.9em;  font-weight: 700; color: #bbb; }
-        /* Lists — hanging indent: marker in gutter, text wraps aligned */
         .rte-ul, .rte-ol { padding-left: 1.8em; text-indent: -1.8em; margin-bottom: 0.3em; }
-        /* Blockquote */
         .rte-blockquote { border-left: 3px solid var(--accent); padding-left: 1.25em; margin-left: 0; font-style: italic; opacity: 0.8; }
-        /* Code fence line */
         .rte-codefence { font-family: monospace; font-size: 0.85em; opacity: 0.55; background: rgba(255,255,255,0.03); border-radius: 3px; }
         .rte-hr { border: none; border-bottom: 1px solid var(--border); margin: 0.4em 0; }
 
@@ -1252,67 +1296,6 @@ export default function CasePage() {
         .pass-modal__input:focus { border-color: rgba(255,250,205,0.4); }
         .pass-modal__hint { font-size: 11px; opacity: 0.4; font-family:'Inter',sans-serif; }
 
-        /* Unsaved cache prompt banner */
-        .unsaved-prompt {
-          display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
-          background: rgba(255,250,205,0.06);
-          border: 1px solid rgba(255,250,205,0.25);
-          border-radius: 8px;
-          padding: 10px 14px;
-          margin-bottom: 16px;
-          font-family: 'Inter', sans-serif;
-          font-size: 13px;
-        }
-        .unsaved-prompt__msg { flex: 1; color: var(--accent); opacity: 0.9; min-width: 200px; }
-        .unsaved-prompt__actions { display: flex; gap: 8px; }
-        .unsaved-prompt__btn {
-          border-radius: 16px; padding: 4px 12px; font-size: 12px;
-          font-family: 'Inter', sans-serif; cursor: pointer;
-          border: 1px solid var(--border); background: rgba(255,255,255,0.06);
-          color: var(--txt); transition: background .15s;
-        }
-        .unsaved-prompt__btn:hover { background: rgba(255,255,255,0.12); }
-        .unsaved-prompt__btn--save  { border-color: rgba(100,220,100,0.4); color: #7dda7d; }
-        .unsaved-prompt__btn--discard { border-color: rgba(220,80,80,0.35); color: #e07070; }
-
-        /* Toolbar */
-        /* Toolbar - Nổi lơ lửng và căn giữa */
-        .toolbar {
-          position: sticky; 
-          top: 15px; 
-          z-index: 1000;         /* Đảm bảo nằm trên cùng */
-          
-          display: flex; 
-          justify-content: center; 
-          gap: 10px; 
-          
-          /* Tuyệt chiêu: */
-          height: 0;             /* Ép chiều cao block bằng 0 để không đẩy chữ xuống */
-          overflow: visible;     /* Để các nút bên trong vẫn hiện ra dù cha cao 0 */
-          pointer-events: none;  /* Click xuyên qua vùng trống xung quanh nút */
-          
-          /* Nếu bạn muốn căn giữa tuyệt đối trong container */
-          width: 100%;
-        }
-
-        .toolbar button {
-          pointer-events: auto;  /* Riêng các nút thì vẫn nhận click */
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); /* Đổ bóng cho nổi hẳn lên */
-          background: rgba(30, 30, 30, 0.8) !important; /* Thêm nền tối để nhìn rõ trên nền chữ */
-          backdrop-filter: blur(8px); /* Hiệu ứng kính mờ xịn sò */
-        }
-        .mode-toggle-btn, .save-btn {
-          background: rgba(255,255,255,0.07); border: 1px solid var(--border);
-          border-radius: 20px; padding: 4px 12px; font-size: 12px;
-          font-family: 'Inter', sans-serif; color: var(--txt);
-          cursor: pointer; user-select: none; transition: background .15s, border-color .15s;
-        }
-        .mode-toggle-btn:hover { background: rgba(255,255,255,0.12); }
-        .save-btn--idle:hover  { background: rgba(255,255,255,0.12); }
-        .save-btn--saving      { opacity: 0.6; cursor: default; }
-        .save-btn--saved       { border-color: rgba(100,220,100,0.5); color: #7dda7d; }
-        .save-btn--error       { border-color: rgba(220,80,80,0.5);  color: #e07070; }
-
         /* ── MARKDOWN TYPOGRAPHY ────────────────────────────────────────────── */
         .markdown-content { font-family:var(--md-font); font-size:var(--md-size); line-height:var(--md-line); color:var(--txt); text-align: justify; }
         .markdown-content h1 { font-size:2.0em; margin:.8em 0 .4em; color:#fff; font-weight:700; }
@@ -1343,7 +1326,6 @@ export default function CasePage() {
         .markdown-content ul ul { list-style-type: circle; }
         .markdown-content ul ul ul { list-style-type: square; }
 
-        /* Task list checkboxes */
         .markdown-content li input[type="checkbox"] {
           margin-right: 0.5em;
           accent-color: var(--accent);
