@@ -494,7 +494,8 @@ export default function CasePage() {
         targetScroll.current = shell.scrollLeft;
       }
       
-      targetScroll.current += e.deltaY * 1.5;
+      // Increase delta multiplier for larger scroll distance per wheel click
+      targetScroll.current += e.deltaY * 2.5;
       targetScroll.current = Math.max(0, Math.min(targetScroll.current, shell.scrollWidth - shell.clientWidth));
       
       if (!isWheelScrolling.current) {
@@ -505,12 +506,13 @@ export default function CasePage() {
             return;
           }
           const diff = targetScroll.current - shell.scrollLeft;
-          if (Math.abs(diff) < 1) {
+          if (Math.abs(diff) < 0.5) {
             shell.scrollLeft = targetScroll.current;
             isWheelScrolling.current = false;
             targetScroll.current = null;
           } else {
-            shell.scrollLeft += diff * 0.15;
+            // Smaller lerp factor means slower, smoother gliding
+            shell.scrollLeft += diff * 0.08;
             requestAnimationFrame(animate);
           }
         };
@@ -581,29 +583,31 @@ export default function CasePage() {
           flex-grow: 0;
           flex-shrink: 0;
           background-color: var(--colorone);
-          border-right: 1px solid rgba(255, 255, 255, 0.1);
+          border-right: 2px solid rgba(255, 255, 255, 0.2);
           cursor: pointer;
           isolation: isolate;
         }
 
         .spine-content {
+          position: relative;
+          width: 100%;
+          height: 100%;
           display: flex;
-          flex-direction: column;
           align-items: center;
           justify-content: center;
-          height: 100%;
-          gap: 20px;
         }
 
         .spine-homepage {
+          position: absolute;
+          bottom: 40px;
           writing-mode: vertical-rl;
           font-family: 'Inter', sans-serif;
-          font-size: 1rem;
+          font-size: 0.85rem;
           color: black;
           opacity: 0.8;
           mix-blend-mode: destination-out;
           text-transform: uppercase;
-          letter-spacing: 2px;
+          letter-spacing: 3px;
         }
 
         .acc-panel {
@@ -611,7 +615,7 @@ export default function CasePage() {
           flex-direction: row;
           height: 100%;
           transition: flex-basis 1.5s cubic-bezier(0.25, 0.8, 0.25, 1), min-width 1.5s cubic-bezier(0.25, 0.8, 0.25, 1), flex-grow 1.5s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 1.5s;
-          border-right: 1px solid rgba(255, 255, 255, 0.1);
+          border-right: 2px solid rgba(255, 255, 255, 0.2);
           overflow: hidden;
           flex-shrink: 0;
         }
