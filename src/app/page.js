@@ -146,6 +146,7 @@ export default function Home() {
   const snowRef = useRef(null);
   const resizeObserverRef = useRef(null);
   const playerRef = useRef(null);
+  const bgPlayerRef = useRef(null);
   const newSongTimerRef = useRef(null);
 
   useEffect(() => {
@@ -197,42 +198,81 @@ export default function Home() {
   }, [mounted, updateSnow]);
 
   useEffect(() => {
-    if (isIntroStarted) {
-      const initPlayer = () => {
-        if (window.YT && window.YT.Player && !playerRef.current) {
-          playerRef.current = new window.YT.Player('youtube-player', {
-            height: '0', width: '0', videoId: '8itIwVBu6os',
-            playerVars: { autoplay: 1, loop: 1, playlist: 'JEUf8nTl5aU,pL35m337Qa4', controls: 0, showinfo: 0, modestbranding: 1 },
-            events: {
-              onReady: (e) => { e.target.setVolume(50); e.target.playVideo(); },
-              onStateChange: (e) => {
-                if (e.data === window.YT.PlayerState.PLAYING) {
-                  setIsPlaying(true);
-                  const newTitle = e.target.getVideoData().title;
-                  setVideoTitle(old => {
-                    if (old !== newTitle) {
-                      if (newSongTimerRef.current) clearTimeout(newSongTimerRef.current);
-                      setAnimationClass('fly-cycle'); setAnimationKey(k => k + 1);
-                      newSongTimerRef.current = setTimeout(() => setAnimationClass(''), 5500);
-                    }
-                    return newTitle;
-                  });
-                } else setIsPlaying(false);
-              },
+    const initPlayers = () => {
+      // Background Video Player
+      if (window.YT && window.YT.Player && !bgPlayerRef.current) {
+        bgPlayerRef.current = new window.YT.Player('bg-player', {
+          videoId: '305Uc8i5RJM',
+          playerVars: {
+            autoplay: 1,
+            mute: 1,
+            controls: 0,
+            showinfo: 0,
+            modestbranding: 1,
+            rel: 0,
+            iv_load_policy: 3,
+            disablekb: 1,
+            start: 48,
+            end: 120,
+          },
+          events: {
+            onReady: (e) => {
+              e.target.mute();
+              e.target.playVideo();
             },
-          });
-        }
-      };
-      if (!window.YT || !window.YT.Player) {
+            onStateChange: (e) => {
+              if (e.data === window.YT.PlayerState.ENDED) {
+                e.target.seekTo(37);
+                e.target.playVideo();
+              }
+            },
+          },
+        });
+      }
+
+      // Music Player
+      if (isIntroStarted && window.YT && window.YT.Player && !playerRef.current) {
+        playerRef.current = new window.YT.Player('youtube-player', {
+          height: '0', width: '0', videoId: '8itIwVBu6os',
+          playerVars: { autoplay: 1, loop: 1, playlist: 'JEUf8nTl5aU,pL35m337Qa4', controls: 0, showinfo: 0, modestbranding: 1 },
+          events: {
+            onReady: (e) => { e.target.setVolume(50); e.target.playVideo(); },
+            onStateChange: (e) => {
+              if (e.data === window.YT.PlayerState.PLAYING) {
+                setIsPlaying(true);
+                const newTitle = e.target.getVideoData().title;
+                setVideoTitle(old => {
+                  if (old !== newTitle) {
+                    if (newSongTimerRef.current) clearTimeout(newSongTimerRef.current);
+                    setAnimationClass('fly-cycle'); setAnimationKey(k => k + 1);
+                    newSongTimerRef.current = setTimeout(() => setAnimationClass(''), 5500);
+                  }
+                  return newTitle;
+                });
+              } else setIsPlaying(false);
+            },
+          },
+        });
+      }
+    };
+
+    if (!window.YT || !window.YT.Player) {
+      if (!document.querySelector('script[src*="iframe_api"]')) {
         const tag = document.createElement('script'); tag.src = "https://www.youtube.com/iframe_api";
         const first = document.getElementsByTagName('script')[0];
         first.parentNode.insertBefore(tag, first);
-        window.onYouTubeIframeAPIReady = initPlayer;
-      } else initPlayer();
-      const handleGlobalClick = () => { if (playerRef.current?.playVideo) { playerRef.current.playVideo(); window.removeEventListener('click', handleGlobalClick); } };
-      window.addEventListener('click', handleGlobalClick);
-      return () => window.removeEventListener('click', handleGlobalClick);
+      }
+      window.onYouTubeIframeAPIReady = initPlayers;
+    } else {
+      initPlayers();
     }
+    const handleGlobalClick = () => { 
+      if (playerRef.current?.playVideo) playerRef.current.playVideo(); 
+      if (bgPlayerRef.current?.playVideo) bgPlayerRef.current.playVideo();
+      window.removeEventListener('click', handleGlobalClick); 
+    };
+    window.addEventListener('click', handleGlobalClick);
+    return () => window.removeEventListener('click', handleGlobalClick);
   }, [isIntroStarted]);
 
   const togglePlayPause = () => {
@@ -289,25 +329,23 @@ export default function Home() {
           left: 50%; 
           width: 100vw; 
           height: 100vh; 
-          transform: translate(-50%, -50%) scale(1.5); /* Tăng scale để đảm bảo phủ kín và che logo YT */
+          transform: translate(-50%, -50%) scale(1.5);
         }
         
-        /* Đối với màn hình dọc (điện thoại) */
         @media (max-aspect-ratio: 16/9) {
           .video-background iframe {
-            width: 177.78vh; /* 100 * 16 / 9 */
+            width: 177.78vh;
             height: 100vh;
           }
         }
         
-        /* Đối với màn hình ngang (desktop) */
         @media (min-aspect-ratio: 16/9) {
           .video-background iframe {
             width: 100vw;
-            height: 56.25vw; /* 100 * 9 / 16 */
+            height: 56.25vw;
           }
         }
-        .video-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; background: rgba(0, 0, 0, 0.4); pointer-events: none; }
+        .video-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); pointer-events: none; }
         .snow-container { pointer-events: none; overflow: hidden; z-index: 40; }
         .snowflake { position: absolute; animation: fall var(--fall-duration) linear infinite, tumble var(--rotation-duration) linear infinite; transform-origin: center; filter: brightness(1.5); }
         @keyframes fall { to { top: var(--page-height); left: calc(var(--base-left) - 50vw); } }
@@ -326,7 +364,7 @@ export default function Home() {
       `}</style>
 
       <div className="video-background">
-        <iframe src="https://www.youtube.com/embed/305Uc8i5RJM?autoplay=1&mute=1&controls=0&loop=1&playlist=305Uc8i5RJM&showinfo=0&modestbranding=1&rel=0&iv_load_policy=3&disablekb=1&start=37&end=124" frameBorder="0" allow="autoplay; encrypted-media" allowFullScreen></iframe>
+        <div id="bg-player"></div>
       </div>
       <div className="video-overlay"></div>
 
@@ -338,7 +376,7 @@ export default function Home() {
       )}
 
       {!isIntroStarted && (
-        <div className="fixed inset-0 bg-[var(--background)] flex justify-center items-center z-[100]">
+        <div className="fixed inset-0 bg-[var(--colorone)] flex justify-center items-center z-[100]">
           <img src="/printer.png" alt="Start" className="w-24 h-24 cursor-pointer animate-pulse" onClick={() => setIsIntroStarted(true)} />
         </div>
       )}

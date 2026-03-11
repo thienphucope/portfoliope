@@ -2,7 +2,7 @@ import "@fontsource-variable/roboto";
 import "@fontsource-variable/roboto-mono";
 import "@fontsource/zen-kaku-gothic-new";
 import "./globals.css";
-import Chat from './components/Chat';
+import Chat from './case/components/Chat';
 
 export const metadata = {
   title: "Ope Watson",

@@ -84,12 +84,12 @@ export default function Hero({ isStoryOpen }) {
 
         @media (min-width: 1024px) {
           .detective-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: transparent;
+            backdrop-filter: none;
+            border: none;
             flex-direction: row;
             align-items: center;
-            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4);
+            box-shadow: none;
           }
         }
 
