@@ -373,7 +373,8 @@ export default function CasePage() {
 
   const tabs = React.useMemo(() => {
     const baseTabs = [
-      { id: 'system', title: 'SYSTEM', type: 'system' }
+      { id: 'filetree', title: 'File Tree', type: 'sidebar' },
+      { id: 'chat', title: 'AI Chat Vault', type: 'chat' },
     ];
     
     const dashboard = allFiles.find(f => f.name.toLowerCase() === 'dash board.md');
@@ -395,13 +396,17 @@ export default function CasePage() {
     setActiveTab(tab.id);
     
     // Auto scroll logic for exactly 4 tabs on left and 4 on right
+    // The first tab (File Tree) is sticky and always visible (index 0).
+    // The active tab should visually be the 4th spine from the left.
+    // So the active tab should have 3 spines to its left:
+    // index 0 (sticky), plus 2 more scrolled spines.
+    // Therefore, we want to scroll so that (tabIndex - 3) * 150 is the scrollLeft.
     const tabIndex = tabs.findIndex(t => t.id === tab.id);
     if (tabIndex !== -1 && appShellRef.current) {
-      const targetOffset = tabIndex * 150;
-      // 450px = 3 closed tabs (150px each). Since the System tab is sticky, 
-      // scrolling to targetOffset - 450 leaves exactly 4 spines on the left!
-      const scrollTarget = targetOffset - 450; 
-      appShellRef.current.scrollTo({ left: Math.max(0, scrollTarget), behavior: 'smooth' });
+      setTimeout(() => {
+        const scrollTarget = (tabIndex - 3) * 150; 
+        appShellRef.current.scrollTo({ left: Math.max(0, scrollTarget), behavior: 'smooth' });
+      }, 50); // slight delay to let flex layout adjust the open panel width first
     }
     
     if (tab.type === 'editor') {
@@ -585,7 +590,7 @@ export default function CasePage() {
       </div>
       <div className="video-overlay"></div>
 
-      {tabs.map(tab => {
+      {tabs.map((tab, index) => {
         const isOpen = activeTab === tab.id;
         return (
           <div 
@@ -593,7 +598,7 @@ export default function CasePage() {
             className={`acc-panel ${isOpen ? 'open' : 'closed'}`}
           >
             {/* The spine is always shown, whether open or closed */}
-            <div className="acc-spine-container" onClick={() => handleTabClick(tab)}>
+            <div className="acc-spine-container" onClick={(e) => handleTabClick(tab, e)}>
               <div className="acc-spine">
                 {tab.title}
               </div>
