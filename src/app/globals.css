@@ -16,7 +16,7 @@ body {
 
 .use-custom-cursor,
 .use-custom-cursor * {
-  cursor: url('/cursorhalf.png') 8 8, auto !important;
+  cursor: url('/cursor.png') 8 8, auto !important;
 }
 
 

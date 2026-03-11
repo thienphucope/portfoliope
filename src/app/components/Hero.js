@@ -1,10 +1,13 @@
 "use client";
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { Fingerprint, Footprints } from 'lucide-react';
 
 export default function Hero({ isStoryOpen }) {
   const [displayText, setDisplayText] = useState("");
   const [displayTitle, setDisplayTitle] = useState("");
   const [displayPronunciation, setDisplayPronunciation] = useState("");
+  const [isHoveringPolaroid, setIsHoveringPolaroid] = useState(false);
+  const [footprints, setFootprints] = useState([]);
 
   const padChar = ' ';
   const originalText = "A counselling detective who helps people make sense of their stories, whether they are struggling with love, loss, or a mystery.";
@@ -29,6 +32,16 @@ export default function Hero({ isStoryOpen }) {
     setDisplayText(originalTextPadded);
     setDisplayTitle(originalTitlePadded);
     setDisplayPronunciation(originalPronPadded);
+    
+    // Generate footprints only on the client to avoid hydration mismatch
+    const generatedFootprints = Array.from({ length: 12 }).map((_, i) => ({
+      id: i,
+      top: Math.random() * 100,
+      left: Math.random() * 100,
+      rotation: Math.random() * 360,
+      size: Math.random() * 60 + 80, // 80px to 140px
+    }));
+    setFootprints(generatedFootprints);
   }, []);
 
   const scrambleText = (original, target, setDisplay, duration = 200) => {
@@ -61,7 +74,22 @@ export default function Hero({ isStoryOpen }) {
   };
 
   return (
-    <section className="relative w-full h-full flex items-center justify-center pt-0 pb-32 lg:pt-24 lg:pb-20">
+    <section className="relative w-full h-full flex items-center justify-center pt-0 pb-32 lg:pt-24 lg:pb-20 overflow-visible">
+      {/* Footprints background on hover */}
+      <div className={`absolute inset-[-100px] pointer-events-none transition-opacity duration-500 z-0 ${isHoveringPolaroid ? 'opacity-30' : 'opacity-0'}`}>
+        {footprints.map(fp => (
+          <div key={fp.id} style={{
+            position: 'absolute',
+            top: `${fp.top}%`,
+            left: `${fp.left}%`,
+            transform: `rotate(${fp.rotation}deg)`,
+            color: 'var(--colorone)'
+          }}>
+            <Footprints size={fp.size} />
+          </div>
+        ))}
+      </div>
+
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Fredericka+the+Great&display=swap');
         .font-fredericka { font-family: 'Fredericka the Great', cursive; }
@@ -96,29 +124,30 @@ export default function Hero({ isStoryOpen }) {
         .polaroid-container {
           position: relative;
           padding: 0 !important;
-          border: 10px solid var(--colorone);
-          border-bottom-width: 55px;
-          background: #ffffff;
+          border: 8px solid var(--colorone);
+          border-bottom-width: 45px;
+          background: transparent;
           transition: all 0.7s cubic-bezier(0.23, 1, 0.32, 1);
           display: flex;
           flex-direction: column;
           align-items: center;
           box-shadow: 0 8px 16px rgba(0,0,0,0.3);
           flex-shrink: 0;
-          width: 300px; /* Mobile */
+          width: 240px; /* Mobile - Smaller */
         }
 
         @media (min-width: 768px) {
-          .polaroid-container { width: min(450px, 80vw); }
+          .polaroid-container { width: 320px; }
         }
         @media (min-width: 1024px) {
-          .polaroid-container { width: 380px; }
+          .polaroid-container { width: 300px; }
         }
 
         .polaroid-container:hover {
-          border-color: transparent;
           background: transparent;
-          box-shadow: none;
+          border-top-color: transparent;
+          border-left-color: transparent;
+          border-right-color: transparent;
           transform: scale(1.02) rotate(-1deg);
         }
 
@@ -159,17 +188,21 @@ export default function Hero({ isStoryOpen }) {
         }
 
         .polaroid-container:hover .polaroid-label {
-          opacity: 0;
+          opacity: 1;
         }
       `}</style>
 
       {/* Detective Dossier Card */}
-      <div className="w-full flex justify-center">
+      <div className="flex justify-center relative z-10 w-fit">
         <div className="detective-card">
           
           {/* Left side: Polaroid (Square) */}
           <div className="flex justify-center items-center">
-            <div className="polaroid-container use-custom-cursor">
+            <div 
+              className="polaroid-container use-custom-cursor"
+              onMouseEnter={() => setIsHoveringPolaroid(true)}
+              onMouseLeave={() => setIsHoveringPolaroid(false)}
+            >
               <div className="image-wrapper">
                 <img
                   src="/ope.png"
@@ -185,9 +218,13 @@ export default function Hero({ isStoryOpen }) {
 
           {/* Right side: Text Intro */}
           {!isStoryOpen && (
-            <div className="intro-text-content font-fredericka p-8 lg:p-12 lg:pl-10 max-w-2xl">
+            <div className="intro-text-content font-fredericka p-8 lg:p-12 lg:pl-10 max-w-2xl relative">
+              {/* Fingerprint in top right of the text content */}
+              <div className="absolute top-0 right-0 text-[var(--colorone)] rotate-[-45deg] opacity-60 pointer-events-none p-4">
+                <Fingerprint className="w-16 h-16 md:w-24 md:h-24 lg:w-32 lg:h-32" />
+              </div>
               <h2
-                className="text-3xl md:text-5xl lg:text-7xl xl:text-8xl text-[var(--colorone)] font-bold mb-3 hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default text-center lg:text-left whitespace-pre-wrap"
+                className="text-3xl md:text-5xl lg:text-7xl xl:text-7xl text-[var(--colorone)] font-bold mb-3 hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default text-center lg:text-left whitespace-pre-wrap"
                 onMouseEnter={() => scrambleText(originalTitlePadded, replacementTitlePadded, setDisplayTitle)}
                 onMouseLeave={() => scrambleText(replacementTitlePadded, originalTitlePadded, setDisplayTitle)}
               >
