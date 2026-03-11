@@ -22,9 +22,14 @@ export default function CasePage() {
   const appShellRef    = useRef(null);
   const saveHandlerRef = useRef(null); // ref to BlockEditor's save fn
   const bgPlayerRef    = useRef(null);
+  
+  // Custom Smooth Scrolling States
   const isTabScrolling = useRef(false);
-  const targetScroll   = useRef(null);
-  const isWheelScrolling = useRef(false);
+  const targetScrollX  = useRef(null);
+  const isWheelScrollingX = useRef(false);
+
+  const verticalScrollTargets = useRef(new Map());
+  const isWheelScrollingY = useRef(new Map());
 
   useEffect(() => {
     const initBgPlayer = () => {
@@ -402,7 +407,7 @@ export default function CasePage() {
     const tabIndex = tabs.findIndex(t => t.id === tab.id);
     if (tabIndex !== -1 && appShellRef.current) {
       isTabScrolling.current = true;
-      targetScroll.current = null; // Cancel wheel scroll
+      targetScrollX.current = null; // Cancel wheel scroll
 
       // Instead of a single timeout, we animate the scroll gradually
       // to match the slow panel CSS flex transition.
@@ -480,8 +485,37 @@ export default function CasePage() {
         const canScrollDown = Math.ceil(vScrollable.scrollTop + vScrollable.clientHeight) < vScrollable.scrollHeight;
 
         if ((e.deltaY < 0 && canScrollUp) || (e.deltaY > 0 && canScrollDown)) {
-          return; // Let the browser scroll vertically
+          e.preventDefault();
+          
+          if (!verticalScrollTargets.current.has(vScrollable)) {
+            verticalScrollTargets.current.set(vScrollable, vScrollable.scrollTop);
+          }
+          
+          let targetY = verticalScrollTargets.current.get(vScrollable) + e.deltaY * 2.5;
+          targetY = Math.max(0, Math.min(targetY, vScrollable.scrollHeight - vScrollable.clientHeight));
+          verticalScrollTargets.current.set(vScrollable, targetY);
+
+          if (!isWheelScrollingY.current.get(vScrollable)) {
+            isWheelScrollingY.current.set(vScrollable, true);
+            const animateY = () => {
+              const currentTarget = verticalScrollTargets.current.get(vScrollable);
+              const diff = currentTarget - vScrollable.scrollTop;
+              
+              if (Math.abs(diff) < 0.5) {
+                vScrollable.scrollTop = currentTarget;
+                isWheelScrollingY.current.set(vScrollable, false);
+                verticalScrollTargets.current.delete(vScrollable);
+              } else {
+                vScrollable.scrollTop += diff * 0.08;
+                requestAnimationFrame(animateY);
+              }
+            };
+            requestAnimationFrame(animateY);
+          }
         }
+        
+        // Stop event from propagating to horizontal app scroll when hovering over vertical containers
+        return;
       }
 
       // At boundary, scroll the app shell horizontally
@@ -490,26 +524,26 @@ export default function CasePage() {
       if (isTabScrolling.current) return;
       
       const shell = appShellRef.current;
-      if (targetScroll.current === null) {
-        targetScroll.current = shell.scrollLeft;
+      if (targetScrollX.current === null) {
+        targetScrollX.current = shell.scrollLeft;
       }
       
       // Increase delta multiplier for larger scroll distance per wheel click
-      targetScroll.current += e.deltaY * 2.5;
-      targetScroll.current = Math.max(0, Math.min(targetScroll.current, shell.scrollWidth - shell.clientWidth));
+      targetScrollX.current += e.deltaY * 2.5;
+      targetScrollX.current = Math.max(0, Math.min(targetScrollX.current, shell.scrollWidth - shell.clientWidth));
       
-      if (!isWheelScrolling.current) {
-        isWheelScrolling.current = true;
+      if (!isWheelScrollingX.current) {
+        isWheelScrollingX.current = true;
         const animate = () => {
-          if (!shell || targetScroll.current === null) {
-            isWheelScrolling.current = false;
+          if (!shell || targetScrollX.current === null) {
+            isWheelScrollingX.current = false;
             return;
           }
-          const diff = targetScroll.current - shell.scrollLeft;
+          const diff = targetScrollX.current - shell.scrollLeft;
           if (Math.abs(diff) < 0.5) {
-            shell.scrollLeft = targetScroll.current;
-            isWheelScrolling.current = false;
-            targetScroll.current = null;
+            shell.scrollLeft = targetScrollX.current;
+            isWheelScrollingX.current = false;
+            targetScrollX.current = null;
           } else {
             // Smaller lerp factor means slower, smoother gliding
             shell.scrollLeft += diff * 0.08;
