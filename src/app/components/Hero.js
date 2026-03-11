@@ -103,7 +103,6 @@ export default function Hero({ isStoryOpen }) {
           display: flex;
           flex-direction: column;
           align-items: center;
-          cursor: pointer;
           box-shadow: 0 8px 16px rgba(0,0,0,0.3);
           flex-shrink: 0;
           width: 300px; /* Mobile */
@@ -170,7 +169,7 @@ export default function Hero({ isStoryOpen }) {
           
           {/* Left side: Polaroid (Square) */}
           <div className="flex justify-center items-center">
-            <div className="polaroid-container">
+            <div className="polaroid-container use-custom-cursor">
               <div className="image-wrapper">
                 <img
                   src="/ope.png"
