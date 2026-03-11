@@ -395,18 +395,34 @@ export default function CasePage() {
     if (activeTab === tab.id) return;
     setActiveTab(tab.id);
     
-    // Auto scroll logic for exactly 4 tabs on left and 4 on right
-    // The first tab (File Tree) is sticky and always visible (index 0).
-    // The active tab should visually be the 4th spine from the left.
-    // So the active tab should have 3 spines to its left:
-    // index 0 (sticky), plus 2 more scrolled spines.
-    // Therefore, we want to scroll so that (tabIndex - 3) * 150 is the scrollLeft.
+    // Auto scroll logic for exactly 2 tabs on left and 2 on right
     const tabIndex = tabs.findIndex(t => t.id === tab.id);
     if (tabIndex !== -1 && appShellRef.current) {
-      setTimeout(() => {
-        const scrollTarget = (tabIndex - 3) * 150; 
-        appShellRef.current.scrollTo({ left: Math.max(0, scrollTarget), behavior: 'smooth' });
-      }, 50); // slight delay to let flex layout adjust the open panel width first
+      // Instead of a single timeout, we animate the scroll gradually
+      // to match the slow panel CSS flex transition.
+      const scrollTarget = (tabIndex - 2) * 150; 
+      const maxScroll = Math.max(0, scrollTarget);
+      
+      let startStart = null;
+      const startScroll = appShellRef.current.scrollLeft;
+      const distance = maxScroll - startScroll;
+      const duration = 1500; // matching CSS transition time
+      
+      const step = (timestamp) => {
+        if (!startStart) startStart = timestamp;
+        const progress = Math.min((timestamp - startStart) / duration, 1);
+        
+        // easeOutQuart equivalent to sync nicely with cubic-bezier(0.25, 0.8, 0.25, 1)
+        const ease = 1 - Math.pow(1 - progress, 4);
+        
+        if (appShellRef.current) {
+           appShellRef.current.scrollLeft = startScroll + (distance * ease);
+        }
+        if (progress < 1) {
+          window.requestAnimationFrame(step);
+        }
+      };
+      window.requestAnimationFrame(step);
     }
     
     if (tab.type === 'editor') {
@@ -450,11 +466,19 @@ export default function CasePage() {
         }
       }
 
-      // Only scroll app shell horizontally if the user is hovering over the app shell directly
-      const isHoveringScrollableContent = e.target.closest('.acc-body, .file-list, .markdown-container, .chat-container');
-      if (!isHoveringScrollableContent) {
-        appShellRef.current.scrollLeft += e.deltaY;
+      const vScrollable = e.target.closest('.markdown-container, .file-list, .chat-container');
+      if (vScrollable) {
+        const canScrollUp = vScrollable.scrollTop > 0;
+        const canScrollDown = Math.ceil(vScrollable.scrollTop + vScrollable.clientHeight) < vScrollable.scrollHeight;
+
+        if ((e.deltaY < 0 && canScrollUp) || (e.deltaY > 0 && canScrollDown)) {
+          return; // Let the browser scroll vertically
+        }
       }
+
+      // At boundary, scroll the app shell horizontally
+      e.preventDefault();
+      appShellRef.current.scrollLeft += e.deltaY;
     };
     
     const shell = appShellRef.current;
@@ -515,24 +539,26 @@ export default function CasePage() {
           display: flex;
           flex-direction: row;
           height: 100%;
-          transition: flex 0.8s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 0.8s;
+          transition: flex-basis 1.5s cubic-bezier(0.25, 0.8, 0.25, 1), min-width 1.5s cubic-bezier(0.25, 0.8, 0.25, 1), flex-grow 1.5s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 1.5s;
           border-right: 1px solid rgba(255, 255, 255, 0.1);
           overflow: hidden;
+          flex-shrink: 0;
         }
 
         .acc-panel.closed {
-          flex: 0 0 150px;
+          flex-basis: 150px;
+          min-width: 150px;
+          flex-grow: 0;
           background-color: var(--colorone);
           cursor: pointer;
-          align-items: center;
-          justify-content: center;
           isolation: isolate;
         }
 
         .acc-panel.open {
-          flex: 1;
+          flex-basis: max(500px, calc(100vw - 600px));
+          min-width: max(500px, calc(100vw - 600px));
+          flex-grow: 1;
           background-color: transparent;
-          min-width: 500px;
         }
 
         .acc-spine-container {
@@ -562,7 +588,7 @@ export default function CasePage() {
           flex-direction: column;
           height: 100%;
           width: calc(100% - 150px);
-          animation: fadeIn 0.8s ease forwards 0.4s;
+          animation: fadeIn 1s ease forwards 0.5s;
           opacity: 0;
           position: relative;
         }
