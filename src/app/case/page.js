@@ -101,7 +101,7 @@ export default function CasePage() {
         const res  = await fetch(path);
         newContent = await res.text();
         const urlParts = new URL(path, window.location.origin).pathname.split('/').slice(1);
-        repoKey = urlParts.slice(3).join('/');
+        repoKey = serverPath || decodeURIComponent(urlParts.slice(3).join('/'));
         serverRawCache.current[repoKey] = newContent;
         setContent(newContent);
         setFileName(repoKey);
@@ -118,7 +118,7 @@ export default function CasePage() {
         }
       } catch { 
         setContent('# Error\nFailed to load.');
-        repoKey = name;
+        repoKey = serverPath || name;
       }
     }
 
@@ -353,15 +353,55 @@ export default function CasePage() {
     }
   }, []);
 
+  const getAllFiles = useCallback((nodes, repoPath = '') => {
+    let files = [];
+    nodes.forEach(n => {
+      if (n.kind === 'file') {
+        files.push({
+          id: repoPath ? `${repoPath}/${n.name}` : n.name,
+          name: n.name,
+          path: n.path
+        });
+      } else if (n.children) {
+        files = files.concat(getAllFiles(n.children, repoPath ? `${repoPath}/${n.name}` : n.name));
+      }
+    });
+    return files;
+  }, []);
+
+  const allFiles = React.useMemo(() => getAllFiles(fileTree), [fileTree, getAllFiles]);
+
+  const tabs = React.useMemo(() => {
+    const baseTabs = [
+      { id: 'system', title: 'SYSTEM', type: 'system' }
+    ];
+    
+    const dashboard = allFiles.find(f => f.name.toLowerCase() === 'dash board.md');
+    if (dashboard) {
+      baseTabs.push({ id: dashboard.id, title: 'Dash Board', type: 'editor', fileData: dashboard });
+    }
+
+    allFiles.forEach(f => {
+      if (f.name.toLowerCase() !== 'dash board.md') {
+        baseTabs.push({ id: f.id, title: f.name.replace('.md', ''), type: 'editor', fileData: f });
+      }
+    });
+
+    return baseTabs;
+  }, [allFiles]);
+
   const handleTabClick = (tab, e) => {
     if (activeTab === tab.id) return;
     setActiveTab(tab.id);
     
-    // Auto scroll to make it centered/visible
-    if (e && e.currentTarget) {
-      setTimeout(() => {
-        e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-      }, 100);
+    // Auto scroll logic for exactly 4 tabs on left and 4 on right
+    const tabIndex = tabs.findIndex(t => t.id === tab.id);
+    if (tabIndex !== -1 && appShellRef.current) {
+      const targetOffset = tabIndex * 150;
+      // 450px = 3 closed tabs (150px each). Since the System tab is sticky, 
+      // scrolling to targetOffset - 450 leaves exactly 4 spines on the left!
+      const scrollTarget = targetOffset - 450; 
+      appShellRef.current.scrollTo({ left: Math.max(0, scrollTarget), behavior: 'smooth' });
     }
     
     if (tab.type === 'editor') {
@@ -386,44 +426,6 @@ export default function CasePage() {
       }
     }
   };
-
-  const getAllFiles = useCallback((nodes, repoPath = '') => {
-    let files = [];
-    nodes.forEach(n => {
-      if (n.kind === 'file') {
-        files.push({
-          id: repoPath ? `${repoPath}/${n.name}` : n.name,
-          name: n.name,
-          path: n.path
-        });
-      } else if (n.children) {
-        files = files.concat(getAllFiles(n.children, repoPath ? `${repoPath}/${n.name}` : n.name));
-      }
-    });
-    return files;
-  }, []);
-
-  const allFiles = React.useMemo(() => getAllFiles(fileTree), [fileTree, getAllFiles]);
-
-  const tabs = React.useMemo(() => {
-    const baseTabs = [
-      { id: 'filetree', title: 'File Tree', type: 'sidebar' },
-      { id: 'chat', title: 'AI Chat Vault', type: 'chat' },
-    ];
-    
-    const dashboard = allFiles.find(f => f.name.toLowerCase() === 'dash board.md');
-    if (dashboard) {
-      baseTabs.push({ id: dashboard.id, title: 'Dash Board', type: 'editor', fileData: dashboard });
-    }
-
-    allFiles.forEach(f => {
-      if (f.name.toLowerCase() !== 'dash board.md') {
-        baseTabs.push({ id: f.id, title: f.name.replace('.md', ''), type: 'editor', fileData: f });
-      }
-    });
-
-    return baseTabs;
-  }, [allFiles]);
 
   // Implement mouse wheel horizontal scrolling
   useEffect(() => {
