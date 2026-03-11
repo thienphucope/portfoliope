@@ -56,6 +56,15 @@ const configureMarked = () => {
     return `<div class="code-block"><div class="code-header"><span class="code-lang">${lang}</span></div><pre><code class="hljs language-${lang}">${highlighted}</code></pre></div>`;
   };
 
+  renderer.heading = (token) => {
+    const level = token.depth;
+    const text = window.marked.parseInline(token.text);
+    if (level === 6) {
+      return `<h6 class="fit-heading">${text}</h6>`;
+    }
+    return `<h${level}>${text}</h${level}>`;
+  };
+
   renderer.image = (token) => {
     const { href = '', title, text } = token;
     const ytMatch = href.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
@@ -122,6 +131,20 @@ const ensureLibsLoaded = () => {
 
 // ─── DOM POST-PROCESSING (KaTeX + Mermaid) ───────────────────────────────────
 
+const fitHeading = (el) => {
+  if (!el || !el.parentElement) return;
+  const maxW = el.parentElement.clientWidth || 800;
+  if (maxW === 0) return;
+  el.style.whiteSpace = 'nowrap';
+  let lo = 12, hi = 500;
+  for (let i = 0; i < 24; i++) {
+    const mid = (lo + hi) / 2;
+    el.style.fontSize = mid + 'px';
+    if (el.scrollWidth <= maxW) lo = mid; else hi = mid;
+  }
+  el.style.fontSize = lo + 'px';
+};
+
 const postProcess = (el) => {
   if (!el) return;
   if (window.renderMathInElement) {
@@ -132,6 +155,7 @@ const postProcess = (el) => {
   }
   const nodes = el.querySelectorAll('.mermaid:not([data-processed="true"])');
   if (window.mermaid && nodes.length) window.mermaid.run({ nodes });
+  el.querySelectorAll('h6.fit-heading').forEach(fitHeading);
 };
 
 // ─── STORAGE HELPERS ──────────────────────────────────────────────────────────
@@ -167,10 +191,18 @@ const BlockView = ({ block, isEditing, isActive, onActivate, onLinkClick }) => {
     postProcess(divRef.current);
   }, [block.raw]);
 
+  useEffect(() => {
+    const handler = () => { if (divRef.current) divRef.current.querySelectorAll('h6.fit-heading').forEach(fitHeading); };
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+
   const handleClick = useCallback((e) => {
     if (isActive) return;
-    const link = e.target.closest('a, .internal-link');
-    if (link) { onLinkClick(e); return; }
+    const internalLink = e.target.closest('.internal-link');
+    if (internalLink) { onLinkClick(e); return; }
+    // Let external <a> tags open normally
+    if (e.target.closest('a')) return;
     if (isEditing) onActivate();
   }, [isActive, isEditing, onActivate, onLinkClick]);
 
@@ -893,16 +925,17 @@ export default function CasePage() {
   }, []);
 
   const handleLinkClick = useCallback((e) => {
-    const link = e.target.closest('.internal-link') || e.target.closest('a');
-    if (!link) return;
-    const target = link.getAttribute('data-target') || link.innerText;
+    // Only handle [[internal-link]] wiki links, not external <a> tags
+    const internalLink = e.target.closest('.internal-link');
+    if (!internalLink) return;
+
+    e.preventDefault();
+    const target     = internalLink.getAttribute('data-target') || internalLink.innerText;
     const serverPath = resolveWikiPath(target);
     const key        = serverPath.toLowerCase();
     const baseName   = serverPath.split('/').pop().toLowerCase();
+    const realPath   = fileRegistry.current[key] ?? fileRegistry.current[baseName];
 
-    const realPath = fileRegistry.current[key] ?? fileRegistry.current[baseName];
-
-    e.preventDefault();
     if (typeof realPath === 'string') {
       loadFile(realPath, serverPath.split('/').pop());
     } else if (realPath === null) {
@@ -1245,7 +1278,7 @@ export default function CasePage() {
         .rte-h3 { font-size: 1.2em;  font-weight: 700; color: #fff; line-height: 1.2; margin-top: .6em;  margin-bottom: .2em; }
         .rte-h4 { font-size: 1.05em; font-weight: 700; color: #fff; }
         .rte-h5 { font-size: 1em;    font-weight: 700; color: #ddd; }
-        .rte-h6 { font-size: 0.9em;  font-weight: 700; color: #bbb; }
+        .rte-h6 { font-size: 0.9em; font-weight: 900; color: #fff; font-style: italic; letter-spacing: -0.02em; white-space: nowrap; }
         .rte-ul, .rte-ol { padding-left: 1.8em; text-indent: -1.8em; margin-bottom: 0.3em; }
         .rte-blockquote { border-left: 3px solid var(--accent); padding-left: 1.25em; margin-left: 0; font-style: italic; opacity: 0.8; }
         .rte-codefence { font-family: monospace; font-size: 0.85em; opacity: 0.55; background: rgba(255,255,255,0.03); border-radius: 3px; }
@@ -1301,6 +1334,20 @@ export default function CasePage() {
         .markdown-content h1 { font-size:2.0em; margin:.8em 0 .4em; color:#fff; font-weight:700; }
         .markdown-content h2 { font-size:1.6em; margin:.7em 0 .3em; color:#fff; font-weight:700; }
         .markdown-content h3 { font-size:1.2em; margin:.6em 0 .2em; color:#fff; font-weight:700; }
+        .markdown-content h6.fit-heading {
+          display: block;
+          width: 100%;
+          white-space: nowrap;
+          overflow: hidden;
+          font-family: 'Crimson Text', serif;
+          font-weight: 900;
+          font-style: italic;
+          color: #fff;
+          line-height: 1;
+          margin: 0.3em 0;
+          letter-spacing: -0.03em;
+          opacity: 0.95;
+        }
         .markdown-content p  { margin-bottom:1em; }
 
         /* ── LISTS ────────────────────────────────────────────────────────── */
