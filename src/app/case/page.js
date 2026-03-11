@@ -435,18 +435,31 @@ export default function CasePage() {
   // Implement mouse wheel horizontal scrolling
   useEffect(() => {
     const handleWheel = (e) => {
-      if (appShellRef.current && e.deltaY !== 0 && !e.shiftKey) {
-        // Only scroll horizontally if the user is hovering over the app shell directly (not inside a scrollable div)
-        const isHoveringScrollableContent = e.target.closest('.acc-body, .file-list, .markdown-container, .chat-container');
-        if (!isHoveringScrollableContent) {
-          appShellRef.current.scrollLeft += e.deltaY;
+      if (!appShellRef.current || e.deltaY === 0 || e.shiftKey) return;
+
+      // Map vertical scroll to horizontal scroll for overflowing elements inside markdown
+      const hScrollable = e.target.closest('.table-container, pre, .math-block');
+      if (hScrollable) {
+        const canScrollLeft = hScrollable.scrollLeft > 0;
+        const canScrollRight = Math.ceil(hScrollable.scrollLeft + hScrollable.clientWidth) < hScrollable.scrollWidth;
+        
+        if ((e.deltaY < 0 && canScrollLeft) || (e.deltaY > 0 && canScrollRight)) {
+          e.preventDefault();
+          hScrollable.scrollLeft += e.deltaY;
+          return;
         }
+      }
+
+      // Only scroll app shell horizontally if the user is hovering over the app shell directly
+      const isHoveringScrollableContent = e.target.closest('.acc-body, .file-list, .markdown-container, .chat-container');
+      if (!isHoveringScrollableContent) {
+        appShellRef.current.scrollLeft += e.deltaY;
       }
     };
     
     const shell = appShellRef.current;
     if (shell) {
-      shell.addEventListener('wheel', handleWheel, { passive: true });
+      shell.addEventListener('wheel', handleWheel, { passive: false });
     }
     return () => {
       if (shell) {
@@ -502,7 +515,7 @@ export default function CasePage() {
           display: flex;
           flex-direction: row;
           height: 100%;
-          transition: flex 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 0.4s;
+          transition: flex 0.8s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 0.8s;
           border-right: 1px solid rgba(255, 255, 255, 0.1);
           overflow: hidden;
         }
@@ -549,7 +562,7 @@ export default function CasePage() {
           flex-direction: column;
           height: 100%;
           width: calc(100% - 150px);
-          animation: fadeIn 0.4s ease forwards 0.2s;
+          animation: fadeIn 0.8s ease forwards 0.4s;
           opacity: 0;
           position: relative;
         }
@@ -665,7 +678,7 @@ export default function CasePage() {
                   )}
                   {tab.type === 'editor' && (
                     <main className="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                      <article className="markdown-container" style={{ flex: 1, overflowY: 'auto' }}>
+                      <article className="markdown-container" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
                         <BlockEditor
                           key={contentKey}
                           content={content}
