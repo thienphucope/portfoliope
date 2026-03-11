@@ -22,6 +22,9 @@ export default function CasePage() {
   const appShellRef    = useRef(null);
   const saveHandlerRef = useRef(null); // ref to BlockEditor's save fn
   const bgPlayerRef    = useRef(null);
+  const isTabScrolling = useRef(false);
+  const targetScroll   = useRef(null);
+  const isWheelScrolling = useRef(false);
 
   useEffect(() => {
     const initBgPlayer = () => {
@@ -398,9 +401,12 @@ export default function CasePage() {
     // Auto scroll logic for exactly 2 tabs on left and 2 on right
     const tabIndex = tabs.findIndex(t => t.id === tab.id);
     if (tabIndex !== -1 && appShellRef.current) {
+      isTabScrolling.current = true;
+      targetScroll.current = null; // Cancel wheel scroll
+
       // Instead of a single timeout, we animate the scroll gradually
       // to match the slow panel CSS flex transition.
-      const scrollTarget = (tabIndex - 2) * 150; 
+      const scrollTarget = (tabIndex - 1) * 150; 
       const maxScroll = Math.max(0, scrollTarget);
       
       let startStart = null;
@@ -420,6 +426,8 @@ export default function CasePage() {
         }
         if (progress < 1) {
           window.requestAnimationFrame(step);
+        } else {
+          isTabScrolling.current = false;
         }
       };
       window.requestAnimationFrame(step);
@@ -478,7 +486,36 @@ export default function CasePage() {
 
       // At boundary, scroll the app shell horizontally
       e.preventDefault();
-      appShellRef.current.scrollLeft += e.deltaY;
+      
+      if (isTabScrolling.current) return;
+      
+      const shell = appShellRef.current;
+      if (targetScroll.current === null) {
+        targetScroll.current = shell.scrollLeft;
+      }
+      
+      targetScroll.current += e.deltaY * 1.5;
+      targetScroll.current = Math.max(0, Math.min(targetScroll.current, shell.scrollWidth - shell.clientWidth));
+      
+      if (!isWheelScrolling.current) {
+        isWheelScrolling.current = true;
+        const animate = () => {
+          if (!shell || targetScroll.current === null) {
+            isWheelScrolling.current = false;
+            return;
+          }
+          const diff = targetScroll.current - shell.scrollLeft;
+          if (Math.abs(diff) < 1) {
+            shell.scrollLeft = targetScroll.current;
+            isWheelScrolling.current = false;
+            targetScroll.current = null;
+          } else {
+            shell.scrollLeft += diff * 0.15;
+            requestAnimationFrame(animate);
+          }
+        };
+        requestAnimationFrame(animate);
+      }
     };
     
     const shell = appShellRef.current;
@@ -533,6 +570,40 @@ export default function CasePage() {
         /* Hide scrollbar for accordion app container itself */
         .accordion-app::-webkit-scrollbar {
           display: none;
+        }
+
+        .sticky-spine {
+          position: sticky;
+          left: 0;
+          z-index: 50;
+          flex-basis: 150px;
+          min-width: 150px;
+          flex-grow: 0;
+          flex-shrink: 0;
+          background-color: var(--colorone);
+          border-right: 1px solid rgba(255, 255, 255, 0.1);
+          cursor: pointer;
+          isolation: isolate;
+        }
+
+        .spine-content {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100%;
+          gap: 20px;
+        }
+
+        .spine-homepage {
+          writing-mode: vertical-rl;
+          font-family: 'Inter', sans-serif;
+          font-size: 1rem;
+          color: black;
+          opacity: 0.8;
+          mix-blend-mode: destination-out;
+          text-transform: uppercase;
+          letter-spacing: 2px;
         }
 
         .acc-panel {
@@ -628,6 +699,16 @@ export default function CasePage() {
         <div id="bg-player-case"></div>
       </div>
       <div className="video-overlay"></div>
+
+      {/* Sticky Spine */}
+      <div className="acc-panel sticky-spine" onClick={() => window.location.href = '/'}>
+        <div className="acc-spine-container" style={{ width: '100%', flex: '1' }}>
+          <div className="spine-content">
+            <div className="acc-spine">Ope Watson</div>
+            <div className="spine-homepage">homepage</div>
+          </div>
+        </div>
+      </div>
 
       {tabs.map((tab, index) => {
         const isOpen = activeTab === tab.id;
