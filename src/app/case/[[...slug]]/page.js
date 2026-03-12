@@ -1074,42 +1074,52 @@ export default function CasePage() {
             height: 60px !important;
             padding-top: 0 !important;
             align-items: center !important;
-            justify-content: flex-start !important;
+            justify-content: center !important;
           }
 
           .spine-content {
             flex-direction: row !important;
             width: 100% !important;
             height: 100% !important;
-            justify-content: flex-start !important;
+            justify-content: center !important;
             align-items: center !important;
-            gap: 15px !important;
+            position: relative !important;
             padding: 0 20px !important;
           }
 
           .acc-ope {
             writing-mode: horizontal-tb !important;
-            font-size: 1.5rem !important;
+            font-size: 1.4rem !important;
             letter-spacing: 1px !important;
+            text-align: center !important;
+            margin: 0 !important;
           }
 
           .spine-homepage {
-            position: static !important;
+            position: absolute !important;
+            right: 20px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
             writing-mode: horizontal-tb !important;
-            bottom: auto !important;
             opacity: 0.5 !important;
-            font-size: 0.7rem !important;
-            margin-top: 4px !important;
+            font-size: 0.6rem !important;
+            letter-spacing: 1px !important;
+            text-transform: uppercase !important;
+            margin: 0 !important;
           }
 
           .add-note-btn {
-            position: relative;
-            top: auto;
-            right: auto;
-            margin-left: auto; /* Pushes it to the right on mobile flex container */
-            width: 35px;
-            height: 35px;
-            font-size: 16px;
+            position: absolute !important;
+            left: 20px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            margin: 0 !important;
+            width: 32px !important;
+            height: 32px !important;
+            font-size: 14px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
           }
 
           .acc-panel {
