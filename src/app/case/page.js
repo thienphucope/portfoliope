@@ -825,8 +825,8 @@ export default function CasePage() {
         }
 
         .add-note-btn {
-          width: 30px;
-          height: 30px;
+          width: 60px;
+          height: 60px;
           border-radius: 50%;
           border: 2px solid rgba(0,0,0,0.6);
           display: flex;
@@ -834,7 +834,7 @@ export default function CasePage() {
           justify-content: center;
           cursor: pointer;
           position: absolute;
-          top: 15px;
+          top: 40px;
           color: black;
           font-weight: bold;
           font-size: 20px;
@@ -1016,6 +1016,9 @@ export default function CasePage() {
             top: auto;
             right: auto;
             margin-left: auto; /* Pushes it to the right on mobile flex container */
+            width: 35px;
+            height: 35px;
+            font-size: 16px;
           }
 
           .acc-panel {
