@@ -124,9 +124,8 @@ export default function CasePage() {
         const res  = await fetch(path);
         newContent = await res.text();
         const urlParts = new URL(path, window.location.origin).pathname.split('/').slice(1);
-        // Match repoKey with getAllFiles's id format (repoPath/name)
-        // API path is /api/cases/sub/path/name.md -> sub/path/name.md
-        repoKey = serverPath || decodeURIComponent(urlParts.slice(2).join('/'));
+        // GitHub raw URLs: /user/repo/branch/path/to/file.md -> slice(3) gives path/to/file.md
+        repoKey = serverPath || decodeURIComponent(urlParts.slice(3).join('/'));
         serverRawCache.current[repoKey] = newContent;
         setContent(newContent);
         setFileName(repoKey);
@@ -255,6 +254,44 @@ export default function CasePage() {
     setFileTree(tree);
   }, []);
 
+  const getAllFiles = useCallback((nodes, repoPath = '') => {
+    let files = [];
+    nodes.forEach(n => {
+      if (n.kind === 'file') {
+        files.push({
+          id: repoPath ? `${repoPath}/${n.name}` : n.name,
+          name: n.name,
+          path: n.path
+        });
+      } else if (n.children) {
+        files = files.concat(getAllFiles(n.children, repoPath ? `${repoPath}/${n.name}` : n.name));
+      }
+    });
+    return files;
+  }, []);
+
+  const allFiles = React.useMemo(() => getAllFiles(fileTree), [fileTree, getAllFiles]);
+
+  const tabs = React.useMemo(() => {
+    const baseTabs = [
+      { id: 'filetree', title: 'File Tree', type: 'sidebar' },
+      { id: 'chat', title: 'AI Chat Vault', type: 'chat' },
+    ];
+    
+    const dashboard = allFiles.find(f => f.name.toLowerCase() === 'dash board.md');
+    if (dashboard) {
+      baseTabs.push({ id: dashboard.id, title: 'Dash Board', type: 'editor', fileData: dashboard });
+    }
+
+    allFiles.forEach(f => {
+      if (f.name.toLowerCase() !== 'dash board.md') {
+        baseTabs.push({ id: f.id, title: f.name.replace('.md', ''), type: 'editor', fileData: f });
+      }
+    });
+
+    return baseTabs;
+  }, [allFiles]);
+
   const resolveWikiPath = (target) => {
     const withExt = target.endsWith('.md') ? target : `${target}.md`;
     return withExt.includes('/') ? withExt : `notes/${withExt}`;
@@ -300,6 +337,20 @@ export default function CasePage() {
   }, []);
 
   const handleLinkClick = useCallback((e) => {
+    // 1. Handle external links (<a> tags starting with http/https)
+    const anchor = e.target.closest('a');
+    if (anchor) {
+      const href = anchor.getAttribute('href');
+      if (href && /^https?:\/\//.test(href)) {
+        e.preventDefault();
+        window.open(href, '_blank', 'noopener,noreferrer');
+        return;
+      }
+      // If it's a footnote or hash link, let it be handled normally
+      if (href && href.startsWith('#')) return;
+    }
+
+    // 2. Handle internal Wiki-style links
     const internalLink = e.target.closest('.internal-link');
     if (!internalLink) return;
 
@@ -311,7 +362,12 @@ export default function CasePage() {
     const realPath   = fileRegistry.current[key] ?? fileRegistry.current[baseName];
 
     if (typeof realPath === 'string') {
-      loadFile(realPath, serverPath.split('/').pop());
+      const existingTab = tabs.find(t => t.fileData?.path === realPath);
+      if (existingTab) {
+        loadFile(realPath, existingTab.fileData.name, existingTab.id);
+      } else {
+        loadFile(realPath, serverPath.split('/').pop(), serverPath);
+      }
     } else if (realPath === null) {
       setFileName(serverPath);
       setActiveTab(serverPath);
@@ -327,7 +383,7 @@ export default function CasePage() {
     } else {
       createAndOpenFile(target);
     }
-  }, [loadFile, createAndOpenFile, openFiles]);
+  }, [loadFile, createAndOpenFile, openFiles, tabs]);
 
   const askPassword = useCallback(() => new Promise((resolve, reject) => {
     setPassPrompt({ resolve, reject });
@@ -398,85 +454,56 @@ export default function CasePage() {
     }
   }, []);
 
-  const getAllFiles = useCallback((nodes, repoPath = '') => {
-    let files = [];
-    nodes.forEach(n => {
-      if (n.kind === 'file') {
-        files.push({
-          id: repoPath ? `${repoPath}/${n.name}` : n.name,
-          name: n.name,
-          path: n.path
-        });
-      } else if (n.children) {
-        files = files.concat(getAllFiles(n.children, repoPath ? `${repoPath}/${n.name}` : n.name));
-      }
-    });
-    return files;
-  }, []);
+  const scrollToTab = useCallback((tabId) => {
+    if (!appShellRef.current) return;
+    const tabIndex = tabs.findIndex(t => t.id === tabId);
+    if (tabIndex === -1) return;
 
-  const allFiles = React.useMemo(() => getAllFiles(fileTree), [fileTree, getAllFiles]);
+    if (window.innerWidth <= 768) {
+      // Vertical scroll for mobile
+      const scrollTarget = tabIndex * 50; 
+      appShellRef.current.scrollTo({ top: scrollTarget, behavior: 'smooth' });
+    } else {
+      isTabScrolling.current = true;
+      targetScrollX.current = null;
+      if (tabAnimId.current) cancelAnimationFrame(tabAnimId.current);
 
-  const tabs = React.useMemo(() => {
-    const baseTabs = [
-      { id: 'filetree', title: 'File Tree', type: 'sidebar' },
-      { id: 'chat', title: 'AI Chat Vault', type: 'chat' },
-    ];
-    
-    const dashboard = allFiles.find(f => f.name.toLowerCase() === 'dash board.md');
-    if (dashboard) {
-      baseTabs.push({ id: dashboard.id, title: 'Dash Board', type: 'editor', fileData: dashboard });
+      const scrollTarget = tabIndex * 150; 
+      const maxScroll = Math.max(0, scrollTarget);
+      
+      let startStart = null;
+      const startScroll = appShellRef.current.scrollLeft;
+      const distance = maxScroll - startScroll;
+      const duration = 1200;
+      
+      const step = (timestamp) => {
+        if (!startStart) startStart = timestamp;
+        const progress = Math.min((timestamp - startStart) / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 4);
+        
+        if (appShellRef.current && isTabScrolling.current) {
+           appShellRef.current.scrollLeft = startScroll + (distance * ease);
+        }
+        if (progress < 1 && isTabScrolling.current) {
+          tabAnimId.current = window.requestAnimationFrame(step);
+        } else {
+          isTabScrolling.current = false;
+          tabAnimId.current = null;
+        }
+      };
+      tabAnimId.current = window.requestAnimationFrame(step);
     }
+  }, [tabs]);
 
-    allFiles.forEach(f => {
-      if (f.name.toLowerCase() !== 'dash board.md') {
-        baseTabs.push({ id: f.id, title: f.name.replace('.md', ''), type: 'editor', fileData: f });
-      }
-    });
-
-    return baseTabs;
-  }, [allFiles]);
+  useEffect(() => {
+    if (activeTab) {
+      scrollToTab(activeTab);
+    }
+  }, [activeTab, scrollToTab]);
 
   const handleTabClick = (tab, e) => {
     if (activeTab === tab.id) return;
     setActiveTab(tab.id);
-    
-    const tabIndex = tabs.findIndex(t => t.id === tab.id);
-    if (tabIndex !== -1 && appShellRef.current) {
-      if (window.innerWidth <= 768) {
-        // Vertical scroll for mobile
-        const scrollTarget = tabIndex * 50; 
-        appShellRef.current.scrollTo({ top: scrollTarget, behavior: 'smooth' });
-      } else {
-        isTabScrolling.current = true;
-        targetScrollX.current = null;
-        if (tabAnimId.current) cancelAnimationFrame(tabAnimId.current);
-
-        const scrollTarget = (tabIndex - 1) * 150; 
-        const maxScroll = Math.max(0, scrollTarget);
-        
-        let startStart = null;
-        const startScroll = appShellRef.current.scrollLeft;
-        const distance = maxScroll - startScroll;
-        const duration = 1500;
-        
-        const step = (timestamp) => {
-          if (!startStart) startStart = timestamp;
-          const progress = Math.min((timestamp - startStart) / duration, 1);
-          const ease = 1 - Math.pow(1 - progress, 4);
-          
-          if (appShellRef.current && isTabScrolling.current) {
-             appShellRef.current.scrollLeft = startScroll + (distance * ease);
-          }
-          if (progress < 1 && isTabScrolling.current) {
-            tabAnimId.current = window.requestAnimationFrame(step);
-          } else {
-            isTabScrolling.current = false;
-            tabAnimId.current = null;
-          }
-        };
-        tabAnimId.current = window.requestAnimationFrame(step);
-      }
-    }
     
     if (tab.type === 'editor') {
       const cached = readCache(tab.id);
@@ -493,7 +520,6 @@ export default function CasePage() {
       } else if (tab.fileData && tab.fileData.path) {
         loadFile(tab.fileData.path, tab.fileData.name, tab.id, 'push');
       } else {
-        // Fallback for missing path
         setFileName(tab.id);
         setContent(`# ${tab.title}\nLoading...`);
         setContentKey(k => k + 1);

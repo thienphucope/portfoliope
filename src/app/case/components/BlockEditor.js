@@ -42,10 +42,8 @@ export const BlockView = ({ block, isEditing, isActive, onActivate, onLinkClick 
 
   const handleClick = useCallback((e) => {
     if (isActive) return;
-    const internalLink = e.target.closest('.internal-link');
-    if (internalLink) { onLinkClick(e); return; }
-    // Let external <a> tags open normally
-    if (e.target.closest('a')) return;
+    const link = e.target.closest('a, .internal-link');
+    if (link) { onLinkClick(e); return; }
     if (isEditing) onActivate();
   }, [isActive, isEditing, onActivate, onLinkClick]);
 
