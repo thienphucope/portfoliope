@@ -84,6 +84,8 @@ export default function VaultStyles() {
           padding: 2px 4px;
           margin: 0 -4px;
           transition: background .12s;
+          border: 1px solid transparent;
+          box-sizing: border-box;
         }
 
         .block-content p:first-child { margin-top: 0; }
@@ -98,43 +100,35 @@ export default function VaultStyles() {
         }
 
         .block-view-hidden {
-          visibility: hidden;
-          pointer-events: none;
-          user-select: none;
+          display: none;
         }
 
         .active-block {
-          position: absolute;
-          top: 0;
-          left: -4px;
-          right: -4px;
-          width: calc(100% + 8px);
-          min-height: 100%;
-          background: rgba(255,255,255,0.02);
+          position: relative;
+          width: 100%;
+          background: rgba(18,18,18,0.98);
+          border: 1px solid rgba(255,250,205,0.2);
           border-radius: 4px;
           outline: none;
           z-index: 10;
           box-sizing: border-box;
+          padding: 2px 4px;
+          text-align: left; /* Editors are usually left-aligned */
         }
 
         /* ── TEXTAREA EDITORS ──────────────────────────────────────────────── */
 
         .raw-text-editor {
-          background: rgba(18,18,18,0.98);
-          border: 1px solid rgba(255,250,205,0.2);
-          border-radius: 4px;
-          padding: 4px 8px;
           caret-color: var(--accent);
           box-shadow: 0 4px 20px rgba(0,0,0,0.6);
           cursor: text;
-          position: relative;
         }
 
         .raw-text-editor::before {
           content: attr(data-placeholder);
           position: absolute;
-          left: 8px;
-          top: 4px;
+          left: 4px;
+          top: 2px;
           color: rgba(255, 255, 255, 0.25);
           pointer-events: none;
           font-family: var(--md-font);
@@ -156,6 +150,7 @@ export default function VaultStyles() {
           white-space: pre-wrap;
           word-break: break-word;
           min-height: 1.6em;
+          line-height: var(--md-line);
           outline: none;
           caret-color: var(--accent);
         }
@@ -163,6 +158,7 @@ export default function VaultStyles() {
           min-height: 1.6em;
           display: block;
         }
+        .rte-p { margin-bottom: 1.25em; }
         .rte-h1 { font-size: 2.0em;  font-weight: 700; color: #fff; line-height: 1.2; margin-top: .8em;  margin-bottom: .4em; }
         .rte-h2 { font-size: 1.6em;  font-weight: 700; color: #fff; line-height: 1.2; margin-top: .7em;  margin-bottom: .3em; }
         .rte-h3 { font-size: 1.2em;  font-weight: 700; color: #fff; line-height: 1.2; margin-top: .6em;  margin-bottom: .2em; }
@@ -183,7 +179,7 @@ export default function VaultStyles() {
           background: var(--code-bg);
           border: 1px solid rgba(255,250,205,0.2);
           border-radius: 4px;
-          padding: 10px;
+          padding: 15px; /* Match pre padding */
           color: var(--txt);
           caret-color: var(--accent);
           white-space: pre;
