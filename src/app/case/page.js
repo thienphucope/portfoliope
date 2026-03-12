@@ -420,6 +420,13 @@ export default function CasePage() {
     
     const tabIndex = tabs.findIndex(t => t.id === tab.id);
     if (tabIndex !== -1 && appShellRef.current) {
+      if (window.innerWidth <= 768) {
+        // Vertical scroll for mobile
+        const scrollTarget = tabIndex * 50; 
+        appShellRef.current.scrollTo({ top: scrollTarget, behavior: 'smooth' });
+        return;
+      }
+
       isTabScrolling.current = true;
       targetScrollX.current = null;
       if (tabAnimId.current) cancelAnimationFrame(tabAnimId.current);
@@ -477,6 +484,7 @@ export default function CasePage() {
   useEffect(() => {
     const handleWheel = (e) => {
       if (!appShellRef.current || e.deltaY === 0 || e.shiftKey) return;
+      if (window.innerWidth <= 768) return;
 
       if (isTabScrolling.current) {
         isTabScrolling.current = false;
@@ -766,6 +774,118 @@ export default function CasePage() {
           display: flex;
           gap: 10px;
           z-index: 100;
+        }
+
+        @media (max-width: 768px) {
+          .accordion-app {
+            flex-direction: column !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+          }
+
+          .sticky-spine {
+            position: sticky !important;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            width: 100% !important;
+            height: 60px !important;
+            flex: 0 0 60px !important;
+            min-width: 0 !important;
+            border-right: none !important;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
+          }
+
+          .acc-ope-container {
+            flex: 1 !important;
+            width: 100% !important;
+            height: 60px !important;
+            padding-top: 0 !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+          }
+
+          .spine-content {
+            flex-direction: row !important;
+            width: 100% !important;
+            height: 100% !important;
+            justify-content: flex-start !important;
+            align-items: center !important;
+            gap: 15px !important;
+            padding: 0 20px !important;
+          }
+
+          .acc-ope {
+            writing-mode: horizontal-tb !important;
+            font-size: 1.5rem !important;
+            letter-spacing: 1px !important;
+          }
+
+          .spine-homepage {
+            position: static !important;
+            writing-mode: horizontal-tb !important;
+            bottom: auto !important;
+            opacity: 0.5 !important;
+            font-size: 0.7rem !important;
+            margin-top: 4px !important;
+          }
+
+          .acc-panel {
+            width: 100% !important;
+            flex-direction: column !important;
+            border-right: none !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+          }
+
+          .acc-panel.closed {
+            flex: 0 0 50px !important;
+            min-width: 0 !important;
+            height: 50px !important;
+          }
+
+          .acc-panel.open {
+            flex: 1 0 auto !important;
+            min-width: 0 !important;
+            height: auto !important;
+            min-height: calc(100vh - 110px) !important;
+          }
+
+          .acc-spine-container {
+            flex: 0 0 50px !important;
+            width: 100% !important;
+            height: 50px !important;
+            padding-top: 0 !important;
+            justify-content: flex-start !important;
+            align-items: center !important;
+            padding-left: 20px !important;
+          }
+
+          .acc-spine {
+            writing-mode: horizontal-tb !important;
+            font-size: 1.1rem !important;
+            letter-spacing: 1px !important;
+          }
+
+          .acc-content {
+            width: 100% !important;
+            height: auto !important;
+            flex: 1 !important;
+          }
+
+          .acc-body {
+            height: calc(100vh - 110px) !important;
+            flex: 1 !important;
+            overflow-y: auto !important;
+          }
+          
+          .floating-actions {
+            top: 10px !important;
+            right: 15px !important;
+          }
+          
+          .video-background iframe {
+            transform: translate(-50%, -50%) scale(2.5) !important;
+          }
         }
       `}</style>
 
