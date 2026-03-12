@@ -221,17 +221,17 @@ export default function VaultStyles() {
           letter-spacing: -0.03em;
           opacity: 0.95;
         }
-        .markdown-content p  { margin-bottom:1em; }
+        .markdown-content p  { margin-bottom:1.25em; }
 
         /* ── LISTS ────────────────────────────────────────────────────────── */
         .markdown-content ul {
           list-style-type: disc;
-          margin: 0.5em 0 1em 0;
+          margin: 0.5em 0 1.25em 0;
           padding-left: 1.8em;
         }
         .markdown-content ol {
           list-style-type: decimal;
-          margin: 0.5em 0 1em 0;
+          margin: 0.5em 0 1.25em 0;
           padding-left: 1.8em;
         }
         .markdown-content li {
