@@ -269,6 +269,14 @@ export default function CasePage() {
       { id: 'chat', title: 'AI Chat Vault', type: 'chat' },
     ];
     
+    if (fileTree.length === 0) {
+      // Add 6 placeholder bars while loading to fill the screen
+      for (let i = 0; i < 8; i++) {
+        baseTabs.push({ id: `placeholder-${i}`, title: '...', type: 'placeholder' });
+      }
+      return baseTabs;
+    }
+
     const dashboard = allFiles.find(f => f.name.toLowerCase() === 'dash board.md');
     if (dashboard) {
       baseTabs.push({ id: dashboard.id, title: 'Dash Board', type: 'editor', fileData: dashboard });
