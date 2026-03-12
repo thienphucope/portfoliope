@@ -25,11 +25,26 @@ export default function CasePage() {
   
   // Custom Smooth Scrolling States
   const isTabScrolling = useRef(false);
+  const tabAnimId = useRef(null);
   const targetScrollX  = useRef(null);
   const isWheelScrollingX = useRef(false);
 
   const verticalScrollTargets = useRef(new Map());
   const isWheelScrollingY = useRef(new Map());
+
+  // Handle global click to toggle video interactability
+  useEffect(() => {
+    const handleGlobalClick = (e) => {
+      const container = e.target.closest('.video-container');
+      if (container) {
+        container.classList.add('interactable');
+      } else {
+        document.querySelectorAll('.video-container.interactable').forEach(c => c.classList.remove('interactable'));
+      }
+    };
+    window.addEventListener('mousedown', handleGlobalClick);
+    return () => window.removeEventListener('mousedown', handleGlobalClick);
+  }, []);
 
   useEffect(() => {
     const initBgPlayer = () => {
@@ -403,39 +418,36 @@ export default function CasePage() {
     if (activeTab === tab.id) return;
     setActiveTab(tab.id);
     
-    // Auto scroll logic for exactly 2 tabs on left and 2 on right
     const tabIndex = tabs.findIndex(t => t.id === tab.id);
     if (tabIndex !== -1 && appShellRef.current) {
       isTabScrolling.current = true;
-      targetScrollX.current = null; // Cancel wheel scroll
+      targetScrollX.current = null;
+      if (tabAnimId.current) cancelAnimationFrame(tabAnimId.current);
 
-      // Instead of a single timeout, we animate the scroll gradually
-      // to match the slow panel CSS flex transition.
       const scrollTarget = (tabIndex - 1) * 150; 
       const maxScroll = Math.max(0, scrollTarget);
       
       let startStart = null;
       const startScroll = appShellRef.current.scrollLeft;
       const distance = maxScroll - startScroll;
-      const duration = 1500; // matching CSS transition time
+      const duration = 1500;
       
       const step = (timestamp) => {
         if (!startStart) startStart = timestamp;
         const progress = Math.min((timestamp - startStart) / duration, 1);
-        
-        // easeOutQuart equivalent to sync nicely with cubic-bezier(0.25, 0.8, 0.25, 1)
         const ease = 1 - Math.pow(1 - progress, 4);
         
-        if (appShellRef.current) {
+        if (appShellRef.current && isTabScrolling.current) {
            appShellRef.current.scrollLeft = startScroll + (distance * ease);
         }
-        if (progress < 1) {
-          window.requestAnimationFrame(step);
+        if (progress < 1 && isTabScrolling.current) {
+          tabAnimId.current = window.requestAnimationFrame(step);
         } else {
           isTabScrolling.current = false;
+          tabAnimId.current = null;
         }
       };
-      window.requestAnimationFrame(step);
+      tabAnimId.current = window.requestAnimationFrame(step);
     }
     
     if (tab.type === 'editor') {
@@ -466,6 +478,11 @@ export default function CasePage() {
     const handleWheel = (e) => {
       if (!appShellRef.current || e.deltaY === 0 || e.shiftKey) return;
 
+      if (isTabScrolling.current) {
+        isTabScrolling.current = false;
+        if (tabAnimId.current) cancelAnimationFrame(tabAnimId.current);
+      }
+
       // Map vertical scroll to horizontal scroll for overflowing elements inside markdown
       const hScrollable = e.target.closest('.table-container, pre, .math-block');
       if (hScrollable) {
@@ -491,7 +508,7 @@ export default function CasePage() {
             verticalScrollTargets.current.set(vScrollable, vScrollable.scrollTop);
           }
           
-          let targetY = verticalScrollTargets.current.get(vScrollable) + e.deltaY * 2.5;
+          let targetY = verticalScrollTargets.current.get(vScrollable) + e.deltaY * 1.5;
           targetY = Math.max(0, Math.min(targetY, vScrollable.scrollHeight - vScrollable.clientHeight));
           verticalScrollTargets.current.set(vScrollable, targetY);
 
@@ -506,7 +523,7 @@ export default function CasePage() {
                 isWheelScrollingY.current.set(vScrollable, false);
                 verticalScrollTargets.current.delete(vScrollable);
               } else {
-                vScrollable.scrollTop += diff * 0.08;
+                vScrollable.scrollTop += diff * 0.15;
                 requestAnimationFrame(animateY);
               }
             };
@@ -521,15 +538,13 @@ export default function CasePage() {
       // At boundary, scroll the app shell horizontally
       e.preventDefault();
       
-      if (isTabScrolling.current) return;
-      
       const shell = appShellRef.current;
       if (targetScrollX.current === null) {
         targetScrollX.current = shell.scrollLeft;
       }
       
       // Increase delta multiplier for larger scroll distance per wheel click
-      targetScrollX.current += e.deltaY * 2.5;
+      targetScrollX.current += e.deltaY * 1.5;
       targetScrollX.current = Math.max(0, Math.min(targetScrollX.current, shell.scrollWidth - shell.clientWidth));
       
       if (!isWheelScrollingX.current) {
@@ -545,7 +560,6 @@ export default function CasePage() {
             isWheelScrollingX.current = false;
             targetScrollX.current = null;
           } else {
-            // Smaller lerp factor means slower, smoother gliding
             shell.scrollLeft += diff * 0.08;
             requestAnimationFrame(animate);
           }

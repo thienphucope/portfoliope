@@ -286,7 +286,8 @@ export default function VaultStyles() {
         .img-circle { border-radius:50%; aspect-ratio:1/1; object-fit:cover; max-width:200px; display:block; margin:2em auto; }
         img { max-width:100%; border-radius:8px; margin:1.5em 0; }
         .video-container { position:relative; padding-bottom:56.25%; height:0; margin:1.5em 0; }
-        .video-container iframe { position:absolute; top:0; left:0; width:100%; height:100%; border-radius:8px; }
+        .video-container iframe { position:absolute; top:0; left:0; width:100%; height:100%; border-radius:8px; pointer-events: none; }
+        .video-container.interactable iframe { pointer-events: auto; }
 
         /* MOBILE & TABLET PORTRAIT */
         @media (max-width:1024px),(orientation:portrait) {
