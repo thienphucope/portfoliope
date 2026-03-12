@@ -524,6 +524,37 @@ export default function CasePage() {
       const pass = await askPassword();
       await acquireLock(fileName, pass);
       
+      // Refresh the entire file tree to see if other files were added/changed
+      await refreshTree();
+      
+      // Check for updates from GitHub after acquiring lock
+      const filePath = fileRegistry.current[fileName.toLowerCase()];
+      if (filePath) {
+        try {
+          const freshRes = await fetch(filePath, { cache: 'no-store' });
+          if (freshRes.ok) {
+            const freshContent = await freshRes.text();
+            const currentContent = (serverRawCache.current[fileName] || "").trim();
+            
+            if (freshContent.trim() !== currentContent && currentContent !== "") {
+              const confirmUpdate = window.confirm("This file has been updated on GitHub by another user. Do you want to load the latest version? (Your local draft will be overwritten)");
+              if (confirmUpdate) {
+                // Clear local cache for this file to force BlockEditor to use the new content
+                try { localStorage.removeItem(`vault_v3::${fileName}`); } catch {}
+                serverRawCache.current[fileName] = freshContent;
+                setContent(freshContent);
+                setContentKey(k => k + 1);
+              }
+            } else if (currentContent === "") {
+              // First time loading this session, sync cache
+              serverRawCache.current[fileName] = freshContent;
+            }
+          }
+        } catch (err) {
+          console.error("Failed to check for updates:", err);
+        }
+      }
+      
       setEditPass(pass);
       try { sessionStorage.setItem('vault_edit_pass', pass); } catch {}
       setIsEditing(true);
