@@ -188,21 +188,65 @@ const SLASH_COMMANDS = [
   { id: 'h1', label: 'Heading 1', icon: 'H1', template: '# ' },
   { id: 'h2', label: 'Heading 2', icon: 'H2', template: '## ' },
   { id: 'h3', label: 'Heading 3', icon: 'H3', template: '### ' },
+  { id: 'h4', label: 'Heading 4', icon: 'H4', template: '#### ' },
+  { id: 'h5', label: 'Heading 5', icon: 'H5', template: '##### ' },
+  { id: 'h6', label: 'Heading 6', icon: 'H6', template: '###### ' },
   { id: 'bold', label: 'Bold', icon: 'B', template: '**Bold**' },
   { id: 'italic', label: 'Italic', icon: 'I', template: '*Italic*' },
   { id: 'quote', label: 'Quote', icon: '”', template: '> ' },
   { id: 'ul', label: 'Bullet List', icon: 'UL', template: '- ' },
   { id: 'ol', label: 'Numbered List', icon: 'OL', template: '1. ' },
   { id: 'todo', label: 'Todo List', icon: '☑', template: '- [ ] ' },
-  { id: 'table', label: 'Table', icon: '田', template: "| Col 1 | Col 2 |\n| --- | --- |\n| Cell 1 | Cell 2 |" },
+  { id: 'table2', label: 'Table (2x2)', icon: '田2', template: "| Col 1 | Col 2 |\n| --- | --- |\n| Cell 1 | Cell 2 |" },
+  { id: 'table3', label: 'Table (3x2)', icon: '田3', template: "| Col 1 | Col 2 | Col 3 |\n| --- | --- | --- |\n| Cell 1 | Cell 2 | Cell 3 |" },
   { id: 'code', label: 'Code Block', icon: '</>', template: "```\n\n```" },
+  { id: 'icode', label: 'Inline Code', icon: '`', template: '`code` ' },
+  { id: 'link', label: 'Link', icon: '🔗', template: '[Title](url)' },
+  { id: 'img', label: 'Image', icon: '🖼', template: '![Alt](url)' },
+  { id: 'math', label: 'Math Block', icon: '∑', template: "$$\n\\text{math}\n$$" },
+  { id: 'mermaid', label: 'Mermaid', icon: '🧬', template: "```mermaid\ngraph TD;\nA-->B;\n```" },
   { id: 'hr', label: 'Divider', icon: '—', template: '---' },
 ];
 
 export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNavigate, cursorPosition = 'end' }) => {
   const containerRef = useRef(null);
+  const menuRef = useRef(null);
   const [slashMenu, setSlashMenu] = useState({ visible: false, x: 0, y: 0, query: '', selectedIndex: 0 });
   const [isEmpty, setIsEmpty] = useState(block.raw === '');
+
+  // Use a native listener to stop propagation of the wheel event
+  // This is more robust against parent components with custom scroll handlers
+  useEffect(() => {
+    const menu = menuRef.current;
+    if (!menu || !slashMenu.visible) return;
+
+    const stopWheel = (e) => {
+      e.stopPropagation();
+    };
+
+    menu.addEventListener('wheel', stopWheel, { passive: false });
+    return () => menu.removeEventListener('wheel', stopWheel);
+  }, [slashMenu.visible]);
+
+  // Scroll active item into view manually
+  useEffect(() => {
+    if (slashMenu.visible && menuRef.current) {
+      const menu = menuRef.current;
+      const activeItem = menu.children[slashMenu.selectedIndex];
+      if (activeItem) {
+        const menuTop = menu.scrollTop;
+        const menuBottom = menuTop + menu.clientHeight;
+        const itemTop = activeItem.offsetTop;
+        const itemBottom = itemTop + activeItem.offsetHeight;
+
+        if (itemTop < menuTop) {
+          menu.scrollTop = itemTop;
+        } else if (itemBottom > menuBottom) {
+          menu.scrollTop = itemBottom - menu.clientHeight;
+        }
+      }
+    }
+  }, [slashMenu.selectedIndex, slashMenu.visible]);
 
   const buildLineDiv = (line) => {
     const d = document.createElement('div');
@@ -271,10 +315,14 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
     // Slash menu detection
     if (text.startsWith('/')) {
       const rect = sel.getRangeAt(0).getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const menuMaxHeight = 240;
+      const showUpwards = rect.bottom + menuMaxHeight > viewportHeight;
+
       setSlashMenu(prev => ({
         visible: true,
         x: rect.left,
-        y: rect.bottom + 5,
+        y: showUpwards ? rect.top - menuMaxHeight - 5 : rect.bottom + 5,
         query: text.slice(1).toLowerCase(),
         selectedIndex: 0
       }));
@@ -337,21 +385,25 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
     if (slashMenu.visible && filteredCommands.length > 0) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
+        e.stopPropagation();
         setSlashMenu(prev => ({ ...prev, selectedIndex: (prev.selectedIndex + 1) % filteredCommands.length }));
         return;
       }
       if (e.key === 'ArrowUp') {
         e.preventDefault();
+        e.stopPropagation();
         setSlashMenu(prev => ({ ...prev, selectedIndex: (prev.selectedIndex - 1 + filteredCommands.length) % filteredCommands.length }));
         return;
       }
       if (e.key === 'Enter' || e.key === 'Tab') {
         e.preventDefault();
+        e.stopPropagation();
         applyCommand(filteredCommands[slashMenu.selectedIndex]);
         return;
       }
       if (e.key === 'Escape') {
         e.preventDefault();
+        e.stopPropagation();
         setSlashMenu(prev => ({ ...prev, visible: false }));
         return;
       }
@@ -470,9 +522,13 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
       />
       {slashMenu.visible && filteredCommands.length > 0 && (
         <div
+          ref={menuRef}
           className="slash-menu"
           style={{ left: slashMenu.x, top: slashMenu.y }}
-          onMouseDown={e => e.preventDefault()} // Prevent blur
+          onWheel={e => e.stopPropagation()}
+          onMouseDown={e => {
+            e.preventDefault(); 
+          }}
         >
           {filteredCommands.map((cmd, idx) => (
             <div

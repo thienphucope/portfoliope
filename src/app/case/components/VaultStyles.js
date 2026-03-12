@@ -314,10 +314,19 @@ export default function VaultStyles() {
           border-radius: 8px;
           box-shadow: 0 10px 30px rgba(0,0,0,0.5);
           z-index: 1000;
-          min-width: 180px;
-          max-height: 300px;
+          min-width: 200px;
+          max-height: 240px;
           overflow-y: auto;
           padding: 6px;
+          scrollbar-width: thin;
+          scrollbar-color: var(--accent) transparent;
+        }
+        .slash-menu::-webkit-scrollbar {
+          width: 4px;
+        }
+        .slash-menu::-webkit-scrollbar-thumb {
+          background: var(--accent);
+          border-radius: 10px;
         }
         .slash-item {
           display: flex;
