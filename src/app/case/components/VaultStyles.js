@@ -82,10 +82,11 @@ export default function VaultStyles() {
           outline: none;
           border-radius: 4px;
           padding: 2px 4px;
-          margin: 0 -4px;
+          margin: 0; 
           transition: background .12s;
           border: 1px solid transparent;
           box-sizing: border-box;
+          position: relative;
         }
 
         .block-content p:first-child { margin-top: 0; }
@@ -100,27 +101,31 @@ export default function VaultStyles() {
         }
 
         .block-view-hidden {
-          display: none;
+          visibility: hidden;
+          height: 0;
+          overflow: hidden;
+          pointer-events: none;
+          position: absolute;
         }
 
         .active-block {
           position: relative;
           width: 100%;
-          background: rgba(18,18,18,0.98);
-          border: 1px solid rgba(255,250,205,0.2);
+          background: transparent;
+          border: 1px solid rgba(255,250,205,0.25);
           border-radius: 4px;
           outline: none;
-          z-index: 10;
+          z-index: 5;
           box-sizing: border-box;
           padding: 2px 4px;
-          text-align: left; /* Editors are usually left-aligned */
+          text-align: left;
+          box-shadow: none;
         }
 
         /* ── TEXTAREA EDITORS ──────────────────────────────────────────────── */
 
         .raw-text-editor {
           caret-color: var(--accent);
-          box-shadow: 0 4px 20px rgba(0,0,0,0.6);
           cursor: text;
         }
 
@@ -153,6 +158,8 @@ export default function VaultStyles() {
           line-height: var(--md-line);
           outline: none;
           caret-color: var(--accent);
+          margin: 0;
+          padding: 0;
         }
         .rte-empty {
           min-height: 1.6em;
