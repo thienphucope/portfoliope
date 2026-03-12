@@ -468,7 +468,16 @@ export default function CasePage() {
       targetScrollX.current = null;
       if (tabAnimId.current) cancelAnimationFrame(tabAnimId.current);
 
-      const scrollTarget = tabIndex * 150; 
+      // tabIndex + 1 vì có thanh "Sticky Spine" (Ope Watson) ở vị trí index 0 ngoài mảng tabs
+      // Giả sử mỗi spine rộng 150px. 
+      // Nếu muốn thấy ít nhất 2 thanh bên trái, ta trừ đi 150 * 2 = 300px
+      const spineWidth = 150;
+      const visibleSpinesBefore = 2; // Số lượng spine bạn muốn thấy ở bên trái tab hiện tại
+      
+      // Vị trí thực tế của tab = (số thứ tự tab + 1 cho sticky spine) * chiều rộng spine
+      const tabPosition = (tabIndex + 1) * spineWidth;
+      const scrollTarget = Math.max(0, tabPosition - (spineWidth * visibleSpinesBefore));
+      
       const maxScroll = Math.max(0, scrollTarget);
       
       let startStart = null;
@@ -733,8 +742,9 @@ export default function CasePage() {
         }
 
         .acc-panel.open {
-          flex-basis: max(500px, calc(100vw - 600px));
-          min-width: max(500px, calc(100vw - 600px));
+          /* Để hở ra khoảng 450px cho các spine khác */
+          flex-basis: calc(100vw - 450px);
+          min-width: calc(100vw - 450px);
           flex-grow: 1;
           background-color: transparent;
         }
