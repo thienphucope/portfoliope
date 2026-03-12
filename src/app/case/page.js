@@ -131,15 +131,7 @@ export default function CasePage() {
         setFileName(repoKey);
         setContentKey(k => k + 1);
         
-        if (historyMode === 'push') {
-          const u = new URL(window.location);
-          u.searchParams.set('file', repoKey);
-          window.history.pushState({ path, name: repoKey }, '', u);
-        } else if (historyMode === 'replace') {
-          const u = new URL(window.location);
-          u.searchParams.set('file', repoKey);
-          window.history.replaceState({ path, name: repoKey }, '', u);
-        }
+        /* URL history updates removed as requested */
       } catch { 
         setContent('# Error\nFailed to load.');
         repoKey = serverPath || name;
@@ -198,12 +190,6 @@ export default function CasePage() {
         }
       } catch { setContent('# Connection Error\nFailed to connect to API.'); }
     })();
-  }, [loadFile]);
-
-  useEffect(() => {
-    const onPop = (e) => { if (e.state?.path) loadFile(e.state.path, e.state.name, null, 'none'); };
-    window.addEventListener('popstate', onPop);
-    return () => window.removeEventListener('popstate', onPop);
   }, [loadFile]);
 
   useEffect(() => {
