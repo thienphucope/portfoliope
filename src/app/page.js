@@ -430,8 +430,8 @@ export default function Home() {
             I do not own media
           </div>
           <div className="order-1 lg:order-2 flex gap-6 z-20">
-            <a href="https://www.youtube.com/@opewatson" target="_blank" rel="noopener noreferrer"><FaYoutube className="text-[var(--colorone)] text-3xl md:text-5xl hover:text-white transition-colors" /></a>
-            <a href="https://www.instagram.com/opewatson/" target="_blank" rel="noopener noreferrer"><FaInstagram className="text-[var(--colorone)] text-3xl md:text-5xl hover:text-white transition-colors" /></a>
+            <a href="https://www.youtube.com/watch?v=zqcrDCynF8k" target="_blank" rel="noopener noreferrer"><FaYoutube className="text-[var(--colorone)] text-3xl md:text-5xl hover:text-white transition-colors" /></a>
+            <a href="https://www.instagram.com/t22felton/" target="_blank" rel="noopener noreferrer"><FaInstagram className="text-[var(--colorone)] text-3xl md:text-5xl hover:text-white transition-colors" /></a>
             <a href="https://github.com/thienphucope" target="_blank" rel="noopener noreferrer"><FaGithub className="text-[var(--colorone)] text-3xl md:text-5xl hover:text-white transition-colors" /></a>
             <a href="mailto:thienphucmain@gmail.com"><FaEnvelope className="text-[var(--colorone)] text-3xl md:text-5xl hover:text-white transition-colors" /></a>
             <a href="https://x.com/a" target="_blank" rel="noopener noreferrer"><FaTwitter className="text-[var(--colorone)] text-3xl md:text-5xl hover:text-white transition-colors" /></a>

@@ -134,8 +134,6 @@ export default function CasePage() {
         setContent(newContent);
         setFileName(repoKey);
         setContentKey(k => k + 1);
-        
-        /* URL history updates removed as requested */
       } catch { 
         setContent('# Error\nFailed to load.');
         repoKey = serverPath || name;
@@ -150,6 +148,17 @@ export default function CasePage() {
         return prev.map(f => f.id === repoKey ? { ...f, fetchedContent: newContent } : f);
       });
       setActiveTab(repoKey);
+
+      // Update URL
+      const cleanPath = repoKey.replace(/\.md$/, '');
+      const newUrl = `/case/${cleanPath}`;
+      if (window.location.pathname !== newUrl) {
+        if (historyMode === 'replace') {
+          window.history.replaceState({ repoKey }, '', newUrl);
+        } else {
+          window.history.pushState({ repoKey }, '', newUrl);
+        }
+      }
     }
   }, []);
 
@@ -171,31 +180,62 @@ export default function CasePage() {
         buildRegistry(tree);
         setFileTree(tree);
         
-        // Find dashboard with full repo path to match tab ID
-        const findDashboard = (nodes, repoPath = '') => {
+        // Try to load file from URL path
+        const pathParts = window.location.pathname.split('/').filter(Boolean);
+        let targetFile = DEFAULT_FILE;
+        if (pathParts.length > 1 && pathParts[0] === 'case') {
+          targetFile = pathParts.slice(1).map(decodeURIComponent).join('/') + '.md';
+        }
+
+        // Find file in registry with full repo path to match tab ID
+        const findFile = (nodes, target, repoPath = '') => {
           for (const n of nodes) {
-            if (n.kind === 'file' && n.name.toLowerCase() === DEFAULT_FILE.toLowerCase()) {
-              return { path: n.path, name: n.name, id: repoPath ? `${repoPath}/${n.name}` : n.name };
+            const currentFullRepoPath = repoPath ? `${repoPath}/${n.name}` : n.name;
+            if (n.kind === 'file' && currentFullRepoPath.toLowerCase() === target.toLowerCase()) {
+              return { path: n.path, name: n.name, id: currentFullRepoPath };
             }
             if (n.children) {
-              const found = findDashboard(n.children, repoPath ? `${repoPath}/${n.name}` : n.name);
+              const found = findFile(n.children, target, currentFullRepoPath);
               if (found) return found;
             }
           }
           return null;
         };
         
-        const db = findDashboard(tree);
+        const db = findFile(tree, targetFile);
         setTimeout(() => {
           if (db) {
             loadFile(db.path, db.name, db.id, 'replace');
           } else {
-            const p = fileRegistry.current[DEFAULT_FILE.toLowerCase()];
-            if (p) loadFile(p, DEFAULT_FILE, null, 'replace');
+            // Fallback to default file if URL path not found
+            const fallbackDb = findFile(tree, DEFAULT_FILE);
+            if (fallbackDb) {
+              loadFile(fallbackDb.path, fallbackDb.name, fallbackDb.id, 'replace');
+            } else {
+              const p = fileRegistry.current[DEFAULT_FILE.toLowerCase()];
+              if (p) loadFile(p, DEFAULT_FILE, null, 'replace');
+            }
           }
         }, 500);
       } catch { setContent('# Connection Error\nFailed to connect to API.'); }
     })();
+  }, [loadFile]);
+
+  // Handle browser back/forward buttons
+  useEffect(() => {
+    const handlePopState = (e) => {
+      if (e.state && e.state.repoKey) {
+        const repoKey = e.state.repoKey;
+        const cleanPath = repoKey.toLowerCase();
+        const realPath = fileRegistry.current[cleanPath];
+        if (realPath) {
+          const name = repoKey.split('/').pop();
+          loadFile(realPath, name, repoKey, 'none'); // 'none' to avoid adding to history again
+        }
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, [loadFile]);
 
   useEffect(() => {
@@ -663,21 +703,29 @@ export default function CasePage() {
       const cached = readCache(tab.id);
       const openedF = openFiles.find(f => f.id === tab.id);
 
+      setFileName(tab.id);
       if (Array.isArray(cached) && cached.length > 0) {
-        setFileName(tab.id);
         setContent(cached.map(b => b.raw).join('\n\n'));
         setContentKey(k => k + 1);
       } else if (openedF && openedF.fetchedContent) {
-        setFileName(tab.id);
         setContent(openedF.fetchedContent);
         setContentKey(k => k + 1);
       } else if (tab.fileData && tab.fileData.path) {
         loadFile(tab.fileData.path, tab.fileData.name, tab.id, 'push');
       } else {
-        setFileName(tab.id);
         setContent(`# ${tab.title}\nLoading...`);
         setContentKey(k => k + 1);
       }
+
+      // Update URL when clicking tab
+      const cleanPath = tab.id.replace(/\.md$/, '');
+      const newUrl = `/case/${cleanPath}`;
+      if (window.location.pathname !== newUrl) {
+        window.history.pushState({ repoKey: tab.id }, '', newUrl);
+      }
+    } else {
+      // For sidebar or chat, we might want to reset the URL or keep it
+      // For now, let's keep the last file URL
     }
   };
 
