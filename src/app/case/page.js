@@ -124,7 +124,9 @@ export default function CasePage() {
         const res  = await fetch(path);
         newContent = await res.text();
         const urlParts = new URL(path, window.location.origin).pathname.split('/').slice(1);
-        repoKey = serverPath || decodeURIComponent(urlParts.slice(3).join('/'));
+        // Match repoKey with getAllFiles's id format (repoPath/name)
+        // API path is /api/cases/sub/path/name.md -> sub/path/name.md
+        repoKey = serverPath || decodeURIComponent(urlParts.slice(2).join('/'));
         serverRawCache.current[repoKey] = newContent;
         setContent(newContent);
         setFileName(repoKey);
@@ -148,7 +150,7 @@ export default function CasePage() {
     if (repoKey && repoKey !== 'error') {
       setOpenFiles(prev => {
         if (!prev.find(f => f.id === repoKey)) {
-          return [...prev, { id: repoKey, path, name, serverPath, fetchedContent: newContent }];
+          return [...prev, { id: repoKey, path, name, serverPath: repoKey, fetchedContent: newContent }];
         }
         return prev.map(f => f.id === repoKey ? { ...f, fetchedContent: newContent } : f);
       });
@@ -173,8 +175,28 @@ export default function CasePage() {
         });
         buildRegistry(tree);
         setFileTree(tree);
-        const p = fileRegistry.current['dash board.md'];
-        if (p) loadFile(p, 'Dash Board.md', null, 'replace');
+        
+        // Find dashboard with full repo path to match tab ID
+        const findDashboard = (nodes, repoPath = '') => {
+          for (const n of nodes) {
+            if (n.kind === 'file' && n.name.toLowerCase() === 'dash board.md') {
+              return { path: n.path, name: n.name, id: repoPath ? `${repoPath}/${n.name}` : n.name };
+            }
+            if (n.children) {
+              const found = findDashboard(n.children, repoPath ? `${repoPath}/${n.name}` : n.name);
+              if (found) return found;
+            }
+          }
+          return null;
+        };
+        
+        const db = findDashboard(tree);
+        if (db) {
+          loadFile(db.path, db.name, db.id, 'replace');
+        } else {
+          const p = fileRegistry.current['dash board.md'];
+          if (p) loadFile(p, 'Dash Board.md', null, 'replace');
+        }
       } catch { setContent('# Connection Error\nFailed to connect to API.'); }
     })();
   }, [loadFile]);
@@ -424,37 +446,36 @@ export default function CasePage() {
         // Vertical scroll for mobile
         const scrollTarget = tabIndex * 50; 
         appShellRef.current.scrollTo({ top: scrollTarget, behavior: 'smooth' });
-        return;
-      }
+      } else {
+        isTabScrolling.current = true;
+        targetScrollX.current = null;
+        if (tabAnimId.current) cancelAnimationFrame(tabAnimId.current);
 
-      isTabScrolling.current = true;
-      targetScrollX.current = null;
-      if (tabAnimId.current) cancelAnimationFrame(tabAnimId.current);
-
-      const scrollTarget = (tabIndex - 1) * 150; 
-      const maxScroll = Math.max(0, scrollTarget);
-      
-      let startStart = null;
-      const startScroll = appShellRef.current.scrollLeft;
-      const distance = maxScroll - startScroll;
-      const duration = 1500;
-      
-      const step = (timestamp) => {
-        if (!startStart) startStart = timestamp;
-        const progress = Math.min((timestamp - startStart) / duration, 1);
-        const ease = 1 - Math.pow(1 - progress, 4);
+        const scrollTarget = (tabIndex - 1) * 150; 
+        const maxScroll = Math.max(0, scrollTarget);
         
-        if (appShellRef.current && isTabScrolling.current) {
-           appShellRef.current.scrollLeft = startScroll + (distance * ease);
-        }
-        if (progress < 1 && isTabScrolling.current) {
-          tabAnimId.current = window.requestAnimationFrame(step);
-        } else {
-          isTabScrolling.current = false;
-          tabAnimId.current = null;
-        }
-      };
-      tabAnimId.current = window.requestAnimationFrame(step);
+        let startStart = null;
+        const startScroll = appShellRef.current.scrollLeft;
+        const distance = maxScroll - startScroll;
+        const duration = 1500;
+        
+        const step = (timestamp) => {
+          if (!startStart) startStart = timestamp;
+          const progress = Math.min((timestamp - startStart) / duration, 1);
+          const ease = 1 - Math.pow(1 - progress, 4);
+          
+          if (appShellRef.current && isTabScrolling.current) {
+             appShellRef.current.scrollLeft = startScroll + (distance * ease);
+          }
+          if (progress < 1 && isTabScrolling.current) {
+            tabAnimId.current = window.requestAnimationFrame(step);
+          } else {
+            isTabScrolling.current = false;
+            tabAnimId.current = null;
+          }
+        };
+        tabAnimId.current = window.requestAnimationFrame(step);
+      }
     }
     
     if (tab.type === 'editor') {
