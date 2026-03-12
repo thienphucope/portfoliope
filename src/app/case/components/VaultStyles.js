@@ -79,6 +79,8 @@ export default function VaultStyles() {
         .block-editor { width:100%; }
 
         .block-content {
+          display: block;
+          width: 100%;
           outline: none;
           border-radius: 4px;
           padding: 2px 4px;
@@ -87,17 +89,20 @@ export default function VaultStyles() {
           border: 1px solid transparent;
           box-sizing: border-box;
           position: relative;
+          overflow-wrap: break-word;
         }
 
         .block-content p:first-child { margin-top: 0; }
         .block-content p:last-child  { margin-bottom: 0; }
 
-        .block-view { cursor: default; }
-        .block-view.editable-mode { cursor: text; }
+        .block-view { cursor: default; width: 100%; display: block; }
+        .block-view.editable-mode { cursor: text; min-height: 1.2em; }
         .block-view.editable-mode:hover { background: rgba(255,255,255,0.025); }
 
         .block-wrapper {
           position: relative;
+          width: 100%;
+          display: block;
         }
 
         .block-view-hidden {
@@ -171,7 +176,7 @@ export default function VaultStyles() {
         .rte-h3 { font-size: 1.2em;  font-weight: 700; color: #fff; line-height: 1.2; margin-top: .6em;  margin-bottom: .2em; }
         .rte-h4 { font-size: 1.05em; font-weight: 700; color: #fff; }
         .rte-h5 { font-size: 1em;    font-weight: 700; color: #ddd; }
-        .rte-h6 { font-size: 0.9em; font-weight: 900; color: #fff; font-style: italic; letter-spacing: -0.02em; white-space: nowrap; }
+        .rte-h6 { font-size: 0.9em; font-weight: 900; color: #fff; font-style: italic; letter-spacing: -0.02em; white-space: pre-wrap; }
         .rte-ul, .rte-ol { padding-left: 1.8em; text-indent: -1.8em; margin-bottom: 0.3em; }
         .rte-blockquote { border-left: 3px solid var(--accent); padding-left: 1.25em; margin-left: 0; font-style: italic; opacity: 0.8; }
         .rte-codefence { font-family: monospace; font-size: 0.85em; opacity: 0.55; background: rgba(255,255,255,0.03); border-radius: 3px; }
@@ -189,8 +194,9 @@ export default function VaultStyles() {
           padding: 15px; /* Match pre padding */
           color: var(--txt);
           caret-color: var(--accent);
-          white-space: pre;
+          white-space: pre-wrap;
           box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+          overflow-wrap: break-word;
         }
 
         .code-raw-editor:focus {

@@ -30,9 +30,11 @@ export const BlockView = ({ block, isEditing, isActive, onActivate, onLinkClick 
 
   useEffect(() => {
     if (!divRef.current || !window.marked) return;
-    divRef.current.innerHTML = window.marked.parse(block.raw || '');
+    let html = window.marked.parse(block.raw || '');
+    if (!html || !html.trim() || html === '<p></p>') html = '<p><br></p>';
+    divRef.current.innerHTML = html;
     postProcess(divRef.current);
-  }, [block.raw]);
+  }, [block.raw, isEditing]);
 
   useEffect(() => {
     const handler = () => { if (divRef.current) divRef.current.querySelectorAll('h6.fit-heading').forEach(fitHeading); };
