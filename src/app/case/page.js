@@ -22,6 +22,8 @@ export default function CasePage() {
   const appShellRef    = useRef(null);
   const saveHandlerRef = useRef(null); // ref to BlockEditor's save fn
   const bgPlayerRef    = useRef(null);
+  const lockIntervalRef = useRef(null);
+  const sessionIdRef = useRef(Math.random().toString(36).substring(2, 15));
   
   // Custom Smooth Scrolling States
   const isTabScrolling = useRef(false);
@@ -380,10 +382,23 @@ export default function CasePage() {
     const res = await fetch('/api/cases', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path: filePath, content: raw, create: isNew, password: pass }),
+      body: JSON.stringify({ 
+        path: filePath, 
+        content: raw, 
+        create: isNew, 
+        password: pass,
+        sessionId: sessionIdRef.current 
+      }),
     });
     if (res.status === 403) return { wrongPass: true };
+    if (res.status === 423) throw new Error('locked_by_other');
     if (!res.ok) throw new Error(await res.text());
+
+    // Update server cache and clear local draft for THIS file only
+    serverRawCache.current[filePath] = raw;
+    setContent(raw);
+    try { localStorage.removeItem(`vault_v3::${filePath}`); } catch {}
+
     if (isNew) await refreshTree();
     return { ok: true };
   }, [refreshTree]);
@@ -413,18 +428,6 @@ export default function CasePage() {
   const handleSaveFile = useCallback(async (raw) => {
     if (!fileName) throw new Error('No file open');
     await saveOneFile(fileName, raw);
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (!k || !k.startsWith('vault_v3::')) continue;
-        const fp = k.replace('vault_v3::', '');
-        if (fp === fileName) continue;
-        const cached = readCache(fp);
-        if (!Array.isArray(cached) || cached.length === 0) continue;
-        const cachedRaw = cached.map(b => b.raw).join('\n\n');
-        await saveOneFile(fp, cachedRaw);
-      }
-    } catch {}
   }, [fileName, saveOneFile]);
 
   const handleSidebarSave = useCallback(async () => {
@@ -434,11 +437,103 @@ export default function CasePage() {
       await saveHandlerRef.current();
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
-    } catch {
+    } catch (e) {
+      if (e.message === 'locked_by_other') {
+        alert("Cannot save. File is locked by another user.");
+      }
       setSaveStatus('error');
       setTimeout(() => setSaveStatus('idle'), 3000);
     }
   }, []);
+
+  // Helper to ping the server and lock the file
+  const acquireLock = async (targetPath, pass) => {
+    const res = await fetch('/api/cases', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        action: 'lock', 
+        path: targetPath, 
+        password: pass,
+        sessionId: sessionIdRef.current 
+      })
+    });
+    if (res.status === 403) throw new Error('wrong_pass');
+    if (res.status === 423) throw new Error('locked_by_other');
+    if (!res.ok) throw new Error('lock_failed');
+  };
+
+  // Helper to explicitly unlock
+  const releaseLock = (targetPath, pass) => {
+    fetch('/api/cases', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        action: 'unlock', 
+        path: targetPath, 
+        password: pass,
+        sessionId: sessionIdRef.current 
+      }),
+      keepalive: true
+    }).catch(() => {});
+  };
+
+  // 1. Handle creating a new note
+  const handleCreateNewNote = () => {
+    const noteName = window.prompt("Enter the name for your new note:");
+    if (!noteName) return;
+    const cleanName = noteName.endsWith('.md') ? noteName : `${noteName}.md`;
+    const targetPath = `notes/${cleanName}`;
+    createAndOpenFile(targetPath);
+    setIsEditing(true); // New notes toggle freely
+  };
+
+  // 2. Custom Toggle Edit Logic
+  const handleToggleEditMode = async () => {
+    if (isEditing) {
+      // Exiting Edit Mode -> unlock and switch to view
+      clearInterval(lockIntervalRef.current);
+      if (editPass && fileName) releaseLock(fileName, editPass);
+      setIsEditing(false);
+      return;
+    }
+
+    // Entering Edit Mode
+    const registryEntry = fileRegistry.current[fileName?.toLowerCase()];
+    const isLocalNew = registryEntry === null;
+
+    if (isLocalNew) {
+      setIsEditing(true); // Free pass for newly created files
+      return;
+    }
+
+    // For existing files: Always prompt for password to ensure security
+    try {
+      const pass = await askPassword();
+      await acquireLock(fileName, pass);
+      
+      setEditPass(pass);
+      try { sessionStorage.setItem('vault_edit_pass', pass); } catch {}
+      setIsEditing(true);
+      
+      // Start keep-alive loop (ping every 20 seconds)
+      if (lockIntervalRef.current) clearInterval(lockIntervalRef.current);
+      lockIntervalRef.current = setInterval(() => {
+        acquireLock(fileName, pass).catch(() => {
+          clearInterval(lockIntervalRef.current);
+          setIsEditing(false);
+          alert("Connection lost or file locked by another user. Returning to view mode.");
+        });
+      }, 20000);
+    } catch (e) {
+      if (e.message === 'cancelled') return;
+      if (e.message === 'wrong_pass') {
+        alert("Incorrect password!");
+      } else {
+        alert("Cannot edit right now. File might be locked by another user.");
+      }
+    }
+  };
 
   const scrollToTab = useCallback((tabId) => {
     if (!appShellRef.current) return;
@@ -496,8 +591,29 @@ export default function CasePage() {
     }
   }, [activeTab, scrollToTab]);
 
-  const handleTabClick = (tab, e) => {
+  const handleTabClick = async (tab, e) => {
     if (activeTab === tab.id) return;
+    
+    // Check for unsaved changes before switching away
+    if (isEditing && fileName) {
+      const cached = readCache(fileName);
+      const raw = Array.isArray(cached) && cached.length > 0 
+        ? cached.map(b => b.raw).join('\n\n') 
+        : content;
+      const serverRaw = serverRawCache.current[fileName] || "";
+      
+      if (raw.trim() !== serverRaw.trim()) {
+        const wantsToSave = window.confirm("You have unsaved changes. Do you want to save before leaving?");
+        if (wantsToSave) {
+          await handleSaveFile(raw);
+        }
+      }
+      // Clean up lock and exit edit mode
+      clearInterval(lockIntervalRef.current);
+      if (editPass) releaseLock(fileName, editPass);
+      setIsEditing(false);
+    }
+
     setActiveTab(tab.id);
     
     if (tab.type === 'editor') {
@@ -708,6 +824,28 @@ export default function CasePage() {
           letter-spacing: 3px;
         }
 
+        .add-note-btn {
+          width: 30px;
+          height: 30px;
+          border-radius: 50%;
+          border: 2px solid rgba(0,0,0,0.6);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          position: absolute;
+          top: 15px;
+          color: black;
+          font-weight: bold;
+          font-size: 20px;
+          z-index: 100;
+          transition: transform 0.2s, background-color 0.2s;
+        }
+        .add-note-btn:hover {
+          background-color: rgba(0,0,0,0.1);
+          transform: scale(1.1);
+        }
+
         .acc-panel {
           display: flex;
           flex-direction: row;
@@ -873,6 +1011,13 @@ export default function CasePage() {
             margin-top: 4px !important;
           }
 
+          .add-note-btn {
+            position: relative;
+            top: auto;
+            right: auto;
+            margin-left: auto; /* Pushes it to the right on mobile flex container */
+          }
+
           .acc-panel {
             width: 100% !important;
             flex-direction: column !important;
@@ -941,6 +1086,7 @@ export default function CasePage() {
       <div className="acc-panel sticky-spine" onClick={() => window.location.href = '/'}>
         <div className="acc-ope-container" style={{ width: '100%', flex: '1' }}>
           <div className="spine-content">
+            <div className="add-note-btn" onClick={(e) => { e.stopPropagation(); handleCreateNewNote(); }} title="New Note">+</div>
             <div className="acc-ope">Ope Watson</div>
             <div className="spine-homepage">homepage</div>
           </div>
@@ -967,7 +1113,7 @@ export default function CasePage() {
                   <div className="floating-actions">
                     <button
                       className={`icon-btn${isEditing ? ' icon-btn--active' : ''}`}
-                      onClick={() => setIsEditing(e => !e)}
+                      onClick={handleToggleEditMode}
                       title={isEditing ? 'Switch to Read mode' : 'Switch to Edit mode'}
                     >
                       {isEditing ? (
@@ -1030,7 +1176,7 @@ export default function CasePage() {
                           onLinkClick={handleLinkClick}
                           onSaveFile={handleSaveFile}
                           isEditing={isEditing}
-                          onToggleEditing={() => setIsEditing(e => !e)}
+                          onToggleEditing={handleToggleEditMode}
                           onSaveRef={saveHandlerRef}
                         />
                       </article>
@@ -1046,7 +1192,7 @@ export default function CasePage() {
       {passPrompt && (
         <div className="pass-overlay" onClick={() => { passPrompt.reject(new Error('cancelled')); setPassPrompt(null); }}>
           <div className="pass-modal" onClick={e => e.stopPropagation()}>
-            <div className="pass-modal__title">🔐 Nhập mật khẩu để lưu</div>
+            <div className="pass-modal__title">🔐 Nhập mật khẩu để tiếp tục</div>
             <input
               className="pass-modal__input"
               type="password"

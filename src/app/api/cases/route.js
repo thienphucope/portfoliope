@@ -5,6 +5,9 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
 const GITHUB_REPO = 'thienphucope/cases';
 const EDIT_PASS = process.env.EDIT_PASS || 'default_hardcoded_pass';
 
+const fileLocks = new Map();
+const LOCK_TIMEOUT = 30000; // 30 seconds expiration
+
 // ─── HELPER: build tree from github ──────────────────────────────────────────
 
 async function getGithubCasesTree() {
@@ -153,22 +156,58 @@ export async function POST(request) {
   let body;
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
 
-  const { path, content, create = false, password } = body;
-  if (!path || typeof content !== 'string') return NextResponse.json({ error: 'Missing path or content' }, { status: 400 });
-  if (!password) return NextResponse.json({ error: 'Password required' }, { status: 401 });
-
-  // Kiểm tra mật khẩu EDIT_PASS
+  // Extract 'action' alongside existing properties
+  const { action, path, content, create = false, password } = body;
+  if (!path) return NextResponse.json({ error: 'Missing path' }, { status: 400 });
+  
   if (password !== EDIT_PASS) {
     console.warn(`❌ [API Route] Wrong password attempt.`);
     return NextResponse.json({ error: 'Wrong password' }, { status: 403 });
   }
 
   const finalPath = path.endsWith('.md') ? path : `${path}.md`;
+  const now = Date.now();
+  const currentLock = fileLocks.get(finalPath);
+  const { sessionId } = body;
 
+  // 1. Handle File Locking
+  if (action === 'lock') {
+    if (!sessionId) return NextResponse.json({ error: 'Missing sessionId' }, { status: 400 });
+
+    // If someone else holds the lock and it hasn't expired
+    if (currentLock && currentLock.expiresAt > now && currentLock.sessionId !== sessionId) {
+      return NextResponse.json({ 
+        ok: false, 
+        error: 'File is being edited by another user', 
+        locked: true 
+      }, { status: 423 }); // 423 Locked
+    }
+
+    fileLocks.set(finalPath, { expiresAt: now + LOCK_TIMEOUT, sessionId });
+    return NextResponse.json({ ok: true, locked: true });
+  }
+
+  // 2. Handle File Unlocking
+  if (action === 'unlock') {
+    if (currentLock && currentLock.sessionId === sessionId) {
+      fileLocks.delete(finalPath);
+    }
+    return NextResponse.json({ ok: true });
+  }
+
+  // 3. Existing Save Logic
+  if (typeof content !== 'string') return NextResponse.json({ error: 'Missing content' }, { status: 400 });
+  
+  // Check lock before saving
+  if (currentLock && currentLock.expiresAt > now && currentLock.sessionId !== sessionId) {
+    return NextResponse.json({ error: 'Lock lost or held by another user' }, { status: 423 });
+  }
+  
   console.log(`📝 [API Route] POST: Saving directly to GitHub...`);
   const result = await saveToGithub(finalPath, content, create);
   
   if (result.ok) {
+    fileLocks.delete(finalPath); // Release lock after successful save
     console.log(`✅ [API Route] Saved to GitHub successfully.`);
     return NextResponse.json(result);
   } else {
