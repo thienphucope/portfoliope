@@ -106,9 +106,10 @@ export default function CasePage() {
 
   // Accordion state
   const [openFiles, setOpenFiles] = useState([]); // Array of { id, path, name, serverPath, fetchedContent }
-  const [activeTab, setActiveTab] = useState('filetree'); 
+  const [activeTab, setActiveTab] = useState(null); 
 
   const loadFile = useCallback(async (path, name, serverPath = null, historyMode = 'push') => {
+    if (serverPath) setActiveTab(serverPath);
     let repoKey;
     let newContent = '';
 
@@ -184,12 +185,14 @@ export default function CasePage() {
         };
         
         const db = findDashboard(tree);
-        if (db) {
-          loadFile(db.path, db.name, db.id, 'replace');
-        } else {
-          const p = fileRegistry.current['dash board.md'];
-          if (p) loadFile(p, 'Dash Board.md', null, 'replace');
-        }
+        setTimeout(() => {
+          if (db) {
+            loadFile(db.path, db.name, db.id, 'replace');
+          } else {
+            const p = fileRegistry.current['dash board.md'];
+            if (p) loadFile(p, 'Dash Board.md', null, 'replace');
+          }
+        }, 500);
       } catch { setContent('# Connection Error\nFailed to connect to API.'); }
     })();
   }, [loadFile]);
@@ -850,7 +853,7 @@ export default function CasePage() {
           display: flex;
           flex-direction: row;
           height: 100%;
-          transition: flex-basis 1.5s cubic-bezier(0.25, 0.8, 0.25, 1), min-width 1.5s cubic-bezier(0.25, 0.8, 0.25, 1), flex-grow 1.5s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 1.5s;
+          transition: flex-basis 1s cubic-bezier(0.25, 0.8, 0.25, 1), min-width 1s cubic-bezier(0.25, 0.8, 0.25, 1), flex-grow 1s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 1s;
           border-right: 2px solid rgba(255, 255, 255, 0.2);
           overflow: hidden;
           flex-shrink: 0;
