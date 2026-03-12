@@ -183,8 +183,26 @@ export const getLineClass = (line) => {
 
 // ─── RAW TEXT EDITOR ─────────────────────────────────────────────────────────
 
+const SLASH_COMMANDS = [
+  { id: 'ai', label: 'AI Prompt', icon: 'AI', template: '/ai ' },
+  { id: 'h1', label: 'Heading 1', icon: 'H1', template: '# ' },
+  { id: 'h2', label: 'Heading 2', icon: 'H2', template: '## ' },
+  { id: 'h3', label: 'Heading 3', icon: 'H3', template: '### ' },
+  { id: 'bold', label: 'Bold', icon: 'B', template: '**Bold**' },
+  { id: 'italic', label: 'Italic', icon: 'I', template: '*Italic*' },
+  { id: 'quote', label: 'Quote', icon: '”', template: '> ' },
+  { id: 'ul', label: 'Bullet List', icon: 'UL', template: '- ' },
+  { id: 'ol', label: 'Numbered List', icon: 'OL', template: '1. ' },
+  { id: 'todo', label: 'Todo List', icon: '☑', template: '- [ ] ' },
+  { id: 'table', label: 'Table', icon: '田', template: "| Col 1 | Col 2 |\n| --- | --- |\n| Cell 1 | Cell 2 |" },
+  { id: 'code', label: 'Code Block', icon: '</>', template: "```\n\n```" },
+  { id: 'hr', label: 'Divider', icon: '—', template: '---' },
+];
+
 export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNavigate, cursorPosition = 'end' }) => {
   const containerRef = useRef(null);
+  const [slashMenu, setSlashMenu] = useState({ visible: false, x: 0, y: 0, query: '', selectedIndex: 0 });
+  const [isEmpty, setIsEmpty] = useState(block.raw === '');
 
   const buildLineDiv = (line) => {
     const d = document.createElement('div');
@@ -231,6 +249,9 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleInput = useCallback(() => {
+    const raw = collectRaw();
+    setIsEmpty(raw === '');
+
     const sel = window.getSelection();
     if (!sel || !sel.anchorNode) return;
     let node = sel.anchorNode;
@@ -239,15 +260,52 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
       node = node.parentNode;
     }
     if (!node || node === containerRef.current) return;
+
     const text = node.textContent || '';
-    const isEmpty = text === '' || node.innerHTML === '<br>';
-    node.className = `rte-line ${getLineClass(text)}${isEmpty ? ' rte-empty' : ''}`;
-    if (isEmpty && !node.querySelector('br')) {
+    const isLineEmpty = text === '' || node.innerHTML === '<br>';
+    node.className = `rte-line ${getLineClass(text)}${isLineEmpty ? ' rte-empty' : ''}`;
+    if (isLineEmpty && !node.querySelector('br')) {
       node.innerHTML = '<br>';
+    }
+
+    // Slash menu detection
+    if (text.startsWith('/')) {
+      const rect = sel.getRangeAt(0).getBoundingClientRect();
+      setSlashMenu(prev => ({
+        visible: true,
+        x: rect.left,
+        y: rect.bottom + 5,
+        query: text.slice(1).toLowerCase(),
+        selectedIndex: 0
+      }));
+    } else if (slashMenu.visible) {
+      setSlashMenu(prev => ({ ...prev, visible: false }));
+    }
+  }, [slashMenu.visible]);
+
+  const applyCommand = useCallback((cmd) => {
+    const sel = window.getSelection();
+    let node = sel?.anchorNode;
+    while (node && !(node.classList && node.classList.contains('rte-line'))) node = node.parentNode;
+    if (!node) return;
+
+    node.textContent = cmd.template;
+    node.className = `rte-line ${getLineClass(cmd.template)}`;
+    setSlashMenu({ visible: false, x: 0, y: 0, query: '', selectedIndex: 0 });
+    setIsEmpty(collectRaw() === '');
+
+    // Position cursor after template
+    cursorToEnd(node);
+    if (cmd.id === 'ai' || cmd.id === 'table' || cmd.id === 'code') {
+      // For these types, we might want to stay in edit mode
+    } else {
+      // For others, maybe save and continue
     }
   }, []);
 
-  const handleBlur = useCallback(() => {
+  const handleBlur = useCallback((e) => {
+    // Prevent blur if clicking on slash menu
+    if (e.relatedTarget?.closest('.slash-menu')) return;
     onSave(collectRaw());
     onDeactivate();
   }, [onSave, onDeactivate]);
@@ -268,9 +326,36 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
     return null;
   };
 
+  const filteredCommands = SLASH_COMMANDS.filter(c =>
+    c.label.toLowerCase().includes(slashMenu.query) || c.id.includes(slashMenu.query)
+  );
+
   const handleKeyDown = useCallback(async (e) => {
     const el = containerRef.current;
     if (!el) return;
+
+    if (slashMenu.visible && filteredCommands.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSlashMenu(prev => ({ ...prev, selectedIndex: (prev.selectedIndex + 1) % filteredCommands.length }));
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSlashMenu(prev => ({ ...prev, selectedIndex: (prev.selectedIndex - 1 + filteredCommands.length) % filteredCommands.length }));
+        return;
+      }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        applyCommand(filteredCommands[slashMenu.selectedIndex]);
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setSlashMenu(prev => ({ ...prev, visible: false }));
+        return;
+      }
+    }
 
     if (e.key === 'Escape') {
       onSave(collectRaw());
@@ -368,19 +453,40 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
       onSave(collectRaw());
       onCreateAfter();
     }
-  }, [onSave, onDeactivate, onCreateAfter]);
+  }, [onSave, onDeactivate, onCreateAfter, slashMenu, filteredCommands, applyCommand]);
 
   return (
-    <div
-      ref={containerRef}
-      className="block-content markdown-content raw-text-editor active-block"
-      contentEditable
-      suppressContentEditableWarning
-      onInput={handleInput}
-      onBlur={handleBlur}
-      onKeyDown={handleKeyDown}
-      spellCheck={false}
-    />
+    <>
+      <div
+        ref={containerRef}
+        className={`block-content markdown-content raw-text-editor active-block${isEmpty ? ' is-empty' : ''}`}
+        contentEditable
+        suppressContentEditableWarning
+        onInput={handleInput}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        spellCheck={false}
+        data-placeholder="Type slash / to open command"
+      />
+      {slashMenu.visible && filteredCommands.length > 0 && (
+        <div
+          className="slash-menu"
+          style={{ left: slashMenu.x, top: slashMenu.y }}
+          onMouseDown={e => e.preventDefault()} // Prevent blur
+        >
+          {filteredCommands.map((cmd, idx) => (
+            <div
+              key={cmd.id}
+              className={`slash-item${idx === slashMenu.selectedIndex ? ' slash-item--active' : ''}`}
+              onClick={() => applyCommand(cmd)}
+            >
+              <div className="slash-item__icon">{cmd.icon}</div>
+              <div className="slash-item__label">{cmd.label}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
   );
 };
 

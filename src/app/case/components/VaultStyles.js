@@ -127,6 +127,23 @@ export default function VaultStyles() {
           caret-color: var(--accent);
           box-shadow: 0 4px 20px rgba(0,0,0,0.6);
           cursor: text;
+          position: relative;
+        }
+
+        .raw-text-editor::before {
+          content: attr(data-placeholder);
+          position: absolute;
+          left: 8px;
+          top: 4px;
+          color: rgba(255, 255, 255, 0.25);
+          pointer-events: none;
+          font-family: var(--md-font);
+          font-size: var(--md-size);
+          font-style: italic;
+          display: none;
+        }
+        .raw-text-editor.is-empty::before {
+          display: block;
         }
 
         .raw-text-editor:focus-within {
@@ -288,6 +305,48 @@ export default function VaultStyles() {
         .video-container { position:relative; padding-bottom:56.25%; height:0; margin:1.5em 0; }
         .video-container iframe { position:absolute; top:0; left:0; width:100%; height:100%; border-radius:8px; pointer-events: none; }
         .video-container.interactable iframe { pointer-events: auto; }
+
+        /* ── SLASH MENU ─────────────────────────────────────────────────────── */
+        .slash-menu {
+          position: fixed;
+          background: #1e1e1e;
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+          z-index: 1000;
+          min-width: 180px;
+          max-height: 300px;
+          overflow-y: auto;
+          padding: 6px;
+        }
+        .slash-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 8px 12px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-family: 'Inter', sans-serif;
+          font-size: 13px;
+          color: rgba(255,255,255,0.8);
+          transition: background 0.1s, color 0.1s;
+        }
+        .slash-item:hover, .slash-item--active {
+          background: rgba(255,250,205,0.1);
+          color: var(--accent);
+        }
+        .slash-item__icon {
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(255,255,255,0.05);
+          border-radius: 4px;
+          font-size: 11px;
+          font-weight: 700;
+          color: var(--accent);
+        }
 
         /* MOBILE & TABLET PORTRAIT */
         @media (max-width:1024px),(orientation:portrait) {
