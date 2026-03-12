@@ -7,6 +7,7 @@ import BlockEditor, { readCache } from './components/BlockEditor';
 import VaultStyles from './components/VaultStyles';
 
 // ─── MAIN VAULT ───────────────────────────────────────────────────────────────
+const DEFAULT_FILE = process.env.NEXT_PUBLIC_DEFAULT_VAULT_FILE || "The Boy Who Murdered Love.md";
 
 export default function CasePage() {
   const [fileTree,    setFileTree]    = useState([]);
@@ -173,7 +174,7 @@ export default function CasePage() {
         // Find dashboard with full repo path to match tab ID
         const findDashboard = (nodes, repoPath = '') => {
           for (const n of nodes) {
-            if (n.kind === 'file' && n.name.toLowerCase() === 'dash board.md') {
+            if (n.kind === 'file' && n.name.toLowerCase() === DEFAULT_FILE.toLowerCase()) {
               return { path: n.path, name: n.name, id: repoPath ? `${repoPath}/${n.name}` : n.name };
             }
             if (n.children) {
@@ -189,8 +190,8 @@ export default function CasePage() {
           if (db) {
             loadFile(db.path, db.name, db.id, 'replace');
           } else {
-            const p = fileRegistry.current['dash board.md'];
-            if (p) loadFile(p, 'Dash Board.md', null, 'replace');
+            const p = fileRegistry.current[DEFAULT_FILE.toLowerCase()];
+            if (p) loadFile(p, DEFAULT_FILE, null, 'replace');
           }
         }, 500);
       } catch { setContent('# Connection Error\nFailed to connect to API.'); }
@@ -271,25 +272,25 @@ export default function CasePage() {
     
     if (fileTree.length === 0) {
       // Add 6 placeholder bars while loading to fill the screen
-      for (let i = 0; i < 8; i++) {
+      for (let i = 0; i < 20; i++) {
         baseTabs.push({ id: `placeholder-${i}`, title: '...', type: 'placeholder' });
       }
       return baseTabs;
     }
 
-    const dashboard = allFiles.find(f => f.name.toLowerCase() === 'dash board.md');
-    if (dashboard) {
-      baseTabs.push({ id: dashboard.id, title: 'Dash Board', type: 'editor', fileData: dashboard });
-    }
+    const sortedFiles = [...allFiles].sort((a, b) => a.name.localeCompare(b.name));
 
-    allFiles.forEach(f => {
-      if (f.name.toLowerCase() !== 'dash board.md') {
-        baseTabs.push({ id: f.id, title: f.name.replace('.md', ''), type: 'editor', fileData: f });
-      }
+    sortedFiles.forEach(f => {
+      baseTabs.push({ 
+        id: f.id, 
+        title: f.name.replace('.md', ''), 
+        type: 'editor', 
+        fileData: f 
+      });
     });
 
     return baseTabs;
-  }, [allFiles]);
+  }, [allFiles, fileTree.length]);
 
   const resolveWikiPath = (target) => {
     const withExt = target.endsWith('.md') ? target : `${target}.md`;
