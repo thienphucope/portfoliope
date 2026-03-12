@@ -156,7 +156,7 @@ export default function Chat({ isEmbedded = false }) {
 
   const style = {
     fontFamily: "'Crimson Text', serif",
-    bg: "bg-[#121212]",
+    bg: "bg-transparent",
     border: "border-white/10",
     text: "text-white/90",
     accent: "text-white"
@@ -165,7 +165,7 @@ export default function Chat({ isEmbedded = false }) {
   if (!isOpen && !isEmbedded) return null;
 
   return (
-    <div className={`${isEmbedded ? 'relative h-full w-full' : 'fixed inset-0 z-50'} flex flex-col bg-[#121212] overflow-hidden`} style={{ fontFamily: style.fontFamily }}>
+    <div className={`${isEmbedded ? 'relative h-full w-full' : 'fixed inset-0 z-50'} flex flex-col bg-transparent overflow-hidden`} style={{ fontFamily: style.fontFamily }}>
       {/* Header */}
       <div className="p-4 border-b border-white/10 flex justify-between items-center bg-zinc-900/30">
         <span className="font-bold tracking-widest text-[10px] opacity-40 font-sans">CHAT VAULT</span>

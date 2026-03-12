@@ -676,7 +676,8 @@ export default function CasePage() {
           background-color: var(--colorone);
           cursor: pointer;
           display: flex;
-          align-items: center;
+          align-items: top;
+          padding-top: 3rem;
           justify-content: center;
           isolation: isolate;
         }
@@ -684,7 +685,28 @@ export default function CasePage() {
         .acc-spine {
           writing-mode: vertical-rl;
           font-family: 'Fredericka the Great', cursive;
-          font-size: 2.5rem;
+          font-size: 3rem;
+          color: black;
+          mix-blend-mode: destination-out;
+          white-space: nowrap;
+          letter-spacing: 2px;
+          user-select: none;
+        }
+        
+        .acc-ope-container {
+          flex: 0 0 150px;
+          height: 100%;
+          background-color: #b09278;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          isolation: isolate;
+        }
+        .acc-ope {
+          writing-mode: vertical-rl;
+          font-family: 'Fredericka the Great', cursive;
+          font-size: 2rem;
           color: black;
           mix-blend-mode: destination-out;
           white-space: nowrap;
@@ -740,9 +762,9 @@ export default function CasePage() {
 
       {/* Sticky Spine */}
       <div className="acc-panel sticky-spine" onClick={() => window.location.href = '/'}>
-        <div className="acc-spine-container" style={{ width: '100%', flex: '1' }}>
+        <div className="acc-ope-container" style={{ width: '100%', flex: '1' }}>
           <div className="spine-content">
-            <div className="acc-spine">Ope Watson</div>
+            <div className="acc-ope">Ope Watson</div>
             <div className="spine-homepage">homepage</div>
           </div>
         </div>
