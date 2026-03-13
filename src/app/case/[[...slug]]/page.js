@@ -109,6 +109,14 @@ export default function CasePage() {
   const [openFiles, setOpenFiles] = useState([]); // Array of { id, path, name, serverPath, fetchedContent }
   const [activeTab, setActiveTab] = useState(null); 
 
+  const applyFileContent = useCallback((repoKey, newContent) => {
+    React.startTransition(() => {
+      setFileName(repoKey);
+      setContent(newContent);
+      setContentKey(k => k + 1);
+    });
+  }, []);
+
   const loadFile = useCallback(async (path, name, serverPath = null, historyMode = 'push') => {
     if (serverPath) setActiveTab(serverPath);
     let repoKey;
@@ -120,9 +128,7 @@ export default function CasePage() {
       newContent = Array.isArray(cached) && cached.length > 0
         ? cached.map(b => b.raw).join('\n\n')
         : `# ${name.replace('.md', '')}\n`;
-      setContent(newContent);
-      setFileName(repoKey);
-      setContentKey(k => k + 1);
+      applyFileContent(repoKey, newContent);
     } else {
       try {
         const res  = await fetch(path);
@@ -131,12 +137,10 @@ export default function CasePage() {
         // GitHub raw URLs: /user/repo/branch/path/to/file.md -> slice(3) gives path/to/file.md
         repoKey = serverPath || decodeURIComponent(urlParts.slice(3).join('/'));
         serverRawCache.current[repoKey] = newContent;
-        setContent(newContent);
-        setFileName(repoKey);
-        setContentKey(k => k + 1);
+        applyFileContent(repoKey, newContent);
       } catch { 
-        setContent('# Error\nFailed to load.');
         repoKey = serverPath || name;
+        applyFileContent(repoKey, '# Error\nFailed to load.');
       }
     }
 
@@ -160,7 +164,7 @@ export default function CasePage() {
         }
       }
     }
-  }, []);
+  }, [applyFileContent]);
 
   useEffect(() => {
     (async () => {
@@ -362,9 +366,7 @@ export default function CasePage() {
 
     try { localStorage.removeItem(`vault_v3::${serverPath}`); } catch {}
     const initContent = `# ${title}\n`;
-    setContent(initContent);
-    setFileName(serverPath);
-    setContentKey(k => k + 1);
+    applyFileContent(serverPath, initContent);
 
     setOpenFiles(prev => {
       if (!prev.find(f => f.id === serverPath)) {
@@ -374,7 +376,7 @@ export default function CasePage() {
     });
     setActiveTab(serverPath);
 
-  }, []);
+  }, [applyFileContent]);
 
   const handleLinkClick = useCallback((e) => {
     // 1. Handle external links (<a> tags starting with http/https)
@@ -409,7 +411,6 @@ export default function CasePage() {
         loadFile(realPath, serverPath.split('/').pop(), serverPath);
       }
     } else if (realPath === null) {
-      setFileName(serverPath);
       setActiveTab(serverPath);
       const openF = openFiles.find(f => f.id === serverPath);
       if (openF) {
@@ -417,13 +418,14 @@ export default function CasePage() {
         const raw = Array.isArray(cached) && cached.length > 0
           ? cached.map(b => b.raw).join('\n\n')
           : openF.fetchedContent;
-        setContent(raw);
-        setContentKey(k => k + 1);
+        applyFileContent(serverPath, raw);
+      } else {
+        applyFileContent(serverPath, `# ${serverPath.split('/').pop().replace('.md', '')}\n`);
       }
     } else {
       createAndOpenFile(target);
     }
-  }, [loadFile, createAndOpenFile, openFiles, tabs]);
+  }, [loadFile, createAndOpenFile, openFiles, tabs, applyFileContent]);
 
   const askPassword = useCallback(() => new Promise((resolve, reject) => {
     setPassPrompt({ resolve, reject });
@@ -582,8 +584,7 @@ export default function CasePage() {
                 // Clear local cache for this file to force BlockEditor to use the new content
                 try { localStorage.removeItem(`vault_v3::${fileName}`); } catch {}
                 serverRawCache.current[fileName] = freshContent;
-                setContent(freshContent);
-                setContentKey(k => k + 1);
+                applyFileContent(fileName, freshContent);
               }
             } else if (currentContent === "") {
               // First time loading this session, sync cache
@@ -703,18 +704,14 @@ export default function CasePage() {
       const cached = readCache(tab.id);
       const openedF = openFiles.find(f => f.id === tab.id);
 
-      setFileName(tab.id);
       if (Array.isArray(cached) && cached.length > 0) {
-        setContent(cached.map(b => b.raw).join('\n\n'));
-        setContentKey(k => k + 1);
+        applyFileContent(tab.id, cached.map(b => b.raw).join('\n\n'));
       } else if (openedF && openedF.fetchedContent) {
-        setContent(openedF.fetchedContent);
-        setContentKey(k => k + 1);
+        applyFileContent(tab.id, openedF.fetchedContent);
       } else if (tab.fileData && tab.fileData.path) {
         loadFile(tab.fileData.path, tab.fileData.name, tab.id, 'push');
       } else {
-        setContent(`# ${tab.title}\nLoading...`);
-        setContentKey(k => k + 1);
+        applyFileContent(tab.id, `# ${tab.title}\nLoading...`);
       }
 
       // Update URL when clicking tab
@@ -728,6 +725,7 @@ export default function CasePage() {
       // For now, let's keep the last file URL
     }
   };
+
 
   // Implement mouse wheel horizontal scrolling
   useEffect(() => {
