@@ -17,7 +17,7 @@ const FileSystemItem = ({ item, level = 0, onSelectFile, activeFile }) => {
       >
         <span className="arrow-wrapper">
           {item.kind === 'directory'
-            ? isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />
+            ? isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />
             : <span className="spacer" />}
         </span>
         <span className="item-name">{item.name.replace('.md', '')}</span>

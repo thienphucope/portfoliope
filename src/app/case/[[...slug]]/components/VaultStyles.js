@@ -293,13 +293,13 @@ export default function VaultStyles() {
         thead { border-bottom:1px solid var(--border); }
         th { color:#fff; font-weight:700; }
 
-        .tree-item { display:flex; align-items:center; padding:6px 8px; cursor:pointer; border-radius:4px; transition:.2s; font-size:14px; opacity:.7; font-family:'Crimson Text',serif; }
+        .tree-item { display:flex; align-items:center; padding:6px 8px; cursor:pointer; border-radius:4px; transition:.2s; font-size:18px; opacity:.7; font-family:'Crimson Text',serif; }
         .tree-item:hover { background:rgba(255,255,255,.05); opacity:1; color:var(--accent); }
         .tree-item.is-active { background:rgba(255,250,205,0.08); opacity:1; color:var(--accent); border-left:2px solid var(--accent); padding-left:6px; }
         .tree-item.is-local { opacity:0.85; font-style:italic; }
         .local-badge { margin-left:auto; font-size:8px; color:var(--accent); opacity:0.7; flex-shrink:0; }
-        .arrow-wrapper { width:18px; margin-right:4px; display:flex; justify-content:center; }
-        .spacer { width:18px; }
+        .arrow-wrapper { width:24px; margin-right:4px; display:flex; justify-content:center; }
+        .spacer { width:24px; }
 
         .math-block { margin:1.5em 0; overflow-x:auto; display:block; width:100%; }
         .code-block { background:var(--code-bg); border-radius:8px; margin:1.5em 0; border:1px solid var(--border); overflow:hidden; }

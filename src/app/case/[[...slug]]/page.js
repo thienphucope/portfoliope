@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import Chat from './components/Chat';
 import { ensureLibsLoaded, postProcess, fitHeading } from './components/MarkdownEngine';
 import FileSystemItem from './components/FileSystemItem';
@@ -20,6 +20,8 @@ export default function CasePage() {
   const [fileSha,     setFileSha]     = useState(null);
   const [editPass,    setEditPass]    = useState(() => { try { return sessionStorage.getItem('vault_edit_pass') || ''; } catch { return ''; } });
   const [passPrompt,  setPassPrompt]  = useState(null);
+  const [searchTerm,  setSearchTerm]  = useState('');
+  const [showSearch,   setShowSearch]  = useState(false);
 
   const decodeBase64 = (str) => {
     if (!str) return '';
@@ -322,6 +324,34 @@ export default function CasePage() {
   }, []);
 
   const allFiles = React.useMemo(() => getAllFiles(fileTree), [fileTree, getAllFiles]);
+
+  const filteredTree = React.useMemo(() => {
+    if (!searchTerm) return fileTree;
+    
+    const filterNodes = (nodes) => {
+      return nodes.reduce((acc, node) => {
+        const matches = node.name.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        if (node.kind === 'directory' && node.children) {
+          const filteredChildren = filterNodes(node.children);
+          if (filteredChildren.length > 0 || matches) {
+            acc.push({
+              ...node,
+              children: filteredChildren,
+              // Force directory open if it has matching children or matches itself
+              isOpen: true 
+            });
+          }
+        } else if (matches) {
+          acc.push(node);
+        }
+        
+        return acc;
+      }, []);
+    };
+    
+    return filterNodes(fileTree);
+  }, [fileTree, searchTerm]);
 
   const tabs = React.useMemo(() => {
     const baseTabs = [
@@ -1300,7 +1330,7 @@ export default function CasePage() {
             
             {isOpen && (
               <div className="acc-content" onClick={e => e.stopPropagation()}>
-                {(tab.type === 'editor' || tab.type === 'sidebar') && (
+                {tab.type === 'editor' && (
                   <div className="floating-actions">
                     <button
                       className={`icon-btn${isEditing ? ' icon-btn--active' : ''}`}
@@ -1346,10 +1376,44 @@ export default function CasePage() {
                     </button>
                   </div>
                 )}
+                {tab.id === 'filetree' && (
+                  <div className="floating-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {showSearch && (
+                      <input
+                        type="text"
+                        placeholder="Search notes..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        autoFocus
+                        className="search-input"
+                        style={{
+                          background: 'rgba(255,255,255,0.05)',
+                          border: '1px solid var(--border)',
+                          borderRadius: '4px',
+                          padding: '4px 8px',
+                          color: 'var(--txt)',
+                          fontSize: '13px',
+                          outline: 'none',
+                          width: '150px'
+                        }}
+                      />
+                    )}
+                    <button 
+                      className={`icon-btn ${showSearch ? 'icon-btn--active' : ''}`} 
+                      onClick={() => {
+                        setShowSearch(!showSearch);
+                        if (showSearch) setSearchTerm('');
+                      }}
+                      title="Search notes"
+                    >
+                      <Search size={18} />
+                    </button>
+                  </div>
+                )}
                 <div className="acc-body">
                   {tab.type === 'sidebar' && (
                     <div className="file-list" style={{ flex: 1, overflowY: 'auto', padding: '10px 20px' }}>
-                      {fileTree.map((item, i) => <FileSystemItem key={i} item={item} onSelectFile={loadFile} activeFile={fileName} />)}
+                      {filteredTree.map((item, i) => <FileSystemItem key={i} item={item} onSelectFile={loadFile} activeFile={fileName} />)}
                     </div>
                   )}
                   {tab.type === 'chat' && (
