@@ -82,9 +82,31 @@ async function getGithubCasesTree() {
   }
 }
 
+// ─── HELPER: get from github ──────────────────────────────────────────────────
+
+async function getFileFromGithub(path) {
+  if (!GITHUB_TOKEN) return { error: "Missing GITHUB_TOKEN" };
+  const headers = {
+    "Accept": "application/vnd.github+json",
+    "User-Agent": "Portfolio-NextJS",
+    "Authorization": `token ${GITHUB_TOKEN}`
+  };
+  const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`;
+  try {
+    const resp = await fetch(url, { headers, cache: 'no-store' });
+    if (resp.ok) {
+      const data = await resp.json();
+      return { ok: true, content: data.content, sha: data.sha }; // content is base64
+    }
+    return { error: `File not found: ${resp.status}` };
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
 // ─── HELPER: save to github ──────────────────────────────────────────────────
 
-async function saveToGithub(path, content, create = false) {
+async function saveToGithub(path, content, create = false, sha = null) {
   if (!GITHUB_TOKEN) return { error: "Missing GITHUB_TOKEN" };
   
   const headers = {
@@ -105,15 +127,17 @@ async function saveToGithub(path, content, create = false) {
   if (!activeBranch) return { error: "Could not detect GitHub branch" };
 
   const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`;
-  let existingSha = null;
+  let existingSha = sha;
 
-  try {
-    const getResp = await fetch(`${url}?ref=${activeBranch}`, { headers, cache: 'no-store' });
-    if (getResp.ok) {
-      const data = await getResp.json();
-      existingSha = data.sha;
-    }
-  } catch {}
+  if (!existingSha) {
+    try {
+      const getResp = await fetch(`${url}?ref=${activeBranch}`, { headers, cache: 'no-store' });
+      if (getResp.ok) {
+        const data = await getResp.json();
+        existingSha = data.sha;
+      }
+    } catch {}
+  }
 
   if (create && existingSha) return { error: "File already exists" };
   if (!create && !existingSha) return { error: "File not found for update" };
@@ -132,7 +156,10 @@ async function saveToGithub(path, content, create = false) {
     body: JSON.stringify(payload)
   });
 
-  if (putResp.ok) return { ok: true, path };
+  if (putResp.ok) {
+    const data = await putResp.json();
+    return { ok: true, path, sha: data.content.sha };
+  }
   const errorText = await putResp.text();
   return { error: `GitHub PUT error: ${errorText}` };
 }
@@ -157,7 +184,7 @@ export async function POST(request) {
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
 
   // Extract 'action' alongside existing properties
-  const { action, path, content, create = false, password } = body;
+  const { action, path, content, create = false, password, sha } = body;
   if (!path) return NextResponse.json({ error: 'Missing path' }, { status: 400 });
   
   if (password !== EDIT_PASS) {
@@ -170,7 +197,7 @@ export async function POST(request) {
   const currentLock = fileLocks.get(finalPath);
   const { sessionId } = body;
 
-  // 1. Handle File Locking
+  // 1. Handle File Locking & Getting latest content
   if (action === 'lock') {
     if (!sessionId) return NextResponse.json({ error: 'Missing sessionId' }, { status: 400 });
 
@@ -184,7 +211,10 @@ export async function POST(request) {
     }
 
     fileLocks.set(finalPath, { expiresAt: now + LOCK_TIMEOUT, sessionId });
-    return NextResponse.json({ ok: true, locked: true });
+    
+    // Also return latest content from GitHub
+    const fileData = await getFileFromGithub(finalPath);
+    return NextResponse.json({ ok: true, locked: true, ...fileData });
   }
 
   // 2. Handle File Unlocking
@@ -204,7 +234,7 @@ export async function POST(request) {
   }
   
   console.log(`📝 [API Route] POST: Saving directly to GitHub...`);
-  const result = await saveToGithub(finalPath, content, create);
+  const result = await saveToGithub(finalPath, content, create, sha);
   
   if (result.ok) {
     fileLocks.delete(finalPath); // Release lock after successful save

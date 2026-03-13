@@ -16,8 +16,22 @@ export default function CasePage() {
   const [contentKey,  setContentKey]  = useState(0);
   const [isEditing,   setIsEditing]   = useState(false);
   const [saveStatus,  setSaveStatus]  = useState('idle');
+  const [fileSha,     setFileSha]     = useState(null);
   const [editPass,    setEditPass]    = useState(() => { try { return sessionStorage.getItem('vault_edit_pass') || ''; } catch { return ''; } });
   const [passPrompt,  setPassPrompt]  = useState(null);
+
+  const decodeBase64 = (str) => {
+    if (!str) return '';
+    try {
+      return decodeURIComponent(atob(str).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+    } catch (e) {
+      console.warn("Base64 decode falling back to simple atob", e);
+      return atob(str);
+    }
+  };
+
   const fileRegistry   = useRef({});
   const serverRawCache = useRef({});
   const appShellRef    = useRef(null);
@@ -441,12 +455,16 @@ export default function CasePage() {
         content: raw, 
         create: isNew, 
         password: pass,
-        sessionId: sessionIdRef.current 
+        sessionId: sessionIdRef.current,
+        sha: fileSha
       }),
     });
     if (res.status === 403) return { wrongPass: true };
     if (res.status === 423) throw new Error('locked_by_other');
     if (!res.ok) throw new Error(await res.text());
+
+    const data = await res.json();
+    if (data.sha) setFileSha(data.sha);
 
     // Update server cache and clear local draft for THIS file only
     serverRawCache.current[filePath] = raw;
@@ -455,7 +473,7 @@ export default function CasePage() {
 
     if (isNew) await refreshTree();
     return { ok: true };
-  }, [refreshTree]);
+  }, [refreshTree, fileSha]);
 
   const saveOneFile = useCallback(async (filePath, raw) => {
     const serverRaw = serverRawCache.current[filePath] ?? null;
@@ -470,7 +488,7 @@ export default function CasePage() {
     const result = await doPost(filePath, raw, pass);
     if (result.wrongPass) {
       setEditPass('');
-      try { sessionStorage.removeItem('vault_edit_pass', pass); } catch {}
+      try { sessionStorage.removeItem('vault_edit_pass'); } catch {}
       const newPass = await askPassword();
       setEditPass(newPass);
       try { sessionStorage.setItem('vault_edit_pass', newPass); } catch {}
@@ -515,6 +533,7 @@ export default function CasePage() {
     if (res.status === 403) throw new Error('wrong_pass');
     if (res.status === 423) throw new Error('locked_by_other');
     if (!res.ok) throw new Error('lock_failed');
+    return await res.json();
   };
 
   // Helper to explicitly unlock
@@ -539,6 +558,7 @@ export default function CasePage() {
     const cleanName = noteName.endsWith('.md') ? noteName : `${noteName}.md`;
     const targetPath = `notes/${cleanName}`;
     createAndOpenFile(targetPath);
+    setFileSha(null);
     setIsEditing(true); // New notes toggle freely
   };
 
@@ -564,37 +584,30 @@ export default function CasePage() {
     // For existing files: Always prompt for password to ensure security
     try {
       const pass = await askPassword();
-      await acquireLock(fileName, pass);
+      const lockData = await acquireLock(fileName, pass);
+      
+      if (lockData.ok && lockData.content) {
+        const freshContent = decodeBase64(lockData.content);
+        const currentContent = (serverRawCache.current[fileName] || "").trim();
+        
+        if (freshContent.trim() !== currentContent && currentContent !== "") {
+          const confirmUpdate = window.confirm("This file has been updated on GitHub. Do you want to load the latest version? (Your local draft will be overwritten)");
+          if (confirmUpdate) {
+            try { localStorage.removeItem(`vault_v3::${fileName}`); } catch {}
+            serverRawCache.current[fileName] = freshContent;
+            applyFileContent(fileName, freshContent);
+          }
+        } else {
+          serverRawCache.current[fileName] = freshContent;
+          if (!currentContent) {
+            applyFileContent(fileName, freshContent);
+          }
+        }
+        if (lockData.sha) setFileSha(lockData.sha);
+      }
       
       // Refresh the entire file tree to see if other files were added/changed
       await refreshTree();
-      
-      // Check for updates from GitHub after acquiring lock
-      const filePath = fileRegistry.current[fileName.toLowerCase()];
-      if (filePath) {
-        try {
-          const freshRes = await fetch(filePath, { cache: 'no-store' });
-          if (freshRes.ok) {
-            const freshContent = await freshRes.text();
-            const currentContent = (serverRawCache.current[fileName] || "").trim();
-            
-            if (freshContent.trim() !== currentContent && currentContent !== "") {
-              const confirmUpdate = window.confirm("This file has been updated on GitHub by another user. Do you want to load the latest version? (Your local draft will be overwritten)");
-              if (confirmUpdate) {
-                // Clear local cache for this file to force BlockEditor to use the new content
-                try { localStorage.removeItem(`vault_v3::${fileName}`); } catch {}
-                serverRawCache.current[fileName] = freshContent;
-                applyFileContent(fileName, freshContent);
-              }
-            } else if (currentContent === "") {
-              // First time loading this session, sync cache
-              serverRawCache.current[fileName] = freshContent;
-            }
-          }
-        } catch (err) {
-          console.error("Failed to check for updates:", err);
-        }
-      }
       
       setEditPass(pass);
       try { sessionStorage.setItem('vault_edit_pass', pass); } catch {}
