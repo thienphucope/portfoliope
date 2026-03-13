@@ -689,7 +689,7 @@ export default function CasePage() {
     const tabIndex = tabs.findIndex(t => t.id === tabId);
     if (tabIndex === -1) return;
 
-    if (window.innerWidth <= 768) {
+    if (window.innerWidth <= 1024 && window.innerHeight > window.innerWidth || window.innerWidth <= 768) {
       // Vertical scroll for mobile
       const scrollTarget = tabIndex * 50; 
       appShellRef.current.scrollTo({ top: scrollTarget, behavior: 'smooth' });
@@ -796,7 +796,7 @@ export default function CasePage() {
   useEffect(() => {
     const handleWheel = (e) => {
       if (!appShellRef.current || e.deltaY === 0 || e.shiftKey) return;
-      if (window.innerWidth <= 768) return;
+      if (window.innerWidth <= 1024 && window.innerHeight > window.innerWidth || window.innerWidth <= 768) return;
 
       if (isTabScrolling.current) {
         isTabScrolling.current = false;
@@ -1111,7 +1111,7 @@ export default function CasePage() {
           z-index: 100;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) and (orientation: portrait), (max-width: 768px) {
           .accordion-app {
             flex-direction: column !important;
             overflow-y: auto !important;
