@@ -1,6 +1,36 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
 import { ClockIcon, PaperAirplaneIcon, ArrowPathIcon, MagnifyingGlassIcon, SpeakerWaveIcon, MicrophoneIcon } from '@heroicons/react/24/outline';
+import { ensureLibsLoaded, postProcess } from './MarkdownEngine';
+
+function MessageContent({ role, content, isStreaming }) {
+  const divRef = useRef(null);
+
+  useEffect(() => {
+    if (!divRef.current || !window.marked) return;
+    try {
+      const name = role === 'user' ? 'You' : 'Librarian';
+      const prefix = `**${name}:** `;
+      let html = window.marked.parse(prefix + (content || ''));
+      
+      if (isStreaming) {
+        const cursorHtml = '<span class="streaming-cursor"></span>';
+        if (html.includes('</p>')) {
+          html = html.replace(/<\/p>\s*$/, ` ${cursorHtml}</p>`);
+        } else {
+          html += cursorHtml;
+        }
+      }
+      
+      divRef.current.innerHTML = html;
+      postProcess(divRef.current);
+    } catch (e) {
+      divRef.current.textContent = content;
+    }
+  }, [role, content, isStreaming]);
+
+  return <div ref={divRef} className="markdown-content" />;
+}
 
 export default function Chat({ isEmbedded = false }) {
   const [isOpen, setIsOpen] = useState(isEmbedded ? true : false);
@@ -8,7 +38,7 @@ export default function Chat({ isEmbedded = false }) {
   const [inputValue, setInputValue] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [convo, setConvo] = useState([
-    { role: 'assistant', content: "This is Ope's AI assistant! It has a memory. It can search the web for information. For now, it's in experimental mode, only responding in English with texts and audios. Voice responses can be so slow. " }
+    { role: 'assistant', content: "Ask me anything about this case just like you ask chatGPT" }
   ]);
   const [streamingText, setStreamingText] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
@@ -29,6 +59,10 @@ export default function Chat({ isEmbedded = false }) {
   
   const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
   const displayName = 'YOU';
+
+  useEffect(() => {
+    ensureLibsLoaded();
+  }, []);
 
   const TTS_API_URL = "https://thienphuc1052004--xtts-api-xttsapi-tts-generate.modal.run";
   const TTS_HEALTH_URL = "https://thienphuc1052004--xtts-api-xttsapi-ping.modal.run";
@@ -175,13 +209,16 @@ export default function Chat({ isEmbedded = false }) {
       {/* History */}
       <div ref={historyRef} className="flex-1 overflow-y-auto p-5 space-y-5 custom-scrollbar">
         {convo.map((msg, i) => {
-          const content = (i === convo.length - 1 && isStreaming) ? streamingText : msg.content;
+          const isMsgStreaming = (i === convo.length - 1 && isStreaming);
+          const content = isMsgStreaming ? streamingText : msg.content;
           if (!content && i !== convo.length-1) return null;
           return (
             <div key={i} className={`${isEmbedded ? 'text-base' : 'text-lg'} leading-relaxed text-justify opacity-90`}>
-              <span className="font-bold text-white mr-2">{msg.role === 'user' ? 'You:' : 'Elia:'}</span>
-              <span className="whitespace-pre-wrap">{content}</span>
-              {i === convo.length - 1 && isStreaming && <span className="animate-pulse">|</span>}
+              <MessageContent 
+                role={msg.role} 
+                content={content} 
+                isStreaming={isMsgStreaming} 
+              />
             </div>
           );
         })}
@@ -219,6 +256,17 @@ export default function Chat({ isEmbedded = false }) {
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .animate-pulse { animation: pulse 1s infinite; }
+        .markdown-content :global(p:last-child) { margin-bottom: 0; }
+        .markdown-content :global(p:first-child) { margin-top: 0; }
+        .markdown-content :global(.streaming-cursor) {
+          display: inline-block;
+          width: 2px;
+          height: 1em;
+          background: white;
+          margin-left: 4px;
+          vertical-align: middle;
+          animation: pulse 1s infinite;
+        }
       `}</style>
     </div>
   );

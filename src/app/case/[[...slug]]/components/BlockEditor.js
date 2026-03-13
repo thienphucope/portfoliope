@@ -62,6 +62,8 @@ export const BlockView = ({ block, isEditing, isActive, onActivate, onLinkClick 
 
 export const CodeRawEditor = ({ block, onSave, onDeactivate, onNavigate, cursorPosition = "end" }) => {
   const ref = useRef(null);
+  const abortControllerRef = useRef(null);
+  const originalRef = useRef(null);
 
   useEffect(() => {
     if (!ref.current) return;
@@ -72,12 +74,26 @@ export const CodeRawEditor = ({ block, onSave, onDeactivate, onNavigate, cursorP
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleBlur = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      return; // catch block will handle restoration
+    }
     if (ref.current) onSave(ref.current.value);
     onDeactivate();
   }, [onSave, onDeactivate]);
 
+  const cancelAI = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+  }, []);
+
   const handleKeyDown = useCallback(async (e) => {
     if (e.key === 'Escape') {
+      if (abortControllerRef.current) {
+        cancelAI();
+        return;
+      }
       if (ref.current) onSave(ref.current.value);
       onDeactivate();
       return;
@@ -122,23 +138,36 @@ export const CodeRawEditor = ({ block, onSave, onDeactivate, onNavigate, cursorP
         e.preventDefault();
         const query = text.slice(4).trim();
         if (!query) return;
-        ref.current.value = '⏳ AI is thinking…';
+        
+        originalRef.current = ref.current.value;
+        ref.current.value = '⏳ AI is thinking (click to cancel)…';
+        
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+        
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        
         try {
           const res  = await fetch('https://rag-backend-zh2e.onrender.com/rag', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: 'BlockEditor', query }),
+            signal: controller.signal
           });
+          clearTimeout(timeoutId);
           const data = await res.json();
-          const reply = data.response || '*No response from AI.*';
-          onSave(reply);
+          abortControllerRef.current = null;
+          onSave(data.response || '*No response from AI.*');
           onDeactivate();
-        } catch {
-          ref.current.value = '⚠ Could not reach AI.';
+        } catch (err) {
+          clearTimeout(timeoutId);
+          if (ref.current) ref.current.value = originalRef.current;
+          abortControllerRef.current = null;
+          // Stay active so user can edit their prompt
         }
       }
     }
-  }, [onSave, onDeactivate]);
+  }, [onSave, onDeactivate, cancelAI]);
 
   // Auto-resize textarea
   const handleInput = useCallback(() => {
@@ -161,6 +190,7 @@ export const CodeRawEditor = ({ block, onSave, onDeactivate, onNavigate, cursorP
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       onInput={handleInput}
+      onClick={cancelAI}
       spellCheck={false}
     />
   );
@@ -213,6 +243,8 @@ const SLASH_COMMANDS = [
 export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNavigate, cursorPosition = 'end' }) => {
   const containerRef = useRef(null);
   const menuRef = useRef(null);
+  const abortControllerRef = useRef(null);
+  const originalRef = useRef(null);
   const [slashMenu, setSlashMenu] = useState({ visible: false, x: 0, y: 0, query: '', selectedIndex: 0 });
   const [isEmpty, setIsEmpty] = useState(block.raw === '');
 
@@ -354,11 +386,21 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
   }, []);
 
   const handleBlur = useCallback((e) => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      return;
+    }
     // Prevent blur if clicking on slash menu
     if (e.relatedTarget?.closest('.slash-menu')) return;
     onSave(collectRaw());
     onDeactivate();
   }, [onSave, onDeactivate]);
+
+  const cancelAI = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+  }, []);
 
   const getCurrentLineDiv = () => {
     const sel = window.getSelection();
@@ -406,12 +448,20 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
       if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
-        setSlashMenu(prev => ({ ...prev, visible: false }));
+        if (abortControllerRef.current) {
+          cancelAI();
+        } else {
+          setSlashMenu(prev => ({ ...prev, visible: false }));
+        }
         return;
       }
     }
 
     if (e.key === 'Escape') {
+      if (abortControllerRef.current) {
+        cancelAI();
+        return;
+      }
       onSave(collectRaw());
       onDeactivate();
       return;
@@ -459,19 +509,32 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
         e.preventDefault();
         const query = lineText.trim().slice(4).trim();
         if (!query) return;
-        if (lineDiv) lineDiv.textContent = '⏳ AI is thinking…';
+        
+        originalRef.current = lineText;
+        if (lineDiv) lineDiv.textContent = '⏳ AI is thinking (click to cancel)…';
+        
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+        
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        
         try {
           const res  = await fetch('https://rag-backend-zh2e.onrender.com/rag', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: 'BlockEditor', query }),
+            signal: controller.signal
           });
+          clearTimeout(timeoutId);
           const data = await res.json();
+          abortControllerRef.current = null;
           onSave(data.response || '*No response from AI.*');
-        } catch {
-          onSave('⚠ Could not reach AI.');
+          onDeactivate();
+        } catch (err) {
+          clearTimeout(timeoutId);
+          if (lineDiv) lineDiv.textContent = originalRef.current;
+          abortControllerRef.current = null;
         }
-        onDeactivate();
         return;
       }
 
@@ -507,7 +570,7 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
       onSave(collectRaw());
       onCreateAfter();
     }
-  }, [onSave, onDeactivate, onCreateAfter, slashMenu, filteredCommands, applyCommand]);
+  }, [onSave, onDeactivate, onCreateAfter, slashMenu, filteredCommands, applyCommand, cancelAI]);
 
   return (
     <>
@@ -519,6 +582,7 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
         onInput={handleInput}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
+        onClick={cancelAI}
         spellCheck={false}
         data-placeholder="Type slash / to open command"
       />
