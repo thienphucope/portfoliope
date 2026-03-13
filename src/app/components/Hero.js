@@ -145,9 +145,8 @@ export default function Hero({ isStoryOpen }) {
 
         .polaroid-container:hover {
           background: transparent;
-          border-top-color: transparent;
-          border-left-color: transparent;
-          border-right-color: transparent;
+          border-color: transparent;
+          box-shadow: none;
           transform: scale(1.02) rotate(-1deg);
         }
 

@@ -3,6 +3,7 @@ import Hero from './components/Hero';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { FaYoutube, FaInstagram, FaGithub, FaEnvelope, FaTwitter } from 'react-icons/fa';
+import { Fingerprint } from 'lucide-react';
 
 const GLITCH_FONTS = [
   "'Courier New', monospace",
@@ -138,6 +139,7 @@ export default function Home() {
   const [animationClass, setAnimationClass] = useState('');
   const [animationKey, setAnimationKey] = useState(0);
   const [apiUsername, setApiUsername] = useState('YOU');
+  const [fingerprints, setFingerprints] = useState([]);
 
   const DEFAULT_STORY_TEXT = "Dear Ope Watson!\n\nToday, I've seen a ghost hanging behind the room's door. Can you explain that?";
   const [storyText, setStoryText] = useState(DEFAULT_STORY_TEXT);
@@ -148,6 +150,18 @@ export default function Home() {
   const playerRef = useRef(null);
   const bgPlayerRef = useRef(null);
   const newSongTimerRef = useRef(null);
+
+  useEffect(() => {
+    const handleGlobalClick = (e) => {
+      const id = Date.now();
+      setFingerprints(prev => [...prev, { id, x: e.clientX, y: e.clientY, rotation: Math.random() * 360 }]);
+      setTimeout(() => {
+        setFingerprints(prev => prev.filter(fp => fp.id !== id));
+      }, 5000);
+    };
+    window.addEventListener('click', handleGlobalClick);
+    return () => window.removeEventListener('click', handleGlobalClick);
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -361,12 +375,39 @@ export default function Home() {
         .title-fly-out.fly-out { animation: flyOut 0.5s forwards; }
         .title-fly-out.fly-in { animation: flyIn 0.5s forwards; }
         .title-fly-out.fly-cycle { animation: flyOutStayIn 5.5s forwards; }
+        @keyframes fingerprintFade {
+          0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5) rotate(var(--rot)); }
+          15% { opacity: 0.8; transform: translate(-50%, -50%) scale(1) rotate(var(--rot)); }
+          80% { opacity: 0.8; transform: translate(-50%, -50%) scale(1) rotate(var(--rot)); }
+          100% { opacity: 0; transform: translate(-50%, -50%) scale(1.2) rotate(var(--rot)); }
+        }
+        .fingerprint-effect {
+          position: fixed;
+          pointer-events: none;
+          z-index: 9999;
+          color: var(--colorone);
+          animation: fingerprintFade 5s forwards;
+        }
       `}</style>
 
       <div className="video-background">
         <div id="bg-player"></div>
       </div>
       <div className="video-overlay"></div>
+
+      {fingerprints.map(fp => (
+        <div 
+          key={fp.id} 
+          className="fingerprint-effect" 
+          style={{ 
+            left: fp.x, 
+            top: fp.y, 
+            '--rot': `${fp.rotation}deg` 
+          }}
+        >
+          <Fingerprint size={130} />
+        </div>
+      ))}
 
       {spotlightEnabled && (
         <div className="fixed inset-0 z-20 bg-black pointer-events-none transition-opacity duration-300 opacity-100" style={{
