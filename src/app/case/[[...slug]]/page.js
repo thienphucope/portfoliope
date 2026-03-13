@@ -1450,7 +1450,7 @@ export default function CasePage() {
                   )}
                   {tab.type === 'chat' && (
                     <div className="chat-container" style={{ flex: 1, overflow: 'hidden' }}>
-                      <Chat isEmbedded={true} />
+                      <Chat isEmbedded={true} onLinkClick={handleLinkClick} />
                     </div>
                   )}
                   {tab.type === 'editor' && (

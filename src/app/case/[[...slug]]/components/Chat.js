@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { ClockIcon, PaperAirplaneIcon, ArrowPathIcon, MagnifyingGlassIcon, SpeakerWaveIcon, MicrophoneIcon } from '@heroicons/react/24/outline';
 import { ensureLibsLoaded, postProcess } from './MarkdownEngine';
 
-function MessageContent({ role, content, isStreaming }) {
+function MessageContent({ role, content, isStreaming, onLinkClick }) {
   const divRef = useRef(null);
 
   useEffect(() => {
@@ -29,10 +29,10 @@ function MessageContent({ role, content, isStreaming }) {
     }
   }, [role, content, isStreaming]);
 
-  return <div ref={divRef} className="markdown-content" />;
+  return <div ref={divRef} className="markdown-content" onClick={onLinkClick} />;
 }
 
-export default function Chat({ isEmbedded = false }) {
+export default function Chat({ isEmbedded = false, onLinkClick }) {
   const [isOpen, setIsOpen] = useState(isEmbedded ? true : false);
   const [showHistory, setShowHistory] = useState(true);
   const [inputValue, setInputValue] = useState('');
@@ -218,6 +218,7 @@ export default function Chat({ isEmbedded = false }) {
                 role={msg.role} 
                 content={content} 
                 isStreaming={isMsgStreaming} 
+                onLinkClick={onLinkClick}
               />
             </div>
           );
