@@ -8,7 +8,7 @@ import BlockEditor, { readCache } from './components/BlockEditor';
 import VaultStyles from './components/VaultStyles';
 
 // ─── MAIN VAULT ───────────────────────────────────────────────────────────────
-const DEFAULT_FILE = process.env.NEXT_PUBLIC_DEFAULT_VAULT_FILE || "The Boy Who Murdered Love.md";
+const DEFAULT_FILE = process.env.NEXT_PUBLIC_DEFAULT_VAULT_FILE || "chat";
 
 export default function CasePage() {
   const [fileTree,    setFileTree]    = useState([]);
@@ -1102,25 +1102,6 @@ export default function CasePage() {
           background-color: transparent;
         }
 
-        /* Pin mode: if a tab ID matches DEFAULT_FILE, it stays expanded */
-        .acc-panel.is-pinned {
-          flex-basis: 400px !important;
-          min-width: 400px !important;
-          flex-grow: 0 !important;
-          background-color: rgba(0,0,0,0.15);
-          border-right: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        .acc-panel.is-pinned .acc-content {
-          display: flex !important;
-          opacity: 1 !important;
-          width: calc(400px - 150px) !important;
-        }
-        
-        .acc-panel.is-pinned .acc-spine-container {
-           background-color: rgba(255,255,255,0.05) !important;
-        }
-
         .acc-spine-container {
           flex: 0 0 150px;
           height: 100%;
@@ -1370,14 +1351,13 @@ export default function CasePage() {
       </div>
 
       {tabs.map((tab, index) => {
-        const isPinned = tab.id === DEFAULT_FILE;
-        const isOpen = activeTab === tab.id || isPinned;
+        const isOpen = activeTab === tab.id;
         const isPersistent = tab.id === 'chat';
 
         return (
           <div 
             key={tab.id} 
-            className={`acc-panel ${isOpen ? 'open' : 'closed'} ${isPinned ? 'is-pinned' : ''}`}
+            className={`acc-panel ${isOpen ? 'open' : 'closed'}`}
           >
             {/* The spine is always shown, whether open or closed */}
             <div className="acc-spine-container" onClick={(e) => handleTabClick(tab, e)}>
