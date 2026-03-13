@@ -552,14 +552,66 @@ export default function CasePage() {
   };
 
   // 1. Handle creating a new note
-  const handleCreateNewNote = () => {
+  const handleCreateNewNote = async () => {
     const noteName = window.prompt("Enter the name for your new note:");
     if (!noteName) return;
     const cleanName = noteName.endsWith('.md') ? noteName : `${noteName}.md`;
     const targetPath = `notes/${cleanName}`;
-    createAndOpenFile(targetPath);
-    setFileSha(null);
-    setIsEditing(true); // New notes toggle freely
+    
+    // acquireLock requires a password. We'll use the existing editPass if we have it,
+    // otherwise we use an empty string. The user said "don't ask for pass", 
+    // so we'll only prompt if the lock actually fails due to a wrong password.
+    let pass = editPass;
+    
+    try {
+      const lockData = await acquireLock(targetPath, pass);
+      
+      // If it exists on GitHub already, we load it instead of creating a blank one
+      if (lockData.ok && lockData.content) {
+        const freshContent = decodeBase64(lockData.content);
+        serverRawCache.current[targetPath] = freshContent;
+        applyFileContent(targetPath, freshContent);
+        if (lockData.sha) setFileSha(lockData.sha);
+        
+        setOpenFiles(prev => {
+          if (!prev.find(f => f.id === targetPath)) {
+            return [...prev, { id: targetPath, path: null, name: cleanName, serverPath: targetPath, fetchedContent: freshContent }];
+          }
+          return prev;
+        });
+      } else {
+        // Truly new file
+        createAndOpenFile(targetPath);
+        setFileSha(null);
+      }
+
+      setIsEditing(true);
+      setActiveTab(targetPath);
+      
+      // Start keep-alive loop (ping every 20 seconds)
+      if (lockIntervalRef.current) clearInterval(lockIntervalRef.current);
+      lockIntervalRef.current = setInterval(() => {
+        acquireLock(targetPath, pass).catch(() => {
+          clearInterval(lockIntervalRef.current);
+          setIsEditing(false);
+          alert("Connection lost or file locked by another user. Returning to view mode.");
+        });
+      }, 20000);
+
+    } catch (e) {
+      if (e.message === 'wrong_pass') {
+        // If it really needs a password, then we must ask once
+        const newPass = await askPassword();
+        setEditPass(newPass);
+        try { sessionStorage.setItem('vault_edit_pass', newPass); } catch {}
+        // Retry creation with the new password
+        handleCreateNewNote(); 
+      } else if (e.message === 'locked_by_other') {
+        alert("Cannot create. A file with this name is currently being edited by another user.");
+      } else {
+        alert("Failed to create note. It might already exist or be locked.");
+      }
+    }
   };
 
   // 2. Custom Toggle Edit Logic
