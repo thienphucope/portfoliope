@@ -134,8 +134,8 @@ export default function CasePage() {
     });
   }, []);
 
-  const loadFile = useCallback(async (path, name, serverPath = null, historyMode = 'push') => {
-    if (serverPath) setActiveTab(serverPath);
+  const loadFile = useCallback(async (path, name, serverPath = null, historyMode = 'push', activate = true) => {
+    if (serverPath && activate) setActiveTab(serverPath);
     let repoKey;
     let newContent = '';
 
@@ -168,16 +168,18 @@ export default function CasePage() {
         }
         return prev.map(f => f.id === repoKey ? { ...f, fetchedContent: newContent } : f);
       });
-      setActiveTab(repoKey);
+      if (activate) setActiveTab(repoKey);
 
       // Update URL
-      const cleanPath = repoKey.replace(/\.md$/, '');
-      const newUrl = `/case/${cleanPath}`;
-      if (window.location.pathname !== newUrl) {
-        if (historyMode === 'replace') {
-          window.history.replaceState({ repoKey }, '', newUrl);
-        } else {
-          window.history.pushState({ repoKey }, '', newUrl);
+      if (activate) {
+        const cleanPath = repoKey.replace(/\.md$/, '');
+        const newUrl = `/case/${cleanPath}`;
+        if (window.location.pathname !== newUrl) {
+          if (historyMode === 'replace') {
+            window.history.replaceState({ repoKey }, '', newUrl);
+          } else if (historyMode === 'push') {
+            window.history.pushState({ repoKey }, '', newUrl);
+          }
         }
       }
     }
@@ -204,8 +206,18 @@ export default function CasePage() {
         // Try to load file from URL path
         const pathParts = window.location.pathname.split('/').filter(Boolean);
         let targetFile = DEFAULT_FILE;
+        let forceTab = null;
+
         if (pathParts.length > 1 && pathParts[0] === 'case') {
-          targetFile = pathParts.slice(1).map(decodeURIComponent).join('/') + '.md';
+          const slugParts = pathParts.slice(1).map(decodeURIComponent);
+          const slugStr = slugParts.join('/');
+          if (slugStr === 'chat') {
+            forceTab = 'chat';
+          } else if (slugStr === 'filetree') {
+            forceTab = 'filetree';
+          } else {
+            targetFile = slugStr + '.md';
+          }
         }
 
         // Find file in registry with full repo path to match tab ID
@@ -226,15 +238,22 @@ export default function CasePage() {
         const db = findFile(tree, targetFile);
         setTimeout(() => {
           if (db) {
-            loadFile(db.path, db.name, db.id, 'replace');
+            loadFile(db.path, db.name, db.id, 'replace', !forceTab);
+            if (forceTab) setActiveTab(forceTab);
           } else {
             // Fallback to default file if URL path not found
             const fallbackDb = findFile(tree, DEFAULT_FILE);
             if (fallbackDb) {
-              loadFile(fallbackDb.path, fallbackDb.name, fallbackDb.id, 'replace');
+              loadFile(fallbackDb.path, fallbackDb.name, fallbackDb.id, 'replace', !forceTab);
+              if (forceTab) setActiveTab(forceTab);
             } else {
               const p = fileRegistry.current[DEFAULT_FILE.toLowerCase()];
-              if (p) loadFile(p, DEFAULT_FILE, null, 'replace');
+              if (p) {
+                loadFile(p, DEFAULT_FILE, null, 'replace', !forceTab);
+                if (forceTab) setActiveTab(forceTab);
+              } else if (forceTab) {
+                setActiveTab(forceTab);
+              }
             }
           }
         }, 500);
@@ -247,6 +266,10 @@ export default function CasePage() {
     const handlePopState = (e) => {
       if (e.state && e.state.repoKey) {
         const repoKey = e.state.repoKey;
+        if (repoKey === 'chat' || repoKey === 'filetree') {
+          setActiveTab(repoKey);
+          return;
+        }
         const cleanPath = repoKey.toLowerCase();
         const realPath = fileRegistry.current[cleanPath];
         if (realPath) {
@@ -817,8 +840,11 @@ export default function CasePage() {
         window.history.pushState({ repoKey: tab.id }, '', newUrl);
       }
     } else {
-      // For sidebar or chat, we might want to reset the URL or keep it
-      // For now, let's keep the last file URL
+      // For sidebar or chat, update URL as well
+      const newUrl = `/case/${tab.id}`;
+      if (window.location.pathname !== newUrl) {
+        window.history.pushState({ repoKey: tab.id }, '', newUrl);
+      }
     }
   };
 
@@ -1296,12 +1322,12 @@ export default function CasePage() {
             <div className="add-note-btn" onClick={(e) => { e.stopPropagation(); handleCreateNewNote(); }} title="New Note">
               <Plus size={44} />
             </div>
-            <div className="filetree-btn" onClick={(e) => { e.stopPropagation(); setActiveTab('filetree'); }} title="File Tree">
+            <div className="filetree-btn" onClick={(e) => { e.stopPropagation(); handleTabClick(tabs[0], e); }} title="File Tree">
               <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
               </svg>
             </div>
-            <div className="chatvault-btn" onClick={(e) => { e.stopPropagation(); setActiveTab('chat'); }} title="AI Chat Vault">
+            <div className="chatvault-btn" onClick={(e) => { e.stopPropagation(); handleTabClick(tabs[1], e); }} title="AI Chat Vault">
               <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
               </svg>
@@ -1316,6 +1342,8 @@ export default function CasePage() {
 
       {tabs.map((tab, index) => {
         const isOpen = activeTab === tab.id;
+        const isPersistent = tab.id === 'chat';
+
         return (
           <div 
             key={tab.id} 
@@ -1328,8 +1356,12 @@ export default function CasePage() {
               </div>
             </div>
             
-            {isOpen && (
-              <div className="acc-content" onClick={e => e.stopPropagation()}>
+            {(isOpen || isPersistent) && (
+              <div 
+                className="acc-content" 
+                onClick={e => e.stopPropagation()}
+                style={!isOpen ? { display: 'none' } : {}}
+              >
                 {tab.type === 'editor' && (
                   <div className="floating-actions">
                     <button
