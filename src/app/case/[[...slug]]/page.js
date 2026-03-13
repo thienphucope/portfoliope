@@ -20,6 +20,7 @@ export default function CasePage() {
   const [fileSha,     setFileSha]     = useState(null);
   const [editPass,    setEditPass]    = useState(() => { try { return sessionStorage.getItem('vault_edit_pass') || ''; } catch { return ''; } });
   const [passPrompt,  setPassPrompt]  = useState(null);
+  const [namePrompt,  setNamePrompt]  = useState(null);
   const [searchTerm,  setSearchTerm]  = useState('');
   const [showSearch,   setShowSearch]  = useState(false);
 
@@ -65,6 +66,14 @@ export default function CasePage() {
     window.addEventListener('mousedown', handleGlobalClick);
     return () => window.removeEventListener('mousedown', handleGlobalClick);
   }, []);
+
+  const askPassword = useCallback(() => new Promise((resolve, reject) => {
+    setPassPrompt({ resolve, reject });
+  }), []);
+
+  const askFileName = useCallback(() => new Promise((resolve, reject) => {
+    setNamePrompt({ resolve, reject });
+  }), []);
 
   useEffect(() => {
     const initBgPlayer = () => {
@@ -144,7 +153,7 @@ export default function CasePage() {
       const cached = readCache(repoKey);
       newContent = Array.isArray(cached) && cached.length > 0
         ? cached.map(b => b.raw).join('\n\n')
-        : `# ${name.replace('.md', '')}\n`;
+        : `# ${name.replace('.md', '')}\n*author: <author>*\n*tag: [[Dash Board]]*\n`;
       applyFileContent(repoKey, newContent);
     } else {
       try {
@@ -433,7 +442,7 @@ export default function CasePage() {
     });
 
     try { localStorage.removeItem(`vault_v3::${serverPath}`); } catch {}
-    const initContent = `# ${title}\n`;
+    const initContent = `# ${title}\n*author: <author>*\n*tag: [[Dash Board]]*\n`;
     applyFileContent(serverPath, initContent);
 
     setOpenFiles(prev => {
@@ -487,17 +496,12 @@ export default function CasePage() {
           ? cached.map(b => b.raw).join('\n\n')
           : openF.fetchedContent;
         applyFileContent(serverPath, raw);
-      } else {
-        applyFileContent(serverPath, `# ${serverPath.split('/').pop().replace('.md', '')}\n`);
-      }
-    } else {
+        } else {
+        applyFileContent(serverPath, `# ${serverPath.split('/').pop().replace('.md', '')}\n*author: <author>*\n*tag: [[Dash Board]]*\n`);
+        }    } else {
       createAndOpenFile(target);
     }
   }, [loadFile, createAndOpenFile, openFiles, tabs, applyFileContent]);
-
-  const askPassword = useCallback(() => new Promise((resolve, reject) => {
-    setPassPrompt({ resolve, reject });
-  }), []);
 
   const doPost = useCallback(async (filePath, raw, pass) => {
     const isNew = fileRegistry.current[filePath.toLowerCase()] === null;
@@ -607,7 +611,12 @@ export default function CasePage() {
 
   // 1. Handle creating a new note
   const handleCreateNewNote = async () => {
-    const noteName = window.prompt("Enter the name for your new note:");
+    let noteName;
+    try {
+      noteName = await askFileName();
+    } catch (e) {
+      return;
+    }
     if (!noteName) return;
     const cleanName = noteName.endsWith('.md') ? noteName : `${noteName}.md`;
     const targetPath = `notes/${cleanName}`;
@@ -1479,7 +1488,7 @@ export default function CasePage() {
       {passPrompt && (
         <div className="pass-overlay" onClick={() => { passPrompt.reject(new Error('cancelled')); setPassPrompt(null); }}>
           <div className="pass-modal" onClick={e => e.stopPropagation()}>
-            <div className="pass-modal__title">🔐 Nhập mật khẩu để tiếp tục</div>
+            <div className="pass-modal__title">Please enter password to edit</div>
             <input
               className="pass-modal__input"
               type="password"
@@ -1498,7 +1507,34 @@ export default function CasePage() {
                 }
               }}
             />
-            <div className="pass-modal__hint">Enter để xác nhận · Esc để huỷ</div>
+            <div className="pass-modal__hint">Enter to verify · Esc to cancel</div>
+          </div>
+        </div>
+      )}
+
+      {namePrompt && (
+        <div className="pass-overlay" onClick={() => { namePrompt.reject(new Error('cancelled')); setNamePrompt(null); }}>
+          <div className="pass-modal" onClick={e => e.stopPropagation()}>
+            <div className="pass-modal__title">Enter the name for your new note</div>
+            <input
+              className="pass-modal__input"
+              type="text"
+              placeholder="Note name…"
+              autoFocus
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  const val = e.target.value.trim();
+                  if (!val) return;
+                  namePrompt.resolve(val);
+                  setNamePrompt(null);
+                }
+                if (e.key === 'Escape') {
+                  namePrompt.reject(new Error('cancelled'));
+                  setNamePrompt(null);
+                }
+              }}
+            />
+            <div className="pass-modal__hint">Enter to create · Esc to cancel</div>
           </div>
         </div>
       )}
