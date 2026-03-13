@@ -249,20 +249,42 @@ export default function CasePage() {
         setTimeout(() => {
           if (db) {
             loadFile(db.path, db.name, db.id, 'replace', !forceTab);
-            if (forceTab) setActiveTab(forceTab);
+            if (forceTab) {
+              setActiveTab(forceTab);
+              const newUrl = `/case/${forceTab}`;
+              if (window.location.pathname !== newUrl) {
+                window.history.replaceState({ repoKey: forceTab }, '', newUrl);
+              }
+            }
           } else {
             // Fallback to default file if URL path not found
             const fallbackDb = findFile(tree, DEFAULT_FILE);
             if (fallbackDb) {
               loadFile(fallbackDb.path, fallbackDb.name, fallbackDb.id, 'replace', !forceTab);
-              if (forceTab) setActiveTab(forceTab);
+              if (forceTab) {
+                setActiveTab(forceTab);
+                const newUrl = `/case/${forceTab}`;
+                if (window.location.pathname !== newUrl) {
+                  window.history.replaceState({ repoKey: forceTab }, '', newUrl);
+                }
+              }
             } else {
               const p = fileRegistry.current[DEFAULT_FILE.toLowerCase()];
               if (p) {
                 loadFile(p, DEFAULT_FILE, null, 'replace', !forceTab);
-                if (forceTab) setActiveTab(forceTab);
+                if (forceTab) {
+                  setActiveTab(forceTab);
+                  const newUrl = `/case/${forceTab}`;
+                  if (window.location.pathname !== newUrl) {
+                    window.history.replaceState({ repoKey: forceTab }, '', newUrl);
+                  }
+                }
               } else if (forceTab) {
                 setActiveTab(forceTab);
+                const newUrl = `/case/${forceTab}`;
+                if (window.location.pathname !== newUrl) {
+                  window.history.replaceState({ repoKey: forceTab }, '', newUrl);
+                }
               }
             }
           }
