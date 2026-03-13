@@ -180,7 +180,7 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
     const timer = setInterval(() => {
       if (i < full.length) { setStreamingText(full.slice(0, ++i)); if (historyRef.current) historyRef.current.scrollTop = historyRef.current.scrollHeight; }
       else { clearInterval(timer); setIsStreaming(false); setConvo(p => { const n=[...p]; n[n.length-1]={role:'assistant',content:full}; return n; }); }
-    }, 15);
+    }, 5);
   };
 
   useEffect(() => {
