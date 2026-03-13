@@ -46,6 +46,7 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
   const [isStreaming, setIsStreaming] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [ragReady, setRagReady] = useState(false);
+  const [isFallback, setIsFallback] = useState(false);
   const [ttsReady, setTtsReady] = useState(false);
   const [libsReady, setLibsReady] = useState(false);
   const [apiUsername, setApiUsername] = useState('YOU');
@@ -60,7 +61,7 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
   const isFetchingRef = useRef(false); 
   const recognitionRef = useRef(null);
   
-  const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
   const displayName = 'YOU';
 
   useEffect(() => {
@@ -160,19 +161,58 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
     const newConvo = [...convo, { role: 'user', content: msg }];
     setConvo(newConvo);
     setConvo(prev => [...prev, { role: 'assistant', content: '' }]);
+    
     try {
       let reply;
-      if (ragReady) {
-        const r = await fetch("https://rag-backend-zh2e.onrender.com/rag", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: apiUsername, query: msg }) });
-        const d = await r.json(); reply = d.response || "No response";
-      } else {
-        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents: [{role:"user",parts:[{text:"System: Speak concise."}]}, ...newConvo.map(m=>({role:m.role==='user'?"user":"model",parts:[{text:m.content}]}))] }) });
-        const d = await r.json(); reply = d.candidates?.[0]?.content?.parts?.[0]?.text || "Error";
+      let shouldCallGemini = isFallback || !ragReady;
+
+      if (!shouldCallGemini) {
+        try {
+          const r = await fetch("https://rag-backend-zh2e.onrender.com/rag", { 
+            method: "POST", 
+            headers: { "Content-Type": "application/json" }, 
+            body: JSON.stringify({ username: apiUsername, query: msg }) 
+          });
+          if (!r.ok) throw new Error("RAG failed");
+          const d = await r.json(); 
+          reply = d.response || "No response";
+        } catch (err) {
+          shouldCallGemini = true;
+          setIsFallback(true);
+        }
       }
+
+      if (shouldCallGemini) {
+        setIsFallback(true);
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, { 
+          method: "POST", 
+          headers: { "Content-Type": "application/json" }, 
+          body: JSON.stringify({ 
+            contents: [
+              {
+                role:"user",
+                parts:[{text:"You are Elia, the lively, intelligent, slightly chaotic librarian of opewatson.org helping visitors explore Ope Watson’s knowledge; speak naturally only in English with fun high-energy short conversational replies, format answers in standard Markdown like Obsidian (no footnotes), never mention searching or data sources and answer as if you already know the information, when people ask about the website they mean opewatson.org, notes are stored at https://github.com/thienphucope/cases/tree/main/notes, and whenever referring to a note mention it using [[exact_file_name_with_no_extension]]. When it's youtube link, try to embed it with ![allt](link)"}]
+              }, 
+              ...newConvo.map(m=>({role:m.role==='user'?"user":"model",parts:[{text:m.content}]}))
+            ],
+            tools: [{ google_search_retrieval: {} }]
+          }) 
+        });
+        const d = await r.json(); 
+        reply = d.candidates?.[0]?.content?.parts?.[0]?.text || "LLMs Error";
+      }
+
       streamResponse(reply);
       generateAndPlayAudio(reply);
-    } catch { setConvo(prev => { const n = [...prev]; n[n.length-1] = {role:'assistant',content:"Error"}; return n; }); }
-    finally { setIsSending(false); }
+    } catch { 
+      setConvo(prev => { 
+        const n = [...prev]; 
+        n[n.length-1] = {role:'assistant',content:"LLMs Error"}; 
+        return n; 
+      }); 
+    } finally { 
+      setIsSending(false); 
+    }
   };
 
   const streamResponse = (full) => {
