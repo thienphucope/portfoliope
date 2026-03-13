@@ -210,7 +210,7 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
       </div>
 
       {/* History */}
-      <div ref={historyRef} className="flex-1 overflow-y-auto p-5 space-y-5 custom-scrollbar">
+      <div ref={historyRef} className="flex-1 overflow-y-auto p-5 space-y-5 custom-scrollbar chat-history">
         {convo.map((msg, i) => {
           const isMsgStreaming = (i === convo.length - 1 && isStreaming);
           const content = isMsgStreaming ? streamingText : msg.content;

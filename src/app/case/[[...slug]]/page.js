@@ -905,7 +905,7 @@ export default function CasePage() {
         }
       }
 
-      const vScrollable = e.target.closest('.markdown-container, .file-list, .chat-container');
+      const vScrollable = e.target.closest('.markdown-container, .file-list, .chat-history');
       if (vScrollable) {
         const canScrollUp = vScrollable.scrollTop > 0;
         const canScrollDown = Math.ceil(vScrollable.scrollTop + vScrollable.clientHeight) < vScrollable.scrollHeight;
