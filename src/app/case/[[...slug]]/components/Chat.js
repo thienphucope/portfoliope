@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { ClockIcon, PaperAirplaneIcon, ArrowPathIcon, MagnifyingGlassIcon, SpeakerWaveIcon, MicrophoneIcon } from '@heroicons/react/24/outline';
 import { ensureLibsLoaded, postProcess } from './MarkdownEngine';
 
-function MessageContent({ role, content, isStreaming, onLinkClick }) {
+function MessageContent({ role, content, isStreaming, onLinkClick, libsReady }) {
   const divRef = useRef(null);
 
   useEffect(() => {
@@ -27,7 +27,7 @@ function MessageContent({ role, content, isStreaming, onLinkClick }) {
     } catch (e) {
       divRef.current.textContent = content;
     }
-  }, [role, content, isStreaming]);
+  }, [role, content, isStreaming, libsReady]);
 
   return <div ref={divRef} className="markdown-content" onClick={onLinkClick} />;
 }
@@ -38,13 +38,16 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
   const [inputValue, setInputValue] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [convo, setConvo] = useState([
-    { role: 'assistant', content: "Ask me anything about this case just like you ask chatGPT" }
+    { role: 'assistant', content: "Ask me anything about this case just like you ask chatGPT \n\n # 🤡 Pins\n ### 📌 [[The Boy Who Murdered Love]]\n ### 📌 [[Beautiful]]\n # 📘 Navigation \n | Collection | [[Beautiful]] | [[Mad Gab]] | [[Emotional Analysis Vol 1]] | [[Emotional Analysis Vol 2]] | [[Christmas Album]] | | | | | \n |---|----|----|----|----|----|----|----|----|----|\n | Memoir | [[Ope Watson]] | [[Flood Exp]] | [[Core Memory]] | [[Thought Dump]] | | | | | | \n | Document | [[Emergence]] | [[Feature]] | [[How I Wasted Millions]] | [[RWKV]] | [[Spike Network]] | [[Csm-1B Arch]] | [[World Model V-JEPA 2]] | [[Transformers]] | [[Diffusion]] | [[PersonaPlex]] |\n | Actual Blog | [[Fuck Boy Diary]] | [[In Defence of Edison]] | [[Where Are People]] | [[Sexist Philosopher]] | [[Viet's Lunar New Year]] | [[Sherlock Holmes]] | | | | | \n | Internet Diary | [[VA Collection]] | [[Bombshell]] | [[Jailbreak]] | [[Baalbuddy]] | [[Basement]] | | | | |" }
   ]);
+
+ 
   const [streamingText, setStreamingText] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [ragReady, setRagReady] = useState(false);
   const [ttsReady, setTtsReady] = useState(false);
+  const [libsReady, setLibsReady] = useState(false);
   const [apiUsername, setApiUsername] = useState('YOU');
   const [isListening, setIsListening] = useState(false);
   
@@ -61,7 +64,7 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
   const displayName = 'YOU';
 
   useEffect(() => {
-    ensureLibsLoaded();
+    ensureLibsLoaded().then(() => setLibsReady(true));
   }, []);
 
   const TTS_API_URL = "https://thienphuc1052004--xtts-api-xttsapi-tts-generate.modal.run";
@@ -219,6 +222,7 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
                 content={content} 
                 isStreaming={isMsgStreaming} 
                 onLinkClick={onLinkClick}
+                libsReady={libsReady}
               />
             </div>
           );

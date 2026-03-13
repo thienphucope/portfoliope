@@ -215,11 +215,12 @@ export default function CasePage() {
         // Try to load file from URL path
         const pathParts = window.location.pathname.split('/').filter(Boolean);
         let targetFile = DEFAULT_FILE;
-        let forceTab = null;
+        let forceTab = (targetFile === 'chat' || targetFile === 'filetree') ? targetFile : null;
 
         if (pathParts.length > 1 && pathParts[0] === 'case') {
           const slugParts = pathParts.slice(1).map(decodeURIComponent);
           const slugStr = slugParts.join('/');
+          forceTab = null;
           if (slugStr === 'chat') {
             forceTab = 'chat';
           } else if (slugStr === 'filetree') {
@@ -1101,6 +1102,25 @@ export default function CasePage() {
           background-color: transparent;
         }
 
+        /* Pin mode: if a tab ID matches DEFAULT_FILE, it stays expanded */
+        .acc-panel.is-pinned {
+          flex-basis: 400px !important;
+          min-width: 400px !important;
+          flex-grow: 0 !important;
+          background-color: rgba(0,0,0,0.15);
+          border-right: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .acc-panel.is-pinned .acc-content {
+          display: flex !important;
+          opacity: 1 !important;
+          width: calc(400px - 150px) !important;
+        }
+        
+        .acc-panel.is-pinned .acc-spine-container {
+           background-color: rgba(255,255,255,0.05) !important;
+        }
+
         .acc-spine-container {
           flex: 0 0 150px;
           height: 100%;
@@ -1350,13 +1370,14 @@ export default function CasePage() {
       </div>
 
       {tabs.map((tab, index) => {
-        const isOpen = activeTab === tab.id;
+        const isPinned = tab.id === DEFAULT_FILE;
+        const isOpen = activeTab === tab.id || isPinned;
         const isPersistent = tab.id === 'chat';
 
         return (
           <div 
             key={tab.id} 
-            className={`acc-panel ${isOpen ? 'open' : 'closed'}`}
+            className={`acc-panel ${isOpen ? 'open' : 'closed'} ${isPinned ? 'is-pinned' : ''}`}
           >
             {/* The spine is always shown, whether open or closed */}
             <div className="acc-spine-container" onClick={(e) => handleTabClick(tab, e)}>
