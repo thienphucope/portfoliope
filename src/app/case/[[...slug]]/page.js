@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Plus } from 'lucide-react';
 import Chat from './components/Chat';
 import { ensureLibsLoaded, postProcess, fitHeading } from './components/MarkdownEngine';
 import FileSystemItem from './components/FileSystemItem';
@@ -952,7 +953,7 @@ export default function CasePage() {
           flex-shrink: 0;
           background-color: var(--colorone);
           border-right: 2px solid rgba(255, 255, 255, 0.2);
-          cursor: pointer;
+          cursor: default;
           isolation: isolate;
         }
 
@@ -965,39 +966,47 @@ export default function CasePage() {
           justify-content: center;
         }
 
-        .spine-homepage {
-          position: absolute;
-          bottom: 40px;
-          writing-mode: vertical-rl;
-          font-family: 'Inter', sans-serif;
-          font-size: 0.85rem;
-          color: black;
-          opacity: 0.8;
-          mix-blend-mode: destination-out;
-          text-transform: uppercase;
-          letter-spacing: 3px;
-        }
-
-        .add-note-btn {
-          width: 60px;
-          height: 60px;
-          border-radius: 50%;
-          border: 2px solid rgba(0,0,0,0.6);
+        .add-note-btn, .filetree-btn, .chatvault-btn {
+          width: 80px;
+          height: 80px;
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
           position: absolute;
-          top: 40px;
           color: black;
           font-weight: bold;
           font-size: 20px;
           z-index: 100;
-          transition: transform 0.2s, background-color 0.2s;
+          transition: transform 0.2s, opacity 0.2s;
         }
-        .add-note-btn:hover {
-          background-color: rgba(0,0,0,0.1);
+        .add-note-btn:hover, .filetree-btn:hover, .chatvault-btn:hover {
+          opacity: 0.7;
           transform: scale(1.1);
+        }
+
+        .add-note-btn { top: 40px; }
+        .filetree-btn { top: 140px; }
+        .chatvault-btn { top: 240px; }
+
+        .acc-ope {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 2rem;
+          font-family: 'Fredericka the Great', cursive;
+          font-size: 2.8rem;
+          color: black;
+          mix-blend-mode: destination-out;
+          user-select: none;
+          position: absolute;
+          bottom: 40px;
+          cursor: pointer;
+        }
+        .ope-txt, .watson-txt {
+          writing-mode: vertical-rl;
+          white-space: nowrap;
+          letter-spacing: 2px;
         }
 
         .acc-panel {
@@ -1059,16 +1068,6 @@ export default function CasePage() {
           align-items: center;
           justify-content: center;
           isolation: isolate;
-        }
-        .acc-ope {
-          writing-mode: vertical-rl;
-          font-family: 'Fredericka the Great', cursive;
-          font-size: 2rem;
-          color: black;
-          mix-blend-mode: destination-out;
-          white-space: nowrap;
-          letter-spacing: 2px;
-          user-select: none;
         }
 
         .acc-content {
@@ -1137,43 +1136,37 @@ export default function CasePage() {
             height: 60px !important;
             padding-top: 0 !important;
             align-items: center !important;
-            justify-content: center !important;
+            justify-content: flex-start !important;
           }
 
           .spine-content {
             flex-direction: row !important;
             width: 100% !important;
             height: 100% !important;
-            justify-content: center !important;
+            justify-content: flex-start !important;
             align-items: center !important;
             position: relative !important;
             padding: 0 20px !important;
           }
 
           .acc-ope {
-            writing-mode: horizontal-tb !important;
+            flex-direction: row !important;
+            gap: 10px !important;
+            position: static !important;
             font-size: 1.4rem !important;
             letter-spacing: 1px !important;
-            text-align: center !important;
+            text-align: left !important;
             margin: 0 !important;
+            cursor: pointer;
           }
 
-          .spine-homepage {
-            position: absolute !important;
-            right: 20px !important;
-            top: 50% !important;
-            transform: translateY(-50%) !important;
+          .ope-txt, .watson-txt {
             writing-mode: horizontal-tb !important;
-            opacity: 0.5 !important;
-            font-size: 0.6rem !important;
-            letter-spacing: 1px !important;
-            text-transform: uppercase !important;
-            margin: 0 !important;
+            white-space: nowrap !important;
           }
 
-          .add-note-btn {
+          .add-note-btn, .filetree-btn, .chatvault-btn {
             position: absolute !important;
-            left: 20px !important;
             top: 50% !important;
             transform: translateY(-50%) !important;
             margin: 0 !important;
@@ -1183,6 +1176,23 @@ export default function CasePage() {
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
+            transition: opacity 0.2s !important;
+          }
+
+          .add-note-btn svg, .filetree-btn svg, .chatvault-btn svg {
+            width: 22px !important;
+            height: 22px !important;
+          }
+
+          .add-note-btn {
+            right: 20px !important;
+            left: auto !important;
+          }
+          .chatvault-btn {
+            right: 60px !important;
+          }
+          .filetree-btn {
+            right: 100px !important;
           }
 
           .acc-panel {
@@ -1250,12 +1260,26 @@ export default function CasePage() {
       <div className="video-overlay"></div>
 
       {/* Sticky Spine */}
-      <div className="acc-panel sticky-spine" onClick={() => window.location.href = '/'}>
+      <div className="acc-panel sticky-spine">
         <div className="acc-ope-container" style={{ width: '100%', flex: '1' }}>
           <div className="spine-content">
-            <div className="add-note-btn" onClick={(e) => { e.stopPropagation(); handleCreateNewNote(); }} title="New Note">+</div>
-            <div className="acc-ope">Ope Watson</div>
-            <div className="spine-homepage">homepage</div>
+            <div className="add-note-btn" onClick={(e) => { e.stopPropagation(); handleCreateNewNote(); }} title="New Note">
+              <Plus size={44} />
+            </div>
+            <div className="filetree-btn" onClick={(e) => { e.stopPropagation(); setActiveTab('filetree'); }} title="File Tree">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </div>
+            <div className="chatvault-btn" onClick={(e) => { e.stopPropagation(); setActiveTab('chat'); }} title="AI Chat Vault">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </div>
+            <div className="acc-ope" onClick={() => window.location.href = '/'}>
+              <div className="ope-txt">Ope</div>
+              <div className="watson-txt">Watson</div>
+            </div>
           </div>
         </div>
       </div>
