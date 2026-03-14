@@ -38,12 +38,13 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
   const [inputValue, setInputValue] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [convo, setConvo] = useState([
-    { role: 'assistant', content: "Ask me anything about this case just like you ask chatGPT—you don't have to read these fricking long notes.  *I can even play YouTube video if you want a BGM.*\n # 🤡 Pins\n ### 📌 [[The Boy Who Murdered Love]]\n ### 📌 [[Beautiful]]\n # 📘 Navigation \n | Collection | [[Beautiful]] | [[Mad Gab]] | [[Emotional Analysis Vol 1]] | [[Emotional Analysis Vol 2]] | [[Christmas Album]] | | | | | \n |---|----|----|----|----|----|----|----|----|----|\n | Memoir | [[Ope Watson]] | [[Flood Exp]] | [[Core Memory]] | [[Thought Dump]] | | | | | | \n | Document | [[Emergence]] | [[Feature]] | [[How I Wasted Millions]] | [[RWKV]] | [[Spike Network]] | [[Csm-1B Arch]] | [[World Model V-JEPA 2]] | [[Transformers]] | [[Diffusion]] | [[PersonaPlex]] |\n | Actual Blog | [[Fuck Boy Diary]] | [[In Defence of Edison]] | [[Where Are People]] | [[Sexist Philosopher]] | [[Viet's Lunar New Year]] | [[Sherlock Holmes]] | | | | | \n | Internet Diary | [[VA Collection]] | [[Bombshell]] | [[Jailbreak]] | [[Baalbuddy]] | [[Basement]] | | | | |" }
+    { role: 'assistant', content: "*Ask me anything about this case or contribute by create + a note* \n\n *I can play YouTube video if you want a BGM.*\n *I can tell Ope's secrets* \n # 🤡 Pins\n ### 📌 [[The Boy Who Murdered Love]]\n ### 📌 [[Beautiful]] ⬅️ *click to noclip*\n " }
   ]);
 
  
   const [streamingText, setStreamingText] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isThinking, setIsThinking] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [ragReady, setRagReady] = useState(false);
   const [isFallback, setIsFallback] = useState(false);
@@ -157,6 +158,7 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
     if (!inputValue.trim() || isSending) return;
     const msg = inputValue.trim(); setInputValue('');
     setIsSending(true);
+    setIsThinking(true);
     const newConvo = [...convo, { role: 'user', content: msg }];
     setConvo(newConvo);
     setConvo(prev => [...prev, { role: 'assistant', content: '' }]);
@@ -180,6 +182,7 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
       streamResponse(reply);
       generateAndPlayAudio(reply);
     } catch { 
+      setIsThinking(false);
       setConvo(prev => { 
         const n = [...prev]; 
         n[n.length-1] = {role:'assistant',content:"LLMs Error"}; 
@@ -191,6 +194,7 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
   };
 
   const streamResponse = (full) => {
+    setIsThinking(false);
     let i = 0; setIsStreaming(true);
     const timer = setInterval(() => {
       if (i < full.length) { setStreamingText(full.slice(0, ++i)); if (historyRef.current) historyRef.current.scrollTop = historyRef.current.scrollHeight; }
@@ -228,8 +232,9 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
       <div ref={historyRef} className="flex-1 overflow-y-auto p-5 space-y-5 custom-scrollbar chat-history">
         {convo.map((msg, i) => {
           const isMsgStreaming = (i === convo.length - 1 && isStreaming);
-          const content = isMsgStreaming ? streamingText : msg.content;
-          if (!content && i !== convo.length-1) return null;
+          const isMsgThinking = (i === convo.length - 1 && isThinking);
+          const content = isMsgStreaming ? streamingText : (isMsgThinking ? "Thinking..." : msg.content);
+          if (!content && i !== convo.length-1 && !isMsgThinking) return null;
           return (
             <div key={i} className={`${isEmbedded ? 'text-base' : 'text-lg'} leading-relaxed text-justify opacity-90`}>
               <MessageContent 
