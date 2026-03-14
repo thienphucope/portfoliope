@@ -10,7 +10,7 @@ function MessageContent({ role, content, isStreaming, onLinkClick, libsReady }) 
     if (!divRef.current || !window.marked) return;
     try {
       const name = role === 'user' ? 'You' : 'Librarian';
-      const prefix = `**${name}:** `;
+      const prefix = role === 'user' ? `**${name}:** ` : `\n**${name}:** \n\n`;
       let html = window.marked.parse(prefix + (content || ''));
       
       if (isStreaming) {
@@ -222,12 +222,6 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
 
   return (
     <div className={`${isEmbedded ? 'relative h-full w-full' : 'fixed inset-0 z-50'} flex flex-col bg-transparent overflow-hidden`} style={{ fontFamily: style.fontFamily }}>
-      {/* Header */}
-      <div className="p-4 border-b border-white/10 flex justify-between items-center bg-zinc-900/30">
-        <span className="font-bold tracking-widest text-[10px] opacity-40 font-sans">CHAT VAULT</span>
-        {!isEmbedded && <button onClick={() => setIsOpen(false)} className="text-white/50 hover:text-white">✕</button>}
-      </div>
-
       {/* History */}
       <div ref={historyRef} className="flex-1 overflow-y-auto p-5 space-y-5 custom-scrollbar chat-history">
         {convo.map((msg, i) => {
