@@ -183,46 +183,37 @@ export async function POST(request) {
   let body;
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
 
-  // Extract 'action' alongside existing properties
-  const { action, path, content, create = false, password, sha } = body;
+  const { action, path, content, create = false, password, sha, sessionId } = body;
   if (!path) return NextResponse.json({ error: 'Missing path' }, { status: 400 });
   
-  if (password !== EDIT_PASS) {
-    console.warn(`❌ [API Route] Wrong password attempt.`);
-    return NextResponse.json({ error: 'Wrong password' }, { status: 403 });
-  }
-
   const finalPath = path.endsWith('.md') ? path : `${path}.md`;
   const now = Date.now();
   const currentLock = fileLocks.get(finalPath);
-  const { sessionId } = body;
 
-  // 1. Handle File Locking & Getting latest content
+  // 1. Handle File Locking & Getting latest content (No password required)
   if (action === 'lock') {
     if (!sessionId) return NextResponse.json({ error: 'Missing sessionId' }, { status: 400 });
-
-    // If someone else holds the lock and it hasn't expired
     if (currentLock && currentLock.expiresAt > now && currentLock.sessionId !== sessionId) {
-      return NextResponse.json({ 
-        ok: false, 
-        error: 'File is being edited by another user', 
-        locked: true 
-      }, { status: 423 }); // 423 Locked
+      return NextResponse.json({ ok: false, error: 'File is being edited by another user', locked: true }, { status: 423 });
     }
-
     fileLocks.set(finalPath, { expiresAt: now + LOCK_TIMEOUT, sessionId });
-    
-    // Also return latest content from GitHub
     const fileData = await getFileFromGithub(finalPath);
     return NextResponse.json({ ok: true, locked: true, ...fileData });
   }
 
-  // 2. Handle File Unlocking
+  // 2. Handle File Unlocking (No password required)
   if (action === 'unlock') {
     if (currentLock && currentLock.sessionId === sessionId) {
       fileLocks.delete(finalPath);
     }
     return NextResponse.json({ ok: true });
+  }
+
+  // 3. Save Logic
+  // ONLY require password if we are UPDATING an existing file (not creating)
+  if (!create && password !== EDIT_PASS) {
+    console.warn(`❌ [API Route] Wrong password attempt during update.`);
+    return NextResponse.json({ error: 'Wrong password' }, { status: 403 });
   }
 
   // 3. Existing Save Logic

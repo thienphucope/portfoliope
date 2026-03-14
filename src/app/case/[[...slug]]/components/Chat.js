@@ -195,7 +195,7 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
               }, 
               ...newConvo.map(m=>({role:m.role==='user'?"user":"model",parts:[{text:m.content}]}))
             ],
-            tools: [{ google_search_retrieval: {} }]
+            tools: [{ google_search: {} }]
           }) 
         });
         const d = await r.json(); 
