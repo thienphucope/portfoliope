@@ -148,10 +148,10 @@ export const CodeRawEditor = ({ block, onSave, onDeactivate, onNavigate, cursorP
         const timeoutId = setTimeout(() => controller.abort(), 15000);
         
         try {
-          const res  = await fetch('https://rag-backend-zh2e.onrender.com/rag', {
+          const res  = await fetch('/api/cases', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: 'BlockEditor', query }),
+            body: JSON.stringify({ action: 'ai', query, username: 'BlockEditor' }),
             signal: controller.signal
           });
           clearTimeout(timeoutId);
@@ -519,10 +519,10 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
         const timeoutId = setTimeout(() => controller.abort(), 15000);
         
         try {
-          const res  = await fetch('https://rag-backend-zh2e.onrender.com/rag', {
+          const res  = await fetch('/api/cases', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: 'BlockEditor', query }),
+            body: JSON.stringify({ action: 'ai', query, username: 'BlockEditor' }),
             signal: controller.signal
           });
           clearTimeout(timeoutId);
