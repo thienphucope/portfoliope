@@ -42,7 +42,7 @@ export default function CasePage() {
   const saveHandlerRef = useRef(null); // ref to BlockEditor's save fn
   const lockIntervalRef = useRef(null);
   const sessionIdRef = useRef(Math.random().toString(36).substring(2, 15));
-  
+  const bgPlayerRef    = useRef(null);
   // Custom Smooth Scrolling States
   const isTabScrolling = useRef(false);
   const tabAnimId = useRef(null);
