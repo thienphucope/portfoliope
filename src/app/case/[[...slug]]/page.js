@@ -656,30 +656,31 @@ export default function CasePage() {
     if (!noteName) return;
     const cleanName = noteName.endsWith('.md') ? noteName : `${noteName}.md`;
     const targetPath = `notes/${cleanName}`;
+
+    // 1. Kiểm tra nhanh trong registry hiện tại
+    const exists = fileRegistry.current[targetPath.toLowerCase()] || 
+                   fileRegistry.current[cleanName.toLowerCase()] ||
+                   fileRegistry.current[noteName.toLowerCase()];
     
-    // Attempt to acquire lock and check existence (API now allows this without password)
+    if (exists) {
+      alert(`Note "${noteName}" already exists!`);
+      return;
+    }
+    
+    // 2. Kiểm tra trên server qua acquireLock
     try {
       const lockData = await acquireLock(targetPath, editPass);
       
       if (lockData.ok && lockData.content) {
-        // If it exists on GitHub, load its content
-        const freshContent = decodeBase64(lockData.content);
-        serverRawCache.current[targetPath] = freshContent;
-        applyFileContent(targetPath, freshContent);
-        if (lockData.sha) setFileSha(lockData.sha);
-        
-        setOpenFiles(prev => {
-          if (!prev.find(f => f.id === targetPath)) {
-            return [...prev, { id: targetPath, path: null, name: cleanName, serverPath: targetPath, fetchedContent: freshContent }];
-          }
-          return prev;
-        });
-      } else {
-        // Truly new file
-        createAndOpenFile(targetPath);
-        setFileSha(null);
-      }
+        // Nếu đã có trên GitHub, thông báo và thoát, không vào edit mode
+        alert(`Note "${noteName}" already exists on the server!`);
+        releaseLock(targetPath, editPass);
+        return;
+      } 
 
+      // 3. Chỉ khi là file thực sự mới thì mới tiến hành
+      createAndOpenFile(targetPath);
+      setFileSha(null);
       setIsEditing(true);
       setActiveTab(targetPath);
       
