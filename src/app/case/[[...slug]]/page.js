@@ -40,7 +40,6 @@ export default function CasePage() {
   const serverRawCache = useRef({});
   const appShellRef    = useRef(null);
   const saveHandlerRef = useRef(null); // ref to BlockEditor's save fn
-  const bgPlayerRef    = useRef(null);
   const lockIntervalRef = useRef(null);
   const sessionIdRef = useRef(Math.random().toString(36).substring(2, 15));
   
@@ -217,6 +216,15 @@ export default function CasePage() {
         let targetFile = DEFAULT_FILE;
         let forceTab = (targetFile === 'chat' || targetFile === 'filetree') ? targetFile : null;
 
+        // Insert /case buffer into history if landing deep
+        if (pathParts[0] === 'case') {
+          const currentSlug = pathParts.length > 1 ? pathParts.slice(1).map(decodeURIComponent).join('/') : DEFAULT_FILE;
+          const currentRepoKey = (currentSlug === 'chat' || currentSlug === 'filetree') ? currentSlug : currentSlug + '.md';
+          
+          window.history.replaceState({ repoKey: null }, '', '/case');
+          window.history.pushState({ repoKey: currentRepoKey }, '', window.location.pathname === '/case' ? `/case/${currentSlug}` : window.location.pathname);
+        }
+
         if (pathParts.length > 1 && pathParts[0] === 'case') {
           const slugParts = pathParts.slice(1).map(decodeURIComponent);
           const slugStr = slugParts.join('/');
@@ -296,17 +304,22 @@ export default function CasePage() {
   // Handle browser back/forward buttons
   useEffect(() => {
     const handlePopState = (e) => {
-      if (e.state && e.state.repoKey) {
-        const repoKey = e.state.repoKey;
-        if (repoKey === 'chat' || repoKey === 'filetree') {
-          setActiveTab(repoKey);
-          return;
-        }
-        const cleanPath = repoKey.toLowerCase();
-        const realPath = fileRegistry.current[cleanPath];
-        if (realPath) {
-          const name = repoKey.split('/').pop();
-          loadFile(realPath, name, repoKey, 'none'); // 'none' to avoid adding to history again
+      if (e.state) {
+        if (e.state.repoKey) {
+          const repoKey = e.state.repoKey;
+          if (repoKey === 'chat' || repoKey === 'filetree') {
+            setActiveTab(repoKey);
+            return;
+          }
+          const cleanPath = repoKey.toLowerCase();
+          const realPath = fileRegistry.current[cleanPath];
+          if (realPath) {
+            const name = repoKey.split('/').pop();
+            loadFile(realPath, name, repoKey, 'none'); // 'none' to avoid adding to history again
+          }
+        } else {
+          // repoKey is null or undefined -> buffer state /case (closed)
+          setActiveTab(null);
         }
       }
     };
