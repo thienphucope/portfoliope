@@ -217,7 +217,8 @@ export async function POST(request) {
             instructions: systemInstruction || "You are a helpful assistant.",
             tools: [
               { type: "web_search" },
-              { type: "x_search" }
+              { type: "x_search" },
+              { type: "collections_search", collection_ids: ["collection_06dd3ffc-16df-4db5-9eef-ff869f21d5e5"] }
             ],
             temperature: 0.7,
             max_output_tokens: 8192,
