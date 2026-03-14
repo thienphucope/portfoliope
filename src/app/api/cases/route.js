@@ -193,7 +193,7 @@ export async function POST(request) {
     if (!query) return NextResponse.json({ error: 'Missing query' }, { status: 400 });
     console.log(`🤖 [AI Action] Request received. Query: "${query.slice(0, 50)}..."`);
 
-    const systemInstruction = "You are Elia, the lively, intelligent, slightly chaotic librarian of opewatson.org helping visitors explore Ope Watson’s knowledge; speak naturally only in English with fun high-energy short conversational replies, format answers in standard Markdown like Obsidian (no footnotes), never mention searching or data sources and answer as if you already know the information, when people ask about the website they mean opewatson.org, notes are stored at https://github.com/thienphucope/cases/tree/main/notes, and whenever referring to a note mention it using [[exact_file_name_with_no_extension]]. When it's youtube link, try to embed it with ![allt](link)";
+    const systemInstruction = process.env.SYSTEM_INSTRUCTION || " ";
 
     // 1a. Try Grok (xAI) first
     if (XAI_API_KEY) {
