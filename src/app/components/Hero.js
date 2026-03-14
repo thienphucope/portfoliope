@@ -232,7 +232,7 @@ export default function Hero({ isStoryOpen }) {
               
               <div className="mb-4 text-center lg:text-left">
                 <span
-                  className="text-sm md:text-xl lg:text-2xl xl:text-3xl text-[var(--colorone)] italic hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default whitespace-pre-wrap"
+                  className="text-lg md:text-xl lg:text-2xl xl:text-3xl text-[var(--colorone)] italic hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default whitespace-pre-wrap"
                   onMouseEnter={() => scrambleText(originalPronPadded, replacementPronPadded, setDisplayPronunciation)}
                   onMouseLeave={() => scrambleText(replacementPronPadded, originalPronPadded, setDisplayPronunciation)}
                 >
@@ -241,7 +241,7 @@ export default function Hero({ isStoryOpen }) {
               </div>
 
               <div
-                className="text-xs md:text-base lg:text-xl xl:text-2xl leading-relaxed text-[var(--colorone)] hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default lg:text-left whitespace-pre-wrap"
+                className="text-sm md:text-base lg:text-xl xl:text-2xl leading-relaxed text-[var(--colorone)] hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default lg:text-left whitespace-pre-wrap"
                 onMouseEnter={() => scrambleText(originalTextPadded, replacementTextPadded, setDisplayText)}
                 onMouseLeave={() => scrambleText(replacementTextPadded, originalTextPadded, setDisplayText)}
               >

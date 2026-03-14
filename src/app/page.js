@@ -386,7 +386,7 @@ export default function Home() {
           pointer-events: none;
           z-index: 9999;
           color: var(--colorone);
-          animation: fingerprintFade 5s forwards;
+          animation: fingerprintFade 1s forwards;
         }
       `}</style>
 
@@ -405,7 +405,7 @@ export default function Home() {
             '--rot': `${fp.rotation}deg` 
           }}
         >
-          <Fingerprint size={130} />
+          <Fingerprint className="w-16 h-16 md:w-24 md:h-24 lg:w-32 lg:h-32" />
         </div>
       ))}
 
