@@ -1,17 +1,20 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'opewatson.org',
+          },
+        ],
+        destination: 'https://opewatson.com/:path*',
+        permanent: true,
+      },
+    ]
+  },
+}
 
-export default nextConfig;
-
-// const nextConfig = {
-//   reactStrictMode: true,
-//   redirects: async () => [
-//     {
-//       source: '/',
-//       destination: '/case',
-//       permanent: false, // Đặt false nếu đây là chuyển hướng tạm thời
-//     },
-//   ],
-// };
-
-// export default nextConfig;
+export default nextConfig

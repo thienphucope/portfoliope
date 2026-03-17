@@ -417,8 +417,12 @@ export default function Home() {
       )}
 
       {!isIntroStarted && (
-        <div className="fixed inset-0 bg-[var(--colorone)] flex justify-center items-center z-[100]">
+        <div className="fixed inset-0 bg-[var(--colorone)] flex flex-col justify-center items-center z-[100] gap-4">
           <img src="/printer.png" alt="Start" className="w-24 h-24 cursor-pointer animate-pulse" onClick={() => setIsIntroStarted(true)} />
+          <div className="text-white font-fredericka text-xs md:text-2xl opacity-90">
+            opewatson.org {"->"} opewatson.com 
+          </div>
+          
         </div>
       )}
 
