@@ -3,7 +3,7 @@ import Hero from './components/Hero';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { FaYoutube, FaInstagram, FaGithub, FaEnvelope, FaTwitter } from 'react-icons/fa';
-import { Fingerprint } from 'lucide-react';
+import { Fingerprint, ChevronDown } from 'lucide-react';
 
 const GLITCH_FONTS = [
   "'Courier New', monospace",
@@ -385,7 +385,6 @@ export default function Home() {
           position: fixed;
           pointer-events: none;
           z-index: 9999;
-          color: var(--colorone);
           animation: fingerprintFade 1s forwards;
         }
       `}</style>
@@ -402,7 +401,8 @@ export default function Home() {
           style={{ 
             left: fp.x, 
             top: fp.y, 
-            '--rot': `${fp.rotation}deg` 
+            '--rot': `${fp.rotation}deg`,
+            color: isIntroStarted ? 'var(--colorone)' : 'white'
           }}
         >
           <Fingerprint className="w-16 h-16 md:w-24 md:h-24 lg:w-32 lg:h-32" />
@@ -415,18 +415,17 @@ export default function Home() {
           WebkitMaskImage: `radial-gradient(circle 500px at ${mousePos.x}px ${mousePos.y}px, transparent 0%, transparent 35%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.8) 100%)`,
         }} />
       )}
+{!isIntroStarted && (
+  <div className="fixed inset-0 bg-[var(--colorone)] flex flex-col justify-center items-center z-[100]">
+    <ChevronDown className="text-white w-8 h-8 animate-bounce mb-0" />
+    <img src="/printer.png" alt="Start" className="w-24 h-24 cursor-pointer animate-pulse" onClick={() => setIsIntroStarted(true)} />
+    <div className="text-white font-fredericka text-xs md:text-2xl opacity-90 mt-4">
+      opewatson.org {"->"} opewatson.com 
+    </div>
+  </div>
+)}
 
-      {!isIntroStarted && (
-        <div className="fixed inset-0 bg-[var(--colorone)] flex flex-col justify-center items-center z-[100] gap-4">
-          <img src="/printer.png" alt="Start" className="w-24 h-24 cursor-pointer animate-pulse" onClick={() => setIsIntroStarted(true)} />
-          <div className="text-white font-fredericka text-xs md:text-2xl opacity-90">
-            opewatson.org {"->"} opewatson.com 
-          </div>
-          
-        </div>
-      )}
-
-      <div ref={scrollRef} className="w-full min-h-screen flex flex-col relative">
+<div ref={scrollRef} className="w-full min-h-screen flex flex-col relative">
         <div ref={snowRef} className="absolute top-0 left-0 w-full snow-container">
           {mounted && snowflakes}
         </div>
