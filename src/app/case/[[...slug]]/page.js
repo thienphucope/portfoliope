@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, ArrowLeft } from 'lucide-react';
 import Chat from './components/Chat';
 import { ensureLibsLoaded, postProcess, fitHeading } from './components/MarkdownEngine';
 import FileSystemItem from './components/FileSystemItem';
@@ -996,7 +996,7 @@ export default function CasePage() {
   }, []);
 
   return (
-    <div className="accordion-app" ref={appShellRef}>
+    <div className={`accordion-app ${activeTab ? 'has-active' : ''}`} ref={appShellRef}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fredericka+the+Great&display=swap');
         
@@ -1205,11 +1205,19 @@ export default function CasePage() {
           z-index: 100;
         }
 
+        .mobile-back-btn {
+          display: none;
+        }
+
         @media (max-width: 1024px) and (orientation: portrait), (max-width: 768px) {
           .accordion-app {
             flex-direction: column !important;
             overflow-y: auto !important;
             overflow-x: hidden !important;
+          }
+
+          .accordion-app.has-active {
+            overflow: hidden !important;
           }
 
           .sticky-spine {
@@ -1260,6 +1268,20 @@ export default function CasePage() {
             white-space: nowrap !important;
           }
 
+          .mobile-back-btn {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1001;
+            color: black;
+            mix-blend-mode: destination-out;
+            cursor: pointer;
+          }
+
           .add-note-btn, .filetree-btn, .chatvault-btn {
             position: absolute !important;
             top: 50% !important;
@@ -1303,11 +1325,14 @@ export default function CasePage() {
             height: 50px !important;
           }
 
+          .accordion-app.has-active .acc-panel.closed {
+            display: none !important;
+          }
+
           .acc-panel.open {
-            flex: 1 0 auto !important;
+            flex: 1 !important;
             min-width: 0 !important;
-            height: auto !important;
-            min-height: calc(100vh - 110px) !important;
+            height: calc(100vh - 60px) !important;
           }
 
           .acc-spine-container {
@@ -1318,6 +1343,7 @@ export default function CasePage() {
             justify-content: flex-start !important;
             align-items: center !important;
             padding-left: 20px !important;
+            position: relative !important;
           }
 
           .acc-spine {
@@ -1328,14 +1354,17 @@ export default function CasePage() {
 
           .acc-content {
             width: 100% !important;
-            height: auto !important;
+            height: calc(100% - 50px) !important;
             flex: 1 !important;
+            animation: none !important;
+            opacity: 1 !important;
           }
 
           .acc-body {
-            height: calc(100vh - 110px) !important;
+            height: 100% !important;
             flex: 1 !important;
             overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch;
           }
           
           .floating-actions {
@@ -1393,6 +1422,11 @@ export default function CasePage() {
               <div className="acc-spine">
                 {tab.title}
               </div>
+              {isOpen && (
+                <div className="mobile-back-btn" onClick={(e) => { e.stopPropagation(); window.history.back(); }}>
+                  <ArrowLeft size={24} />
+                </div>
+              )}
             </div>
             
             {(isOpen || isPersistent) && (
@@ -1421,7 +1455,7 @@ export default function CasePage() {
                       )}
                     </button>
                     <button
-                      className={`icon-btn icon-btn--save${saveStatus === 'saved' ? ' icon-btn--saved' : saveStatus === 'error' ? ' icon-btn--error' : saveStatus === 'saving' ? ' icon-btn--saving' : ''}`}
+                      className={`icon-btn icon-btn--save${saveStatus === 'saved' ? ' icon-btn--active' : saveStatus === 'error' ? ' icon-btn--error' : saveStatus === 'saving' ? ' icon-btn--saving' : ''}`}
                       onClick={handleSidebarSave}
                       disabled={saveStatus === 'saving'}
                       title="Save"
