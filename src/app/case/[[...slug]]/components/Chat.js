@@ -38,7 +38,7 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
   const [inputValue, setInputValue] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [convo, setConvo] = useState([
-    { role: 'assistant', content: "*Ask me anything about this case or contribute by create + a note* \n\n *I can play YouTube video if you want a BGM.*\n *I can tell Ope's secrets* \n # 🤡 Pins\n ### 📌 [[The Boy Who Murdered Love]]\n ### 📌 [[Beautiful]] ⬅️ *click to noclip*\n " }
+    { role: 'assistant', content: "*Ask me anything about this case or contribute by create + a note* \n\n*I can play YouTube video if you want a BGM.*\n *I can tell Ope's secrets* \n # 🤡 Pins\n ### 📌 [[The Boy Who Murdered Love]]\n ### 📌 [[Beautiful]] ⬅️ *click to noclip*\n " }
   ]);
 
  
@@ -241,32 +241,34 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
             </div>
           );
         })}
+        
+        {/* Inline Input */}
+        {!isStreaming && !isThinking && (
+          <div className={`${isEmbedded ? 'text-base' : 'text-lg'} flex items-start opacity-90 markdown-content`}>
+            <p className="m-0"><strong className="whitespace-nowrap">You:&nbsp;</strong></p>
+            <input
+              ref={inputRef}
+              autoFocus
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              placeholder="type here..."
+              className="flex-1 bg-transparent border-none focus:ring-0 text-white p-0 leading-relaxed outline-none placeholder-white/20"
+              style={{ caretColor: 'white' }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Status */}
-      <div className="px-5 py-2 flex justify-end space-x-4 opacity-30">
-        {ragReady ? <MagnifyingGlassIcon className="w-4 h-4" /> : <ArrowPathIcon className="w-4 h-4 animate-spin" />}
-        {ttsReady ? <SpeakerWaveIcon className={`w-4 h-4 ${isPlayingAudio ? 'animate-pulse' : ''}`} /> : <ArrowPathIcon className="w-4 h-4 animate-spin" />}
-      </div>
-
-      {/* Input */}
-      <div className="p-4 bg-zinc-900/30 border-t border-white/10">
-        <div className="flex items-center space-x-3 bg-white/5 rounded-xl px-4 py-2 border border-white/10 focus-within:border-white/30 transition-all">
-          <button onClick={() => recognitionRef.current?.start()} className={`${isListening ? 'text-red-500 animate-pulse' : 'text-white/40'}`}>
-            <MicrophoneIcon className="w-5 h-5" />
-          </button>
-          <input
-            ref={inputRef}
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Type a message..."
-            className="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder-white/20 text-lg py-1"
-          />
-          <button onClick={handleSend} disabled={isSending} className="text-white/40 hover:text-white transition-colors">
-            <PaperAirplaneIcon className={`w-5 h-5 ${isSending ? 'opacity-20' : ''}`} />
-          </button>
+      <div className="px-5 py-2 flex justify-between items-center opacity-30">
+        <button onClick={() => recognitionRef.current?.start()} className={`${isListening ? 'text-red-500 animate-pulse' : 'text-white/40'}`}>
+          <MicrophoneIcon className="w-4 h-4" />
+        </button>
+        <div className="flex space-x-4">
+          {ragReady ? <MagnifyingGlassIcon className="w-4 h-4" /> : <ArrowPathIcon className="w-4 h-4 animate-spin" />}
+          {ttsReady ? <SpeakerWaveIcon className={`w-4 h-4 ${isPlayingAudio ? 'animate-pulse' : ''}`} /> : <ArrowPathIcon className="w-4 h-4 animate-spin" />}
         </div>
       </div>
 
