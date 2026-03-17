@@ -93,7 +93,12 @@ export default function VaultStyles() {
         }
 
         .block-content p:first-child { margin-top: 0; }
-        .block-content p:last-child  { margin-bottom: 0; }
+        /* Sync spacing between edit and view modes */
+        .markdown-content p br {
+          content: "";
+          display: block;
+          margin-bottom: 1.25em;
+        }
 
         .block-view { cursor: default; width: 100%; display: block; }
         .block-view.editable-mode { cursor: text; min-height: 1.2em; }
