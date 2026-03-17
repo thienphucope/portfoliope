@@ -3,12 +3,12 @@ import React from 'react';
 export default function VaultStyles() {
   return (
     <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Inter:wght@400;500;600&family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap');
 
         :root {
           --bg: #121212; --txt: #e0e0e0; --accent: #FFFACD;
           --border: rgba(255,255,255,0.1); --code-bg: #1e1e1e;
-          --md-font: 'Courier Prime', monospace; --md-size: 19px; --md-line: 1.6;
+          --md-font: 'Lora', serif; --md-size: 19px; --md-line: 1.6;
         }
 
         body { margin:0; background:var(--bg); color:var(--txt); font-family:'Inter',sans-serif; overflow:hidden; }
