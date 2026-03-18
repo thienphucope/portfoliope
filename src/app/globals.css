@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredericka+the+Great&display=swap');
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
@@ -7,6 +8,10 @@
   --colorone: #c2a38a;   
   --colortwo: rgba(5, 10, 16, 0.75); /* Darker Blue-Black with transparency */
   --colorthree: #0a1a2a; /* Even deeper blue for accents */
+}
+
+.font-fredericka {
+  font-family: 'Fredericka the Great', cursive;
 }
 
 body {
@@ -107,5 +112,3 @@ body::-webkit-scrollbar {
 .polaroid:nth-child(even) {
   transform: rotate(2deg);
 }
-
-
