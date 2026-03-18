@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Fingerprint, Footprints } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Hero({ isStoryOpen }) {
   const [displayText, setDisplayText] = useState("");
@@ -197,22 +198,24 @@ export default function Hero({ isStoryOpen }) {
           
           {/* Left side: Polaroid (Square) */}
           <div className="flex justify-center items-center">
-            <div 
-              className="polaroid-container use-custom-cursor"
-              onMouseEnter={() => setIsHoveringPolaroid(true)}
-              onMouseLeave={() => setIsHoveringPolaroid(false)}
-            >
-              <div className="image-wrapper">
-                <img
-                  src="/ope.png"
-                  alt="Ope"
-                  style={{
-                    filter: 'brightness(0.7) contrast(1.1) saturate(0.8)'
-                  }}
-                />
+            <Link href="/case">
+              <div 
+                className="polaroid-container use-custom-cursor"
+                onMouseEnter={() => setIsHoveringPolaroid(true)}
+                onMouseLeave={() => setIsHoveringPolaroid(false)}
+              >
+                <div className="image-wrapper">
+                  <img
+                    src="/ope.png"
+                    alt="Ope"
+                    style={{
+                      filter: 'brightness(0.7) contrast(1.1) saturate(0.8)'
+                    }}
+                  />
+                </div>
+                <span className="polaroid-label">#SUBJECT-510</span>
               </div>
-              <span className="polaroid-label">#SUBJECT-510</span>
-            </div>
+            </Link>
           </div>
 
           {/* Right side: Text Intro */}
