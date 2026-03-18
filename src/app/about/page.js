@@ -10,18 +10,18 @@ export default async function AboutPage() {
   const content = fs.readFileSync(filePath, 'utf8');
 
   return (
-    <div className="h-screen bg-[var(--background)] text-[var(--foreground)] font-fredericka p-6 md:p-20 overflow-y-auto no-scrollbar">
+    <div className="h-screen bg-[var(--background)] text-[var(--foreground)] p-6 md:p-20 overflow-y-auto no-scrollbar font-lora">
       <div className="max-w-3xl mx-auto pb-20">
-        <Link href="/" className="inline-flex items-center gap-2 text-[var(--colorone)] hover:text-white transition-colors mb-12 group">
+        <Link href="/" className="inline-flex items-center gap-2 text-[var(--colorone)] hover:text-white transition-colors mb-12 group font-fredericka">
           <ChevronLeft className="w-8 h-8 group-hover:-translate-x-1 transition-transform" />
           <span className="text-xl">Back to Home</span>
         </Link>
         
         <article className="prose prose-invert prose-stone max-w-none 
           prose-headings:text-[var(--colorone)] prose-headings:font-fredericka prose-headings:font-normal
-          prose-p:text-gray-300 prose-p:leading-relaxed prose-p:font-fredericka
+          prose-p:text-gray-300 prose-p:leading-relaxed
           prose-strong:text-[var(--colorone)]
-          prose-li:text-gray-300 prose-li:font-fredericka">
+          prose-li:text-gray-300">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {content}
           </ReactMarkdown>
