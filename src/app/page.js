@@ -402,7 +402,7 @@ export default function Home() {
             left: fp.x, 
             top: fp.y, 
             '--rot': `${fp.rotation}deg`,
-            color: isIntroStarted ? 'var(--colorone)' : 'white'
+            color: isIntroStarted ? 'var(--colorone)' : '#F5F5DC'
           }}
         >
           <Fingerprint className="w-16 h-16 md:w-24 md:h-24 lg:w-32 lg:h-32" />
@@ -417,9 +417,9 @@ export default function Home() {
       )}
 {!isIntroStarted && (
   <div className="fixed inset-0 bg-[var(--colorone)] flex flex-col justify-center items-center z-[100]">
-    <ChevronDown className="text-white w-8 h-8 animate-bounce mb-0" />
+    <ChevronDown className="text-black w-8 h-8 animate-bounce mb-0" />
     <img src="/printer.png" alt="Start" className="w-24 h-24 cursor-pointer animate-pulse" onClick={() => setIsIntroStarted(true)} />
-    <div className="text-white font-fredericka text-xs md:text-2xl opacity-90 mt-4">
+    <div className="text-black font-fredericka text-xs md:text-2xl opacity-90 mt-4">
       opewatson.org {"->"} opewatson.com 
     </div>
   </div>
