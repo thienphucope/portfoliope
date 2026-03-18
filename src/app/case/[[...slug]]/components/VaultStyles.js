@@ -235,8 +235,8 @@ export default function VaultStyles() {
 
         /* ── MARKDOWN TYPOGRAPHY ────────────────────────────────────────────── */
         .markdown-content { font-family:var(--md-font); font-size:var(--md-size); line-height:var(--md-line); color:var(--txt); text-align: justify; }
-        .markdown-content h1 { font-size:2.0em; margin:.8em 0 .4em; color:#fff; font-weight:700; }
-        .markdown-content h2 { font-size:1.6em; margin:.7em 0 .3em; color:#fff; font-weight:700; }
+        .markdown-content h1 { font-size:2.0em; margin:.8em 0 .4em; color:#fff; font-weight:700; text-align: left; }
+        .markdown-content h2 { font-size:1.6em; margin:.7em 0 .3em; color:#fff; font-weight:700; text-align: left; }
         .markdown-content h3 { font-size:1.2em; margin:.6em 0 .2em; color:#fff; font-weight:700; }
         .markdown-content h6.fit-heading {
           display: block;

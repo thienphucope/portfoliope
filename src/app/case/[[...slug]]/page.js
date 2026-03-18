@@ -806,12 +806,12 @@ export default function CasePage() {
       let startStart = null;
       const startScroll = appShellRef.current.scrollLeft;
       const distance = maxScroll - startScroll;
-      const duration = 1200;
+      const duration = 2500; // Increased from 1200 to 2500 for a longer glide
       
       const step = (timestamp) => {
         if (!startStart) startStart = timestamp;
         const progress = Math.min((timestamp - startStart) / duration, 1);
-        const ease = 1 - Math.pow(1 - progress, 4);
+        const ease = 1 - Math.pow(1 - progress, 5); // Changed to quintic ease (power 5) for even smoother finish
         
         if (appShellRef.current && isTabScrolling.current) {
            appShellRef.current.scrollLeft = startScroll + (distance * ease);
@@ -924,7 +924,7 @@ export default function CasePage() {
             verticalScrollTargets.current.set(vScrollable, vScrollable.scrollTop);
           }
           
-          let targetY = verticalScrollTargets.current.get(vScrollable) + e.deltaY * 1.5;
+          let targetY = verticalScrollTargets.current.get(vScrollable) + e.deltaY * 0.8;
           targetY = Math.max(0, Math.min(targetY, vScrollable.scrollHeight - vScrollable.clientHeight));
           verticalScrollTargets.current.set(vScrollable, targetY);
 
@@ -934,12 +934,12 @@ export default function CasePage() {
               const currentTarget = verticalScrollTargets.current.get(vScrollable);
               const diff = currentTarget - vScrollable.scrollTop;
               
-              if (Math.abs(diff) < 0.5) {
+              if (Math.abs(diff) < 0.2) {
                 vScrollable.scrollTop = currentTarget;
                 isWheelScrollingY.current.set(vScrollable, false);
                 verticalScrollTargets.current.delete(vScrollable);
               } else {
-                vScrollable.scrollTop += diff * 0.15;
+                vScrollable.scrollTop += diff * 0.05; // Even more liquid
                 requestAnimationFrame(animateY);
               }
             };
@@ -959,8 +959,8 @@ export default function CasePage() {
         targetScrollX.current = shell.scrollLeft;
       }
       
-      // Increase delta multiplier for larger scroll distance per wheel click
-      targetScrollX.current += e.deltaY * 1.5;
+      // Reduced multiplier to compensate for jitter
+      targetScrollX.current += e.deltaY * 1.0; 
       targetScrollX.current = Math.max(0, Math.min(targetScrollX.current, shell.scrollWidth - shell.clientWidth));
       
       if (!isWheelScrollingX.current) {
@@ -971,12 +971,12 @@ export default function CasePage() {
             return;
           }
           const diff = targetScrollX.current - shell.scrollLeft;
-          if (Math.abs(diff) < 0.5) {
+          if (Math.abs(diff) < 0.2) {
             shell.scrollLeft = targetScrollX.current;
             isWheelScrollingX.current = false;
             targetScrollX.current = null;
           } else {
-            shell.scrollLeft += diff * 0.08;
+            shell.scrollLeft += diff * 0.035; // Very smooth glide
             requestAnimationFrame(animate);
           }
         };

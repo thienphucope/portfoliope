@@ -38,7 +38,7 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
   const [inputValue, setInputValue] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [convo, setConvo] = useState([
-    { role: 'assistant', content: "*Ask me anything about this case or contribute by create + a note* \n\n*I can play YouTube video if you want a BGM.*\n *I can tell Ope's secrets* \n # 🤡 Pins\n ### 📌 [[The Boy Who Murdered Love]]\n ### 📌 [[Beautiful]] ⬅️ *click to noclip*\n " }
+    { role: 'assistant', content: "*Ask me anything about this case or contribute by create + a note* \n\n*I can play YouTube video if you want a BGM.* *I can tell Ope's secrets* \n ## 🤡 Pins\n #### 📌 [[The Boy Who Murdered Love]]\n #### 📌 [[Beautiful]] ⬅️ *click to noclip*\n " }
   ]);
 
  
