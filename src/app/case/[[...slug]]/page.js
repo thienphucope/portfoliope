@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, Search, ArrowLeft } from 'lucide-react';
+import { Plus, Search, ArrowLeft, MessageSquare } from 'lucide-react';
 import Chat from './components/Chat';
 import { ensureLibsLoaded, postProcess, fitHeading } from './components/MarkdownEngine';
 import FileSystemItem from './components/FileSystemItem';
@@ -21,6 +21,7 @@ export default function CasePage() {
   const [editPass,    setEditPass]    = useState(() => { try { return sessionStorage.getItem('vault_edit_pass') || ''; } catch { return ''; } });
   const [passPrompt,  setPassPrompt]  = useState(null);
   const [namePrompt,  setNamePrompt]  = useState(null);
+  const [commentPrompt, setCommentPrompt] = useState(null);
   const [searchTerm,  setSearchTerm]  = useState('');
   const [showSearch,   setShowSearch]  = useState(false);
 
@@ -72,6 +73,10 @@ export default function CasePage() {
 
   const askFileName = useCallback(() => new Promise((resolve, reject) => {
     setNamePrompt({ resolve, reject });
+  }), []);
+
+  const askComment = useCallback((defaultValue = "") => new Promise((resolve, reject) => {
+    setCommentPrompt({ resolve, reject, defaultValue });
   }), []);
 
   useEffect(() => {
@@ -705,6 +710,92 @@ export default function CasePage() {
         setIsEditing(true);
         setActiveTab(targetPath);
       }
+    }
+  };
+
+  const handleAppendComment = async (initialValue = "") => {
+    if (!fileName || fileName === 'chat' || fileName === 'filetree') return;
+
+    let comment;
+    try {
+      comment = await askComment(typeof initialValue === 'string' ? initialValue : "");
+    } catch (e) {
+      return;
+    }
+    if (!comment) return;
+
+    try {
+      const pass = editPass || "";
+
+      // 1. Acquire lock and get latest content from server
+      const lockData = await acquireLock(fileName, pass);
+      const freshContent = decodeBase64(lockData.content);
+      const currentSha = lockData.sha;
+      
+      // 2. Prepare new content
+      const commentEntry = `"${comment}"`;
+      let updatedContent;
+      
+      // Regex robust hơn để tìm khối Comments, hỗ trợ khoảng trắng và không phân biệt hoa thường
+      const detailsRegex = /<details[^>]*>\s*<summary>\s*Comments\s*<\/summary>([\s\S]*?)<\/details>/i;
+      const match = freshContent.match(detailsRegex);
+      
+      if (match) {
+        const oldInner = match[1].trim();
+        // Sử dụng \n thay vì \n\n giữa các comment để chúng nằm sát nhau hơn
+        const newInner = `\n\n${commentEntry}\n${oldInner}\n\n`;
+        const newBlock = `<details>\n<summary>Comments</summary>${newInner}</details>`;
+        
+        // Sử dụng substring để thay thế chính xác vị trí match
+        updatedContent = freshContent.substring(0, match.index) + newBlock + freshContent.substring(match.index + match[0].length);
+      } else {
+        // Tạo mới khối Comments ở đầu file
+        updatedContent = `<details>\n<summary>Comments</summary>\n\n${commentEntry}\n\n</details>\n\n` + freshContent.trim();
+      }
+      
+      // 3. Post updated content (Commit)
+      const res = await fetch('/api/cases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          path: fileName, 
+          content: updatedContent, 
+          password: pass,
+          comment: true,
+          sessionId: sessionIdRef.current,
+          sha: currentSha
+        }),
+      });
+
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+
+      // 4. Update all local states to ensure everything is "fresh"
+      if (data.sha) setFileSha(data.sha);
+      serverRawCache.current[fileName] = updatedContent;
+      
+      // Update openFiles registry for tab consistency
+      setOpenFiles(prev => prev.map(f => f.id === fileName ? { ...f, fetchedContent: updatedContent } : f));
+      
+      // Force refresh of the view
+      setContent(updatedContent);
+      setContentKey(k => k + 1);
+      
+      // Clear any local drafts to ensure next load is from server
+      try { localStorage.removeItem(`vault_v3::${fileName}`); } catch {}
+      
+      // 5. Release lock
+      releaseLock(fileName, pass);
+      
+    } catch (e) {
+      if (e.message === 'cancelled') return;
+      if (e.message === 'locked_by_other') {
+        alert("Cannot add comment. File is locked by another user.");
+      } else {
+        alert("Error adding comment: " + e.message);
+      }
+      // Return comment to user by re-triggering the prompt
+      handleAppendComment(comment);
     }
   };
 
@@ -1528,7 +1619,7 @@ export default function CasePage() {
                     </div>
                   )}
                   {tab.type === 'editor' && (
-                    <main className="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <main className="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
                       <article className="markdown-container" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
                         <BlockEditor
                           key={contentKey}
@@ -1541,6 +1632,29 @@ export default function CasePage() {
                           onSaveRef={saveHandlerRef}
                         />
                       </article>
+                      <div 
+                        className="comment-trigger" 
+                        onClick={handleAppendComment}
+                        title="Add comment"
+                        style={{
+                          position: 'absolute',
+                          bottom: '30px',
+                          right: '30px',
+                          width: '60px',
+                          height: '60px',
+                          borderRadius: '50%',
+                          backgroundColor: 'var(--colorone)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          zIndex: 200,
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                          color: 'black'
+                        }}
+                      >
+                        <MessageSquare size={28} />
+                      </div>
                     </main>
                   )}
                 </div>
@@ -1600,6 +1714,35 @@ export default function CasePage() {
               }}
             />
             <div className="pass-modal__hint">Enter to create · Esc to cancel</div>
+          </div>
+        </div>
+      )}
+
+      {commentPrompt && (
+        <div className="pass-overlay" onClick={() => { commentPrompt.reject(new Error('cancelled')); setCommentPrompt(null); }}>
+          <div className="pass-modal" onClick={e => e.stopPropagation()}>
+            <div className="pass-modal__title">Add a comment to this note</div>
+            <textarea
+              className="pass-modal__input"
+              style={{ minHeight: '100px', resize: 'vertical', paddingTop: '10px' }}
+              placeholder="Your comment…"
+              autoFocus
+              defaultValue={commentPrompt.defaultValue}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  const val = e.target.value.trim();
+                  if (!val) return;
+                  commentPrompt.resolve(val);
+                  setCommentPrompt(null);
+                }
+                if (e.key === 'Escape') {
+                  commentPrompt.reject(new Error('cancelled'));
+                  setCommentPrompt(null);
+                }
+              }}
+            />
+            <div className="pass-modal__hint">Enter to add · Shift+Enter for new line · Esc to cancel</div>
           </div>
         </div>
       )}

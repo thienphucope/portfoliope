@@ -186,7 +186,7 @@ export async function POST(request) {
   let body;
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
 
-  const { action, path, content, create = false, password, sha, sessionId, query, history, username } = body;
+  const { action, path, content, create = false, comment = false, password, sha, sessionId, query, history, username } = body;
 
   // 1. Handle AI requests
   if (action === 'ai') {
@@ -347,8 +347,8 @@ export async function POST(request) {
   }
 
   // 3. Save Logic
-  // ONLY require password if we are UPDATING an existing file (not creating)
-  if (!create && password !== EDIT_PASS) {
+  // ONLY require password if we are UPDATING an existing file (not creating or adding a comment)
+  if (!create && !comment && password !== EDIT_PASS) {
     console.warn(`❌ [API Route] Wrong password attempt during update.`);
     return NextResponse.json({ error: 'Wrong password' }, { status: 403 });
   }

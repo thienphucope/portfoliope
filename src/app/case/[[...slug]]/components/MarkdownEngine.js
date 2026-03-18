@@ -96,6 +96,25 @@ export const configureMarked = () => {
         tokenizer(src) { const m = /^\[\[(.*?)\]\]/.exec(src); if (m) return { type: 'wikiLink', raw: m[0], text: m[1] }; },
         renderer(t) { return `<span class="internal-link" data-target="${t.text}">${t.text}</span>`; }
       },
+      { name: 'detailsBlock', level: 'block',
+        start(src) { return src.match(/<details/)?.index; },
+        tokenizer(src) {
+          const m = /^<details[\s\S]*?<\/details>/.exec(src);
+          if (m) return { type: 'detailsBlock', raw: m[0] };
+        },
+        renderer(t) { 
+          // Use marked to parse the content INSIDE the details if needed, 
+          // but here we just want to return the raw HTML for the browser to render.
+          // However, to support markdown INSIDE the details, we should parse it.
+          const match = t.raw.match(/<details([^>]*)>([\s\S]*?)<\/details>/i);
+          if (match) {
+            const attrs = match[1];
+            const content = match[2];
+            return `<details${attrs}>${window.marked.parse(content)}</details>`;
+          }
+          return t.raw; 
+        }
+      },
     ],
     gfm: true, breaks: true,
   });
