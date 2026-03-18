@@ -3,6 +3,7 @@ import "@fontsource-variable/roboto-mono";
 import "@fontsource/zen-kaku-gothic-new";
 import "./globals.css";
 import Chat from './case/[[...slug]]/components/Chat';
+import { Analytics } from '@vercel/analytics/react';
 
 export const metadata = {
   title: "Ope Watson",
@@ -23,6 +24,7 @@ export default function RootLayout({ children }) {
         <meta name="google-adsense-account" content="ca-pub-3500852425052196"></meta>
       </head>
       <body>{children}<Chat /></body>
+      <Analytics />
     </html>
   );
 }
