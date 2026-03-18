@@ -226,12 +226,13 @@ export default function Home() {
             rel: 0,
             iv_load_policy: 3,
             disablekb: 1,
-            start: 48,
-            end: 120,
+            start: 50,
+            end: 118,
           },
           events: {
             onReady: (e) => {
               e.target.mute();
+              if (e.target.setPlaybackQuality) e.target.setPlaybackQuality('small');
               e.target.playVideo();
             },
             onStateChange: (e) => {
@@ -247,8 +248,8 @@ export default function Home() {
       // Music Player
       if (isIntroStarted && window.YT && window.YT.Player && !playerRef.current) {
         playerRef.current = new window.YT.Player('youtube-player', {
-          height: '0', width: '0', videoId: '8itIwVBu6os',
-          playerVars: { autoplay: 1, loop: 1, playlist: 'JEUf8nTl5aU,pL35m337Qa4', controls: 0, showinfo: 0, modestbranding: 1 },
+          height: '0', width: '0', videoId: 'wPlTqVqb7go',
+          playerVars: { autoplay: 1, loop: 1, playlist: 'wPlTqVqb7go,6c5YHZhfxco', controls: 0, showinfo: 0, modestbranding: 1 },
           events: {
             onReady: (e) => { e.target.setVolume(50); e.target.playVideo(); },
             onStateChange: (e) => {

@@ -94,6 +94,7 @@ export default function CasePage() {
           events: {
             onReady: (e) => {
               e.target.mute();
+              if (e.target.setPlaybackQuality) e.target.setPlaybackQuality('small');
               e.target.playVideo();
             },
             onStateChange: (e) => {
