@@ -15,13 +15,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         <link rel="icon" href="/ope.png" />
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3500852425052196"
-          crossOrigin="anonymous"
-        ></script>
         {/* Nếu muốn dùng ảnh khác, đổi href thành đường dẫn ảnh, ví dụ /logo.png */}
-        <meta name="google-adsense-account" content="ca-pub-3500852425052196"></meta>
       </head>
       <body>{children}<Chat /></body>
       <Analytics />

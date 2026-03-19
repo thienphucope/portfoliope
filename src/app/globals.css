@@ -33,12 +33,16 @@ body {
 
 
 /* Reset scrollbar hiding */
+html {
+  scroll-behavior: smooth;
+}
+
 html, 
 body {
-  overflow: hidden;
+  overflow-x: hidden;
   margin: 0;
   padding: 0;
-  height: 100dvh;
+  min-height: 100dvh;
   width: 100vw;
   -ms-overflow-style: none !important;  
   scrollbar-width: none !important;
