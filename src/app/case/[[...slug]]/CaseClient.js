@@ -100,6 +100,7 @@ export default function CaseClient({ staticRecords = [] }) {
 
   const verticalScrollTargets = useRef(new Map());
   const isWheelScrollingY = useRef(new Map());
+  const lastActiveNote = useRef(null); // Keep track of the actual note open behind overlay
 
   // Handle global click to toggle video interactability
   useEffect(() => {
@@ -935,6 +936,9 @@ export default function CaseClient({ staticRecords = [] }) {
     const tabIndex = tabs.findIndex(t => t.id === tabId);
     if (tabIndex === -1) return;
 
+    // Skip horizontal scroll animation for overlay tabs to keep background stable
+    if (tabId === 'filetree' || tabId === 'chat') return;
+
     if (window.innerWidth <= 1024 && window.innerHeight > window.innerWidth || window.innerWidth <= 768) {
       // Vertical scroll for mobile
       const scrollTarget = tabIndex * 50; 
@@ -944,27 +948,27 @@ export default function CaseClient({ staticRecords = [] }) {
       targetScrollX.current = null;
       if (tabAnimId.current) cancelAnimationFrame(tabAnimId.current);
 
-      // tabIndex + 1 vì có thanh "Sticky Spine" (Ope Watson) ở vị trí index 0 ngoài mảng tabs
-      // Giả sử mỗi spine rộng 150px. 
-      // Nếu muốn thấy ít nhất 2 thanh bên trái, ta trừ đi 150 * 2 = 300px
       const spineWidth = 150;
-      const visibleSpinesBefore = 2; // Số lượng spine bạn muốn thấy ở bên trái tab hiện tại
+      // Centering logic: 
+      // 1. Sticky spine is 150px.
+      // 2. Tabs at index 0 (filetree) and 1 (chat) are display:none when closed.
+      // 3. Visible closed tabs before target index are (tabIndex - 2).
+      // 4. Position = 150 + (tabIndex - 2) * 150.
+      // 5. To center the 100vw-450px panel, its left edge should be at 225px from viewport left.
+      const visibleClosedBefore = Math.max(0, tabIndex - 2);
+      const tabPosition = 150 + (visibleClosedBefore * spineWidth);
+      const scrollTarget = Math.max(0, tabPosition - 225);
       
-      // Vị trí thực tế của tab = (số thứ tự tab + 1 cho sticky spine) * chiều rộng spine
-      const tabPosition = (tabIndex + 1) * spineWidth;
-      const scrollTarget = Math.max(0, tabPosition - (spineWidth * visibleSpinesBefore));
-      
-      const maxScroll = Math.max(0, scrollTarget);
-      
-      let startStart = null;
       const startScroll = appShellRef.current.scrollLeft;
-      const distance = maxScroll - startScroll;
-      const duration = 2500; // Increased from 1200 to 2500 for a longer glide
+      const distance = scrollTarget - startScroll;
+      const duration = 600; 
+      let startStart = null;
       
       const step = (timestamp) => {
         if (!startStart) startStart = timestamp;
         const progress = Math.min((timestamp - startStart) / duration, 1);
-        const ease = 1 - Math.pow(1 - progress, 5); // Changed to quintic ease (power 5) for even smoother finish
+        // easeOutQuart: fast start, smooth but firm finish
+        const ease = 1 - Math.pow(1 - progress, 4);
         
         if (appShellRef.current && isTabScrolling.current) {
            appShellRef.current.scrollLeft = startScroll + (distance * ease);
@@ -1009,6 +1013,11 @@ export default function CaseClient({ staticRecords = [] }) {
       setIsEditing(false);
     }
 
+    // Capture the note we are coming from if it's not an overlay
+    if (activeTab !== 'filetree' && activeTab !== 'chat' && activeTab !== null) {
+      lastActiveNote.current = activeTab;
+    }
+
     setActiveTab(tab.id);
     if (tab.id === 'filetree') setShowSearch(true);
     
@@ -1037,11 +1046,8 @@ export default function CaseClient({ staticRecords = [] }) {
         window.history.pushState({ repoKey: tab.id }, '', newUrl);
       }
     } else {
-      // For sidebar or chat, update URL as well
-      const newUrl = `/case/${tab.id}`;
-      if (window.location.pathname !== newUrl) {
-        window.history.pushState({ repoKey: tab.id }, '', newUrl);
-      }
+      // DO NOT update URL for filetree or chat overlays
+      // These are now purely internal UI toggles
     }
   };
 
@@ -1082,7 +1088,7 @@ export default function CaseClient({ staticRecords = [] }) {
             verticalScrollTargets.current.set(vScrollable, vScrollable.scrollTop);
           }
           
-          let targetY = verticalScrollTargets.current.get(vScrollable) + e.deltaY * 0.8;
+          let targetY = verticalScrollTargets.current.get(vScrollable) + e.deltaY * 1.5;
           targetY = Math.max(0, Math.min(targetY, vScrollable.scrollHeight - vScrollable.clientHeight));
           verticalScrollTargets.current.set(vScrollable, targetY);
 
@@ -1097,7 +1103,7 @@ export default function CaseClient({ staticRecords = [] }) {
                 isWheelScrollingY.current.set(vScrollable, false);
                 verticalScrollTargets.current.delete(vScrollable);
               } else {
-                vScrollable.scrollTop += diff * 0.05; // Even more liquid
+                vScrollable.scrollTop += diff * 0.15; // Snappier response
                 requestAnimationFrame(animateY);
               }
             };
@@ -1117,8 +1123,8 @@ export default function CaseClient({ staticRecords = [] }) {
         targetScrollX.current = shell.scrollLeft;
       }
       
-      // Reduced multiplier to compensate for jitter
-      targetScrollX.current += e.deltaY * 1.0; 
+      // Increased multiplier for faster horizontal scroll
+      targetScrollX.current += e.deltaY * 2.0; 
       targetScrollX.current = Math.max(0, Math.min(targetScrollX.current, shell.scrollWidth - shell.clientWidth));
       
       if (!isWheelScrollingX.current) {
@@ -1134,7 +1140,7 @@ export default function CaseClient({ staticRecords = [] }) {
             isWheelScrollingX.current = false;
             targetScrollX.current = null;
           } else {
-            shell.scrollLeft += diff * 0.035; // Very smooth glide
+            shell.scrollLeft += diff * 0.1; // Faster horizontal response
             requestAnimationFrame(animate);
           }
         };
@@ -1159,7 +1165,7 @@ export default function CaseClient({ staticRecords = [] }) {
   })), [allFiles, fullContentCache, openFiles]);
 
   return (
-    <div className={`accordion-app ${activeTab ? 'has-active' : ''} ${activeTab === 'filetree' ? 'filetree-active' : ''}`} ref={appShellRef}>
+    <div className={`accordion-app ${activeTab ? 'has-active' : ''} ${activeTab === 'filetree' ? 'filetree-active' : ''} ${activeTab === 'chat' ? 'chat-active' : ''}`} ref={appShellRef}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fredericka+the+Great&display=swap');
         
@@ -1286,8 +1292,9 @@ export default function CaseClient({ staticRecords = [] }) {
           isolation: isolate;
         }
 
-        /* Completely hide File Tree spine as it's now accessible via button */
-        .acc-panel.tab-filetree.closed {
+        /* Completely hide File Tree and Chat spines as they're now accessible via buttons */
+        .acc-panel.tab-filetree.closed,
+        .acc-panel.tab-chat.closed {
           display: none !important;
         }
 
@@ -1299,13 +1306,15 @@ export default function CaseClient({ staticRecords = [] }) {
           background-color: transparent;
         }
 
-        /* File Tree Overlay Mode */
-        .filetree-active .acc-panel.closed {
+        /* Overlay Mode for File Tree and Chat */
+        .filetree-active .acc-panel.closed,
+        .chat-active .acc-panel.closed {
           opacity: 0;
           pointer-events: none;
         }
 
-        .acc-panel.tab-filetree.open {
+        .acc-panel.tab-filetree.open,
+        .acc-panel.tab-chat.open {
           position: fixed;
           left: 150px;
           top: 0;
@@ -1320,11 +1329,13 @@ export default function CaseClient({ staticRecords = [] }) {
           border-right: none;
         }
 
-        .acc-panel.tab-filetree .acc-spine-container {
+        .acc-panel.tab-filetree .acc-spine-container,
+        .acc-panel.tab-chat .acc-spine-container {
           display: none;
         }
 
-        .acc-panel.tab-filetree .acc-content {
+        .acc-panel.tab-filetree .acc-content,
+        .acc-panel.tab-chat .acc-content {
           width: 100%;
         }
 
@@ -1409,7 +1420,7 @@ export default function CaseClient({ staticRecords = [] }) {
           flex-direction: column;
         }
 
-        /* Hide scrollbars inside panel bodies */
+        /* Hide all scrollbars inside panel bodies */
         .acc-body *::-webkit-scrollbar {
           display: none !important;
         }
@@ -1602,7 +1613,8 @@ export default function CaseClient({ staticRecords = [] }) {
             display: none !important;
           }
 
-          .acc-panel.tab-filetree.open {
+          .acc-panel.tab-filetree.open,
+          .acc-panel.tab-chat.open {
             position: relative !important;
             left: 0 !important;
             width: 100% !important;
@@ -1610,13 +1622,18 @@ export default function CaseClient({ staticRecords = [] }) {
             backdrop-filter: none !important;
           }
 
-          .acc-panel.tab-filetree .acc-spine-container {
+          .acc-panel.tab-filetree .acc-spine-container,
+          .acc-panel.tab-chat .acc-spine-container {
             display: flex !important;
           }
 
           .acc-panel.tab-filetree .file-list {
-            padding: 20px !important;
+            display: flex !important;
             flex-direction: column !important;
+            padding: 20px !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            column-width: auto !important;
           }
 
           .acc-panel.tab-filetree .file-list > div {
@@ -1642,7 +1659,7 @@ export default function CaseClient({ staticRecords = [] }) {
             <div className="filetree-btn" onClick={(e) => { 
               e.stopPropagation(); 
               if (activeTab === 'filetree') {
-                window.history.back();
+                setActiveTab(lastActiveNote.current);
               } else {
                 handleTabClick(tabs[0], e); 
               }
@@ -1651,7 +1668,14 @@ export default function CaseClient({ staticRecords = [] }) {
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
               </svg>
             </div>
-            <div className="chatvault-btn" onClick={(e) => { e.stopPropagation(); handleTabClick(tabs[1], e); }} title="AI Chat Vault">
+            <div className="chatvault-btn" onClick={(e) => { 
+              e.stopPropagation(); 
+              if (activeTab === 'chat') {
+                setActiveTab(lastActiveNote.current);
+              } else {
+                handleTabClick(tabs[1], e); 
+              }
+            }} title="AI Chat Vault">
               <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
               </svg>
@@ -1680,7 +1704,14 @@ export default function CaseClient({ staticRecords = [] }) {
                 {tab.title}
               </div>
               {isOpen && (
-                <div className="mobile-back-btn" onClick={(e) => { e.stopPropagation(); window.history.back(); }}>
+                <div className="mobile-back-btn" onClick={(e) => { 
+                  e.stopPropagation(); 
+                  if (tab.id === 'filetree' || tab.id === 'chat') {
+                    setActiveTab(lastActiveNote.current);
+                  } else {
+                    window.history.back(); 
+                  }
+                }}>
                   <ArrowLeft size={24} />
                 </div>
               )}

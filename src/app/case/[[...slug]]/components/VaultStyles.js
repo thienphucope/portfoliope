@@ -13,6 +13,17 @@ export default function VaultStyles() {
 
         body { margin:0; background:var(--bg); color:var(--txt); font-family:'Inter',sans-serif; overflow:hidden; }
 
+        /* Hide all scrollbars */
+        *::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
+        }
+        * {
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
+        }
+
         .app-shell { height:100dvh; width:100vw; display:flex; background:var(--bg); overflow:hidden; }
 
         .sidebar-panel { height:100dvh; background:var(--bg); display:flex; flex-direction:column; flex-shrink:0; }
@@ -60,12 +71,17 @@ export default function VaultStyles() {
         .icon-btn--saving { opacity: 0.5; cursor: default; }
         .icon-btn:disabled { cursor: default; }
 
-        .file-list { flex:1; overflow-y:auto; padding:10px; scrollbar-width:none; }
-        .file-list::-webkit-scrollbar { display:none; }
+        .file-list { flex:1; overflow-y:auto; padding:10px; }
 
-        .main-content { flex:1; overflow-y:auto; display:flex; justify-content:center; padding:10px 15px; scrollbar-width:none; background:var(--bg); }
-        .main-content::-webkit-scrollbar { display:none; }
-        .markdown-container { max-width:1000px; width:100%; box-sizing:border-box; }
+        .main-content { flex:1; overflow-y:auto; display:flex; justify-content:center; padding:10px 15px; background:var(--bg); }
+        .main-content::-webkit-scrollbar-thumb {
+          background-color: rgba(255, 255, 255, 0.2);
+        }
+        .main-content::-webkit-scrollbar-thumb:hover {
+          background-color: rgba(255, 255, 255, 0.4);
+        }
+        
+        .markdown-container { max-width:1000px; width:100%; box-sizing:border-box; padding-bottom: 300px; }
 
         .chat-panel { height:100dvh; background:var(--bg); flex-shrink:0; border-left:1px solid var(--border); overflow:hidden; }
         .chat-container { height:100%; width:100%; position:relative; }
