@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 
 const FileSystemItem = ({ item, level = 0, onSelectFile, activeFile }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(item.isOpen || false);
   const isActive = item.kind === 'file' && item.name.toLowerCase() === activeFile?.toLowerCase();
   return (
     <div className="select-none">

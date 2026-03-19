@@ -1,11 +1,14 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, Search, ArrowLeft, MessageSquare } from 'lucide-react';
+import { Plus, Search, ArrowLeft, MessageSquare, Share2 } from 'lucide-react';
 import Chat from './components/Chat';
 import { ensureLibsLoaded, postProcess, fitHeading } from './components/MarkdownEngine';
 import FileSystemItem from './components/FileSystemItem';
 import BlockEditor, { readCache } from './components/BlockEditor';
 import VaultStyles from './components/VaultStyles';
+import dynamic from 'next/dynamic';
+
+const GraphView = dynamic(() => import('./components/GraphView'), { ssr: false });
 
 // ─── MAIN VAULT ───────────────────────────────────────────────────────────────
 const DEFAULT_FILE = process.env.NEXT_PUBLIC_DEFAULT_VAULT_FILE || "chat";
@@ -24,6 +27,51 @@ export default function CaseClient({ staticRecords = [] }) {
   const [commentPrompt, setCommentPrompt] = useState(null);
   const [searchTerm,  setSearchTerm]  = useState('');
   const [showSearch,   setShowSearch]  = useState(false);
+  const [viewMode,     setViewMode]    = useState('list'); // 'list' or 'graph'
+  const [fullContentCache, setFullContentCache] = useState({});
+
+  const getAllFiles = useCallback((nodes, repoPath = '') => {
+    let files = [];
+    nodes.forEach(n => {
+      if (n.kind === 'file') {
+        files.push({
+          id: repoPath ? `${repoPath}/${n.name}` : n.name,
+          name: n.name,
+          path: n.path
+        });
+      } else if (n.children) {
+        files = files.concat(getAllFiles(n.children, repoPath ? `${repoPath}/${n.name}` : n.name));
+      }
+    });
+    return files;
+  }, []);
+
+  const allFiles = React.useMemo(() => getAllFiles(fileTree), [fileTree, getAllFiles]);
+
+  useEffect(() => {
+    if (viewMode === 'graph' && allFiles.length > 0) {
+      const fetchAll = async () => {
+        const newCache = { ...fullContentCache };
+        let changed = false;
+        
+        await Promise.all(allFiles.map(async (file) => {
+          if (!newCache[file.id] && file.path) {
+            try {
+              const res = await fetch(file.path);
+              const text = await res.text();
+              newCache[file.id] = text;
+              changed = true;
+            } catch (e) {
+              console.error("Failed to pre-fetch for graph:", file.id, e);
+            }
+          }
+        }));
+        
+        if (changed) setFullContentCache(newCache);
+      };
+      fetchAll();
+    }
+  }, [viewMode, allFiles]);
 
   const decodeBase64 = (str) => {
     if (!str) return '';
@@ -403,42 +451,22 @@ export default function CaseClient({ staticRecords = [] }) {
     setFileTree(tree);
   }, []);
 
-  const getAllFiles = useCallback((nodes, repoPath = '') => {
-    let files = [];
-    nodes.forEach(n => {
-      if (n.kind === 'file') {
-        files.push({
-          id: repoPath ? `${repoPath}/${n.name}` : n.name,
-          name: n.name,
-          path: n.path
-        });
-      } else if (n.children) {
-        files = files.concat(getAllFiles(n.children, repoPath ? `${repoPath}/${n.name}` : n.name));
-      }
-    });
-    return files;
-  }, []);
-
-  const allFiles = React.useMemo(() => getAllFiles(fileTree), [fileTree, getAllFiles]);
-
   const filteredTree = React.useMemo(() => {
-    if (!searchTerm) return fileTree;
-    
-    const filterNodes = (nodes) => {
+    const filterNodes = (nodes, forceOpen = false) => {
       return nodes.reduce((acc, node) => {
         const matches = node.name.toLowerCase().includes(searchTerm.toLowerCase());
         
         if (node.kind === 'directory' && node.children) {
-          const filteredChildren = filterNodes(node.children);
-          if (filteredChildren.length > 0 || matches) {
+          const filteredChildren = filterNodes(node.children, forceOpen);
+          if (filteredChildren.length > 0 || matches || forceOpen) {
             acc.push({
               ...node,
               children: filteredChildren,
-              // Force directory open if it has matching children or matches itself
-              isOpen: true 
+              // Force directory open if it has matching children or matches itself OR if forceOpen is true
+              isOpen: forceOpen || filteredChildren.length > 0 || matches 
             });
           }
-        } else if (matches) {
+        } else if (matches || !searchTerm) {
           acc.push(node);
         }
         
@@ -446,8 +474,9 @@ export default function CaseClient({ staticRecords = [] }) {
       }, []);
     };
     
-    return filterNodes(fileTree);
-  }, [fileTree, searchTerm]);
+    const forceOpen = activeTab === 'filetree' || !!searchTerm;
+    return filterNodes(fileTree, forceOpen);
+  }, [fileTree, searchTerm, activeTab]);
 
   const tabs = React.useMemo(() => {
     const baseTabs = [
@@ -981,6 +1010,7 @@ export default function CaseClient({ staticRecords = [] }) {
     }
 
     setActiveTab(tab.id);
+    if (tab.id === 'filetree') setShowSearch(true);
     
     if (tab.type === 'static') {
       applyFileContent(tab.id, tab.content);
@@ -1123,8 +1153,13 @@ export default function CaseClient({ staticRecords = [] }) {
     };
   }, []);
 
+  const graphFiles = React.useMemo(() => allFiles.map(f => ({
+    ...f,
+    fetchedContent: fullContentCache[f.id] || openFiles.find(of => of.id === f.id)?.fetchedContent || ""
+  })), [allFiles, fullContentCache, openFiles]);
+
   return (
-    <div className={`accordion-app ${activeTab ? 'has-active' : ''}`} ref={appShellRef}>
+    <div className={`accordion-app ${activeTab ? 'has-active' : ''} ${activeTab === 'filetree' ? 'filetree-active' : ''}`} ref={appShellRef}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fredericka+the+Great&display=swap');
         
@@ -1236,7 +1271,7 @@ export default function CaseClient({ staticRecords = [] }) {
           display: flex;
           flex-direction: row;
           height: 100%;
-          transition: flex-basis 1s cubic-bezier(0.25, 0.8, 0.25, 1), min-width 1s cubic-bezier(0.25, 0.8, 0.25, 1), flex-grow 1s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 1s;
+          transition: flex-basis 1s cubic-bezier(0.25, 0.8, 0.25, 1), min-width 1s cubic-bezier(0.25, 0.8, 0.25, 1), flex-grow 1s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 1s, opacity 0.5s;
           border-right: 2px solid rgba(255, 255, 255, 0.2);
           overflow: hidden;
           flex-shrink: 0;
@@ -1251,12 +1286,71 @@ export default function CaseClient({ staticRecords = [] }) {
           isolation: isolate;
         }
 
+        /* Completely hide File Tree spine as it's now accessible via button */
+        .acc-panel.tab-filetree.closed {
+          display: none !important;
+        }
+
         .acc-panel.open {
           /* Để hở ra khoảng 450px cho các spine khác */
           flex-basis: calc(100vw - 450px);
           min-width: calc(100vw - 450px);
           flex-grow: 1;
           background-color: transparent;
+        }
+
+        /* File Tree Overlay Mode */
+        .filetree-active .acc-panel.closed {
+          opacity: 0;
+          pointer-events: none;
+        }
+
+        .acc-panel.tab-filetree.open {
+          position: fixed;
+          left: 150px;
+          top: 0;
+          width: calc(100vw - 150px);
+          height: 100vh;
+          z-index: 45;
+          flex-basis: auto !important;
+          min-width: 0 !important;
+          background: transparent !important;
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+          border-right: none;
+        }
+
+        .acc-panel.tab-filetree .acc-spine-container {
+          display: none;
+        }
+
+        .acc-panel.tab-filetree .acc-content {
+          width: 100%;
+        }
+
+        .acc-panel.tab-filetree .file-list {
+          display: block !important;
+          column-width: 280px;
+          column-gap: 60px;
+          height: 100%;
+          padding: 60px !important;
+          overflow-x: auto !important;
+          overflow-y: hidden !important;
+        }
+
+        /* Top level items in file list should not break across columns */
+        .acc-panel.tab-filetree .file-list > div {
+          break-inside: avoid;
+          margin-bottom: 30px;
+        }
+
+        /* Ensure links and text are readable against video */
+        .acc-panel.tab-filetree .file-list * {
+          text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+        }
+
+        .pc-only {
+          display: flex !important;
         }
 
         .acc-spine-container {
@@ -1503,6 +1597,33 @@ export default function CaseClient({ staticRecords = [] }) {
           .video-background iframe {
             transform: translate(-50%, -50%) scale(2.5) !important;
           }
+
+          .pc-only {
+            display: none !important;
+          }
+
+          .acc-panel.tab-filetree.open {
+            position: relative !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: calc(100vh - 60px) !important;
+            backdrop-filter: none !important;
+          }
+
+          .acc-panel.tab-filetree .acc-spine-container {
+            display: flex !important;
+          }
+
+          .acc-panel.tab-filetree .file-list {
+            padding: 20px !important;
+            flex-direction: column !important;
+          }
+
+          .acc-panel.tab-filetree .file-list > div {
+            flex: 0 0 auto !important;
+            width: 100% !important;
+            margin-bottom: 20px !important;
+          }
         }
       `}</style>
 
@@ -1518,7 +1639,14 @@ export default function CaseClient({ staticRecords = [] }) {
             <div className="add-note-btn" onClick={(e) => { e.stopPropagation(); handleCreateNewNote(); }} title="New Note">
               <Plus size={44} />
             </div>
-            <div className="filetree-btn" onClick={(e) => { e.stopPropagation(); handleTabClick(tabs[0], e); }} title="File Tree">
+            <div className="filetree-btn" onClick={(e) => { 
+              e.stopPropagation(); 
+              if (activeTab === 'filetree') {
+                window.history.back();
+              } else {
+                handleTabClick(tabs[0], e); 
+              }
+            }} title="File Tree">
               <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
               </svg>
@@ -1543,7 +1671,8 @@ export default function CaseClient({ staticRecords = [] }) {
         return (
           <div 
             key={tab.id} 
-            className={`acc-panel ${isOpen ? 'open' : 'closed'}`}
+            className={`acc-panel ${isOpen ? 'open' : 'closed'} tab-${tab.id}`}
+            data-tab-id={tab.id}
           >
             {/* The spine is always shown, whether open or closed */}
             <div className="acc-spine-container" onClick={(e) => handleTabClick(tab, e)}>
@@ -1611,6 +1740,14 @@ export default function CaseClient({ staticRecords = [] }) {
                 )}
                 {tab.id === 'filetree' && (
                   <div className="floating-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button 
+                      className={`icon-btn pc-only ${viewMode === 'graph' ? 'icon-btn--active' : ''}`} 
+                      onClick={() => setViewMode(viewMode === 'list' ? 'graph' : 'list')}
+                      title="Toggle Graph View"
+                      style={{ display: 'none' }} /* Will be shown via CSS on PC */
+                    >
+                      <Share2 size={18} />
+                    </button>
                     {showSearch && (
                       <input
                         type="text"
@@ -1645,9 +1782,22 @@ export default function CaseClient({ staticRecords = [] }) {
                 )}
                 <div className="acc-body">
                   {tab.type === 'sidebar' && (
-                    <div className="file-list" style={{ flex: 1, overflowY: 'auto', padding: '10px 20px' }}>
-                      {filteredTree.map((item, i) => <FileSystemItem key={i} item={item} onSelectFile={loadFile} activeFile={fileName} />)}
-                    </div>
+                    <>
+                      {viewMode === 'list' ? (
+                        <div className="file-list" style={{ flex: 1, overflowY: 'auto', padding: '10px 20px' }}>
+                          {filteredTree.map((item, i) => <FileSystemItem key={i} item={item} onSelectFile={loadFile} activeFile={fileName} />)}
+                        </div>
+                      ) : (
+                        <div style={{ flex: 1, overflow: 'hidden' }}>
+                          <GraphView 
+                            allFiles={graphFiles} 
+                            onSelectFile={loadFile}
+                            searchTerm={searchTerm}
+                            activeNodeId={fileName}
+                          />
+                        </div>
+                      )}
+                    </>
                   )}
                   {tab.type === 'chat' && (
                     <div className="chat-container" style={{ flex: 1, overflow: 'hidden' }}>
