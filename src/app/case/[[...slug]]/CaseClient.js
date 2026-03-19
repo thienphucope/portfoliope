@@ -957,10 +957,10 @@ export default function CaseClient({ staticRecords = [] }) {
   }, [tabs]);
 
   useEffect(() => {
-    if (activeTab) {
+    if (activeTab && !activeOverlay) {
       scrollToTab(activeTab);
     }
-  }, [activeTab, scrollToTab]);
+  }, [activeTab, activeOverlay, scrollToTab]);
 
   const handleTabClick = async (tab, e) => {
     if (tab.id === 'filetree' || tab.id === 'chat') {
@@ -1294,7 +1294,9 @@ export default function CaseClient({ staticRecords = [] }) {
 
         .filetree-active .acc-panel.open:not(.tab-filetree),
         .chat-active .acc-panel.open:not(.tab-chat) {
-          display: none !important;
+          visibility: hidden !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
         }
 
         .acc-panel.tab-filetree.open,
