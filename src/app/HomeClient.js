@@ -199,23 +199,29 @@ export default function HomeClient() {
   useEffect(() => {
     if (isIntroStarted) {
       const timer = setTimeout(() => {
-        // Only auto-scroll on desktop and if user is still at the top
-        if (window.innerWidth > 1024 && window.scrollY < 50) {
-          verticalScrollTarget.current = window.innerHeight;
-          if (!isWheelScrolling.current) {
-            isWheelScrolling.current = true;
-            const animate = () => {
-              const currentY = window.scrollY;
-              const diff = verticalScrollTarget.current - currentY;
-              if (Math.abs(diff) < 0.2) {
-                window.scrollTo(0, verticalScrollTarget.current);
-                isWheelScrolling.current = false;
-              } else {
-                window.scrollTo(0, currentY + diff * 0.05);
-                requestAnimationFrame(animate);
-              }
-            };
-            requestAnimationFrame(animate);
+        // Chỉ tự động cuộn nếu người dùng vẫn đang ở gần đỉnh trang
+        if (window.scrollY < 50) {
+          if (window.innerWidth <= 1024) {
+            // Trên mobile: Dùng native smooth scroll để cực kỳ mượt và không giật
+            window.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
+          } else {
+            // Trên desktop: Dùng logic momentum đồng bộ với wheel scroll
+            verticalScrollTarget.current = window.innerHeight;
+            if (!isWheelScrolling.current) {
+              isWheelScrolling.current = true;
+              const animate = () => {
+                const currentY = window.scrollY;
+                const diff = verticalScrollTarget.current - currentY;
+                if (Math.abs(diff) < 0.2) {
+                  window.scrollTo(0, verticalScrollTarget.current);
+                  isWheelScrolling.current = false;
+                } else {
+                  window.scrollTo(0, currentY + diff * 0.05);
+                  requestAnimationFrame(animate);
+                }
+              };
+              requestAnimationFrame(animate);
+            }
           }
         }
       }, 5000);
