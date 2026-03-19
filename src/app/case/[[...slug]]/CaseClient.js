@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, Search, ArrowLeft, MessageSquare, Share2 } from 'lucide-react';
+import { Plus, Search, ArrowLeft, Pencil, Share2, Folder, MessageSquare } from 'lucide-react';
 import Chat from './components/Chat';
 import { ensureLibsLoaded, postProcess, fitHeading } from './components/MarkdownEngine';
 import FileSystemItem from './components/FileSystemItem';
@@ -30,6 +30,29 @@ export default function CaseClient({ staticRecords = [] }) {
   const [viewMode,     setViewMode]    = useState('list'); // 'list' or 'graph'
   const [fullContentCache, setFullContentCache] = useState({});
   const [activeOverlay, setActiveOverlay] = useState(null); // 'filetree' or 'chat' or null
+  const [showHeader, setShowHeader] = useState(true);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleGlobalScroll = (e) => {
+      if (window.innerWidth > 1024) return;
+      const target = e.target;
+      if (!target || !target.scrollTop && target !== document.documentElement) return;
+      
+      const currentScrollY = target.scrollTop || window.scrollY;
+      const diff = currentScrollY - (target._lastScrollY || 0);
+      
+      if (diff > 10 && currentScrollY > 100) {
+        setShowHeader(false);
+      } else if (diff < -10) {
+        setShowHeader(true);
+      }
+      target._lastScrollY = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleGlobalScroll, true);
+    return () => window.removeEventListener('scroll', handleGlobalScroll, true);
+  }, []);
 
   const getAllFiles = useCallback((nodes, repoPath = '') => {
     let files = [];
@@ -92,7 +115,6 @@ export default function CaseClient({ staticRecords = [] }) {
   const saveHandlerRef = useRef(null); // ref to BlockEditor's save fn
   const lockIntervalRef = useRef(null);
   const sessionIdRef = useRef(Math.random().toString(36).substring(2, 15));
-  const bgPlayerRef    = useRef(null);
   // Custom Smooth Scrolling States
   const isTabScrolling = useRef(false);
   const tabAnimId = useRef(null);
@@ -128,63 +150,6 @@ export default function CaseClient({ staticRecords = [] }) {
   const askComment = useCallback((defaultValue = "") => new Promise((resolve, reject) => {
     setCommentPrompt({ resolve, reject, defaultValue });
   }), []);
-
-  useEffect(() => {
-    const initBgPlayer = () => {
-      if (window.YT && window.YT.Player && !bgPlayerRef.current) {
-        bgPlayerRef.current = new window.YT.Player('bg-player-case', {
-          videoId: '305Uc8i5RJM',
-          playerVars: {
-            autoplay: 1,
-            mute: 1,
-            controls: 0,
-            showinfo: 0,
-            modestbranding: 1,
-            rel: 0,
-            iv_load_policy: 3,
-            disablekb: 1,
-            start: 48,
-            end: 58,
-          },
-          events: {
-            onReady: (e) => {
-              e.target.mute();
-              if (e.target.setPlaybackQuality) e.target.setPlaybackQuality('small');
-              e.target.playVideo();
-            },
-            onStateChange: (e) => {
-              if (e.data === window.YT.PlayerState.ENDED) {
-                e.target.seekTo(37);
-                e.target.playVideo();
-              }
-            },
-          },
-        });
-      }
-    };
-
-    if (!window.YT || !window.YT.Player) {
-      if (!document.querySelector('script[src*="iframe_api"]')) {
-        const tag = document.createElement('script'); 
-        tag.src = "https://www.youtube.com/iframe_api";
-        const first = document.getElementsByTagName('script')[0];
-        if (first) {
-          first.parentNode.insertBefore(tag, first);
-        } else {
-          document.head.appendChild(tag);
-        }
-      }
-      
-      const checkYT = setInterval(() => {
-        if (window.YT && window.YT.Player) {
-          clearInterval(checkYT);
-          initBgPlayer();
-        }
-      }, 100);
-    } else {
-      initBgPlayer();
-    }
-  }, []);
 
   // Accordion state
   const [openFiles, setOpenFiles] = useState([]); // Array of { id, path, name, serverPath, fetchedContent }
@@ -1201,20 +1166,18 @@ export default function CaseClient({ staticRecords = [] }) {
           background: transparent;
         }
 
-        .video-background { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; pointer-events: none; overflow: hidden; background: black; }
-        .video-background iframe { 
-          position: absolute; 
-          top: 50%; 
-          left: 50%; 
-          width: 100vw; 
-          height: 100vh; 
-          transform: translate(-50%, -50%) scale(1.5);
-        }
-        @media (max-aspect-ratio: 16/9) {
-          .video-background iframe { width: 177.78vh; height: 100vh; }
-        }
-        @media (min-aspect-ratio: 16/9) {
-          .video-background iframe { width: 100vw; height: 56.25vw; }
+        .case-background {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          z-index: -2;
+          pointer-events: none;
+          background-image: url('/casebg2.png');
+          background-size: cover;
+          background-position: center;
+          background-color: black;
         }
         .video-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); pointer-events: none; }
 
@@ -1475,22 +1438,27 @@ export default function CaseClient({ staticRecords = [] }) {
           }
 
           .sticky-spine {
-            position: sticky !important;
+            position: fixed !important;
             top: 0;
             left: 0;
             z-index: 1000;
             width: 100% !important;
-            height: 60px !important;
-            flex: 0 0 60px !important;
+            height: 50px !important;
+            flex: 0 0 50px !important;
             min-width: 0 !important;
             border-right: none !important;
             border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
+            transition: transform 0.3s ease;
+          }
+
+          .header-hidden {
+            transform: translateY(-100%);
           }
 
           .acc-ope-container {
             flex: 1 !important;
             width: 100% !important;
-            height: 60px !important;
+            height: 50px !important;
             padding-top: 0 !important;
             align-items: center !important;
             justify-content: flex-start !important;
@@ -1668,15 +1636,90 @@ export default function CaseClient({ staticRecords = [] }) {
             display: none !important;
           }
         }
+
+        .mobile-footer {
+          display: none;
+        }
+
+        @media (max-width: 1024px) and (orientation: portrait), (max-width: 768px) {
+          .mobile-footer {
+            display: flex;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            background: #b09278;
+            z-index: 2000;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            align-items: center;
+            justify-content: space-around;
+            padding: 0 10px;
+            padding-bottom: env(safe-area-inset-bottom);
+          }
+          
+          .footer-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: black;
+            width: 36px;
+            height: 36px;
+            cursor: pointer;
+          }
+          
+          .footer-item.add-note {
+            background: black;
+            color: #b09278;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          }
+
+          .add-note-btn, .filetree-btn, .chatvault-btn, .mobile-back-btn, .comment-trigger {
+            display: none !important;
+          }
+
+          .acc-panel.open {
+            height: calc(100vh - 110px) !important;
+          }
+          
+          .acc-panel.tab-filetree.open,
+          .acc-panel.tab-chat.open {
+             height: calc(100vh - 110px) !important;
+          }
+        }
       `}</style>
 
-      <div className="video-background">
-        <div id="bg-player-case"></div>
-      </div>
+      <div className="case-background"></div>
       <div className="video-overlay"></div>
 
+      {/* Mobile Footer */}
+      <div className="mobile-footer">
+        <div className="footer-item" onClick={() => { if (activeOverlay) setActiveOverlay(null); else window.history.back(); }}>
+          <ArrowLeft size={28} />
+        </div>
+        <div className="footer-item" onClick={() => setActiveOverlay(activeOverlay === 'filetree' ? null : 'filetree')}>
+          <Folder size={28} />
+        </div>
+        <div className="footer-item add-note" onClick={handleCreateNewNote}>
+          <Plus size={36} />
+        </div>
+        <div className="footer-item" onClick={() => setActiveOverlay(activeOverlay === 'chat' ? null : 'chat')}>
+          <MessageSquare size={28} />
+        </div>
+        <div 
+          className="footer-item" 
+          onClick={handleAppendComment}
+          style={{ opacity: (!fileName || fileName === 'chat' || fileName === 'filetree') ? 0.3 : 1 }}
+        >
+          <Pencil size={28} />
+        </div>
+      </div>
+
       {/* Sticky Spine */}
-      <div className="acc-panel sticky-spine">
+      <div className={`acc-panel sticky-spine ${!showHeader ? 'header-hidden' : ''}`}>
         <div className="acc-ope-container" style={{ width: '100%', flex: '1' }}>
           <div className="spine-content">
             <div className="add-note-btn" onClick={(e) => { e.stopPropagation(); handleCreateNewNote(); }} title="New Note">
@@ -1903,7 +1946,7 @@ export default function CaseClient({ staticRecords = [] }) {
                           color: 'black'
                         }}
                       >
-                        <MessageSquare size={28} />
+                        <Pencil size={28} />
                       </div>
                     </main>
                   )}

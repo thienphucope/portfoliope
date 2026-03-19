@@ -116,7 +116,10 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
         }
         
         const findAndZoom = (attempts = 0) => {
-          if (!graphRef.current) return;
+          if (!graphRef.current || typeof graphRef.current.graphData !== 'function') {
+            if (attempts < 30) setTimeout(() => findAndZoom(attempts + 1), 50);
+            return;
+          }
           const liveNodes = graphRef.current.graphData().nodes;
           const liveNode = liveNodes.find(n => n.id === activeNodeId);
           

@@ -296,7 +296,7 @@ export default function HomeClient() {
           },
           events: {
             onReady: (e) => { e.target.mute(); if (e.target.setPlaybackQuality) e.target.setPlaybackQuality('small'); e.target.playVideo(); },
-            onStateChange: (e) => { if (e.data === window.YT.PlayerState.ENDED) { e.target.seekTo(37); e.target.playVideo(); } },
+            onStateChange: (e) => { if (e.data === window.YT.PlayerState.ENDED) { e.target.seekTo(50); e.target.playVideo(); } },
           },
         });
       }
