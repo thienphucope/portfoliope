@@ -73,7 +73,7 @@ export default function CaseClient({ staticRecords = [] }) {
   const allFiles = React.useMemo(() => getAllFiles(fileTree), [fileTree, getAllFiles]);
 
   useEffect(() => {
-    if (viewMode === 'graph' && allFiles.length > 0) {
+    if (allFiles.length > 0) {
       const fetchAll = async () => {
         const newCache = { ...fullContentCache };
         let changed = false;
@@ -84,9 +84,10 @@ export default function CaseClient({ staticRecords = [] }) {
               const res = await fetch(file.path);
               const text = await res.text();
               newCache[file.id] = text;
+              serverRawCache.current[file.id] = text; // Fill raw cache for SEO/Bots
               changed = true;
             } catch (e) {
-              console.error("Failed to pre-fetch for graph:", file.id, e);
+              console.error("Failed to pre-fetch:", file.id, e);
             }
           }
         }));
@@ -95,7 +96,7 @@ export default function CaseClient({ staticRecords = [] }) {
       };
       fetchAll();
     }
-  }, [viewMode, allFiles]);
+  }, [allFiles]);
 
   const decodeBase64 = (str) => {
     if (!str) return '';
@@ -180,11 +181,27 @@ export default function CaseClient({ staticRecords = [] }) {
       applyFileContent(repoKey, newContent);
     } else {
       try {
-        const res  = await fetch(path);
-        newContent = await res.text();
         const urlParts = new URL(path, window.location.origin).pathname.split('/').slice(1);
         // GitHub raw URLs: /user/repo/branch/path/to/file.md -> slice(3) gives path/to/file.md
         repoKey = serverPath || decodeURIComponent(urlParts.slice(3).join('/'));
+
+        // Ưu tiên gọi API để lấy bản mới nhất ngay khi người dùng click
+        const apiRes = await fetch('/api/cases', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'get', path: repoKey })
+        });
+        const data = await apiRes.json();
+
+        if (data.ok && data.content) {
+          newContent = decodeBase64(data.content);
+          if (data.sha) setFileSha(data.sha);
+        } else {
+          // Fallback sang CDN nếu API lỗi
+          const res  = await fetch(path);
+          newContent = await res.text();
+        }
+
         serverRawCache.current[repoKey] = newContent;
         applyFileContent(repoKey, newContent);
       } catch { 

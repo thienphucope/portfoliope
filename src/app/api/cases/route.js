@@ -327,7 +327,13 @@ export async function POST(request) {
   const now = Date.now();
   const currentLock = fileLocks.get(finalPath);
 
-  // 1. Handle File Locking & Getting latest content (No password required)
+  // 1. Handle File Content Fetching (No password required, no lock)
+  if (action === 'get') {
+    const fileData = await getFileFromGithub(finalPath);
+    return NextResponse.json({ ok: true, ...fileData });
+  }
+
+  // 2. Handle File Locking & Getting latest content (No password required)
   if (action === 'lock') {
     if (!sessionId) return NextResponse.json({ error: 'Missing sessionId' }, { status: 400 });
     if (currentLock && currentLock.expiresAt > now && currentLock.sessionId !== sessionId) {
