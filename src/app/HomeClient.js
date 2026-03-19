@@ -156,7 +156,8 @@ export default function HomeClient() {
 
   useEffect(() => {
     const handleWheel = (e) => {
-      if (e.deltaY === 0 || e.shiftKey) return;
+      // Disable custom momentum scroll on mobile/touch devices or if it's a touch-pad scroll
+      if (window.innerWidth <= 1024 || e.deltaY === 0 || e.shiftKey) return;
       
       e.preventDefault();
       
@@ -164,7 +165,7 @@ export default function HomeClient() {
         verticalScrollTarget.current = window.scrollY;
       }
 
-      // Tăng mục tiêu cuộn dựa trên deltaY
+      // Increase scroll target based on deltaY
       verticalScrollTarget.current = Math.max(
         0, 
         Math.min(
@@ -183,7 +184,7 @@ export default function HomeClient() {
             window.scrollTo(0, verticalScrollTarget.current);
             isWheelScrolling.current = false;
           } else {
-            window.scrollTo(0, currentY + diff * 0.075); // Hệ số 0.075 tạo cảm giác trôi mượt
+            window.scrollTo(0, currentY + diff * 0.075); 
             requestAnimationFrame(animate);
           }
         };
@@ -198,8 +199,8 @@ export default function HomeClient() {
   useEffect(() => {
     if (isIntroStarted) {
       const timer = setTimeout(() => {
-        // Chỉ tự động cuộn nếu người dùng vẫn đang ở gần đỉnh trang
-        if (window.scrollY < 50) {
+        // Only auto-scroll on desktop and if user is still at the top
+        if (window.innerWidth > 1024 && window.scrollY < 50) {
           verticalScrollTarget.current = window.innerHeight;
           if (!isWheelScrolling.current) {
             isWheelScrolling.current = true;
@@ -210,7 +211,7 @@ export default function HomeClient() {
                 window.scrollTo(0, verticalScrollTarget.current);
                 isWheelScrolling.current = false;
               } else {
-                window.scrollTo(0, currentY + diff * 0.05); // Cuộn tự động chậm hơn một chút để tạo sự tự nhiên
+                window.scrollTo(0, currentY + diff * 0.05);
                 requestAnimationFrame(animate);
               }
             };
@@ -382,11 +383,11 @@ export default function HomeClient() {
   return (
     <>
       <style jsx global>{`
-        .video-background { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -10; pointer-events: none; overflow: hidden; background: black; }
-        .video-background iframe { position: absolute; top: 50%; left: 50%; width: 100vw; height: 100vh; transform: translate(-50%, -50%) scale(1.5); }
-        @media (max-aspect-ratio: 16/9) { .video-background iframe { width: 177.78vh; height: 100vh; } }
+        .video-background { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; z-index: -10; pointer-events: none; overflow: hidden; background: black; }
+        .video-background iframe { position: absolute; top: 50%; left: 50%; width: 100vw; height: 100dvh; transform: translate(-50%, -50%) scale(1.5); }
+        @media (max-aspect-ratio: 16/9) { .video-background iframe { width: 177.78vh; height: 100dvh; } }
         @media (min-aspect-ratio: 16/9) { .video-background iframe { width: 100vw; height: 56.25vw; } }
-        .video-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100vh; z-index: -5; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); pointer-events: none; }
+        .video-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100dvh; z-index: -5; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); pointer-events: none; }
         .snow-container { pointer-events: none; overflow: hidden; z-index: 40; }
         .snowflake { position: absolute; animation: fall var(--fall-duration) linear infinite, tumble var(--rotation-duration) linear infinite; transform-origin: center; filter: brightness(1.5); }
         @keyframes fall { to { top: var(--page-height); left: calc(var(--base-left) - 50vw); } }
@@ -414,9 +415,9 @@ export default function HomeClient() {
       {/* Background Video - Cố định ở lớp dưới cùng tuyệt đối */}
       <div className="video-background"><div id="bg-player-home"></div></div>
 
-      <div className="w-full relative min-h-screen">
+      <div className="w-full relative min-h-[100dvh]">
         <div className="video-overlay"></div>
-        <div ref={snowRef} className="absolute top-0 left-0 w-full h-screen snow-container pointer-events-none">{mounted && snowflakes}</div>
+        <div ref={snowRef} className="absolute top-0 left-0 w-full h-[100dvh] snow-container pointer-events-none">{mounted && snowflakes}</div>
         <div id="youtube-player-home" style={{ display: 'none' }}></div>
 
         {fingerprints.map(fp => (
@@ -463,7 +464,7 @@ export default function HomeClient() {
           </div>
         )}
 
-        <main className="w-full h-screen flex-shrink-0 relative flex items-start lg:items-center justify-center pt-24 lg:pt-0" onMouseEnter={() => setSpotlightEnabled(true)} onMouseLeave={() => setSpotlightEnabled(false)}>
+        <main className="w-full h-[100dvh] flex-shrink-0 relative flex items-start lg:items-center justify-center pt-24 lg:pt-0" onMouseEnter={() => setSpotlightEnabled(true)} onMouseLeave={() => setSpotlightEnabled(false)}>
           <div className={`w-full transition-opacity duration-1000 ${isIntroStarted ? 'opacity-100' : 'opacity-0'}`}>
             <Hero isStoryOpen={isStoryOpen} />
           </div>

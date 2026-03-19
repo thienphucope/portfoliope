@@ -15,7 +15,7 @@ export default async function Page() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-[100dvh]">
       {/* SEO Hidden Content */}
       <div 
         style={{ display: 'none', visibility: 'hidden', height: 0, overflow: 'hidden' }} 
