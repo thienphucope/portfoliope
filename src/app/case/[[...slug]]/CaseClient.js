@@ -128,16 +128,34 @@ export default function CaseClient({ staticRecords = [] }) {
 
   // Handle global click to toggle video interactability
   useEffect(() => {
-    const handleGlobalClick = (e) => {
+    const handleMouseDown = (e) => {
       const container = e.target.closest('.video-container');
-      if (container) {
+      if (container && !container.classList.contains('interactable')) {
+        // Break the glass
         container.classList.add('interactable');
-      } else {
-        document.querySelectorAll('.video-container.interactable').forEach(c => c.classList.remove('interactable'));
+        
+        // Repair the glass after 1s
+        // This allows the current click to pass through to the iframe
+        // and keeps interaction window narrow to prevent scroll theft
+        setTimeout(() => {
+          container.classList.remove('interactable');
+        }, 1000);
       }
     };
-    window.addEventListener('mousedown', handleGlobalClick);
-    return () => window.removeEventListener('mousedown', handleGlobalClick);
+    
+    const handleWheelRestore = () => {
+      document.querySelectorAll('.video-container.interactable').forEach(c => {
+        c.classList.remove('interactable');
+      });
+    };
+
+    window.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('wheel', handleWheelRestore, { passive: true });
+    
+    return () => {
+      window.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('wheel', handleWheelRestore);
+    };
   }, []);
 
   const askPassword = useCallback(() => new Promise((resolve, reject) => {
