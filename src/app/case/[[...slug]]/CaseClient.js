@@ -887,9 +887,8 @@ export default function CaseClient({ staticRecords = [] }) {
           }
         } else {
           serverRawCache.current[fileName] = freshContent;
-          if (!currentContent) {
-            applyFileContent(fileName, freshContent);
-          }
+          try { localStorage.removeItem(`vault_v3::${fileName}`); } catch {}
+          applyFileContent(fileName, freshContent);
         }
         if (lockData.sha) setFileSha(lockData.sha);
       }
