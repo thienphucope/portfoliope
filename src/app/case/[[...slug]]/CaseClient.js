@@ -29,6 +29,7 @@ export default function CaseClient({ staticRecords = [] }) {
   const [showSearch,   setShowSearch]  = useState(false);
   const [viewMode,     setViewMode]    = useState('list'); // 'list' or 'graph'
   const [fullContentCache, setFullContentCache] = useState({});
+  const [activeOverlay, setActiveOverlay] = useState(null); // 'filetree' or 'chat' or null
 
   const getAllFiles = useCallback((nodes, repoPath = '') => {
     let files = [];
@@ -143,7 +144,7 @@ export default function CaseClient({ staticRecords = [] }) {
             iv_load_policy: 3,
             disablekb: 1,
             start: 48,
-            end: 120,
+            end: 58,
           },
           events: {
             onReady: (e) => {
@@ -198,7 +199,10 @@ export default function CaseClient({ staticRecords = [] }) {
   }, []);
 
   const loadFile = useCallback(async (path, name, serverPath = null, historyMode = 'push', activate = true) => {
-    if (serverPath && activate) setActiveTab(serverPath);
+    if (activate) {
+      setActiveOverlay(null);
+      if (serverPath) setActiveTab(serverPath);
+    }
     let repoKey;
     let newContent = '';
 
@@ -322,7 +326,7 @@ export default function CaseClient({ staticRecords = [] }) {
           if (db) {
             loadFile(db.path, db.name, db.id, 'replace', !forceTab);
             if (forceTab) {
-              setActiveTab(forceTab);
+              setActiveOverlay(forceTab);
               const newUrl = `/case/${forceTab}`;
               if (window.location.pathname !== newUrl) {
                 window.history.replaceState({ repoKey: forceTab }, '', newUrl);
@@ -334,7 +338,7 @@ export default function CaseClient({ staticRecords = [] }) {
             if (fallbackDb) {
               loadFile(fallbackDb.path, fallbackDb.name, fallbackDb.id, 'replace', !forceTab);
               if (forceTab) {
-                setActiveTab(forceTab);
+                setActiveOverlay(forceTab);
                 const newUrl = `/case/${forceTab}`;
                 if (window.location.pathname !== newUrl) {
                   window.history.replaceState({ repoKey: forceTab }, '', newUrl);
@@ -345,14 +349,14 @@ export default function CaseClient({ staticRecords = [] }) {
               if (p) {
                 loadFile(p, DEFAULT_FILE, null, 'replace', !forceTab);
                 if (forceTab) {
-                  setActiveTab(forceTab);
+                  setActiveOverlay(forceTab);
                   const newUrl = `/case/${forceTab}`;
                   if (window.location.pathname !== newUrl) {
                     window.history.replaceState({ repoKey: forceTab }, '', newUrl);
                   }
                 }
               } else if (forceTab) {
-                setActiveTab(forceTab);
+                setActiveOverlay(forceTab);
                 const newUrl = `/case/${forceTab}`;
                 if (window.location.pathname !== newUrl) {
                   window.history.replaceState({ repoKey: forceTab }, '', newUrl);
@@ -374,10 +378,11 @@ export default function CaseClient({ staticRecords = [] }) {
           
           // 1. Handle special tabs
           if (repoKey === 'chat' || repoKey === 'filetree') {
-            setActiveTab(repoKey);
+            setActiveOverlay(repoKey);
             return;
           }
 
+          setActiveOverlay(null);
           // 2. Handle static system records
           if (typeof repoKey === 'string' && repoKey.startsWith('system::')) {
             const staticMatch = staticRecords.find(r => r.id === repoKey);
@@ -397,6 +402,7 @@ export default function CaseClient({ staticRecords = [] }) {
           }
         } else {
           setActiveTab(null);
+          setActiveOverlay(null);
         }
       }
     };
@@ -475,9 +481,9 @@ export default function CaseClient({ staticRecords = [] }) {
       }, []);
     };
     
-    const forceOpen = activeTab === 'filetree' || !!searchTerm;
+    const forceOpen = activeOverlay === 'filetree' || !!searchTerm;
     return filterNodes(fileTree, forceOpen);
-  }, [fileTree, searchTerm, activeTab]);
+  }, [fileTree, searchTerm, activeOverlay]);
 
   const tabs = React.useMemo(() => {
     const baseTabs = [
@@ -556,6 +562,7 @@ export default function CaseClient({ staticRecords = [] }) {
       return prev;
     });
     setActiveTab(serverPath);
+    setActiveOverlay(null);
 
   }, [applyFileContent]);
 
@@ -991,8 +998,17 @@ export default function CaseClient({ staticRecords = [] }) {
   }, [activeTab, scrollToTab]);
 
   const handleTabClick = async (tab, e) => {
-    if (activeTab === tab.id) return;
+    if (tab.id === 'filetree' || tab.id === 'chat') {
+      setActiveOverlay(prev => prev === tab.id ? null : tab.id);
+      return;
+    }
+
+    if (activeTab === tab.id) {
+      if (activeOverlay) setActiveOverlay(null);
+      return;
+    }
     
+    setActiveOverlay(null);
     // Check for unsaved changes before switching away
     if (isEditing && fileName) {
       const cached = readCache(fileName);
@@ -1165,7 +1181,7 @@ export default function CaseClient({ staticRecords = [] }) {
   })), [allFiles, fullContentCache, openFiles]);
 
   return (
-    <div className={`accordion-app ${activeTab ? 'has-active' : ''} ${activeTab === 'filetree' ? 'filetree-active' : ''} ${activeTab === 'chat' ? 'chat-active' : ''}`} ref={appShellRef}>
+    <div className={`accordion-app ${activeTab || activeOverlay ? 'has-active' : ''} ${activeOverlay === 'filetree' ? 'filetree-active' : ''} ${activeOverlay === 'chat' ? 'chat-active' : ''}`} ref={appShellRef}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fredericka+the+Great&display=swap');
         
@@ -1311,6 +1327,11 @@ export default function CaseClient({ staticRecords = [] }) {
         .chat-active .acc-panel.closed {
           opacity: 0;
           pointer-events: none;
+        }
+
+        .filetree-active .acc-panel.open:not(.tab-filetree),
+        .chat-active .acc-panel.open:not(.tab-chat) {
+          display: none !important;
         }
 
         .acc-panel.tab-filetree.open,
@@ -1641,6 +1662,11 @@ export default function CaseClient({ staticRecords = [] }) {
             width: 100% !important;
             margin-bottom: 20px !important;
           }
+
+          .filetree-active .acc-panel.open:not(.tab-filetree),
+          .chat-active .acc-panel.open:not(.tab-chat) {
+            display: none !important;
+          }
         }
       `}</style>
 
@@ -1658,11 +1684,7 @@ export default function CaseClient({ staticRecords = [] }) {
             </div>
             <div className="filetree-btn" onClick={(e) => { 
               e.stopPropagation(); 
-              if (activeTab === 'filetree') {
-                setActiveTab(lastActiveNote.current);
-              } else {
-                handleTabClick(tabs[0], e); 
-              }
+              setActiveOverlay(prev => prev === 'filetree' ? null : 'filetree');
             }} title="File Tree">
               <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
@@ -1670,11 +1692,7 @@ export default function CaseClient({ staticRecords = [] }) {
             </div>
             <div className="chatvault-btn" onClick={(e) => { 
               e.stopPropagation(); 
-              if (activeTab === 'chat') {
-                setActiveTab(lastActiveNote.current);
-              } else {
-                handleTabClick(tabs[1], e); 
-              }
+              setActiveOverlay(prev => prev === 'chat' ? null : 'chat');
             }} title="AI Chat Vault">
               <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -1689,8 +1707,9 @@ export default function CaseClient({ staticRecords = [] }) {
       </div>
 
       {tabs.map((tab, index) => {
-        const isOpen = activeTab === tab.id;
-        const isPersistent = tab.id === 'chat';
+        const isOverlay = tab.id === 'filetree' || tab.id === 'chat';
+        const isOpen = isOverlay ? activeOverlay === tab.id : activeTab === tab.id;
+        const isPersistent = tab.id === 'chat' || tab.id === activeTab;
 
         return (
           <div 
@@ -1706,8 +1725,8 @@ export default function CaseClient({ staticRecords = [] }) {
               {isOpen && (
                 <div className="mobile-back-btn" onClick={(e) => { 
                   e.stopPropagation(); 
-                  if (tab.id === 'filetree' || tab.id === 'chat') {
-                    setActiveTab(lastActiveNote.current);
+                  if (isOverlay) {
+                    setActiveOverlay(null);
                   } else {
                     window.history.back(); 
                   }

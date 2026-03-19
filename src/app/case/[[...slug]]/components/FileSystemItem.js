@@ -12,7 +12,7 @@ const FileSystemItem = ({ item, level = 0, onSelectFile, activeFile }) => {
         onClick={(e) => {
           e.stopPropagation();
           if (item.kind === 'directory') setIsOpen(o => !o);
-          else onSelectFile(item.path, item.name);
+          else onSelectFile(item.path, item.name, item.id);
         }}
       >
         <span className="arrow-wrapper">
