@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, Search, ArrowLeft, Pencil, Share2, Folder, MessageSquare } from 'lucide-react';
+import { Plus, Search, ArrowLeft, Pencil, Share2, Folder, MessageSquare, MoreVertical, X } from 'lucide-react';
 import Chat from './components/Chat';
 import { ensureLibsLoaded, postProcess, fitHeading } from './components/MarkdownEngine';
 import FileSystemItem from './components/FileSystemItem';
@@ -31,6 +31,7 @@ export default function CaseClient({ staticRecords = [] }) {
   const [fullContentCache, setFullContentCache] = useState({});
   const [activeOverlay, setActiveOverlay] = useState(null); // 'filetree' or 'chat' or null
   const [showHeader, setShowHeader] = useState(true);
+  const [isFooterExpanded, setIsFooterExpanded] = useState(false);
   const lastScrollY = useRef(0);
 
   useEffect(() => {
@@ -1673,89 +1674,172 @@ export default function CaseClient({ staticRecords = [] }) {
           }
         }
 
-        .mobile-footer {
-          display: none;
-        }
-
-        @media (max-width: 1024px) and (orientation: portrait), (max-width: 768px) {
           .mobile-footer {
-            display: flex;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 50px;
-            background: #b09278;
-            z-index: 2000;
-            border-top: 1px solid rgba(0, 0, 0, 0.1);
-            align-items: center;
-            justify-content: space-around;
-            padding: 0 10px;
-            padding-bottom: env(safe-area-inset-bottom);
+            display: none;
           }
+
+          @media (max-width: 1024px) and (orientation: portrait), (max-width: 768px) {
+            .mobile-footer {
+              display: flex;
+              flex-direction: column-reverse;
+              align-items: flex-end;
+              position: fixed;
+              bottom: calc(30px + env(safe-area-inset-bottom));
+              right: 20px;
+              width: auto;
+              height: auto;
+              background: transparent;
+              z-index: 2000;
+              border-top: none;
+              padding: 0;
+              gap: 16px;
+            }
+
+            .assistive-ball {
+              width: 48px;
+              height: 48px;
+              background: #b09278;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: black;
+              box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+              cursor: pointer;
+              z-index: 2001;
+              transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            }
+
+            .assistive-ball.active {
+              transform: rotate(90deg);
+              background: black;
+              color: #b09278;
+            }
+
+            .footer-expanded-content {
+              display: flex;
+              flex-direction: column-reverse;
+              align-items: flex-end;
+              gap: 12px;
+              opacity: 0;
+              transform: translateY(20px) scale(0.8);
+              pointer-events: none;
+              transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            }
+
+            .footer-expanded-content.active {
+              opacity: 1;
+              transform: translateY(0) scale(1);
+              pointer-events: auto;
+            }
+            
+            .footer-item-wrapper {
+              display: flex;
+              align-items: center;
+              cursor: pointer;
+              transition: transform 0.2s;
+            }
+            
+            .footer-item-wrapper:active {
+              transform: scale(0.95);
+            }
+
+            .footer-item {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: black;
+              height: 48px;
+              padding: 0 18px;
+              background: #b09278;
+              border-radius: 24px;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+              gap: 12px;
+              white-space: nowrap;
+            }
+
+            .footer-item-label {
+              font-family: 'Fredericka the Great', cursive;
+              font-size: 1.1rem;
+              color: black;
+              margin-top: 2px;
+            }
+            
+            .footer-item.active-action {
+              background: white;
+            }
+            .footer-item.active-action .footer-item-label {
+              color: black;
+            }
+
+            .add-note-btn, .filetree-btn, .chatvault-btn, .mobile-back-btn, .comment-trigger {
+              display: none !important;
+            }
+
+            .acc-panel.open {
+              height: calc(100vh - 60px) !important;
+            }
+            
+            .acc-panel.tab-filetree.open,
+            .acc-panel.tab-chat.open {
+               height: calc(100vh - 60px) !important;
+            }
+          }
+        `}</style>
+
+        <div className="case-background"></div>
+        <div className="video-overlay"></div>
+
+        {/* Mobile Assistive Ball Footer */}
+        <div className="mobile-footer">
+          <div className={`assistive-ball ${isFooterExpanded ? 'active' : ''}`} onClick={() => setIsFooterExpanded(!isFooterExpanded)}>
+            {isFooterExpanded ? <X size={28} /> : <MoreVertical size={28} />}
+          </div>
           
-          .footer-item {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: black;
-            width: 36px;
-            height: 36px;
-            cursor: pointer;
-          }
-          
-          .footer-item.add-note {
-            background: black;
-            color: #b09278;
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-          }
+          <div className={`footer-expanded-content ${isFooterExpanded ? 'active' : ''}`}>
+            <div className="footer-item-wrapper" onClick={() => { setIsFooterExpanded(false); if (activeOverlay) setActiveOverlay(null); else window.history.back(); }}>
+              <div className="footer-item">
+                <span className="footer-item-label">Back</span>
+                <ArrowLeft size={20} />
+              </div>
+            </div>
 
-          .add-note-btn, .filetree-btn, .chatvault-btn, .mobile-back-btn, .comment-trigger {
-            display: none !important;
-          }
+            <div className="footer-item-wrapper" onClick={() => { setIsFooterExpanded(false); setActiveOverlay(activeOverlay === 'filetree' ? null : 'filetree'); }}>
+              <div className={`footer-item ${activeOverlay === 'filetree' ? 'active-action' : ''}`}>
+                <span className="footer-item-label">File Tree</span>
+                <Folder size={20} />
+              </div>
+            </div>
 
-          .acc-panel.open {
-            height: calc(100vh - 110px) !important;
-          }
-          
-          .acc-panel.tab-filetree.open,
-          .acc-panel.tab-chat.open {
-             height: calc(100vh - 110px) !important;
-          }
-        }
-      `}</style>
+            <div className="footer-item-wrapper" onClick={() => { setIsFooterExpanded(false); handleCreateNewNote(); }}>
+              <div className="footer-item">
+                <span className="footer-item-label">New Note</span>
+                <Plus size={22} />
+              </div>
+            </div>
 
-      <div className="case-background"></div>
-      <div className="video-overlay"></div>
+            <div className="footer-item-wrapper" onClick={() => { setIsFooterExpanded(false); setActiveOverlay(activeOverlay === 'chat' ? null : 'chat'); }}>
+              <div className={`footer-item ${activeOverlay === 'chat' ? 'active-action' : ''}`}>
+                <span className="footer-item-label">AI Chat</span>
+                <MessageSquare size={20} />
+              </div>
+            </div>
 
-      {/* Mobile Footer */}
-      <div className="mobile-footer">
-        <div className="footer-item" onClick={() => { if (activeOverlay) setActiveOverlay(null); else window.history.back(); }}>
-          <ArrowLeft size={28} />
+            <div 
+              className="footer-item-wrapper" 
+              onClick={() => { if (fileName && fileName !== 'chat' && fileName !== 'filetree') { setIsFooterExpanded(false); handleAppendComment(); } }}
+              style={{ opacity: (!fileName || fileName === 'chat' || fileName === 'filetree') ? 0.3 : 1 }}
+            >
+              <div className="footer-item">
+                <span className="footer-item-label">Comment</span>
+                <Pencil size={20} />
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="footer-item" onClick={() => setActiveOverlay(activeOverlay === 'filetree' ? null : 'filetree')}>
-          <Folder size={28} />
-        </div>
-        <div className="footer-item add-note" onClick={handleCreateNewNote}>
-          <Plus size={36} />
-        </div>
-        <div className="footer-item" onClick={() => setActiveOverlay(activeOverlay === 'chat' ? null : 'chat')}>
-          <MessageSquare size={28} />
-        </div>
-        <div 
-          className="footer-item" 
-          onClick={handleAppendComment}
-          style={{ opacity: (!fileName || fileName === 'chat' || fileName === 'filetree') ? 0.3 : 1 }}
-        >
-          <Pencil size={28} />
-        </div>
-      </div>
 
-      {/* Sticky Spine */}
-      <div className={`acc-panel sticky-spine ${!showHeader ? 'header-hidden' : ''}`}>
+        {/* Sticky Spine */}
+        <div className={`acc-panel sticky-spine ${(!showHeader || activeTab || activeOverlay) ? 'header-hidden' : ''}`}>
         <div className="acc-ope-container" style={{ width: '100%', flex: '1' }}>
           <div className="spine-content">
             <div className="add-note-btn" onClick={(e) => { e.stopPropagation(); handleCreateNewNote(); }} title="New Note">
