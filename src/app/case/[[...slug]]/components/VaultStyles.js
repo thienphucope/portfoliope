@@ -81,7 +81,7 @@ export default function VaultStyles() {
           background-color: rgba(255, 255, 255, 0.4);
         }
         
-        .markdown-container { max-width:1000px; width:100%; box-sizing:border-box; padding-bottom: 300px; }
+        .markdown-container { max-width:1000px; width:100%; box-sizing:border-box; padding-bottom: 100px; }
 
         .chat-panel { height:100dvh; background:var(--bg); flex-shrink:0; border-left:1px solid var(--border); overflow:hidden; }
         .chat-container { height:100%; width:100%; position:relative; }

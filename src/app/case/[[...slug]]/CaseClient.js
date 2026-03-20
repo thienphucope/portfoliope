@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, Search, ArrowLeft, Pencil, Share2, Folder, MessageSquare, MoreVertical, X } from 'lucide-react';
+import { Plus, Search, ArrowLeft, Pencil, Share2, Folder, MessageSquare, MoreVertical, X, ChevronRight } from 'lucide-react';
 import Chat from './components/Chat';
 import { ensureLibsLoaded, postProcess, fitHeading } from './components/MarkdownEngine';
 import FileSystemItem from './components/FileSystemItem';
@@ -32,6 +32,7 @@ export default function CaseClient({ staticRecords = [] }) {
   const [activeOverlay, setActiveOverlay] = useState(null); // 'filetree' or 'chat' or null
   const [showHeader, setShowHeader] = useState(true);
   const [isFooterExpanded, setIsFooterExpanded] = useState(false);
+  const [isAtBottom, setIsAtBottom] = useState(false);
   const lastScrollY = useRef(0);
 
   useEffect(() => {
@@ -180,6 +181,7 @@ export default function CaseClient({ staticRecords = [] }) {
       setFileName(repoKey);
       setContent(newContent);
       setContentKey(k => k + 1);
+      setIsAtBottom(false);
     });
   }, []);
 
@@ -188,6 +190,7 @@ export default function CaseClient({ staticRecords = [] }) {
       setActiveOverlay(null);
       if (serverPath) setActiveTab(serverPath);
     }
+    setIsAtBottom(false);
     let repoKey;
     let newContent = '';
 
@@ -1180,6 +1183,9 @@ export default function CaseClient({ staticRecords = [] }) {
     fetchedContent: fullContentCache[f.id] || openFiles.find(of => of.id === f.id)?.fetchedContent || ""
   })), [allFiles, fullContentCache, openFiles]);
 
+  const activeTabIndex = tabs.findIndex(t => t.id === activeTab);
+  const nextTabForActive = tabs.slice(activeTabIndex + 1).find(t => t.type === 'editor' || t.type === 'static');
+
   return (
     <div className={`accordion-app ${activeTab || activeOverlay ? 'has-active' : ''} ${activeOverlay === 'filetree' ? 'filetree-active' : ''} ${activeOverlay === 'chat' ? 'chat-active' : ''}`} ref={appShellRef}>
       <style>{`
@@ -1672,6 +1678,10 @@ export default function CaseClient({ staticRecords = [] }) {
           .chat-active .acc-panel.open:not(.tab-chat) {
             display: none !important;
           }
+
+          .mobile-read-more {
+            display: flex !important;
+          }
         }
 
           .mobile-footer {
@@ -1714,6 +1724,13 @@ export default function CaseClient({ staticRecords = [] }) {
               transform: rotate(90deg);
               background: black;
               color: #b09278;
+            }
+
+            .assistive-ball.at-bottom {
+              width: auto;
+              min-width: 48px;
+              border-radius: 24px;
+              padding: 0;
             }
 
             .footer-expanded-content {
@@ -1792,8 +1809,39 @@ export default function CaseClient({ staticRecords = [] }) {
 
         {/* Mobile Assistive Ball Footer */}
         <div className="mobile-footer">
-          <div className={`assistive-ball ${isFooterExpanded ? 'active' : ''}`} onClick={() => setIsFooterExpanded(!isFooterExpanded)}>
-            {isFooterExpanded ? <X size={28} /> : <MoreVertical size={28} />}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div 
+              className={`assistive-ball ${isFooterExpanded ? 'active' : ''} ${isAtBottom && !isFooterExpanded && nextTabForActive ? 'at-bottom' : ''}`}
+            >
+              {isFooterExpanded ? (
+                <div onClick={() => setIsFooterExpanded(false)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px' }}>
+                  <X size={28} />
+                </div>
+              ) : (
+                isAtBottom && !isFooterExpanded && nextTabForActive ? (
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <div 
+                      onClick={() => setIsFooterExpanded(true)}
+                      style={{ width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <MoreVertical size={24} />
+                    </div>
+                    <div style={{ width: '1px', height: '24px', background: 'rgba(0,0,0,0.15)', margin: '0 2px' }} />
+                    <div 
+                      onClick={(e) => handleTabClick(nextTabForActive, e)}
+                      style={{ padding: '0 16px 0 10px', height: '48px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    >
+                      <span className="footer-item-label" style={{ fontSize: '0.95rem' }}>{nextTabForActive.title}</span>
+                      <ChevronRight size={22} />
+                    </div>
+                  </div>
+                ) : (
+                  <div onClick={() => setIsFooterExpanded(true)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px' }}>
+                    <MoreVertical size={28} />
+                  </div>
+                )
+              )}
+            </div>
           </div>
           
           <div className={`footer-expanded-content ${isFooterExpanded ? 'active' : ''}`}>
@@ -1873,6 +1921,7 @@ export default function CaseClient({ staticRecords = [] }) {
         const isOverlay = tab.id === 'filetree' || tab.id === 'chat';
         const isOpen = isOverlay ? activeOverlay === tab.id : activeTab === tab.id;
         const isPersistent = tab.id === 'chat' || tab.id === activeTab;
+        const nextTab = tabs.slice(index + 1).find(t => t.type === 'editor' || t.type === 'static');
 
         return (
           <div 
@@ -2019,7 +2068,15 @@ export default function CaseClient({ staticRecords = [] }) {
                   )}
                   {tab.type === 'static' && (
                     <main className="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
-                      <article className="markdown-container" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+                      <article 
+                        className="markdown-container" 
+                        style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}
+                        onScroll={(e) => {
+                          const target = e.target;
+                          const atBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 100;
+                          if (atBottom !== isAtBottom) setIsAtBottom(atBottom);
+                        }}
+                      >
                         <BlockEditor
                           key={contentKey}
                           content={content}
@@ -2033,7 +2090,15 @@ export default function CaseClient({ staticRecords = [] }) {
                   )}
                   {tab.type === 'editor' && (
                     <main className="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
-                      <article className="markdown-container" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+                      <article 
+                        className="markdown-container" 
+                        style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}
+                        onScroll={(e) => {
+                          const target = e.target;
+                          const atBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 100;
+                          if (atBottom !== isAtBottom) setIsAtBottom(atBottom);
+                        }}
+                      >
                         <BlockEditor
                           key={contentKey}
                           content={content}
