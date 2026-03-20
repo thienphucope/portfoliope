@@ -1000,6 +1000,22 @@ export default function CaseClient({ staticRecords = [] }) {
     }
   }, [activeTab, activeOverlay, scrollToTab]);
 
+  useEffect(() => {
+    const checkBottom = () => {
+      const container = document.querySelector('.acc-panel.open .markdown-container');
+      if (container) {
+        const atBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
+        setIsAtBottom(atBottom);
+      } else {
+        // If it's chat or filetree, we might want a different logic, but for now:
+        setIsAtBottom(false);
+      }
+    };
+    // Wait for content to render and animations to finish
+    const timer = setTimeout(checkBottom, 400);
+    return () => clearTimeout(timer);
+  }, [content, activeTab, activeOverlay, tabs.length]);
+
   const handleTabClick = async (tab, e) => {
     if (tab.id === 'filetree' || tab.id === 'chat') {
       setActiveOverlay(prev => prev === tab.id ? null : tab.id);
@@ -1628,10 +1644,21 @@ export default function CaseClient({ staticRecords = [] }) {
           .acc-body {
             height: 100% !important;
             flex: 1 !important;
-            overflow-y: auto !important;
+            overflow: hidden !important;
+            overscroll-behavior: contain;
             -webkit-overflow-scrolling: touch;
           }
           
+          .main-content {
+            padding: 0 !important;
+            overflow: hidden !important;
+          }
+
+          .markdown-container {
+            padding: 0 15px 100px !important;
+            overscroll-behavior: contain;
+          }
+
           .floating-actions {
             top: 10px !important;
             right: 15px !important;
@@ -1703,6 +1730,7 @@ export default function CaseClient({ staticRecords = [] }) {
               border-top: none;
               padding: 0;
               gap: 16px;
+              pointer-events: none; /* Tránh chặn thao tác vuốt của ngón cái ở vùng trống */
             }
 
             .assistive-ball {
@@ -1718,6 +1746,7 @@ export default function CaseClient({ staticRecords = [] }) {
               cursor: pointer;
               z-index: 2001;
               transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+              pointer-events: auto; /* Chỉ cho phép tương tác tại quả cầu */
             }
 
             .assistive-ball.active {
@@ -1734,7 +1763,7 @@ export default function CaseClient({ staticRecords = [] }) {
             }
 
             .footer-expanded-content {
-              display: flex;
+              display: none;
               flex-direction: column-reverse;
               align-items: flex-end;
               gap: 12px;
@@ -1745,6 +1774,7 @@ export default function CaseClient({ staticRecords = [] }) {
             }
 
             .footer-expanded-content.active {
+              display: flex;
               opacity: 1;
               transform: translateY(0) scale(1);
               pointer-events: auto;
