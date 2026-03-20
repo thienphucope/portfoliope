@@ -1201,6 +1201,7 @@ export default function CaseClient({ staticRecords = [] }) {
 
   const activeTabIndex = tabs.findIndex(t => t.id === activeTab);
   const nextTabForActive = tabs.slice(activeTabIndex + 1).find(t => t.type === 'editor' || t.type === 'static');
+  const showReadMore = isAtBottom && !isFooterExpanded && nextTabForActive && !activeOverlay;
 
   return (
     <div className={`accordion-app ${activeTab || activeOverlay ? 'has-active' : ''} ${activeOverlay === 'filetree' ? 'filetree-active' : ''} ${activeOverlay === 'chat' ? 'chat-active' : ''}`} ref={appShellRef}>
@@ -1841,14 +1842,14 @@ export default function CaseClient({ staticRecords = [] }) {
         <div className="mobile-footer">
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div 
-              className={`assistive-ball ${isFooterExpanded ? 'active' : ''} ${isAtBottom && !isFooterExpanded && nextTabForActive ? 'at-bottom' : ''}`}
+              className={`assistive-ball ${isFooterExpanded ? 'active' : ''} ${showReadMore ? 'at-bottom' : ''}`}
             >
               {isFooterExpanded ? (
                 <div onClick={() => setIsFooterExpanded(false)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px' }}>
                   <X size={28} />
                 </div>
               ) : (
-                isAtBottom && !isFooterExpanded && nextTabForActive ? (
+                showReadMore ? (
                   <div style={{ display: 'flex', alignItems: 'center' }}>
                     <div 
                       onClick={() => setIsFooterExpanded(true)}
