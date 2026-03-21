@@ -302,8 +302,8 @@ export default function HomeClient() {
       }
       if (isIntroStarted && window.YT && window.YT.Player && !playerRef.current) {
         playerRef.current = new window.YT.Player('youtube-player-home', {
-          height: '0', width: '0', videoId: 'wPlTqVqb7go',
-          playerVars: { autoplay: 1, loop: 1, playlist: 'wPlTqVqb7go,6c5YHZhfxco', controls: 0, showinfo: 0, modestbranding: 1 },
+          height: '0', width: '0', videoId: 'ivVQYpGGvuc',
+          playerVars: { autoplay: 1, loop: 1, playlist: 'ivVQYpGGvuc,6c5YHZhfxco', controls: 0, showinfo: 0, modestbranding: 1 },
           events: {
             onReady: (e) => { e.target.setVolume(50); e.target.playVideo(); },
             onStateChange: (e) => {
