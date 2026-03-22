@@ -3,10 +3,14 @@ import React, { useMemo, useRef, useEffect, useState, useCallback } from 'react'
 import ForceGraph2D from 'react-force-graph-2d';
 import { forceX, forceY } from 'd3-force';
 
-export default function GraphView({ allFiles, onSelectFile, searchTerm = '', activeNodeId = '' }) {
+export default function GraphView({ allFiles, onSelectFile, searchTerm = '', activeNodeId = '', zoomToNodeId, onZoomComplete }) {
   const containerRef = useRef(null);
   const graphRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [needsZoom, setNeedsZoom] = useState(true);
+  const [hoveredNodeId, setHoveredNodeId] = useState(null);
+  const [highlightNodes, setHighlightNodes] = useState(new Set());
+  const [highlightLinks, setHighlightLinks] = useState(new Set());
 
   useEffect(() => {
     const updateSize = () => {
@@ -22,14 +26,20 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
     return () => window.removeEventListener('resize', updateSize);
   }, []);
 
+  useEffect(() => {
+    if (activeNodeId) {
+      setNeedsZoom(true);
+      setHoveredNodeId(null); // Clear hover when active node changes
+    }
+  }, [activeNodeId]);
+
   const graphData = useMemo(() => {
     const nodes = [];
     const links = [];
-    const nodeMap = new Map(); // Maps node name (lowercase) to node id
-    const degreeMap = new Map(); // Maps node id to its degree
-    const tagNodeMap = new Map(); // Maps tag name (lowercase) to tag node id
+    const nodeMap = new Map();
+    const degreeMap = new Map();
+    const tagNodeMap = new Map();
 
-    // First pass: Create file nodes and collect all unique tags
     allFiles.forEach(file => {
       const fileNode = {
         id: file.id,
@@ -37,13 +47,12 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
         val: 1,
         path: file.path,
         fileName: file.name,
-        type: 'file' // Differentiate file nodes
+        type: 'file'
       };
       nodes.push(fileNode);
       nodeMap.set(fileNode.name.toLowerCase(), fileNode.id);
       degreeMap.set(fileNode.id, 0);
 
-      // Regex to find #tags, ignoring numbers only tags
       const tagRegex = /(?<!\S)#([a-zA-Z][a-zA-Z0-9_-]*)/g;
       let tagMatch;
       if (file.fetchedContent) {
@@ -52,30 +61,22 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
           if (!tagNodeMap.has(tagName)) {
             const tagNodeId = `tag-${tagName}`;
             tagNodeMap.set(tagName, tagNodeId);
-            nodes.push({
-              id: tagNodeId,
-              name: `#${tagName}`,
-              val: 1,
-              type: 'tag' // Differentiate tag nodes
-            });
+            nodes.push({ id: tagNodeId, name: `#${tagName}`, val: 1, type: 'tag' });
             degreeMap.set(tagNodeId, 0);
           }
         }
       }
     });
 
-    // Second pass: Create links (both backlinks and file-to-tag links)
     allFiles.forEach(file => {
       if (!file.fetchedContent) return;
 
-      // Backlinks
       const linkRegex = /\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g;
       let linkMatch;
       while ((linkMatch = linkRegex.exec(file.fetchedContent)) !== null) {
         let targetName = linkMatch[1].trim().toLowerCase();
         let targetId = nodeMap.get(targetName);
         if (!targetId) {
-          // Fallback search for partial matches
           for (const [name, id] of nodeMap.entries()) {
             if (name === targetName || name.split('/').pop() === targetName || name.replace('.md', '') === targetName) {
               targetId = id;
@@ -90,8 +91,7 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
         }
       }
 
-      // File-to-tag links
-      const tagRegex = /(?<!\S)#([a-zA-Z][a-zA-Z0-9_-]*)/g; // Re-use regex
+      const tagRegex = /(?<!\S)#([a-zA-Z][a-zA-Z0-9_-]*)/g;
       let tagMatch;
       while ((tagMatch = tagRegex.exec(file.fetchedContent)) !== null) {
         const tagName = tagMatch[1].trim().toLowerCase();
@@ -106,11 +106,39 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
 
     nodes.forEach(node => {
       const degree = degreeMap.get(node.id) || 0;
-      node.val = 3 + Math.sqrt(degree) * 3; 
+      node.val = 3 + Math.sqrt(degree) * 3;
     });
 
     return { nodes, links };
   }, [allFiles]);
+
+  useEffect(() => {
+    const centerNodeId = hoveredNodeId; // Only highlight based on hover
+    if (!centerNodeId) {
+      setHighlightNodes(new Set());
+      setHighlightLinks(new Set());
+      return;
+    }
+
+    const newHighlightNodes = new Set([centerNodeId]);
+    const newHighlightLinks = new Set();
+
+    graphData.links.forEach(link => {
+      const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+      const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+
+      if (sourceId === centerNodeId) {
+        newHighlightNodes.add(targetId);
+        newHighlightLinks.add(link);
+      } else if (targetId === centerNodeId) {
+        newHighlightNodes.add(sourceId);
+        newHighlightLinks.add(link);
+      }
+    });
+
+    setHighlightNodes(newHighlightNodes);
+    setHighlightLinks(newHighlightLinks);
+  }, [hoveredNodeId, graphData]);
 
   const filteredData = useMemo(() => {
     if (!searchTerm) return graphData;
@@ -134,26 +162,22 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
     const timer = setTimeout(() => {
       fg.d3Force('charge')?.strength(-200);
       fg.d3Force('link')?.distance(100).strength(1);
-      
-      // Use forceX/Y for centering, it's more stable
       fg.d3Force('x', forceX(0).strength(0.03));
       fg.d3Force('y', forceY(0).strength(0.03));
-      fg.d3Force('center', null); // Disable default center force
-
+      fg.d3Force('center', null);
       fg.resumeAnimation();
     }, 100);
     return () => clearTimeout(timer);
   }, [dimensions]);
 
-
-
   const handleNodeClick = useCallback(node => {
+    if (node.type === 'tag') return;
     onSelectFile(node.path, node.fileName, node.id);
   }, [onSelectFile]);
 
   return (
-    <div 
-      ref={containerRef} 
+    <div
+      ref={containerRef}
       style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden', background: 'transparent' }}
     >
       {dimensions.width > 0 && (
@@ -165,76 +189,73 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
           nodeLabel={() => ""}
           backgroundColor="rgba(0,0,0,0)"
           onNodeClick={handleNodeClick}
+          onNodeHover={node => {
+            setHoveredNodeId(node ? node.id : null);
+            if (containerRef.current) {
+              containerRef.current.style.cursor = node && node.type !== 'tag' ? 'pointer' : '';
+            }
+          }}
+          onNodeDragStart={() => setNeedsZoom(false)}
           cooldownTicks={50}
           onEngineStop={() => {
             if (!graphRef.current) return;
-            if (activeNodeId) {
+            if (zoomToNodeId) {
+              const node = filteredData.nodes.find(n => n.id.toLowerCase() === zoomToNodeId.toLowerCase());
+              if (node && node.x !== undefined) {
+                graphRef.current.centerAt(node.x, node.y, 800);
+                graphRef.current.zoom(4, 800);
+                onZoomComplete();
+              }
+            } else if (needsZoom && activeNodeId) {
               const node = filteredData.nodes.find(n => n.id.toLowerCase() === activeNodeId.toLowerCase());
               if (node && node.x !== undefined) {
                 graphRef.current.centerAt(node.x, node.y, 800);
                 graphRef.current.zoom(2, 800);
+                setNeedsZoom(false);
               }
-            } else {
+            } else if (!activeNodeId) {
               graphRef.current.zoomToFit(400, 150);
             }
           }}
-          linkColor={link => `rgba(255, 255, 255, ${link.opacity || 0.4})`}
-          linkWidth={2}
+          linkColor={link => highlightLinks.size > 0 && !highlightLinks.has(link) ? 'rgba(100, 100, 100, 0.1)' : 'rgba(255, 255, 255, 0.4)'}
+          linkWidth={link => highlightLinks.has(link) ? 2 : 1}
           nodeCanvasObject={(node, ctx, globalScale) => {
             const label = node.name;
             const size = node.val;
             const isMatch = searchTerm ? node.opacity > 0.2 : true;
             const isActive = node.id === activeNodeId;
-            
-            // Add glow for active node (Yellow) or all nodes when zoomed in (White)
-            // Or green for tag nodes
-            if (isActive) {
-              ctx.shadowColor = '#ffff00';
-              ctx.shadowBlur = 25 / globalScale;
-            } else if (node.type === 'tag') {
-              ctx.shadowColor = '#00ff00'; // Green glow for tags
-              ctx.shadowBlur = 15 / globalScale;
-            } else if (globalScale > 1.5 && isMatch) {
-              ctx.shadowColor = '#ffffff';
-              ctx.shadowBlur = 15 / globalScale;
-            } else {
-              ctx.shadowBlur = 0;
-            }
+            const isHighlighted = highlightNodes.size === 0 || highlightNodes.has(node.id);
 
-            // Draw clean circle
+            ctx.shadowBlur = 0;
+            ctx.shadowColor = 'transparent';
+
             ctx.beginPath();
             ctx.arc(node.x, node.y, size, 0, 2 * Math.PI, false);
-            ctx.fillStyle = node.type === 'tag' ? '#00cc00' : (isMatch ? '#ffffff' : 'rgba(255, 255, 255, 0.2)');
+
+            const fillStyle = isActive ? '#ffffff' : (node.type === 'tag' ? '#fece9e' : (isMatch ? '#808080' : 'rgba(128, 128, 128, 0.2)'));
+            ctx.fillStyle = isHighlighted ? fillStyle : 'rgba(128, 128, 128, 0.1)';
             ctx.fill();
-            
-            // High-contrast border for better definition
-            if (isMatch || node.type === 'tag') { // Add tag type here
-              ctx.strokeStyle = isActive ? '#ffff00' : (node.type === 'tag' ? '#008800' : 'rgba(255, 255, 255, 0.8)');
+
+            if (isHighlighted) {
+              const strokeStyle = isActive ? '#cccccc' : (node.type === 'tag' ? '#D2A77A' : (isMatch ? '#555555' : 'rgba(85, 85, 85, 0.4)'));
+              ctx.strokeStyle = strokeStyle;
               ctx.lineWidth = (isActive ? 3 : (globalScale > 1.5 ? 1.5 : 1)) / globalScale;
               ctx.stroke();
             }
 
-            // Reset shadow for label drawing
-            ctx.shadowBlur = 0;
-
-            // Labels: Only show if near mouse or it's the active node
-            if (globalScale > 0.5 || isActive) {
+            const isLabelVisible = isHighlighted && (node.type === 'tag' || globalScale > 1.9 || isActive || node.id === hoveredNodeId);
+            if (isLabelVisible) {
               const fontSize = 11 / globalScale;
               ctx.font = `normal ${fontSize}px Lora, serif`;
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
-              
-              // Text shadow for readability on video
               ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
               ctx.shadowBlur = 4 / globalScale;
-              
               ctx.fillStyle = isMatch ? '#ffffff' : 'rgba(255, 255, 255, 0.4)';
               ctx.fillText(label, node.x, node.y + size + (8 / globalScale));
-              
-              ctx.shadowBlur = 0; // Reset
+              ctx.shadowBlur = 0;
             }
           }}
-
         />
       )}
       <style jsx global>{`

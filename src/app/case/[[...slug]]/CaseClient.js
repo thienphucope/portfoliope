@@ -1924,15 +1924,14 @@ export default function CaseClient({ staticRecords = [] }) {
             <div className="add-note-btn" onClick={(e) => { e.stopPropagation(); handleCreateNewNote(); }} title="New Note">
               <Plus size={44} />
             </div>
-            <div className="filetree-btn" onClick={(e) => { 
-              e.stopPropagation(); 
+            <div className="filetree-btn" onClick={(e) => {
+              e.stopPropagation();
               setActiveOverlay(prev => prev === 'filetree' ? null : 'filetree');
             }} title="File Tree">
               <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
               </svg>
-            </div>
-            <div className="chatvault-btn" onClick={(e) => { 
+            </div>            <div className="chatvault-btn" onClick={(e) => { 
               e.stopPropagation(); 
               setActiveOverlay(prev => prev === 'chat' ? null : 'chat');
             }} title="AI Chat Vault">
@@ -2033,15 +2032,14 @@ export default function CaseClient({ staticRecords = [] }) {
                 )}
                 {tab.id === 'filetree' && (
                   <div className="floating-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <button 
-                      className={`icon-btn pc-only ${viewMode === 'graph' ? 'icon-btn--active' : ''}`} 
+                    <button
+                      className={`icon-btn pc-only ${viewMode === 'graph' ? 'icon-btn--active' : ''}`}
                       onClick={() => setViewMode(viewMode === 'list' ? 'graph' : 'list')}
-                      title="Toggle Graph View"
-                      style={{ display: 'none' }} /* Will be shown via CSS on PC */
+                      title="Toggle Graph/List View"
+                      /* Removed style={{ display: 'none' }} to make it visible */
                     >
                       <Share2 size={18} />
-                    </button>
-                    {showSearch && (
+                    </button>                    {showSearch && (
                       <input
                         type="text"
                         placeholder="Search notes..."
