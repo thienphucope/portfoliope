@@ -243,7 +243,7 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
               ctx.stroke();
             }
 
-            const isLabelVisible = isHighlighted && (node.type === 'tag' || globalScale > 1.9 || isActive || node.id === hoveredNodeId);
+            const isLabelVisible = isHighlighted && (node.type === 'tag' || globalScale > 1 || isActive || node.id === hoveredNodeId);
             if (isLabelVisible) {
               const fontSize = 11 / globalScale;
               ctx.font = `normal ${fontSize}px Lora, serif`;
