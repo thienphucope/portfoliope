@@ -27,7 +27,7 @@ export default function CaseClient({ staticRecords = [] }) {
   const [commentPrompt, setCommentPrompt] = useState(null);
   const [searchTerm,  setSearchTerm]  = useState('');
   const [showSearch,   setShowSearch]  = useState(false);
-  const [viewMode,     setViewMode]    = useState('list'); // 'list' or 'graph'
+  const [viewMode,     setViewMode]    = useState('graph'); // 'list' or 'graph'
   const [fullContentCache, setFullContentCache] = useState({});
   const [activeOverlay, setActiveOverlay] = useState(null); // 'filetree' or 'chat' or null
   const [showHeader, setShowHeader] = useState(true);
@@ -199,7 +199,7 @@ export default function CaseClient({ staticRecords = [] }) {
       const cached = readCache(repoKey);
       newContent = Array.isArray(cached) && cached.length > 0
         ? cached.map(b => b.raw).join('\n\n')
-        : `# ${name.replace('.md', '')}\n*author: <author>*\n*tag: [[Dash Board]]*\n`;
+        : `# ${name.replace('.md', '')}\n*author: <author>*\n*tag: [[Dash Board]]*\n*links:*\n`;
       applyFileContent(repoKey, newContent);
     } else {
       try {
@@ -556,7 +556,7 @@ export default function CaseClient({ staticRecords = [] }) {
     });
 
     try { localStorage.removeItem(`vault_v3::${serverPath}`); } catch {}
-    const initContent = `# ${title}\n*author: <author>*\n*tag: [[Dash Board]]*\n`;
+    const initContent = `# ${title}\n*author: <author>*\n*tag: [[Dash Board]]*\n*links:*\n`;
     applyFileContent(serverPath, initContent);
 
     setOpenFiles(prev => {
@@ -612,7 +612,7 @@ export default function CaseClient({ staticRecords = [] }) {
           : openF.fetchedContent;
         applyFileContent(serverPath, raw);
         } else {
-        applyFileContent(serverPath, `# ${serverPath.split('/').pop().replace('.md', '')}\n*author: <author>*\n*tag: [[Dash Board]]*\n`);
+        applyFileContent(serverPath, `# ${serverPath.split('/').pop().replace('.md', '')}\n*author: <author>*\n*tag: [[Dash Board]]*\n*links:*\n`);
         }    } else {
       createAndOpenFile(target);
     }

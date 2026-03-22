@@ -1,12 +1,12 @@
 "use client";
 import React, { useMemo, useRef, useEffect, useState, useCallback } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
+import { forceX, forceY } from 'd3-force';
 
 export default function GraphView({ allFiles, onSelectFile, searchTerm = '', activeNodeId = '' }) {
   const containerRef = useRef(null);
   const graphRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [hoverPos, setHoverPos] = useState({ x: null, y: null });
 
   useEffect(() => {
     const updateSize = () => {
@@ -22,48 +22,60 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
     return () => window.removeEventListener('resize', updateSize);
   }, []);
 
-  const handleMouseMove = useCallback((e) => {
-    if (graphRef.current && containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      // Convert screen coords to graph coords
-      const graphCoords = graphRef.current.screen2GraphCoords(x, y);
-      setHoverPos(graphCoords);
-    }
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    setHoverPos({ x: null, y: null });
-  }, []);
-
   const graphData = useMemo(() => {
     const nodes = [];
     const links = [];
-    const nodeMap = new Map();
-    const degreeMap = new Map();
+    const nodeMap = new Map(); // Maps node name (lowercase) to node id
+    const degreeMap = new Map(); // Maps node id to its degree
+    const tagNodeMap = new Map(); // Maps tag name (lowercase) to tag node id
 
+    // First pass: Create file nodes and collect all unique tags
     allFiles.forEach(file => {
-      const node = {
+      const fileNode = {
         id: file.id,
         name: file.name.replace('.md', ''),
         val: 1,
         path: file.path,
-        fileName: file.name
+        fileName: file.name,
+        type: 'file' // Differentiate file nodes
       };
-      nodes.push(node);
-      nodeMap.set(node.name.toLowerCase(), node.id);
-      degreeMap.set(node.id, 0);
+      nodes.push(fileNode);
+      nodeMap.set(fileNode.name.toLowerCase(), fileNode.id);
+      degreeMap.set(fileNode.id, 0);
+
+      // Regex to find #tags, ignoring numbers only tags
+      const tagRegex = /(?<!\S)#([a-zA-Z][a-zA-Z0-9_-]*)/g;
+      let tagMatch;
+      if (file.fetchedContent) {
+        while ((tagMatch = tagRegex.exec(file.fetchedContent)) !== null) {
+          const tagName = tagMatch[1].trim().toLowerCase();
+          if (!tagNodeMap.has(tagName)) {
+            const tagNodeId = `tag-${tagName}`;
+            tagNodeMap.set(tagName, tagNodeId);
+            nodes.push({
+              id: tagNodeId,
+              name: `#${tagName}`,
+              val: 1,
+              type: 'tag' // Differentiate tag nodes
+            });
+            degreeMap.set(tagNodeId, 0);
+          }
+        }
+      }
     });
 
+    // Second pass: Create links (both backlinks and file-to-tag links)
     allFiles.forEach(file => {
       if (!file.fetchedContent) return;
+
+      // Backlinks
       const linkRegex = /\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g;
-      let match;
-      while ((match = linkRegex.exec(file.fetchedContent)) !== null) {
-        let targetName = match[1].trim().toLowerCase();
+      let linkMatch;
+      while ((linkMatch = linkRegex.exec(file.fetchedContent)) !== null) {
+        let targetName = linkMatch[1].trim().toLowerCase();
         let targetId = nodeMap.get(targetName);
         if (!targetId) {
+          // Fallback search for partial matches
           for (const [name, id] of nodeMap.entries()) {
             if (name === targetName || name.split('/').pop() === targetName || name.replace('.md', '') === targetName) {
               targetId = id;
@@ -72,9 +84,22 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
           }
         }
         if (targetId && targetId !== file.id) {
-          links.push({ source: file.id, target: targetId });
+          links.push({ source: file.id, target: targetId, type: 'backlink' });
           degreeMap.set(file.id, (degreeMap.get(file.id) || 0) + 1);
           degreeMap.set(targetId, (degreeMap.get(targetId) || 0) + 1);
+        }
+      }
+
+      // File-to-tag links
+      const tagRegex = /(?<!\S)#([a-zA-Z][a-zA-Z0-9_-]*)/g; // Re-use regex
+      let tagMatch;
+      while ((tagMatch = tagRegex.exec(file.fetchedContent)) !== null) {
+        const tagName = tagMatch[1].trim().toLowerCase();
+        const tagNodeId = tagNodeMap.get(tagName);
+        if (tagNodeId) {
+          links.push({ source: file.id, target: tagNodeId, type: 'taglink' });
+          degreeMap.set(file.id, (degreeMap.get(file.id) || 0) + 1);
+          degreeMap.set(tagNodeId, (degreeMap.get(tagNodeId) || 0) + 1);
         }
       }
     });
@@ -103,40 +128,24 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
   }, [graphData, searchTerm]);
 
   useEffect(() => {
-    if (graphRef.current) {
-      // Set forces
-      graphRef.current.d3Force('charge').strength(-100).distanceMax(250);
-      graphRef.current.d3Force('link').distance(30).strength(1);
-      graphRef.current.d3Force('center').strength(0.15);
-      
-      const performInitialZoom = () => {
-        if (!graphRef.current || !activeNodeId) {
-          graphRef.current?.zoomToFit(400, 100);
-          return;
-        }
-        
-        const findAndZoom = (attempts = 0) => {
-          if (!graphRef.current || typeof graphRef.current.graphData !== 'function') {
-            if (attempts < 30) setTimeout(() => findAndZoom(attempts + 1), 50);
-            return;
-          }
-          const liveNodes = graphRef.current.graphData().nodes;
-          const liveNode = liveNodes.find(n => n.id === activeNodeId);
-          
-          if (liveNode && typeof liveNode.x === 'number' && typeof liveNode.y === 'number') {
-            graphRef.current.centerAt(liveNode.x, liveNode.y, 1000);
-            graphRef.current.zoom(3, 1000);
-          } else if (attempts < 30) {
-            setTimeout(() => findAndZoom(attempts + 1), 50);
-          }
-        };
-        findAndZoom();
-      };
+    if (!graphRef.current || dimensions.width === 0) return;
+    const fg = graphRef.current;
 
-      const timer = setTimeout(performInitialZoom, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [graphData, activeNodeId]); // Removed searchTerm from dependencies for camera movement
+    const timer = setTimeout(() => {
+      fg.d3Force('charge')?.strength(-200);
+      fg.d3Force('link')?.distance(100).strength(1);
+      
+      // Use forceX/Y for centering, it's more stable
+      fg.d3Force('x', forceX(0).strength(0.03));
+      fg.d3Force('y', forceY(0).strength(0.03));
+      fg.d3Force('center', null); // Disable default center force
+
+      fg.resumeAnimation();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [dimensions]);
+
+
 
   const handleNodeClick = useCallback(node => {
     onSelectFile(node.path, node.fileName, node.id);
@@ -145,8 +154,6 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
   return (
     <div 
       ref={containerRef} 
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
       style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden', background: 'transparent' }}
     >
       {dimensions.width > 0 && (
@@ -158,6 +165,19 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
           nodeLabel={() => ""}
           backgroundColor="rgba(0,0,0,0)"
           onNodeClick={handleNodeClick}
+          cooldownTicks={50}
+          onEngineStop={() => {
+            if (!graphRef.current) return;
+            if (activeNodeId) {
+              const node = filteredData.nodes.find(n => n.id.toLowerCase() === activeNodeId.toLowerCase());
+              if (node && node.x !== undefined) {
+                graphRef.current.centerAt(node.x, node.y, 800);
+                graphRef.current.zoom(2, 800);
+              }
+            } else {
+              graphRef.current.zoomToFit(400, 150);
+            }
+          }}
           linkColor={link => `rgba(255, 255, 255, ${link.opacity || 0.4})`}
           linkWidth={2}
           nodeCanvasObject={(node, ctx, globalScale) => {
@@ -166,19 +186,14 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
             const isMatch = searchTerm ? node.opacity > 0.2 : true;
             const isActive = node.id === activeNodeId;
             
-            // Check distance to mouse for label display
-            let isNearMouse = false;
-            if (hoverPos.x !== null && hoverPos.y !== null) {
-              const dx = node.x - hoverPos.x;
-              const dy = node.y - hoverPos.y;
-              const dist = Math.sqrt(dx*dx + dy*dy);
-              isNearMouse = dist < (100 / Math.sqrt(globalScale)); // Radius adjustments based on zoom
-            }
-
             // Add glow for active node (Yellow) or all nodes when zoomed in (White)
+            // Or green for tag nodes
             if (isActive) {
               ctx.shadowColor = '#ffff00';
               ctx.shadowBlur = 25 / globalScale;
+            } else if (node.type === 'tag') {
+              ctx.shadowColor = '#00ff00'; // Green glow for tags
+              ctx.shadowBlur = 15 / globalScale;
             } else if (globalScale > 1.5 && isMatch) {
               ctx.shadowColor = '#ffffff';
               ctx.shadowBlur = 15 / globalScale;
@@ -186,15 +201,15 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
               ctx.shadowBlur = 0;
             }
 
-            // Draw clean white circle
+            // Draw clean circle
             ctx.beginPath();
             ctx.arc(node.x, node.y, size, 0, 2 * Math.PI, false);
-            ctx.fillStyle = isMatch ? '#ffffff' : 'rgba(255, 255, 255, 0.2)';
+            ctx.fillStyle = node.type === 'tag' ? '#00cc00' : (isMatch ? '#ffffff' : 'rgba(255, 255, 255, 0.2)');
             ctx.fill();
             
             // High-contrast border for better definition
-            if (isMatch) {
-              ctx.strokeStyle = isActive ? '#ffff00' : 'rgba(255, 255, 255, 0.8)';
+            if (isMatch || node.type === 'tag') { // Add tag type here
+              ctx.strokeStyle = isActive ? '#ffff00' : (node.type === 'tag' ? '#008800' : 'rgba(255, 255, 255, 0.8)');
               ctx.lineWidth = (isActive ? 3 : (globalScale > 1.5 ? 1.5 : 1)) / globalScale;
               ctx.stroke();
             }
@@ -203,9 +218,9 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
             ctx.shadowBlur = 0;
 
             // Labels: Only show if near mouse or it's the active node
-            if (isNearMouse || isActive) {
-              const fontSize = 13 / globalScale;
-              ctx.font = `${(isMatch || isActive) ? 'bold' : 'normal'} ${fontSize}px Lora, serif`;
+            if (globalScale > 0.5 || isActive) {
+              const fontSize = 11 / globalScale;
+              ctx.font = `normal ${fontSize}px Lora, serif`;
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
               
@@ -219,7 +234,7 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
               ctx.shadowBlur = 0; // Reset
             }
           }}
-          cooldownTicks={150}
+
         />
       )}
       <style jsx global>{`
