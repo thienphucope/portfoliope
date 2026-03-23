@@ -232,27 +232,36 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
             ctx.beginPath();
             ctx.arc(node.x, node.y, size, 0, 2 * Math.PI, false);
 
-            const fillStyle = isActive ? '#ffffff' : (node.type === 'tag' ? '#fece9e' : (isMatch ? '#808080' : 'rgba(128, 128, 128, 0.2)'));
+            const fillStyle = isActive ? '#add8e6' : (node.type === 'tag' ? '#fece9e' : (isMatch ? '#808080' : 'rgba(128, 128, 128, 0.2)'));
             ctx.fillStyle = isHighlighted ? fillStyle : 'rgba(128, 128, 128, 0.1)';
             ctx.fill();
 
             if (isHighlighted) {
-              const strokeStyle = isActive ? '#cccccc' : (node.type === 'tag' ? '#D2A77A' : (isMatch ? '#555555' : 'rgba(85, 85, 85, 0.4)'));
+              const strokeStyle = isActive ? '#87ceeb' : (node.type === 'tag' ? '#D2A77A' : (isMatch ? '#555555' : 'rgba(85, 85, 85, 0.4)'));
               ctx.strokeStyle = strokeStyle;
               ctx.lineWidth = (isActive ? 3 : (globalScale > 1.5 ? 1.5 : 1)) / globalScale;
               ctx.stroke();
             }
 
-            const isLabelVisible = isHighlighted && (node.type === 'tag' || globalScale > 1 || isActive || node.id === hoveredNodeId);
+            // Tên node note biến mất trước (zoom <= 1), tên tag biến mất sau (zoom <= 0.5)
+            const isLabelVisible = isHighlighted && (
+              (node.type === 'tag' ? globalScale > 0.5 : globalScale > 1) || 
+              isActive || 
+              node.id === hoveredNodeId
+            );
+
             if (isLabelVisible) {
-              const fontSize = 11 / globalScale;
+              // Font size tỷ lệ thuận với zoom (kích thước cố định trong không gian canvas)
+              const fontSize = 12; 
               ctx.font = `normal ${fontSize}px Lora, serif`;
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
               ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-              ctx.shadowBlur = 4 / globalScale;
+              ctx.shadowBlur = 3 / globalScale; // Giữ shadow ổn định trên màn hình
               ctx.fillStyle = isMatch ? '#ffffff' : 'rgba(255, 255, 255, 0.4)';
-              ctx.fillText(label, node.x, node.y + size + (8 / globalScale));
+              
+              const textPadding = 6; // Khoảng cách cố định so với node trong canvas
+              ctx.fillText(label, node.x, node.y + size + textPadding);
               ctx.shadowBlur = 0;
             }
           }}

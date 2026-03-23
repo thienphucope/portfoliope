@@ -67,7 +67,7 @@ export default function FloatingActions({
     return (
       <div className="floating-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <button
-          className={`icon-btn pc-only ${viewMode === 'graph' ? 'icon-btn--active' : ''}`}
+          className={`icon-btn ${viewMode === 'graph' ? 'icon-btn--active' : ''}`}
           onClick={() => setViewMode(viewMode === 'list' ? 'graph' : 'list')}
           title="Toggle Graph/List View"
         >
