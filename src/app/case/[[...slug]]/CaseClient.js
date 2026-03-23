@@ -1,11 +1,15 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, Search, ArrowLeft, Pencil, Share2, Folder, MessageSquare, MoreVertical, X, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Pencil } from 'lucide-react';
 import Chat from './components/Chat';
 import { ensureLibsLoaded, postProcess, fitHeading } from './components/MarkdownEngine';
 import FileSystemItem from './components/FileSystemItem';
 import BlockEditor, { readCache } from './components/BlockEditor';
 import VaultStyles from './components/VaultStyles';
+import StickySpine from './components/StickySpine';
+import MobileFooter from './components/MobileFooter';
+import PromptOverlays from './components/PromptOverlays';
+import FloatingActions from './components/FloatingActions';
 import dynamic from 'next/dynamic';
 
 const GraphView = dynamic(() => import('./components/GraphView'), { ssr: false });
@@ -1205,753 +1209,34 @@ export default function CaseClient({ staticRecords = [] }) {
 
   return (
     <div className={`accordion-app ${activeTab || activeOverlay ? 'has-active' : ''} ${activeOverlay === 'filetree' ? 'filetree-active' : ''} ${activeOverlay === 'chat' ? 'chat-active' : ''}`} ref={appShellRef}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fredericka+the+Great&display=swap');
-        
-        /* Force transparent backgrounds for all vault content */
-        body, .app-shell, .main-content, .sidebar-panel, .chat-panel, 
-        .chat-container, .markdown-container, .file-list, .prose {
-          background: transparent !important;
-        }
-
-        .accordion-app {
-          display: flex;
-          flex-direction: row;
-          width: 100vw;
-          height: 100vh;
-          overflow-x: auto;
-          overflow-y: hidden;
-          background: transparent;
-        }
-
-        .case-background {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100vw;
-          height: 100vh;
-          z-index: -2;
-          pointer-events: none;
-          background-image: url('/casebg2.png');
-          background-size: cover;
-          background-position: center;
-          background-color: black;
-        }
-        .video-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); pointer-events: none; }
-
-        /* Hide scrollbar for accordion app container itself */
-        .accordion-app::-webkit-scrollbar {
-          display: none;
-        }
-
-        .sticky-spine {
-          position: sticky;
-          left: 0;
-          z-index: 50;
-          flex-basis: 150px;
-          min-width: 150px;
-          flex-grow: 0;
-          flex-shrink: 0;
-          background-color: var(--colorone);
-          border-right: 2px solid rgba(255, 255, 255, 0.2);
-          cursor: default;
-          isolation: isolate;
-        }
-
-        .spine-content {
-          position: relative;
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .add-note-btn, .filetree-btn, .chatvault-btn {
-          width: 80px;
-          height: 80px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          position: absolute;
-          color: black;
-          font-weight: bold;
-          font-size: 20px;
-          z-index: 100;
-          transition: transform 0.2s, opacity 0.2s;
-        }
-        .add-note-btn:hover, .filetree-btn:hover, .chatvault-btn:hover {
-          opacity: 0.7;
-          transform: scale(1.1);
-        }
-
-        .add-note-btn { top: 40px; }
-        .filetree-btn { top: 140px; }
-        .chatvault-btn { top: 240px; }
-
-        .acc-ope {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 2rem;
-          font-family: 'Fredericka the Great', cursive;
-          font-size: 2.8rem;
-          color: black;
-          mix-blend-mode: destination-out;
-          user-select: none;
-          position: absolute;
-          bottom: 40px;
-          cursor: pointer;
-        }
-        .ope-txt, .watson-txt {
-          writing-mode: vertical-rl;
-          white-space: nowrap;
-          letter-spacing: 2px;
-        }
-
-        .acc-panel {
-          display: flex;
-          flex-direction: row;
-          height: 100%;
-          transition: flex-basis 1s cubic-bezier(0.25, 0.8, 0.25, 1), min-width 1s cubic-bezier(0.25, 0.8, 0.25, 1), flex-grow 1s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 1s, opacity 0.5s;
-          border-right: 2px solid rgba(255, 255, 255, 0.2);
-          overflow: hidden;
-          flex-shrink: 0;
-        }
-
-        .acc-panel.closed {
-          flex-basis: 150px;
-          min-width: 150px;
-          flex-grow: 0;
-          background-color: var(--colorone);
-          cursor: pointer;
-          isolation: isolate;
-        }
-
-        /* Completely hide File Tree and Chat spines as they're now accessible via buttons */
-        .acc-panel.tab-filetree.closed,
-        .acc-panel.tab-chat.closed {
-          display: none !important;
-        }
-
-        .acc-panel.open {
-          /* Để hở ra khoảng 450px cho các spine khác */
-          flex-basis: calc(100vw - 450px);
-          min-width: calc(100vw - 450px);
-          flex-grow: 1;
-          background-color: transparent;
-        }
-
-        /* Overlay Mode for File Tree and Chat */
-        .filetree-active .acc-panel.closed,
-        .chat-active .acc-panel.closed {
-          opacity: 0;
-          pointer-events: none;
-        }
-
-        .filetree-active .acc-panel.open:not(.tab-filetree),
-        .chat-active .acc-panel.open:not(.tab-chat) {
-          visibility: hidden !important;
-          opacity: 0 !important;
-          pointer-events: none !important;
-        }
-
-        .acc-panel.tab-filetree.open,
-        .acc-panel.tab-chat.open {
-          position: fixed;
-          left: 150px;
-          top: 0;
-          width: calc(100vw - 150px);
-          height: 100vh;
-          z-index: 45;
-          flex-basis: auto !important;
-          min-width: 0 !important;
-          background: transparent !important;
-          backdrop-filter: none !important;
-          -webkit-backdrop-filter: none !important;
-          border-right: none;
-        }
-
-        .acc-panel.tab-filetree .acc-spine-container,
-        .acc-panel.tab-chat .acc-spine-container {
-          display: none;
-        }
-
-        .acc-panel.tab-filetree .acc-content,
-        .acc-panel.tab-chat .acc-content {
-          width: 100%;
-        }
-
-        .acc-panel.tab-filetree .file-list {
-          display: block !important;
-          column-width: 280px;
-          column-gap: 60px;
-          height: 100%;
-          padding: 60px !important;
-          overflow-x: auto !important;
-          overflow-y: hidden !important;
-        }
-
-        /* Top level items in file list should not break across columns */
-        .acc-panel.tab-filetree .file-list > div {
-          break-inside: avoid;
-          margin-bottom: 30px;
-        }
-
-        /* Ensure links and text are readable against video */
-        .acc-panel.tab-filetree .file-list * {
-          text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-        }
-
-        .pc-only {
-          display: flex !important;
-        }
-
-        .acc-spine-container {
-          flex: 0 0 150px;
-          height: 100%;
-          background-color: var(--colorone);
-          cursor: pointer;
-          display: flex;
-          align-items: top;
-          padding-top: 3rem;
-          justify-content: center;
-          isolation: isolate;
-        }
-
-        .acc-spine {
-          writing-mode: vertical-rl;
-          font-family: 'Fredericka the Great', cursive;
-          font-size: 3rem;
-          color: black;
-          mix-blend-mode: destination-out;
-          white-space: nowrap;
-          letter-spacing: 2px;
-          user-select: none;
-        }
-        
-        .acc-ope-container {
-          flex: 0 0 150px;
-          height: 100%;
-          background-color: #b09278;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          isolation: isolate;
-        }
-
-        .acc-content {
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-          width: calc(100% - 150px);
-          animation: fadeIn 1s ease forwards 0.5s;
-          opacity: 0;
-          position: relative;
-        }
-
-        @keyframes fadeIn {
-          to { opacity: 1; }
-        }
-
-        .acc-body {
-          flex: 1;
-          overflow: hidden; 
-          position: relative;
-          display: flex;
-          flex-direction: column;
-        }
-
-        /* Hide all scrollbars inside panel bodies */
-        .acc-body *::-webkit-scrollbar {
-          display: none !important;
-        }
-        .acc-body * {
-          scrollbar-width: none !important;
-          -ms-overflow-style: none !important;
-        }
-
-        .floating-actions {
-          position: absolute;
-          top: 15px;
-          right: 30px;
-          display: flex;
-          gap: 10px;
-          z-index: 100;
-        }
-
-        .mobile-back-btn {
-          display: none;
-        }
-
-        @media (max-width: 1024px) and (orientation: portrait), (max-width: 768px) {
-          .accordion-app {
-            flex-direction: column !important;
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-          }
-
-          .accordion-app.has-active {
-            overflow: hidden !important;
-          }
-
-          .sticky-spine {
-            position: fixed !important;
-            top: 0;
-            left: 0;
-            z-index: 1000;
-            width: 100% !important;
-            height: 50px !important;
-            flex: 0 0 50px !important;
-            min-width: 0 !important;
-            border-right: none !important;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
-            transition: transform 0.3s ease;
-          }
-
-          .header-hidden {
-            transform: translateY(-100%);
-          }
-
-          .acc-ope-container {
-            flex: 1 !important;
-            width: 100% !important;
-            height: 50px !important;
-            padding-top: 0 !important;
-            align-items: center !important;
-            justify-content: flex-start !important;
-          }
-
-          .spine-content {
-            flex-direction: row !important;
-            width: 100% !important;
-            height: 100% !important;
-            justify-content: flex-start !important;
-            align-items: center !important;
-            position: relative !important;
-            padding: 0 20px !important;
-          }
-
-          .acc-ope {
-            flex-direction: row !important;
-            gap: 10px !important;
-            position: static !important;
-            font-size: 1.4rem !important;
-            letter-spacing: 1px !important;
-            text-align: left !important;
-            margin: 0 !important;
-            cursor: pointer;
-          }
-
-          .ope-txt, .watson-txt {
-            writing-mode: horizontal-tb !important;
-            white-space: nowrap !important;
-          }
-
-          .mobile-back-btn {
-            display: flex !important;
-            align-items: center;
-            justify-content: center;
-            position: absolute;
-            right: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 1001;
-            color: black;
-            mix-blend-mode: destination-out;
-            cursor: pointer;
-          }
-
-          .add-note-btn, .filetree-btn, .chatvault-btn {
-            position: absolute !important;
-            top: 50% !important;
-            transform: translateY(-50%) !important;
-            margin: 0 !important;
-            width: 32px !important;
-            height: 32px !important;
-            font-size: 14px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            transition: opacity 0.2s !important;
-          }
-
-          .add-note-btn svg, .filetree-btn svg, .chatvault-btn svg {
-            width: 22px !important;
-            height: 22px !important;
-          }
-
-          .add-note-btn {
-            right: 20px !important;
-            left: auto !important;
-          }
-          .chatvault-btn {
-            right: 60px !important;
-          }
-          .filetree-btn {
-            right: 100px !important;
-          }
-
-          .acc-panel {
-            width: 100% !important;
-            flex-direction: column !important;
-            border-right: none !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-          }
-
-          .acc-panel.closed {
-            flex: 0 0 50px !important;
-            min-width: 0 !important;
-            height: 50px !important;
-          }
-
-          .accordion-app.has-active .acc-panel.closed {
-            display: none !important;
-          }
-
-          .acc-panel.open {
-            flex: 1 !important;
-            min-width: 0 !important;
-            height: calc(100vh - 60px) !important;
-          }
-
-          .acc-spine-container {
-            flex: 0 0 50px !important;
-            width: 100% !important;
-            height: 50px !important;
-            padding-top: 0 !important;
-            justify-content: flex-start !important;
-            align-items: center !important;
-            padding-left: 20px !important;
-            position: relative !important;
-          }
-
-          .acc-spine {
-            writing-mode: horizontal-tb !important;
-            font-size: 1.1rem !important;
-            letter-spacing: 1px !important;
-          }
-
-          .acc-content {
-            width: 100% !important;
-            height: calc(100% - 50px) !important;
-            flex: 1 !important;
-            animation: none !important;
-            opacity: 1 !important;
-          }
-
-          .acc-body {
-            height: 100% !important;
-            flex: 1 !important;
-            overflow: hidden !important;
-            overscroll-behavior: contain;
-            -webkit-overflow-scrolling: touch;
-          }
-          
-          .main-content {
-            padding: 0 !important;
-            overflow: hidden !important;
-          }
-
-          .markdown-container {
-            padding: 0 15px 100px !important;
-            overscroll-behavior: contain;
-          }
-
-          .floating-actions {
-            top: 10px !important;
-            right: 15px !important;
-          }
-          
-          .video-background iframe {
-            transform: translate(-50%, -50%) scale(2.5) !important;
-          }
-
-          .pc-only {
-            display: none !important;
-          }
-
-          .acc-panel.tab-filetree.open,
-          .acc-panel.tab-chat.open {
-            position: relative !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: calc(100vh - 60px) !important;
-            backdrop-filter: none !important;
-          }
-
-          .acc-panel.tab-filetree .acc-spine-container,
-          .acc-panel.tab-chat .acc-spine-container {
-            display: flex !important;
-          }
-
-          .acc-panel.tab-filetree .file-list {
-            display: flex !important;
-            flex-direction: column !important;
-            padding: 20px !important;
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-            column-width: auto !important;
-          }
-
-          .acc-panel.tab-filetree .file-list > div {
-            flex: 0 0 auto !important;
-            width: 100% !important;
-            margin-bottom: 20px !important;
-          }
-
-          .filetree-active .acc-panel.open:not(.tab-filetree),
-          .chat-active .acc-panel.open:not(.tab-chat) {
-            display: none !important;
-          }
-
-          .mobile-read-more {
-            display: flex !important;
-          }
-        }
-
-          .mobile-footer {
-            display: none;
-          }
-
-          @media (max-width: 1024px) and (orientation: portrait), (max-width: 768px) {
-            .mobile-footer {
-              display: flex;
-              flex-direction: column-reverse;
-              align-items: flex-end;
-              position: fixed;
-              bottom: calc(30px + env(safe-area-inset-bottom));
-              right: 20px;
-              width: auto;
-              height: auto;
-              background: transparent;
-              z-index: 2000;
-              border-top: none;
-              padding: 0;
-              gap: 16px;
-              pointer-events: none; /* Tránh chặn thao tác vuốt của ngón cái ở vùng trống */
-            }
-
-            .assistive-ball {
-              width: 48px;
-              height: 48px;
-              background: #b09278;
-              border-radius: 50%;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              color: black;
-              box-shadow: 0 6px 20px rgba(0,0,0,0.6);
-              cursor: pointer;
-              z-index: 2001;
-              transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-              pointer-events: auto; /* Chỉ cho phép tương tác tại quả cầu */
-            }
-
-            .assistive-ball.active {
-              transform: rotate(90deg);
-              background: black;
-              color: #b09278;
-            }
-
-            .assistive-ball.at-bottom {
-              width: auto;
-              min-width: 48px;
-              border-radius: 24px;
-              padding: 0;
-            }
-
-            .footer-expanded-content {
-              display: none;
-              flex-direction: column-reverse;
-              align-items: flex-end;
-              gap: 12px;
-              opacity: 0;
-              transform: translateY(20px) scale(0.8);
-              pointer-events: none;
-              transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            }
-
-            .footer-expanded-content.active {
-              display: flex;
-              opacity: 1;
-              transform: translateY(0) scale(1);
-              pointer-events: auto;
-            }
-            
-            .footer-item-wrapper {
-              display: flex;
-              align-items: center;
-              cursor: pointer;
-              transition: transform 0.2s;
-            }
-            
-            .footer-item-wrapper:active {
-              transform: scale(0.95);
-            }
-
-            .footer-item {
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              color: black;
-              height: 48px;
-              padding: 0 18px;
-              background: #b09278;
-              border-radius: 24px;
-              box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-              gap: 12px;
-              white-space: nowrap;
-            }
-
-            .footer-item-label {
-              font-family: 'Fredericka the Great', cursive;
-              font-size: 1.1rem;
-              color: black;
-              margin-top: 2px;
-            }
-            
-            .footer-item.active-action {
-              background: white;
-            }
-            .footer-item.active-action .footer-item-label {
-              color: black;
-            }
-
-            .add-note-btn, .filetree-btn, .chatvault-btn, .mobile-back-btn, .comment-trigger {
-              display: none !important;
-            }
-
-            .acc-panel.open {
-              height: calc(100vh - 60px) !important;
-            }
-            
-            .acc-panel.tab-filetree.open,
-            .acc-panel.tab-chat.open {
-               height: calc(100vh - 60px) !important;
-            }
-          }
-        `}</style>
-
         <div className="case-background"></div>
         <div className="video-overlay"></div>
 
-        {/* Mobile Assistive Ball Footer */}
-        <div className="mobile-footer">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div 
-              className={`assistive-ball ${isFooterExpanded ? 'active' : ''} ${showReadMore ? 'at-bottom' : ''}`}
-            >
-              {isFooterExpanded ? (
-                <div onClick={() => setIsFooterExpanded(false)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px' }}>
-                  <X size={28} />
-                </div>
-              ) : (
-                showReadMore ? (
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <div 
-                      onClick={() => setIsFooterExpanded(true)}
-                      style={{ width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    >
-                      <MoreVertical size={24} />
-                    </div>
-                    <div style={{ width: '1px', height: '24px', background: 'rgba(0,0,0,0.15)', margin: '0 2px' }} />
-                    <div 
-                      onClick={(e) => handleTabClick(nextTabForActive, e)}
-                      style={{ padding: '0 16px 0 10px', height: '48px', display: 'flex', alignItems: 'center', gap: '8px' }}
-                    >
-                      <span className="footer-item-label" style={{ fontSize: '0.95rem' }}>{nextTabForActive.title}</span>
-                      <ChevronRight size={22} />
-                    </div>
-                  </div>
-                ) : (
-                  <div onClick={() => setIsFooterExpanded(true)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px' }}>
-                    <MoreVertical size={28} />
-                  </div>
-                )
-              )}
-            </div>
-          </div>
-          
-          <div className={`footer-expanded-content ${isFooterExpanded ? 'active' : ''}`}>
-            <div className="footer-item-wrapper" onClick={() => { setIsFooterExpanded(false); if (activeOverlay) setActiveOverlay(null); else window.history.back(); }}>
-              <div className="footer-item">
-                <span className="footer-item-label">Back</span>
-                <ArrowLeft size={20} />
-              </div>
-            </div>
+        <MobileFooter 
+          isFooterExpanded={isFooterExpanded}
+          setIsFooterExpanded={setIsFooterExpanded}
+          showReadMore={showReadMore}
+          activeOverlay={activeOverlay}
+          setActiveOverlay={setActiveOverlay}
+          handleCreateNewNote={handleCreateNewNote}
+          fileName={fileName}
+          handleAppendComment={handleAppendComment}
+          handleTabClick={handleTabClick}
+          nextTabForActive={nextTabForActive}
+        />
 
-            <div className="footer-item-wrapper" onClick={() => { setIsFooterExpanded(false); setActiveOverlay(activeOverlay === 'filetree' ? null : 'filetree'); }}>
-              <div className={`footer-item ${activeOverlay === 'filetree' ? 'active-action' : ''}`}>
-                <span className="footer-item-label">File Tree</span>
-                <Folder size={20} />
-              </div>
-            </div>
-
-            <div className="footer-item-wrapper" onClick={() => { setIsFooterExpanded(false); handleCreateNewNote(); }}>
-              <div className="footer-item">
-                <span className="footer-item-label">New Note</span>
-                <Plus size={22} />
-              </div>
-            </div>
-
-            <div className="footer-item-wrapper" onClick={() => { setIsFooterExpanded(false); setActiveOverlay(activeOverlay === 'chat' ? null : 'chat'); }}>
-              <div className={`footer-item ${activeOverlay === 'chat' ? 'active-action' : ''}`}>
-                <span className="footer-item-label">AI Chat</span>
-                <MessageSquare size={20} />
-              </div>
-            </div>
-
-            <div 
-              className="footer-item-wrapper" 
-              onClick={() => { if (fileName && fileName !== 'chat' && fileName !== 'filetree') { setIsFooterExpanded(false); handleAppendComment(); } }}
-              style={{ opacity: (!fileName || fileName === 'chat' || fileName === 'filetree') ? 0.3 : 1 }}
-            >
-              <div className="footer-item">
-                <span className="footer-item-label">Comment</span>
-                <Pencil size={20} />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Sticky Spine */}
-        <div className={`acc-panel sticky-spine ${(!showHeader || activeTab || activeOverlay) ? 'header-hidden' : ''}`}>
-        <div className="acc-ope-container" style={{ width: '100%', flex: '1' }}>
-          <div className="spine-content">
-            <div className="add-note-btn" onClick={(e) => { e.stopPropagation(); handleCreateNewNote(); }} title="New Note">
-              <Plus size={44} />
-            </div>
-            <div className="filetree-btn" onClick={(e) => {
-              e.stopPropagation();
-              setActiveOverlay(prev => prev === 'filetree' ? null : 'filetree');
-            }} title="File Tree">
-              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-              </svg>
-            </div>            <div className="chatvault-btn" onClick={(e) => { 
-              e.stopPropagation(); 
-              setActiveOverlay(prev => prev === 'chat' ? null : 'chat');
-            }} title="AI Chat Vault">
-              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-              </svg>
-            </div>
-            <div className="acc-ope" onClick={() => window.location.href = '/'}>
-              <div className="ope-txt">Ope</div>
-              <div className="watson-txt">Watson</div>
-            </div>
-          </div>
-        </div>
-      </div>
+        <StickySpine 
+          showHeader={showHeader}
+          activeTab={activeTab}
+          activeOverlay={activeOverlay}
+          handleCreateNewNote={handleCreateNewNote}
+          setActiveOverlay={setActiveOverlay}
+        />
 
       {tabs.map((tab, index) => {
         const isOverlay = tab.id === 'filetree' || tab.id === 'chat';
         const isOpen = isOverlay ? activeOverlay === tab.id : activeTab === tab.id;
         const isPersistent = tab.id === 'chat' || tab.id === activeTab;
-        const nextTab = tabs.slice(index + 1).find(t => t.type === 'editor' || t.type === 'static');
 
         return (
           <div 
@@ -1959,7 +1244,6 @@ export default function CaseClient({ staticRecords = [] }) {
             className={`acc-panel ${isOpen ? 'open' : 'closed'} tab-${tab.id}`}
             data-tab-id={tab.id}
           >
-            {/* The spine is always shown, whether open or closed */}
             <div className="acc-spine-container" onClick={(e) => handleTabClick(tab, e)}>
               <div className="acc-spine">
                 {tab.title}
@@ -1984,93 +1268,20 @@ export default function CaseClient({ staticRecords = [] }) {
                 onClick={e => e.stopPropagation()}
                 style={!isOpen ? { display: 'none' } : {}}
               >
-                {tab.type === 'editor' && (
-                  <div className="floating-actions">
-                    <button
-                      className={`icon-btn${isEditing ? ' icon-btn--active' : ''}`}
-                      onClick={handleToggleEditMode}
-                      title={isEditing ? 'Switch to Read mode' : 'Switch to Edit mode'}
-                    >
-                      {isEditing ? (
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                          <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                      ) : (
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                        </svg>
-                      )}
-                    </button>
-                    <button
-                      className={`icon-btn icon-btn--save${saveStatus === 'saved' ? ' icon-btn--active' : saveStatus === 'error' ? ' icon-btn--error' : saveStatus === 'saving' ? ' icon-btn--saving' : ''}`}
-                      onClick={handleSidebarSave}
-                      disabled={saveStatus === 'saving'}
-                      title="Save"
-                    >
-                      {saveStatus === 'saving' ? (
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{opacity:0.5}}>
-                          <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.06-5.96"/>
-                        </svg>
-                      ) : saveStatus === 'saved' ? (
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12"/>
-                        </svg>
-                      ) : saveStatus === 'error' ? (
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                        </svg>
-                      ) : (
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                          <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                )}
-                {tab.id === 'filetree' && (
-                  <div className="floating-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <button
-                      className={`icon-btn pc-only ${viewMode === 'graph' ? 'icon-btn--active' : ''}`}
-                      onClick={() => setViewMode(viewMode === 'list' ? 'graph' : 'list')}
-                      title="Toggle Graph/List View"
-                      /* Removed style={{ display: 'none' }} to make it visible */
-                    >
-                      <Share2 size={18} />
-                    </button>                    {showSearch && (
-                      <input
-                        type="text"
-                        placeholder="Search notes..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        autoFocus
-                        className="search-input"
-                        style={{
-                          background: 'rgba(255,255,255,0.05)',
-                          border: '1px solid var(--border)',
-                          borderRadius: '4px',
-                          padding: '4px 8px',
-                          color: 'var(--txt)',
-                          fontSize: '13px',
-                          outline: 'none',
-                          width: '150px'
-                        }}
-                      />
-                    )}
-                    <button 
-                      className={`icon-btn ${showSearch ? 'icon-btn--active' : ''}`} 
-                      onClick={() => {
-                        setShowSearch(!showSearch);
-                        if (showSearch) setSearchTerm('');
-                      }}
-                      title="Search notes"
-                    >
-                      <Search size={18} />
-                    </button>
-                  </div>
-                )}
+                <FloatingActions 
+                  tab={tab}
+                  isEditing={isEditing}
+                  handleToggleEditMode={handleToggleEditMode}
+                  saveStatus={saveStatus}
+                  handleSidebarSave={handleSidebarSave}
+                  viewMode={viewMode}
+                  setViewMode={setViewMode}
+                  showSearch={showSearch}
+                  setShowSearch={setShowSearch}
+                  searchTerm={searchTerm}
+                  setSearchTerm={setSearchTerm}
+                />
+
                 <div className="acc-body">
                   {tab.type === 'sidebar' && (
                     <>
@@ -2095,29 +1306,7 @@ export default function CaseClient({ staticRecords = [] }) {
                       <Chat isEmbedded={true} onLinkClick={handleLinkClick} />
                     </div>
                   )}
-                  {tab.type === 'static' && (
-                    <main className="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
-                      <article 
-                        className="markdown-container" 
-                        style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}
-                        onScroll={(e) => {
-                          const target = e.target;
-                          const atBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 100;
-                          if (atBottom !== isAtBottom) setIsAtBottom(atBottom);
-                        }}
-                      >
-                        <BlockEditor
-                          key={contentKey}
-                          content={content}
-                          fileName={fileName}
-                          onLinkClick={handleLinkClick}
-                          isEditing={false}
-                          readOnly={true}
-                        />
-                      </article>
-                    </main>
-                  )}
-                  {tab.type === 'editor' && (
+                  {(tab.type === 'static' || tab.type === 'editor') && (
                     <main className="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
                       <article 
                         className="markdown-container" 
@@ -2134,34 +1323,37 @@ export default function CaseClient({ staticRecords = [] }) {
                           fileName={fileName}
                           onLinkClick={handleLinkClick}
                           onSaveFile={handleSaveFile}
-                          isEditing={isEditing}
+                          isEditing={tab.type === 'editor' ? isEditing : false}
+                          readOnly={tab.type === 'static'}
                           onToggleEditing={handleToggleEditMode}
                           onSaveRef={saveHandlerRef}
                         />
                       </article>
-                      <div 
-                        className="comment-trigger" 
-                        onClick={handleAppendComment}
-                        title="Add comment"
-                        style={{
-                          position: 'absolute',
-                          bottom: '30px',
-                          right: '30px',
-                          width: '60px',
-                          height: '60px',
-                          borderRadius: '50%',
-                          backgroundColor: 'var(--colorone)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                          zIndex: 200,
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                          color: 'black'
-                        }}
-                      >
-                        <Pencil size={28} />
-                      </div>
+                      {tab.type === 'editor' && (
+                        <div 
+                          className="comment-trigger" 
+                          onClick={handleAppendComment}
+                          title="Add comment"
+                          style={{
+                            position: 'absolute',
+                            bottom: '30px',
+                            right: '30px',
+                            width: '60px',
+                            height: '60px',
+                            borderRadius: '50%',
+                            backgroundColor: 'var(--colorone)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            zIndex: 200,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                            color: 'black'
+                          }}
+                        >
+                          <Pencil size={28} />
+                        </div>
+                      )}
                     </main>
                   )}
                 </div>
@@ -2171,88 +1363,14 @@ export default function CaseClient({ staticRecords = [] }) {
         );
       })}
 
-      {passPrompt && (
-        <div className="pass-overlay" onClick={() => { passPrompt.reject(new Error('cancelled')); setPassPrompt(null); }}>
-          <div className="pass-modal" onClick={e => e.stopPropagation()}>
-            <div className="pass-modal__title">Please enter password to edit</div>
-            <input
-              className="pass-modal__input"
-              type="password"
-              placeholder="Edit password…"
-              autoFocus
-              onKeyDown={e => {
-                if (e.key === 'Enter') {
-                  const val = e.target.value.trim();
-                  if (!val) return;
-                  passPrompt.resolve(val);
-                  setPassPrompt(null);
-                }
-                if (e.key === 'Escape') {
-                  passPrompt.reject(new Error('cancelled'));
-                  setPassPrompt(null);
-                }
-              }}
-            />
-            <div className="pass-modal__hint">Enter to verify · Esc to cancel</div>
-          </div>
-        </div>
-      )}
-
-      {namePrompt && (
-        <div className="pass-overlay" onClick={() => { namePrompt.reject(new Error('cancelled')); setNamePrompt(null); }}>
-          <div className="pass-modal" onClick={e => e.stopPropagation()}>
-            <div className="pass-modal__title">Enter the name for your new note</div>
-            <input
-              className="pass-modal__input"
-              type="text"
-              placeholder="Note name…"
-              autoFocus
-              onKeyDown={e => {
-                if (e.key === 'Enter') {
-                  const val = e.target.value.trim();
-                  if (!val) return;
-                  namePrompt.resolve(val);
-                  setNamePrompt(null);
-                }
-                if (e.key === 'Escape') {
-                  namePrompt.reject(new Error('cancelled'));
-                  setNamePrompt(null);
-                }
-              }}
-            />
-            <div className="pass-modal__hint">Enter to create · Esc to cancel</div>
-          </div>
-        </div>
-      )}
-
-      {commentPrompt && (
-        <div className="pass-overlay" onClick={() => { commentPrompt.reject(new Error('cancelled')); setCommentPrompt(null); }}>
-          <div className="pass-modal" onClick={e => e.stopPropagation()}>
-            <div className="pass-modal__title">Add a comment to this note</div>
-            <textarea
-              className="pass-modal__input"
-              style={{ minHeight: '100px', resize: 'vertical', paddingTop: '10px' }}
-              placeholder="Your comment…"
-              autoFocus
-              defaultValue={commentPrompt.defaultValue}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  const val = e.target.value.trim();
-                  if (!val) return;
-                  commentPrompt.resolve(val);
-                  setCommentPrompt(null);
-                }
-                if (e.key === 'Escape') {
-                  commentPrompt.reject(new Error('cancelled'));
-                  setCommentPrompt(null);
-                }
-              }}
-            />
-            <div className="pass-modal__hint">Enter to add · Shift+Enter for new line · Esc to cancel</div>
-          </div>
-        </div>
-      )}
+      <PromptOverlays 
+        passPrompt={passPrompt}
+        setPassPrompt={setPassPrompt}
+        namePrompt={namePrompt}
+        setNamePrompt={setNamePrompt}
+        commentPrompt={commentPrompt}
+        setCommentPrompt={setCommentPrompt}
+      />
 
       <VaultStyles />
     </div>

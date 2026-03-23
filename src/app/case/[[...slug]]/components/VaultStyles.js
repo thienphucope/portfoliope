@@ -399,6 +399,636 @@ export default function VaultStyles() {
           .markdown-content h3 { font-size:1.2em; }
           .tree-item { font-size:clamp(13px,1vw + 10px,16px); }
         }
+
+        /* ── CASE CLIENT ACCORDION STYLES ──────────────────────────────────── */
+        
+        @import url('https://fonts.googleapis.com/css2?family=Fredericka+the+Great&display=swap');
+        
+        /* Force transparent backgrounds for all vault content */
+        body, .app-shell, .main-content, .sidebar-panel, .chat-panel, 
+        .chat-container, .markdown-container, .file-list, .prose {
+          background: transparent !important;
+        }
+
+        .accordion-app {
+          display: flex;
+          flex-direction: row;
+          width: 100vw;
+          height: 100vh;
+          overflow-x: auto;
+          overflow-y: hidden;
+          background: transparent;
+        }
+
+        .case-background {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          z-index: -2;
+          pointer-events: none;
+          background-image: url('/casebg2.png');
+          background-size: cover;
+          background-position: center;
+          background-color: black;
+        }
+        .video-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); pointer-events: none; }
+
+        /* Hide scrollbar for accordion app container itself */
+        .accordion-app::-webkit-scrollbar {
+          display: none;
+        }
+
+        .sticky-spine {
+          position: sticky;
+          left: 0;
+          z-index: 50;
+          flex-basis: 150px;
+          min-width: 150px;
+          flex-grow: 0;
+          flex-shrink: 0;
+          background-color: var(--colorone);
+          border-right: 2px solid rgba(255, 255, 255, 0.2);
+          cursor: default;
+          isolation: isolate;
+        }
+
+        .spine-content {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .add-note-btn, .filetree-btn, .chatvault-btn {
+          width: 80px;
+          height: 80px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          position: absolute;
+          color: black;
+          font-weight: bold;
+          font-size: 20px;
+          z-index: 100;
+          transition: transform 0.2s, opacity 0.2s;
+        }
+        .add-note-btn:hover, .filetree-btn:hover, .chatvault-btn:hover {
+          opacity: 0.7;
+          transform: scale(1.1);
+        }
+
+        .add-note-btn { top: 40px; }
+        .filetree-btn { top: 140px; }
+        .chatvault-btn { top: 240px; }
+
+        .acc-ope {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 2rem;
+          font-family: 'Fredericka the Great', cursive;
+          font-size: 2.8rem;
+          color: black;
+          mix-blend-mode: destination-out;
+          user-select: none;
+          position: absolute;
+          bottom: 40px;
+          cursor: pointer;
+        }
+        .ope-txt, .watson-txt {
+          writing-mode: vertical-rl;
+          white-space: nowrap;
+          letter-spacing: 2px;
+        }
+
+        .acc-panel {
+          display: flex;
+          flex-direction: row;
+          height: 100%;
+          transition: flex-basis 1s cubic-bezier(0.25, 0.8, 0.25, 1), min-width 1s cubic-bezier(0.25, 0.8, 0.25, 1), flex-grow 1s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 1s, opacity 0.5s;
+          border-right: 2px solid rgba(255, 255, 255, 0.2);
+          overflow: hidden;
+          flex-shrink: 0;
+        }
+
+        .acc-panel.closed {
+          flex-basis: 150px;
+          min-width: 150px;
+          flex-grow: 0;
+          background-color: var(--colorone);
+          cursor: pointer;
+          isolation: isolate;
+        }
+
+        /* Completely hide File Tree and Chat spines as they're now accessible via buttons */
+        .acc-panel.tab-filetree.closed,
+        .acc-panel.tab-chat.closed {
+          display: none !important;
+        }
+
+        .acc-panel.open {
+          /* Để hở ra khoảng 450px cho các spine khác */
+          flex-basis: calc(100vw - 450px);
+          min-width: calc(100vw - 450px);
+          flex-grow: 1;
+          background-color: transparent;
+        }
+
+        /* Overlay Mode for File Tree and Chat */
+        .filetree-active .acc-panel.closed,
+        .chat-active .acc-panel.closed {
+          opacity: 0;
+          pointer-events: none;
+        }
+
+        .filetree-active .acc-panel.open:not(.tab-filetree),
+        .chat-active .acc-panel.open:not(.tab-chat) {
+          visibility: hidden !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+        }
+
+        .acc-panel.tab-filetree.open,
+        .acc-panel.tab-chat.open {
+          position: fixed;
+          left: 150px;
+          top: 0;
+          width: calc(100vw - 150px);
+          height: 100vh;
+          z-index: 45;
+          flex-basis: auto !important;
+          min-width: 0 !important;
+          background: transparent !important;
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+          border-right: none;
+        }
+
+        .acc-panel.tab-filetree .acc-spine-container,
+        .acc-panel.tab-chat .acc-spine-container {
+          display: none;
+        }
+
+        .acc-panel.tab-filetree .acc-content,
+        .acc-panel.tab-chat .acc-content {
+          width: 100%;
+        }
+
+        .acc-panel.tab-filetree .file-list {
+          display: block !important;
+          column-width: 280px;
+          column-gap: 60px;
+          height: 100%;
+          padding: 60px !important;
+          overflow-x: auto !important;
+          overflow-y: hidden !important;
+        }
+
+        /* Top level items in file list should not break across columns */
+        .acc-panel.tab-filetree .file-list > div {
+          break-inside: avoid;
+          margin-bottom: 30px;
+        }
+
+        /* Ensure links and text are readable against video */
+        .acc-panel.tab-filetree .file-list * {
+          text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+        }
+
+        .pc-only {
+          display: flex !important;
+        }
+
+        .acc-spine-container {
+          flex: 0 0 150px;
+          height: 100%;
+          background-color: var(--colorone);
+          cursor: pointer;
+          display: flex;
+          align-items: top;
+          padding-top: 3rem;
+          justify-content: center;
+          isolation: isolate;
+        }
+
+        .acc-spine {
+          writing-mode: vertical-rl;
+          font-family: 'Fredericka the Great', cursive;
+          font-size: 3rem;
+          color: black;
+          mix-blend-mode: destination-out;
+          white-space: nowrap;
+          letter-spacing: 2px;
+          user-select: none;
+        }
+        
+        .acc-ope-container {
+          flex: 0 0 150px;
+          height: 100%;
+          background-color: #b09278;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          isolation: isolate;
+        }
+
+        .acc-content {
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          width: calc(100% - 150px);
+          animation: fadeIn 1s ease forwards 0.5s;
+          opacity: 0;
+          position: relative;
+        }
+
+        @keyframes fadeIn {
+          to { opacity: 1; }
+        }
+
+        .acc-body {
+          flex: 1;
+          overflow: hidden; 
+          position: relative;
+          display: flex;
+          flex-direction: column;
+        }
+
+        /* Hide all scrollbars inside panel bodies */
+        .acc-body *::-webkit-scrollbar {
+          display: none !important;
+        }
+        .acc-body * {
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
+        }
+
+        .floating-actions {
+          position: absolute;
+          top: 15px;
+          right: 30px;
+          display: flex;
+          gap: 10px;
+          z-index: 100;
+        }
+
+        .mobile-back-btn {
+          display: none;
+        }
+
+        @media (max-width: 1024px) and (orientation: portrait), (max-width: 768px) {
+          .accordion-app {
+            flex-direction: column !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+          }
+
+          .accordion-app.has-active {
+            overflow: hidden !important;
+          }
+
+          .sticky-spine {
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            width: 100% !important;
+            height: 50px !important;
+            flex: 0 0 50px !important;
+            min-width: 0 !important;
+            border-right: none !important;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
+            transition: transform 0.3s ease;
+          }
+
+          .header-hidden {
+            transform: translateY(-100%);
+          }
+
+          .acc-ope-container {
+            flex: 1 !important;
+            width: 100% !important;
+            height: 50px !important;
+            padding-top: 0 !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+          }
+
+          .spine-content {
+            flex-direction: row !important;
+            width: 100% !important;
+            height: 100% !important;
+            justify-content: flex-start !important;
+            align-items: center !important;
+            position: relative !important;
+            padding: 0 20px !important;
+          }
+
+          .acc-ope {
+            flex-direction: row !important;
+            gap: 10px !important;
+            position: static !important;
+            font-size: 1.4rem !important;
+            letter-spacing: 1px !important;
+            text-align: left !important;
+            margin: 0 !important;
+            cursor: pointer;
+          }
+
+          .ope-txt, .watson-txt {
+            writing-mode: horizontal-tb !important;
+            white-space: nowrap !important;
+          }
+
+          .mobile-back-btn {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1001;
+            color: black;
+            mix-blend-mode: destination-out;
+            cursor: pointer;
+          }
+
+          .add-note-btn, .filetree-btn, .chatvault-btn {
+            position: absolute !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            margin: 0 !important;
+            width: 32px !important;
+            height: 32px !important;
+            font-size: 14px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: opacity 0.2s !important;
+          }
+
+          .add-note-btn svg, .filetree-btn svg, .chatvault-btn svg {
+            width: 22px !important;
+            height: 22px !important;
+          }
+
+          .add-note-btn {
+            right: 20px !important;
+            left: auto !important;
+          }
+          .chatvault-btn {
+            right: 60px !important;
+          }
+          .filetree-btn {
+            right: 100px !important;
+          }
+
+          .acc-panel {
+            width: 100% !important;
+            flex-direction: column !important;
+            border-right: none !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+          }
+
+          .acc-panel.closed {
+            flex: 0 0 50px !important;
+            min-width: 0 !important;
+            height: 50px !important;
+          }
+
+          .accordion-app.has-active .acc-panel.closed {
+            display: none !important;
+          }
+
+          .acc-panel.open {
+            flex: 1 !important;
+            min-width: 0 !important;
+            height: calc(100vh - 60px) !important;
+          }
+
+          .acc-spine-container {
+            flex: 0 0 50px !important;
+            width: 100% !important;
+            height: 50px !important;
+            padding-top: 0 !important;
+            justify-content: flex-start !important;
+            align-items: center !important;
+            padding-left: 20px !important;
+            position: relative !important;
+          }
+
+          .acc-spine {
+            writing-mode: horizontal-tb !important;
+            font-size: 1.1rem !important;
+            letter-spacing: 1px !important;
+          }
+
+          .acc-content {
+            width: 100% !important;
+            height: calc(100% - 50px) !important;
+            flex: 1 !important;
+            animation: none !important;
+            opacity: 1 !important;
+          }
+
+          .acc-body {
+            height: 100% !important;
+            flex: 1 !important;
+            overflow: hidden !important;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+          }
+          
+          .main-content {
+            padding: 0 !important;
+            overflow: hidden !important;
+          }
+
+          .markdown-container {
+            padding: 0 15px 100px !important;
+            overscroll-behavior: contain;
+          }
+
+          .floating-actions {
+            top: 10px !important;
+            right: 15px !important;
+          }
+          
+          .video-background iframe {
+            transform: translate(-50%, -50%) scale(2.5) !important;
+          }
+
+          .pc-only {
+            display: none !important;
+          }
+
+          .acc-panel.tab-filetree.open,
+          .acc-panel.tab-chat.open {
+            position: relative !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: calc(100vh - 60px) !important;
+            backdrop-filter: none !important;
+          }
+
+          .acc-panel.tab-filetree .acc-spine-container,
+          .acc-panel.tab-chat .acc-spine-container {
+            display: flex !important;
+          }
+
+          .acc-panel.tab-filetree .file-list {
+            display: flex !important;
+            flex-direction: column !important;
+            padding: 20px !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            column-width: auto !important;
+          }
+
+          .acc-panel.tab-filetree .file-list > div {
+            flex: 0 0 auto !important;
+            width: 100% !important;
+            margin-bottom: 20px !important;
+          }
+
+          .filetree-active .acc-panel.open:not(.tab-filetree),
+          .chat-active .acc-panel.open:not(.tab-chat) {
+            display: none !important;
+          }
+
+          .mobile-read-more {
+            display: flex !important;
+          }
+        }
+
+          .mobile-footer {
+            display: none;
+          }
+
+          @media (max-width: 1024px) and (orientation: portrait), (max-width: 768px) {
+            .mobile-footer {
+              display: flex;
+              flex-direction: column-reverse;
+              align-items: flex-end;
+              position: fixed;
+              bottom: calc(30px + env(safe-area-inset-bottom));
+              right: 20px;
+              width: auto;
+              height: auto;
+              background: transparent;
+              z-index: 2000;
+              border-top: none;
+              padding: 0;
+              gap: 16px;
+              pointer-events: none; /* Tránh chặn thao tác vuốt của ngón cái ở vùng trống */
+            }
+
+            .assistive-ball {
+              width: 48px;
+              height: 48px;
+              background: #b09278;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: black;
+              box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+              cursor: pointer;
+              z-index: 2001;
+              transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+              pointer-events: auto; /* Chỉ cho phép tương tác tại quả cầu */
+            }
+
+            .assistive-ball.active {
+              transform: rotate(90deg);
+              background: black;
+              color: #b09278;
+            }
+
+            .assistive-ball.at-bottom {
+              width: auto;
+              min-width: 48px;
+              border-radius: 24px;
+              padding: 0;
+            }
+
+            .footer-expanded-content {
+              display: none;
+              flex-direction: column-reverse;
+              align-items: flex-end;
+              gap: 12px;
+              opacity: 0;
+              transform: translateY(20px) scale(0.8);
+              pointer-events: none;
+              transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            }
+
+            .footer-expanded-content.active {
+              display: flex;
+              opacity: 1;
+              transform: translateY(0) scale(1);
+              pointer-events: auto;
+            }
+            
+            .footer-item-wrapper {
+              display: flex;
+              align-items: center;
+              cursor: pointer;
+              transition: transform 0.2s;
+            }
+            
+            .footer-item-wrapper:active {
+              transform: scale(0.95);
+            }
+
+            .footer-item {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: black;
+              height: 48px;
+              padding: 0 18px;
+              background: #b09278;
+              border-radius: 24px;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+              gap: 12px;
+              white-space: nowrap;
+            }
+
+            .footer-item-label {
+              font-family: 'Fredericka the Great', cursive;
+              font-size: 1.1rem;
+              color: black;
+              margin-top: 2px;
+            }
+            
+            .footer-item.active-action {
+              background: white;
+            }
+            .footer-item.active-action .footer-item-label {
+              color: black;
+            }
+
+            .add-note-btn, .filetree-btn, .chatvault-btn, .mobile-back-btn, .comment-trigger {
+              display: none !important;
+            }
+
+            .acc-panel.open {
+              height: calc(100vh - 60px) !important;
+            }
+            
+            .acc-panel.tab-filetree.open,
+            .acc-panel.tab-chat.open {
+               height: calc(100vh - 60px) !important;
+            }
+          }
       `}</style>
   );
 }
