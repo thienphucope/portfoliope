@@ -413,18 +413,26 @@ export default function CaseClient({ staticRecords = [] }) {
 
     (async () => {
       try {
-        // Fetch rawTree directly and initialize state to avoid stale closures
         const rawTree = await fetch('/api/cases', { cache: 'no-store' }).then(r => r.json());
         if (!Array.isArray(rawTree)) { setContent(`# API Error\n${rawTree.error || 'Unknown'}`); return; }
         
-        // Re-populate registry and state from this fresh fetch
         const newRegistry = {};
+        const repoPathRegistry = {}; // Map name/path to the actual repoPath (ID)
+        
         const buildReg = (nodes, repoPath = '') => nodes.forEach(n => {
           if (n.kind === 'file') {
             const fullRepoPath = repoPath ? `${repoPath}/${n.name}` : n.name;
-            newRegistry[fullRepoPath.toLowerCase()] = n.path;
-            newRegistry[n.name.toLowerCase()] = n.path;
-            newRegistry[n.name.replace('.md', '').toLowerCase()] = n.path;
+            const lowerFull = fullRepoPath.toLowerCase();
+            const lowerName = n.name.toLowerCase();
+            const lowerNoExt = n.name.replace('.md', '').toLowerCase();
+            
+            newRegistry[lowerFull] = n.path;
+            newRegistry[lowerName] = n.path;
+            newRegistry[lowerNoExt] = n.path;
+            
+            repoPathRegistry[lowerFull] = fullRepoPath;
+            repoPathRegistry[lowerName] = fullRepoPath;
+            repoPathRegistry[lowerNoExt] = fullRepoPath;
           } else if (n.children) {
             buildReg(n.children, repoPath ? `${repoPath}/${n.name}` : n.name);
           }
@@ -434,94 +442,45 @@ export default function CaseClient({ staticRecords = [] }) {
         setFileTree(rawTree);
 
         const pathParts = window.location.pathname.split('/').filter(Boolean);
-        let targetFile = DEFAULT_FILE;
-        let forceTab = (targetFile === 'chat' || targetFile === 'filetree') ? targetFile : null;
-
-        // Insert /case buffer into history if landing deep
-        if (pathParts[0] === 'case') {
-          const currentSlug = pathParts.length > 1 ? pathParts.slice(1).map(decodeURIComponent).join('/') : DEFAULT_FILE;
-          const currentRepoKey = (currentSlug === 'chat' || currentSlug === 'filetree') ? currentSlug : currentSlug + '.md';
-          
-          window.history.replaceState({ repoKey: null }, '', '/case');
-          window.history.pushState({ repoKey: currentRepoKey }, '', window.location.pathname === '/case' ? `/case/${currentSlug}` : window.location.pathname);
-        }
-
-        if (pathParts.length > 1 && pathParts[0] === 'case') {
-          const slugParts = pathParts.slice(1).map(decodeURIComponent);
-          const slugStr = slugParts.join('/');
-          forceTab = null;
-
-          // Check if the slug matches a static record (e.g., 'faq', 'case-info')
-          const staticMatch = staticRecords.find(r => r.id.replace('system::', '') === slugStr);
-          if (staticMatch) {
-            setActiveTab(staticMatch.id);
-            applyFileContent(staticMatch.id, staticMatch.content);
-            return; // Handled as static record
-          }
-
-          if (slugStr === 'chat') {
-            forceTab = 'chat';
-          } else if (slugStr === 'filetree') {
-            forceTab = 'filetree';
-          } else {
-            targetFile = slugStr + '.md';
-          }
-        }
-
-        // Find file in registry with full repo path to match tab ID
-        const findFile = (nodes, target, repoPath = '') => {
-          for (const n of nodes) {
-            const currentFullRepoPath = repoPath ? `${repoPath}/${n.name}` : n.name;
-            if (n.kind === 'file' && currentFullRepoPath.toLowerCase() === target.toLowerCase()) {
-              return { path: n.path, name: n.name, id: currentFullRepoPath };
-            }
-            if (n.children) {
-              const found = findFile(n.children, target, currentFullRepoPath);
-              if (found) return found;
-            }
-          }
-          return null;
-        };
+        const rawDefault = process.env.NEXT_PUBLIC_DEFAULT_VAULT_FILE || "chat";
+        const cleanDefault = rawDefault.replace(/\.md$/, '');
         
-        // Use rawTree instead of stale fileTree state
-        const db = findFile(rawTree, targetFile);
+        let targetSlug = cleanDefault;
+        if (pathParts[0] === 'case' && pathParts.length > 1) {
+          targetSlug = decodeURIComponent(pathParts.slice(1).join('/'));
+        }
+
+        const cleanTargetSlug = targetSlug.replace(/\.md$/, '');
+        let forceTab = (cleanTargetSlug === 'chat' || cleanTargetSlug === 'filetree') ? cleanTargetSlug : null;
+
+        // Find the actual file ID from our new registry
+        const lowerTarget = cleanTargetSlug.toLowerCase();
+        const actualRepoPath = repoPathRegistry[lowerTarget] || repoPathRegistry[lowerTarget + '.md'];
+        const githubUrl = newRegistry[lowerTarget] || newRegistry[lowerTarget + '.md'];
+
         setTimeout(() => {
-          if (db) {
-            loadFile(db.path, db.name, db.id, 'replace', !forceTab);
-            if (forceTab) {
-              setActiveOverlay(forceTab);
-              const newUrl = `/case/${forceTab}`;
-              if (window.location.pathname !== newUrl) {
-                window.history.replaceState({ repoKey: forceTab }, '', newUrl);
-              }
+          if (forceTab) {
+            setActiveOverlay(forceTab);
+            // Ensure the initial file behind the overlay is the default one
+            const defRepoPath = repoPathRegistry[cleanDefault.toLowerCase()] || repoPathRegistry[cleanDefault.toLowerCase() + '.md'];
+            const defUrl = newRegistry[cleanDefault.toLowerCase()] || newRegistry[cleanDefault.toLowerCase() + '.md'];
+            if (defRepoPath && defUrl) {
+              loadFile(defUrl, defRepoPath.split('/').pop(), defRepoPath, 'replace', false);
             }
+          } else if (actualRepoPath && githubUrl) {
+            loadFile(githubUrl, actualRepoPath.split('/').pop(), actualRepoPath, 'replace', true);
           } else {
-            // Check registry for targetFile before falling back (handles flat names and missing .md)
-            const cleanTarget = targetFile.toLowerCase();
-            const regPath = fileRegistry.current[cleanTarget] || 
-                            fileRegistry.current[cleanTarget.replace('.md', '')];
-            
-            if (regPath) {
-              const baseName = targetFile.split('/').pop();
-              loadFile(regPath, baseName, targetFile, 'replace', !forceTab);
+            // Fallback to static records
+            const staticMatch = staticRecords.find(r => r.id.replace('system::', '').toLowerCase() === lowerTarget);
+            if (staticMatch) {
+              setActiveTab(staticMatch.id);
+              applyFileContent(staticMatch.id, staticMatch.content);
             } else {
-              // Final fallback to default file if URL path not found
-              const fallbackDb = findFile(rawTree, DEFAULT_FILE);
-              if (fallbackDb) {
-                loadFile(fallbackDb.path, fallbackDb.name, fallbackDb.id, 'replace', !forceTab);
-              } else {
-                const p = fileRegistry.current[DEFAULT_FILE.toLowerCase()];
-                if (p) {
-                  loadFile(p, DEFAULT_FILE, null, 'replace', !forceTab);
-                }
-              }
-              
-              if (forceTab) {
-                setActiveOverlay(forceTab);
-                const newUrl = `/case/${forceTab}`;
-                if (window.location.pathname !== newUrl) {
-                  window.history.replaceState({ repoKey: forceTab }, '', newUrl);
-                }
+              // Final fallback to default file
+              const defRepoPath = repoPathRegistry[cleanDefault.toLowerCase()] || repoPathRegistry[cleanDefault.toLowerCase() + '.md'];
+              const defUrl = newRegistry[cleanDefault.toLowerCase()] || newRegistry[cleanDefault.toLowerCase() + '.md'];
+              if (defRepoPath && defUrl) {
+                loadFile(defUrl, defRepoPath.split('/').pop(), defRepoPath, 'replace', true);
               }
             }
           }
