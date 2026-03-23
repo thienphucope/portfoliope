@@ -413,12 +413,26 @@ export default function CaseClient({ staticRecords = [] }) {
 
     (async () => {
       try {
-        await refreshTree();
-        const tree = fileTree; // This might be stale if used immediately, but wait...
-        
-        // Use the freshly fetched tree directly for initial logic
+        // Fetch rawTree directly and initialize state to avoid stale closures
         const rawTree = await fetch('/api/cases', { cache: 'no-store' }).then(r => r.json());
         if (!Array.isArray(rawTree)) { setContent(`# API Error\n${rawTree.error || 'Unknown'}`); return; }
+        
+        // Re-populate registry and state from this fresh fetch
+        const newRegistry = {};
+        const buildReg = (nodes, repoPath = '') => nodes.forEach(n => {
+          if (n.kind === 'file') {
+            const fullRepoPath = repoPath ? `${repoPath}/${n.name}` : n.name;
+            newRegistry[fullRepoPath.toLowerCase()] = n.path;
+            newRegistry[n.name.toLowerCase()] = n.path;
+            newRegistry[n.name.replace('.md', '').toLowerCase()] = n.path;
+          } else if (n.children) {
+            buildReg(n.children, repoPath ? `${repoPath}/${n.name}` : n.name);
+          }
+        });
+        buildReg(rawTree);
+        fileRegistry.current = newRegistry;
+        setFileTree(rawTree);
+
         const pathParts = window.location.pathname.split('/').filter(Boolean);
         let targetFile = DEFAULT_FILE;
         let forceTab = (targetFile === 'chat' || targetFile === 'filetree') ? targetFile : null;
@@ -469,7 +483,8 @@ export default function CaseClient({ staticRecords = [] }) {
           return null;
         };
         
-        const db = findFile(tree, targetFile);
+        // Use rawTree instead of stale fileTree state
+        const db = findFile(rawTree, targetFile);
         setTimeout(() => {
           if (db) {
             loadFile(db.path, db.name, db.id, 'replace', !forceTab);
@@ -481,29 +496,27 @@ export default function CaseClient({ staticRecords = [] }) {
               }
             }
           } else {
-            // Fallback to default file if URL path not found
-            const fallbackDb = findFile(tree, DEFAULT_FILE);
-            if (fallbackDb) {
-              loadFile(fallbackDb.path, fallbackDb.name, fallbackDb.id, 'replace', !forceTab);
-              if (forceTab) {
-                setActiveOverlay(forceTab);
-                const newUrl = `/case/${forceTab}`;
-                if (window.location.pathname !== newUrl) {
-                  window.history.replaceState({ repoKey: forceTab }, '', newUrl);
+            // Check registry for targetFile before falling back (handles flat names and missing .md)
+            const cleanTarget = targetFile.toLowerCase();
+            const regPath = fileRegistry.current[cleanTarget] || 
+                            fileRegistry.current[cleanTarget.replace('.md', '')];
+            
+            if (regPath) {
+              const baseName = targetFile.split('/').pop();
+              loadFile(regPath, baseName, targetFile, 'replace', !forceTab);
+            } else {
+              // Final fallback to default file if URL path not found
+              const fallbackDb = findFile(rawTree, DEFAULT_FILE);
+              if (fallbackDb) {
+                loadFile(fallbackDb.path, fallbackDb.name, fallbackDb.id, 'replace', !forceTab);
+              } else {
+                const p = fileRegistry.current[DEFAULT_FILE.toLowerCase()];
+                if (p) {
+                  loadFile(p, DEFAULT_FILE, null, 'replace', !forceTab);
                 }
               }
-            } else {
-              const p = fileRegistry.current[DEFAULT_FILE.toLowerCase()];
-              if (p) {
-                loadFile(p, DEFAULT_FILE, null, 'replace', !forceTab);
-                if (forceTab) {
-                  setActiveOverlay(forceTab);
-                  const newUrl = `/case/${forceTab}`;
-                  if (window.location.pathname !== newUrl) {
-                    window.history.replaceState({ repoKey: forceTab }, '', newUrl);
-                  }
-                }
-              } else if (forceTab) {
+              
+              if (forceTab) {
                 setActiveOverlay(forceTab);
                 const newUrl = `/case/${forceTab}`;
                 if (window.location.pathname !== newUrl) {
@@ -513,9 +526,12 @@ export default function CaseClient({ staticRecords = [] }) {
             }
           }
         }, 500);
-      } catch { setContent('# Connection Error\nFailed to connect to API.'); }
+      } catch (e) { 
+        console.error("Initialization error:", e);
+        setContent('# Connection Error\nFailed to connect to API.'); 
+      }
     })();
-  }, [loadFile]);
+  }, [loadFile, staticRecords, applyFileContent]);
 
   // Handle browser back/forward buttons
   useEffect(() => {
