@@ -40,12 +40,13 @@ export default function PromptOverlays({
       {namePrompt && (
         <div className="pass-overlay" onClick={() => { namePrompt.reject(new Error('cancelled')); setNamePrompt(null); }}>
           <div className="pass-modal" onClick={e => e.stopPropagation()}>
-            <div className="pass-modal__title">Enter the name for your new note</div>
+            <div className="pass-modal__title">{namePrompt.title || "Enter the name for your new note"}</div>
             <input
               className="pass-modal__input"
               type="text"
               placeholder="Note name…"
               autoFocus
+              defaultValue={namePrompt.defaultValue || ""}
               onKeyDown={e => {
                 if (e.key === 'Enter') {
                   const val = e.target.value.trim();
@@ -59,7 +60,7 @@ export default function PromptOverlays({
                 }
               }}
             />
-            <div className="pass-modal__hint">Enter to create · Esc to cancel</div>
+            <div className="pass-modal__hint">Enter to confirm · Esc to cancel</div>
           </div>
         </div>
       )}

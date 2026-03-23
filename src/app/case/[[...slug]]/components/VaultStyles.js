@@ -301,9 +301,17 @@ export default function VaultStyles() {
         .markdown-content a, .internal-link {
           color:var(--accent); text-decoration:none; border-bottom:1px dotted var(--accent);
           padding-right:14px; position:relative; cursor:pointer;
+          transition: opacity 0.2s;
         }
         .markdown-content a::after, .internal-link::after {
           content:'↗'; position:absolute; right:0; top:-2px; font-size:.75em; opacity:.7;
+        }
+        .internal-link.is-missing {
+          opacity: 0.5;
+          cursor: help;
+        }
+        .internal-link.is-missing::after {
+          content: '?';
         }
 
         .table-container { width:100%; overflow-x:auto; margin:1.5em 0; display:block; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,.03) transparent; }
@@ -318,7 +326,31 @@ export default function VaultStyles() {
         .tree-item:hover { background:rgba(255,255,255,.05); opacity:1; color:var(--accent); }
         .tree-item.is-active { background:rgba(255,250,205,0.08); opacity:1; color:var(--accent); border-left:2px solid var(--accent); padding-left:6px; }
         .tree-item.is-local { opacity:0.85; font-style:italic; }
-        .local-badge { margin-left:auto; font-size:8px; color:var(--accent); opacity:0.7; flex-shrink:0; }
+        
+        .file-actions {
+          margin-left: auto;
+          display: flex;
+          gap: 8px;
+          opacity: 0;
+          transition: opacity 0.2s;
+        }
+        .tree-item:hover .file-actions {
+          opacity: 1;
+        }
+        .file-action-icon {
+          cursor: pointer;
+          opacity: 0.6;
+          transition: opacity 0.2s, color 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .file-action-icon:hover {
+          opacity: 1;
+          color: var(--accent);
+        }
+
+        .local-badge { margin-left: 8px; font-size:8px; color:var(--accent); opacity:0.7; flex-shrink:0; }
         .arrow-wrapper { width:24px; margin-right:4px; display:flex; justify-content:center; }
         .spacer { width:24px; }
 

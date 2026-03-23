@@ -25,7 +25,7 @@ export const cursorToEnd = (el) => {
 
 // ─── BLOCK VIEW (inactive block) ─────────────────────────────────────────────
 
-export const BlockView = ({ block, isEditing, isActive, onActivate, onLinkClick }) => {
+export const BlockView = ({ block, isEditing, isActive, onActivate, onLinkClick, fileRegistry = {} }) => {
   const divRef = useRef(null);
 
   useEffect(() => {
@@ -33,8 +33,25 @@ export const BlockView = ({ block, isEditing, isActive, onActivate, onLinkClick 
     let html = window.marked.parse(block.raw || '');
     if (!html || !html.trim() || html === '<p></p>') html = '<p><br></p>';
     divRef.current.innerHTML = html;
+    
+    // Check internal links
+    const links = divRef.current.querySelectorAll('.internal-link');
+    links.forEach(link => {
+      const target = link.getAttribute('data-target');
+      if (target) {
+        const cleanTarget = target.toLowerCase();
+        const withExt = cleanTarget.endsWith('.md') ? cleanTarget : `${cleanTarget}.md`;
+        const exists = fileRegistry[cleanTarget] || fileRegistry[withExt] || fileRegistry[`notes/${withExt}`];
+        if (!exists) {
+          link.classList.add('is-missing');
+        } else {
+          link.classList.remove('is-missing');
+        }
+      }
+    });
+
     postProcess(divRef.current);
-  }, [block.raw, isEditing]);
+  }, [block.raw, isEditing, fileRegistry]);
 
   useEffect(() => {
     const handler = () => { if (divRef.current) divRef.current.querySelectorAll('h6.fit-heading').forEach(fitHeading); };
@@ -640,7 +657,7 @@ export const ActiveBlock = ({ block, onSave, onDeactivate, onCreateAfter, onNavi
 
 // ─── BLOCK EDITOR ─────────────────────────────────────────────────────────────
 
-const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, onToggleEditing, onSaveRef }) => {
+const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, onToggleEditing, onSaveRef, fileRegistry = {} }) => {
   const [blocks, setBlocks]           = useState([]);
   const [activeBlockIndex, setActive] = useState(null);
   const [libsReady, setLibsReady]     = useState(false);
@@ -737,6 +754,7 @@ const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, on
               isActive={isActive}
               onActivate={() => { setCursorPos('end'); setActive(index); }}
               onLinkClick={onLinkClick}
+              fileRegistry={fileRegistry}
             />
             {isActive && (
               <ActiveBlock

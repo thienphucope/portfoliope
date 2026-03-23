@@ -57,11 +57,11 @@ async function getGithubCasesTree() {
       if (pathParts.some(p => p.startsWith('.'))) continue;
 
       if (item.type === "tree") {
-        const newFolder = { kind: "directory", name: name, children: [] };
+        const newFolder = { kind: "directory", name: name, path: item.path, children: [] };
         nodes[item.path] = newFolder.children;
         if (nodes[parentPath]) nodes[parentPath].push(newFolder);
       } else if (item.path.endsWith(".md")) {
-        const newFile = { kind: "file", name: name, path: `${rawBaseUrl}/${item.path}` };
+        const newFile = { kind: "file", name: name, path: `${rawBaseUrl}/${item.path}`, repoPath: item.path };
         if (nodes[parentPath]) nodes[parentPath].push(newFile);
       }
     }
@@ -167,6 +167,45 @@ async function saveToGithub(path, content, create = false, sha = null) {
   return { error: `GitHub PUT error: ${errorText}` };
 }
 
+// ─── HELPER: delete from github ──────────────────────────────────────────────
+
+async function deleteFromGithub(path, sha) {
+  if (!GITHUB_TOKEN) return { error: "Missing GITHUB_TOKEN" };
+  const headers = {
+    "Accept": "application/vnd.github+json",
+    "User-Agent": "Portfolio-NextJS",
+    "Authorization": `token ${GITHUB_TOKEN}`,
+    "Content-Type": "application/json",
+  };
+
+  let activeBranch = null;
+  for (const branch of ["main", "master"]) {
+    try {
+      const r = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/branches/${branch}`, { headers });
+      if (r.ok) { activeBranch = branch; break; }
+    } catch {}
+  }
+
+  if (!activeBranch) return { error: "Could not detect GitHub branch" };
+
+  const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`;
+  const payload = {
+    message: `Delete ${path} via Red Vault`,
+    sha: sha,
+    branch: activeBranch,
+  };
+
+  const resp = await fetch(url, {
+    method: 'DELETE',
+    headers,
+    body: JSON.stringify(payload)
+  });
+
+  if (resp.ok) return { ok: true };
+  const errorText = await resp.text();
+  return { error: `GitHub DELETE error: ${errorText}` };
+}
+
 // ─── GET: fetch file tree ─────────────────────────────────────────────────────
 
 export async function GET() {
@@ -186,7 +225,7 @@ export async function POST(request) {
   let body;
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
 
-  const { action, path, content, create = false, comment = false, password, sha, sessionId, query, history, username } = body;
+  const { action, path, newPath, content, create = false, comment = false, password, sha, sessionId, query, history, username } = body;
 
   // 1. Handle AI requests
   if (action === 'ai') {
@@ -352,20 +391,112 @@ export async function POST(request) {
     return NextResponse.json({ ok: true });
   }
 
-  // 3. Save Logic
-  // ONLY require password if we are UPDATING an existing file (not creating or adding a comment)
+  // 3. Password Check for destructive/modifying actions
   if (!create && !comment && password !== EDIT_PASS) {
-    console.warn(`❌ [API Route] Wrong password attempt during update.`);
+    console.warn(`❌ [API Route] Wrong password attempt during modification.`);
     return NextResponse.json({ error: 'Wrong password' }, { status: 403 });
   }
 
-  // 3. Existing Save Logic
-  if (typeof content !== 'string') return NextResponse.json({ error: 'Missing content' }, { status: 400 });
-  
-  // Check lock before saving
+  // Check lock for modification actions
   if (currentLock && currentLock.expiresAt > now && currentLock.sessionId !== sessionId) {
     return NextResponse.json({ error: 'Lock lost or held by another user' }, { status: 423 });
   }
+
+  // 4. Handle Delete Action
+  if (action === 'delete') {
+    if (!sha) return NextResponse.json({ error: 'Missing sha' }, { status: 400 });
+    console.log(`🗑️ [API Route] Deleting ${finalPath} from GitHub...`);
+    const result = await deleteFromGithub(finalPath, sha);
+    if (result.ok) {
+      fileLocks.delete(finalPath);
+      return NextResponse.json(result);
+    }
+    return NextResponse.json({ error: result.error }, { status: 500 });
+  }
+
+  // 5. Handle Rename/Move Action
+  if (action === 'rename') {
+    if (!newPath) return NextResponse.json({ error: 'Missing newPath' }, { status: 400 });
+    const finalNewPath = newPath.endsWith('.md') ? newPath : `${newPath}.md`;
+    
+    console.log(`🔄 [API Route] Renaming ${finalPath} to ${finalNewPath}...`);
+    
+    // 1. Get content of old path if not provided
+    let finalContent = content;
+    let finalSha = sha;
+    if (!finalContent || !finalSha) {
+      const oldData = await getFileFromGithub(finalPath);
+      if (!oldData.ok) return NextResponse.json({ error: `Could not fetch old file: ${oldData.error}` }, { status: 404 });
+      finalContent = Buffer.from(oldData.content, 'base64').toString('utf8');
+      finalSha = oldData.sha;
+    }
+
+    // 2. Create new file
+    const createResult = await saveToGithub(finalNewPath, finalContent, true);
+    if (!createResult.ok) return NextResponse.json({ error: `Create new file failed: ${createResult.error}` }, { status: 500 });
+
+    // 3. Delete old file
+    const deleteResult = await deleteFromGithub(finalPath, finalSha);
+    if (!deleteResult.ok) {
+      console.error(`⚠️ [API Route] Rename partial success: Created ${finalNewPath} but failed to delete ${finalPath}`);
+      return NextResponse.json({ ok: true, partial: true, error: deleteResult.error });
+    }
+
+    // 4. Update links in other files
+    const oldBase = finalPath.replace('.md', '');
+    const newBase = finalNewPath.replace('.md', '');
+    const oldNameOnly = oldBase.split('/').pop();
+    const newNameOnly = newBase.split('/').pop();
+
+    console.log(`🔗 [Rename] Updating links across repository...`);
+    console.log(`🔗 [Rename] Patterns: [[${oldBase}]] -> [[${newBase}]], [[${oldNameOnly}]] -> [[${newNameOnly}]]`);
+
+    const treeData = await getGithubCasesTree();
+    if (treeData) {
+      const allFiles = [];
+      const collect = (nodes) => {
+        for (const n of nodes) {
+          if (n.kind === 'file' && n.repoPath !== finalNewPath) allFiles.push(n);
+          if (n.children) collect(n.children);
+        }
+      };
+      collect(treeData);
+
+      console.log(`🔗 [Rename] Scanning ${allFiles.length} files for links...`);
+
+      for (const file of allFiles) {
+        const fileData = await getFileFromGithub(file.repoPath);
+        if (fileData.ok) {
+          let text = Buffer.from(fileData.content, 'base64').toString('utf8');
+          let changed = false;
+
+          const pathRegex = new RegExp(`\\[\\[${oldBase.replace(/\//g, '\\/')}\\]\\]`, 'g');
+          if (pathRegex.test(text)) {
+            text = text.replace(pathRegex, `[[${newBase}]]`);
+            changed = true;
+          }
+
+          const nameRegex = new RegExp(`\\[\\[${oldNameOnly}\\]\\]`, 'g');
+          if (nameRegex.test(text)) {
+            text = text.replace(nameRegex, `[[${newNameOnly}]]`);
+            changed = true;
+          }
+
+          if (changed) {
+            console.log(`📝 [Rename] Updated links in: ${file.repoPath}`);
+            await saveToGithub(file.repoPath, text, false, fileData.sha);
+          }
+        }
+      }
+      console.log(`🔗 [Rename] Link update complete.`);
+    }
+
+    fileLocks.delete(finalPath);
+    return NextResponse.json({ ok: true, path: finalNewPath });
+  }
+
+  // 6. Handle Save Logic (Existing)
+  if (typeof content !== 'string') return NextResponse.json({ error: 'Missing content' }, { status: 400 });
   
   console.log(`📝 [API Route] POST: Saving directly to GitHub...`);
   const result = await saveToGithub(finalPath, content, create, sha);
@@ -379,3 +510,4 @@ export async function POST(request) {
     return NextResponse.json({ error: result.error }, { status: 500 });
   }
 }
+

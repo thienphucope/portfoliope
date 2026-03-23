@@ -168,8 +168,8 @@ export default function CaseClient({ staticRecords = [] }) {
     setPassPrompt({ resolve, reject });
   }), []);
 
-  const askFileName = useCallback(() => new Promise((resolve, reject) => {
-    setNamePrompt({ resolve, reject });
+  const askFileName = useCallback((defaultValue = "", title = "") => new Promise((resolve, reject) => {
+    setNamePrompt({ resolve, reject, defaultValue, title });
   }), []);
 
   const askComment = useCallback((defaultValue = "") => new Promise((resolve, reject) => {
@@ -260,25 +260,165 @@ export default function CaseClient({ staticRecords = [] }) {
     }
   }, [applyFileContent]);
 
+  const refreshTree = useCallback(async () => {
+    try {
+      const tree = await fetch('/api/cases', { cache: 'no-store' }).then(r => r.json());
+      if (!Array.isArray(tree)) return;
+      
+      const newRegistry = {};
+      const buildReg = (nodes, repoPath = '') => nodes.forEach(n => {
+        if (n.kind === 'file') {
+          const fullRepoPath = repoPath ? `${repoPath}/${n.name}` : n.name;
+          newRegistry[fullRepoPath.toLowerCase()] = n.path;
+          newRegistry[n.name.toLowerCase()] = n.path;
+          newRegistry[n.name.replace('.md', '').toLowerCase()] = n.path;
+        } else if (n.children) {
+          buildReg(n.children, repoPath ? `${repoPath}/${n.name}` : n.name);
+        }
+      });
+      buildReg(tree);
+      fileRegistry.current = newRegistry;
+      setFileTree(tree);
+      // Force a slight state change to ensure registry-dependent components re-render
+      setContentKey(k => k + 0.0000001); 
+    } catch (e) {
+      console.error("Failed to refresh tree:", e);
+    }
+  }, []);
+
+  const handleRenameFile = async (oldPath) => {
+    let newPath;
+    try {
+      newPath = await askFileName(oldPath, "Rename/Move file (enter full path)");
+    } catch (e) {
+      return;
+    }
+    if (!newPath || newPath === oldPath) return;
+
+    try {
+      const pass = editPass || await askPassword();
+      setEditPass(pass);
+      try { sessionStorage.setItem('vault_edit_pass', pass); } catch {}
+
+      const lockData = await acquireLock(oldPath, pass);
+      const sha = lockData.sha;
+
+      setSaveStatus('saving');
+      const res = await fetch('/api/cases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'rename', 
+          path: oldPath, 
+          newPath: newPath,
+          password: pass,
+          sessionId: sessionIdRef.current,
+          sha: sha
+        }),
+      });
+
+      if (!res.ok) throw new Error(await res.text());
+
+      // Clear caches to force re-fetch and link update reflection
+      setFullContentCache({});
+      serverRawCache.current = {};
+      
+      await refreshTree();
+      
+      if (fileName === oldPath) {
+        setFileName(newPath);
+        const cleanPath = newPath.replace(/\.md$/, '');
+        window.history.replaceState({ repoKey: newPath }, '', `/case/${cleanPath}`);
+        
+        // Re-load the renamed file to get its content (it might have been updated too if it had links to itself)
+        const newRegistryEntry = fileRegistry.current[newPath.toLowerCase()];
+        if (newRegistryEntry) {
+          loadFile(newRegistryEntry, newPath.split('/').pop(), newPath, 'replace');
+        }
+      } else {
+        // If we renamed another file, reload current file to see updated links
+        const currentPath = fileName;
+        const currentRegistryEntry = fileRegistry.current[currentPath?.toLowerCase()];
+        if (currentRegistryEntry) {
+          loadFile(currentRegistryEntry, currentPath.split('/').pop(), currentPath, 'replace');
+        }
+      }
+
+      releaseLock(newPath, pass);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (e) {
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+      if (e.message === 'cancelled') return;
+      alert("Error renaming: " + e.message);
+    }
+  };
+
+  const handleDeleteFile = async (filePath) => {
+    if (!window.confirm(`Are you sure you want to delete "${filePath}"?`)) return;
+
+    try {
+      const pass = editPass || await askPassword();
+      setEditPass(pass);
+      try { sessionStorage.setItem('vault_edit_pass', pass); } catch {}
+
+      const lockData = await acquireLock(filePath, pass);
+      const sha = lockData.sha;
+
+      setSaveStatus('saving');
+      const res = await fetch('/api/cases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'delete', 
+          path: filePath, 
+          password: pass,
+          sessionId: sessionIdRef.current,
+          sha: sha
+        }),
+      });
+
+      if (!res.ok) throw new Error(await res.text());
+
+      // Clear caches
+      setFullContentCache({});
+      serverRawCache.current = {};
+
+      await refreshTree();
+      
+      if (fileName === filePath) {
+        setActiveTab(null);
+        window.history.replaceState({ repoKey: null }, '', '/case');
+      } else {
+        // Reload current file to see updated links (they might become broken/dimmed)
+        const currentPath = fileName;
+        const currentRegistryEntry = fileRegistry.current[currentPath?.toLowerCase()];
+        if (currentRegistryEntry) {
+          loadFile(currentRegistryEntry, currentPath.split('/').pop(), currentPath, 'replace');
+        }
+      }
+      
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (e) {
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+      if (e.message === 'cancelled') return;
+      alert("Error deleting: " + e.message);
+    }
+  };
+
   useEffect(() => {
+
     (async () => {
       try {
-        const tree = await fetch('/api/cases').then(r => r.json());
-        if (!Array.isArray(tree)) { setContent(`# API Error\n${tree.error || 'Unknown'}`); return; }
-        const buildRegistry = (nodes, repoPath = '') => nodes.forEach(n => {
-          if (n.kind === 'file') {
-            const fullRepoPath = repoPath ? `${repoPath}/${n.name}` : n.name;
-            fileRegistry.current[fullRepoPath.toLowerCase()] = n.path;
-            fileRegistry.current[n.name.toLowerCase()] = n.path;
-            fileRegistry.current[n.name.replace('.md', '').toLowerCase()] = n.path;
-          } else if (n.children) {
-            buildRegistry(n.children, repoPath ? `${repoPath}/${n.name}` : n.name);
-          }
-        });
-        buildRegistry(tree);
-        setFileTree(tree);
+        await refreshTree();
+        const tree = fileTree; // This might be stale if used immediately, but wait...
         
-        // Try to load file from URL path
+        // Use the freshly fetched tree directly for initial logic
+        const rawTree = await fetch('/api/cases', { cache: 'no-store' }).then(r => r.json());
+        if (!Array.isArray(rawTree)) { setContent(`# API Error\n${rawTree.error || 'Unknown'}`); return; }
         const pathParts = window.location.pathname.split('/').filter(Boolean);
         let targetFile = DEFAULT_FILE;
         let forceTab = (targetFile === 'chat' || targetFile === 'filetree') ? targetFile : null;
@@ -447,23 +587,6 @@ export default function CaseClient({ staticRecords = [] }) {
 
     window.addEventListener('beforeunload', onBeforeUnload);
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
-  }, []);
-
-  const refreshTree = useCallback(async () => {
-    const tree = await fetch('/api/cases').then(r => r.json());
-    if (!Array.isArray(tree)) return;
-    const buildReg = (nodes, repoPath = '') => nodes.forEach(n => {
-      if (n.kind === 'file') {
-        const fullRepoPath = repoPath ? `${repoPath}/${n.name}` : n.name;
-        fileRegistry.current[fullRepoPath.toLowerCase()] = n.path;
-        fileRegistry.current[n.name.toLowerCase()] = n.path;
-        fileRegistry.current[n.name.replace('.md', '').toLowerCase()] = n.path;
-      } else if (n.children) {
-        buildReg(n.children, repoPath ? `${repoPath}/${n.name}` : n.name);
-      }
-    });
-    buildReg(tree);
-    setFileTree(tree);
   }, []);
 
   const filteredTree = React.useMemo(() => {
@@ -1287,7 +1410,16 @@ export default function CaseClient({ staticRecords = [] }) {
                     <>
                       {viewMode === 'list' ? (
                         <div className="file-list" style={{ flex: 1, overflowY: 'auto', padding: '10px 20px' }}>
-                          {filteredTree.map((item, i) => <FileSystemItem key={i} item={item} onSelectFile={loadFile} activeFile={fileName} />)}
+                          {filteredTree.map((item, i) => (
+                            <FileSystemItem 
+                              key={i} 
+                              item={item} 
+                              onSelectFile={loadFile} 
+                              activeFile={fileName} 
+                              onRename={handleRenameFile}
+                              onDelete={handleDeleteFile}
+                            />
+                          ))}
                         </div>
                       ) : (
                         <div style={{ flex: 1, overflow: 'hidden' }}>
@@ -1327,6 +1459,7 @@ export default function CaseClient({ staticRecords = [] }) {
                           readOnly={tab.type === 'static'}
                           onToggleEditing={handleToggleEditMode}
                           onSaveRef={saveHandlerRef}
+                          fileRegistry={fileRegistry.current}
                         />
                       </article>
                       {tab.type === 'editor' && (
