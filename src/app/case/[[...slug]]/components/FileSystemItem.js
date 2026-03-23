@@ -3,7 +3,8 @@ import { ChevronRight, ChevronDown, Edit2, Trash2 } from 'lucide-react';
 
 const FileSystemItem = ({ item, level = 0, onSelectFile, activeFile, onRename, onDelete }) => {
   const [isOpen, setIsOpen] = React.useState(item.isOpen || false);
-  const isActive = item.kind === 'file' && (item.repoPath || item.name).toLowerCase() === activeFile?.toLowerCase();
+  const itemPath = item.repoPath || item.path;
+  const isActive = item.kind === 'file' && itemPath?.toLowerCase() === activeFile?.toLowerCase();
   
   return (
     <div className="select-none">
@@ -13,7 +14,7 @@ const FileSystemItem = ({ item, level = 0, onSelectFile, activeFile, onRename, o
         onClick={(e) => {
           e.stopPropagation();
           if (item.kind === 'directory') setIsOpen(o => !o);
-          else onSelectFile(item.path, item.name, item.repoPath || item.id);
+          else onSelectFile(item.path, item.name, itemPath);
         }}
       >
         <span className="arrow-wrapper">
@@ -29,14 +30,14 @@ const FileSystemItem = ({ item, level = 0, onSelectFile, activeFile, onRename, o
             <span 
               className="file-action-icon" 
               title="Rename/Move" 
-              onClick={(e) => { e.stopPropagation(); onRename(item.repoPath); }}
+              onClick={(e) => { e.stopPropagation(); onRename(itemPath); }}
             >
               <Edit2 size={14} />
             </span>
             <span 
               className="file-action-icon" 
               title="Delete" 
-              onClick={(e) => { e.stopPropagation(); onDelete(item.repoPath); }}
+              onClick={(e) => { e.stopPropagation(); onDelete(itemPath); }}
             >
               <Trash2 size={14} />
             </span>

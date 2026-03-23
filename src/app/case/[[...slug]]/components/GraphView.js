@@ -41,17 +41,32 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
     const tagNodeMap = new Map();
 
     allFiles.forEach(file => {
+      const nameNoExt = file.name.replace('.md', '');
       const fileNode = {
         id: file.id,
-        name: file.name.replace('.md', ''),
+        name: nameNoExt,
         val: 1,
         path: file.path,
         fileName: file.name,
         type: 'file'
       };
       nodes.push(fileNode);
-      nodeMap.set(fileNode.name.toLowerCase(), fileNode.id);
-      degreeMap.set(fileNode.id, 0);
+      
+      // Populate nodeMap with all possible ways to refer to this file
+      const lowerId = file.id.toLowerCase();
+      const lowerName = file.name.toLowerCase();
+      const lowerNameNoExt = nameNoExt.toLowerCase();
+      
+      nodeMap.set(lowerId, file.id);
+      nodeMap.set(lowerName, file.id);
+      nodeMap.set(lowerNameNoExt, file.id);
+      
+      // Also map filename-only if it's unique or we don't mind collisions
+      if (!nodeMap.has(lowerNameNoExt)) {
+        nodeMap.set(lowerNameNoExt, file.id);
+      }
+
+      degreeMap.set(file.id, 0);
 
       const tagRegex = /(?<!\S)#([a-zA-Z][a-zA-Z0-9_-]*)/g;
       let tagMatch;
@@ -76,14 +91,13 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
       while ((linkMatch = linkRegex.exec(file.fetchedContent)) !== null) {
         let targetName = linkMatch[1].trim().toLowerCase();
         let targetId = nodeMap.get(targetName);
+
         if (!targetId) {
-          for (const [name, id] of nodeMap.entries()) {
-            if (name === targetName || name.split('/').pop() === targetName || name.replace('.md', '') === targetName) {
-              targetId = id;
-              break;
-            }
-          }
+          // Fallback: match by filename only if full path didn't match
+          const targetBase = targetName.split('/').pop();
+          targetId = nodeMap.get(targetBase);
         }
+
         if (targetId && targetId !== file.id) {
           links.push({ source: file.id, target: targetId, type: 'backlink' });
           degreeMap.set(file.id, (degreeMap.get(file.id) || 0) + 1);
