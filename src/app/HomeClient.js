@@ -232,7 +232,7 @@ export default function HomeClient() {
   useEffect(() => {
     const handleGlobalClick = (e) => {
       const id = Date.now();
-      setFingerprints(prev => [...prev, { id, x: e.clientX, y: e.clientY, rotation: Math.random() * 360 }]);
+      setFingerprints(prev => [...prev, { id, x: e.pageX, y: e.pageY, rotation: Math.random() * 360 }]);
       setTimeout(() => {
         setFingerprints(prev => prev.filter(fp => fp.id !== id));
       }, 5000);
@@ -302,8 +302,8 @@ export default function HomeClient() {
       }
       if (isIntroStarted && window.YT && window.YT.Player && !playerRef.current) {
         playerRef.current = new window.YT.Player('youtube-player-home', {
-          height: '0', width: '0', videoId: 'ivVQYpGGvuc',
-          playerVars: { autoplay: 1, loop: 1, playlist: 'ivVQYpGGvuc,6c5YHZhfxco', controls: 0, showinfo: 0, modestbranding: 1 },
+          height: '0', width: '0', videoId: 'aiKlW8XCABQ',
+          playerVars: { autoplay: 1, loop: 1, playlist: 'aiKlW8XCABQ,6c5YHZhfxco', controls: 0, showinfo: 0, modestbranding: 1 },
           events: {
             onReady: (e) => { e.target.setVolume(50); e.target.playVideo(); },
             onStateChange: (e) => {
@@ -415,7 +415,7 @@ export default function HomeClient() {
           80% { opacity: 0.8; transform: translate(-50%, -50%) scale(1) rotate(var(--rot)); }
           100% { opacity: 0; transform: translate(-50%, -50%) scale(1.2) rotate(var(--rot)); }
         }
-        .fingerprint-effect { position: fixed; pointer-events: none; z-index: 9999; animation: fingerprintFade 1s forwards; }
+        .fingerprint-effect { position: absolute; pointer-events: none; z-index: 9999; animation: fingerprintFade 1s forwards; }
       `}</style>
 
       {/* Background Video - Cố định ở lớp dưới cùng tuyệt đối */}
