@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { Fingerprint, Footprints } from 'lucide-react';
 import Link from 'next/link';
 
-export default function Hero({ isStoryOpen }) {
+export default function Hero() {
   const [displayText, setDisplayText] = useState("");
   const [displayTitle, setDisplayTitle] = useState("");
   const [displayPronunciation, setDisplayPronunciation] = useState("");
@@ -217,39 +217,37 @@ export default function Hero({ isStoryOpen }) {
           </div>
 
           {/* Right side: Text Intro */}
-          {!isStoryOpen && (
-            <div className="intro-text-content font-fredericka p-8 lg:p-12 lg:pl-10 max-w-2xl relative">
-              {/* Fingerprint in top right of the text content */}
-              <div className="absolute top-0 right-0 text-[var(--colorone)] rotate-[-45deg] opacity-60 pointer-events-none p-4">
-                <Fingerprint className="w-16 h-16 md:w-24 md:h-24 lg:w-32 lg:h-32" />
-              </div>
-              <h2
-                className="text-3xl md:text-5xl lg:text-7xl xl:text-7xl text-[var(--colorone)] font-bold mb-3 hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default text-center lg:text-left whitespace-pre-wrap"
-                onMouseEnter={() => scrambleText(originalTitlePadded, replacementTitlePadded, setDisplayTitle)}
-                onMouseLeave={() => scrambleText(replacementTitlePadded, originalTitlePadded, setDisplayTitle)}
-              >
-                {displayTitle}
-              </h2>
-              
-              <div className="mb-4 text-center lg:text-left">
-                <span
-                  className="text-lg md:text-xl lg:text-2xl xl:text-3xl text-[var(--colorone)] italic hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default whitespace-pre-wrap"
-                  onMouseEnter={() => scrambleText(originalPronPadded, replacementPronPadded, setDisplayPronunciation)}
-                  onMouseLeave={() => scrambleText(replacementPronPadded, originalPronPadded, setDisplayPronunciation)}
-                >
-                  {displayPronunciation}
-                </span>
-              </div>
-
-              <div
-                className="text-sm md:text-base lg:text-xl xl:text-2xl leading-relaxed text-[var(--colorone)] hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default lg:text-left whitespace-pre-wrap"
-                onMouseEnter={() => scrambleText(originalTextPadded, replacementTextPadded, setDisplayText)}
-                onMouseLeave={() => scrambleText(replacementTextPadded, originalTextPadded, setDisplayText)}
-              >
-                {displayText}
-              </div>
+          <div className="intro-text-content font-fredericka p-8 lg:p-12 lg:pl-10 max-w-2xl relative">
+            {/* Fingerprint in top right of the text content */}
+            <div className="absolute top-0 right-0 text-[var(--colorone)] rotate-[-45deg] opacity-60 pointer-events-none p-4">
+              <Fingerprint className="w-16 h-16 md:w-24 md:h-24 lg:w-32 lg:h-32" />
             </div>
-          )}
+            <h2
+              className="text-3xl md:text-5xl lg:text-7xl xl:text-7xl text-[var(--colorone)] font-bold mb-3 hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default text-center lg:text-left whitespace-pre-wrap"
+              onMouseEnter={() => scrambleText(originalTitlePadded, replacementTitlePadded, setDisplayTitle)}
+              onMouseLeave={() => scrambleText(replacementTitlePadded, originalTitlePadded, setDisplayTitle)}
+            >
+              {displayTitle}
+            </h2>
+            
+            <div className="mb-4 text-center lg:text-left">
+              <span
+                className="text-lg md:text-xl lg:text-2xl xl:text-3xl text-[var(--colorone)] italic hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default whitespace-pre-wrap"
+                onMouseEnter={() => scrambleText(originalPronPadded, replacementPronPadded, setDisplayPronunciation)}
+                onMouseLeave={() => scrambleText(replacementPronPadded, originalPronPadded, setDisplayPronunciation)}
+              >
+                {displayPronunciation}
+              </span>
+            </div>
+
+            <div
+              className="text-sm md:text-base lg:text-xl xl:text-2xl leading-relaxed text-[var(--colorone)] hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default lg:text-left whitespace-pre-wrap"
+              onMouseEnter={() => scrambleText(originalTextPadded, replacementTextPadded, setDisplayText)}
+              onMouseLeave={() => scrambleText(replacementTextPadded, originalTextPadded, setDisplayText)}
+            >
+              {displayText}
+            </div>
+          </div>
 
         </div>
       </div>

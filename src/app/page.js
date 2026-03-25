@@ -1,38 +1,18 @@
-import fs from 'fs';
-import path from 'path';
-import HomeClient from './HomeClient';
-import PageExtra from './components/PageExtra';
+"use client";
+import Link from 'next/link';
+import { ChevronDown } from 'lucide-react';
+import FingerprintEffect from '@/components/FingerprintEffect';
 
-export default async function Page() {
-  const aboutPath = path.join(process.cwd(), 'src', 'content', 'about.md');
-  let aboutContent = "";
-  try {
-    if (fs.existsSync(aboutPath)) {
-      aboutContent = fs.readFileSync(aboutPath, 'utf8');
-    }
-  } catch (e) {
-    console.error("Could not read about.md", e);
-  }
-
+export default function RootPage() {
   return (
-    <div className="min-h-[100dvh]">
-      {/* SEO Hidden Content */}
-      <div 
-        style={{ display: 'none', visibility: 'hidden', height: 0, overflow: 'hidden' }} 
-        aria-hidden="true"
-      >
-        <h1>Ope Watson - Professional Portfolio & Digital Case Archives</h1>
-        <p>Interactive detective storytelling combined with modern web technologies.</p>
-        <div>{aboutContent}</div>
-      </div>
-
-      {/* 
-        Main Wrapper: 
-        Không để background-color ở đây để thấy được video fixed phía sau.
-      */}
-      <div className="relative">
-        <HomeClient />
-        <PageExtra content={aboutContent} />
+    <div className="fixed inset-0 bg-[var(--colorone)] flex flex-col justify-center items-center z-[100]">
+      <FingerprintEffect color="black" />
+      <ChevronDown className="text-black w-8 h-8 animate-bounce mb-0" />
+      <Link href="/home" passHref>
+        <img src="/printer.png" alt="Start" className="w-24 h-24 cursor-pointer animate-pulse" />
+      </Link>
+      <div className="text-black font-fredericka text-xs md:text-2xl opacity-90 mt-4">
+        opewatson.org {"->"} opewatson.com
       </div>
     </div>
   );

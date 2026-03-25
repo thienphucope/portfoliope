@@ -1,123 +1,112 @@
+/* -------------------------------------------------------------------------- */
+/*                                   IMPORTS                                  */
+/* -------------------------------------------------------------------------- */
 @import url('https://fonts.googleapis.com/css2?family=Fredericka+the+Great&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap');
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* -------------------------------------------------------------------------- */
+/*                                DESIGN TOKENS                              */
+/* -------------------------------------------------------------------------- */
 :root {
   --background: #000000; 
   --foreground: #f0f0f0; 
+  /* Detective Gold - The primary accent color for the theme */
   --colorone: #c2a38a;   
-  --colortwo: rgba(5, 10, 16, 0.75); /* Darker Blue-Black with transparency */
-  --colorthree: #0a1a2a; /* Even deeper blue for accents */
 }
 
-.font-fredericka {
-  font-family: 'Fredericka the Great', cursive;
-}
-
-.font-lora {
-  font-family: 'Lora', serif;
-}
-
-body {
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-  
-}
-
-.use-custom-cursor,
-.use-custom-cursor * {
-  cursor: url('/cursor.png') 8 8, auto !important;
-}
-
-
-
-/* Reset scrollbar hiding */
-html {
-  scroll-behavior: smooth;
-}
-
-html, 
-body {
+/* -------------------------------------------------------------------------- */
+/*                                 BASE STYLES                                */
+/* -------------------------------------------------------------------------- */
+html, body {
   overflow-x: hidden;
   margin: 0;
   padding: 0;
   min-height: 100dvh;
   width: 100vw;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
   -ms-overflow-style: none !important;  
   scrollbar-width: none !important;
 }
 
+/* Hide Scrollbars */
 html::-webkit-scrollbar,
-body::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-}
-
-/* Ensure all scrollable containers also hide scrollbars */
-.no-scrollbar {
-  -ms-overflow-style: none !important;
-  scrollbar-width: none !important;
-}
-
+body::-webkit-scrollbar,
 .no-scrollbar::-webkit-scrollbar {
   display: none !important;
   width: 0 !important;
 }
 
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
 
-/* Shared typography for Chomsky font */
+/* -------------------------------------------------------------------------- */
+/*                                 TYPOGRAPHY                                 */
+/* -------------------------------------------------------------------------- */
 @font-face {
   font-family: 'Chomsky';
   src: url('https://fonts.googleapis.com/css2?family=Chomsky&display=swap');
 }
 
-/* Shared animation styles */
-.animate-zoom-out {
-  animation: zoomOut 1.5s ease-in forwards;
-}
-@keyframes zoomOut {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1.2);
-    opacity: 0;
-  }
-}
-
-.animate-rise {
-  opacity: 0;
-  transform: translateY(100%);
-  animation: rise 1.5s ease-out 1.5s forwards;
-}
-@keyframes rise {
-  0% {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-/* app/globals.css */
 @font-face {
   font-family: 'Handwritten';
   src: url('https://fonts.googleapis.com/css2?family=Caveat&display=swap');
 }
 
-.font-handwritten {
-  font-family: 'Caveat', cursive;
+.font-fredericka { font-family: 'Fredericka the Great', cursive; }
+.font-lora { font-family: 'Lora', serif; }
+.font-handwritten { font-family: 'Caveat', cursive; }
+
+/* -------------------------------------------------------------------------- */
+/*                               SHARED COMPONENTS                            */
+/* -------------------------------------------------------------------------- */
+.use-custom-cursor,
+.use-custom-cursor * {
+  cursor: url('/cursor.png') 8 8, auto !important;
 }
 
-/* Optional: Smooth out polaroid effect */
-.polaroid {
-  transform: rotate(-2deg);
+.polaroid { transform: rotate(-2deg); }
+.polaroid:nth-child(even) { transform: rotate(2deg); }
+
+/* -------------------------------------------------------------------------- */
+/*                                 ANIMATIONS                                 */
+/* -------------------------------------------------------------------------- */
+
+/* Fingerprint Effect */
+@keyframes fingerprintFade {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5) rotate(var(--rot)); }
+  15% { opacity: 0.8; transform: translate(-50%, -50%) scale(1) rotate(var(--rot)); }
+  80% { opacity: 0.8; transform: translate(-50%, -50%) scale(1) rotate(var(--rot)); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.2) rotate(var(--rot)); }
 }
 
-.polaroid:nth-child(even) {
-  transform: rotate(2deg);
+.fingerprint-effect { 
+  position: absolute; 
+  pointer-events: none; 
+  z-index: 9999; 
+  animation: fingerprintFade 1s forwards; 
 }
+
+/* Snow Effect */
+.snow-container { pointer-events: none; overflow: hidden; z-index: 40; }
+.snowflake { 
+  position: absolute; 
+  animation: fall var(--fall-duration) linear infinite, tumble var(--rotation-duration) linear infinite; 
+  transform-origin: center; 
+  filter: brightness(1.5); 
+}
+
+@keyframes fall { to { top: var(--page-height); left: calc(var(--base-left) - 50vw); } }
+@keyframes tumble { from { transform: rotate(0deg); } to { transform: rotate(calc(var(--rotation-direction) * 360deg)); } }
+
+/* Utility Animations */
+@keyframes zoomOut { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.2); opacity: 0; } }
+.animate-zoom-out { animation: zoomOut 1.5s ease-in forwards; }
+
+@keyframes rise { 0% { transform: translateY(100%); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+.animate-rise { opacity: 0; transform: translateY(100%); animation: rise 1.5s ease-out 1.5s forwards; }
