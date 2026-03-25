@@ -144,11 +144,11 @@ useEffect(() => {
   return (
     <>
       <style jsx global>{`
-        .video-background { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; z-index: -10; pointer-events: none; overflow: hidden; background: black; }
+        .video-background { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; z-index: 0; pointer-events: none; overflow: hidden; background: black; }
         .video-background iframe { position: absolute; top: 50%; left: 50%; width: 100vw; height: 100dvh; transform: translate(-50%, -50%) scale(1.5); }
         @media (max-aspect-ratio: 16/9) { .video-background iframe { width: 177.78vh; height: 100dvh; } }
         @media (min-aspect-ratio: 16/9) { .video-background iframe { width: 100vw; height: 56.25vw; } }
-        .video-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100dvh; z-index: -5; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); pointer-events: none; }
+        .video-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100dvh; z-index: -1; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); pointer-events: none; }
       `}</style>
 
       {/* Background Video Wrapper */}
@@ -156,7 +156,7 @@ useEffect(() => {
         <div ref={bgPlayerDivRef}></div>
       </div>
 
-      <div className={`w-full relative min-h-[100dvh] transition-opacity duration-[2000ms] ease-in-out ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`w-full relative z-10 min-h-[100dvh] transition-opacity duration-[2000ms] ease-in-out ${mounted ? 'opacity-100' : 'opacity-0'}`}>
         <div className="video-overlay"></div>
         
         {/* SnowEffect now isolated */}
