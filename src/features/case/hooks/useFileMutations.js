@@ -1,0 +1,377 @@
+import { useState, useRef, useCallback } from 'react';
+import { readCache } from '../../../app/case/[[...slug]]/components/BlockEditor';
+
+const decodeBase64 = (str) => {
+  if (!str) return '';
+  try {
+    return decodeURIComponent(
+      atob(str)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+  } catch {
+    return atob(str);
+  }
+};
+
+/**
+ * All write operations: save, create, rename, delete, append comment.
+ * Depends on: lock helpers, prompt helpers, registry, and content state.
+ */
+export function useFileMutations({
+  sessionIdRef,
+  fileRegistry,
+  serverRawCache,
+  fileSha,
+  setFileSha,
+  editPass,
+  setEditPass,
+  fileName,
+  content,
+  setContent,
+  setOpenFiles,
+  setContentKey,
+  applyFileContent,
+  createAndOpenFile,
+  refreshTree,
+  acquireLock,
+  releaseLock,
+  askPassword,
+  askFileName,
+  askComment,
+}) {
+  const [saveStatus, setSaveStatus] = useState('idle');
+  const saveHandlerRef = useRef(null); // set by BlockEditor
+
+  // ─── Low-level POST ────────────────────────────────────────────────────────
+
+  const doPost = useCallback(
+    async (filePath, raw, pass) => {
+      const isNew = fileRegistry.current[filePath.toLowerCase()] === null;
+      const res = await fetch('/api/cases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          path: filePath,
+          content: raw,
+          create: isNew,
+          password: pass,
+          sessionId: sessionIdRef.current,
+          sha: fileSha,
+        }),
+      });
+
+      if (res.status === 403) return { wrongPass: true };
+      if (res.status === 423) throw new Error('locked_by_other');
+      if (!res.ok) throw new Error(await res.text());
+
+      const data = await res.json();
+      if (data.sha) setFileSha(data.sha);
+
+      serverRawCache.current[filePath] = raw;
+      setContent(raw);
+      try { localStorage.removeItem(`vault_v3::${filePath}`); } catch {}
+
+      if (isNew) await refreshTree();
+      return { ok: true };
+    },
+    [fileRegistry, fileSha, sessionIdRef, setFileSha, serverRawCache, setContent, refreshTree]
+  );
+
+  // ─── Save single file ──────────────────────────────────────────────────────
+
+  const saveOneFile = useCallback(
+    async (filePath, raw) => {
+      const serverRaw = serverRawCache.current[filePath] ?? null;
+      if (serverRaw !== null && serverRaw.trim() === raw.trim()) return;
+
+      let pass = editPass;
+      if (!pass) {
+        pass = await askPassword();
+        setEditPass(pass);
+        try { sessionStorage.setItem('vault_edit_pass', pass); } catch {}
+      }
+
+      const result = await doPost(filePath, raw, pass);
+      if (result.wrongPass) {
+        setEditPass('');
+        try { sessionStorage.removeItem('vault_edit_pass'); } catch {}
+        const newPass = await askPassword();
+        setEditPass(newPass);
+        try { sessionStorage.setItem('vault_edit_pass', newPass); } catch {}
+        const retry = await doPost(filePath, raw, newPass);
+        if (!retry.ok) throw new Error('Wrong password');
+      }
+    },
+    [editPass, askPassword, setEditPass, doPost, serverRawCache]
+  );
+
+  const handleSaveFile = useCallback(
+    async (raw) => {
+      if (!fileName) throw new Error('No file open');
+      await saveOneFile(fileName, raw);
+    },
+    [fileName, saveOneFile]
+  );
+
+  /** Called by FloatingActions save button — delegates to BlockEditor's save ref */
+  const handleSidebarSave = useCallback(async () => {
+    if (!saveHandlerRef.current) return;
+    setSaveStatus('saving');
+    try {
+      await saveHandlerRef.current();
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (e) {
+      if (e.message === 'locked_by_other') {
+        alert('Cannot save. File is locked by another user.');
+      }
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    }
+  }, []);
+
+  // ─── Rename ────────────────────────────────────────────────────────────────
+
+  const handleRenameFile = useCallback(
+    async (oldPath, currentFileName, loadFile) => {
+      let newPath;
+      try {
+        newPath = await askFileName(oldPath, 'Rename/Move file (enter full path)');
+      } catch {
+        return;
+      }
+      if (!newPath || newPath === oldPath) return;
+
+      try {
+        const pass = editPass || (await askPassword());
+        setEditPass(pass);
+        try { sessionStorage.setItem('vault_edit_pass', pass); } catch {}
+
+        const lockData = await acquireLock(oldPath, pass);
+
+        setSaveStatus('saving');
+        const res = await fetch('/api/cases', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'rename',
+            path: oldPath,
+            newPath,
+            password: pass,
+            sessionId: sessionIdRef.current,
+            sha: lockData.sha,
+          }),
+        });
+        if (!res.ok) throw new Error(await res.text());
+
+        serverRawCache.current = {};
+        await refreshTree();
+
+        if (currentFileName === oldPath) {
+          const cleanPath = newPath.replace(/\.md$/, '');
+          window.history.replaceState({ repoKey: newPath }, '', `/case/${cleanPath}`);
+          const newUrl = fileRegistry.current[newPath.toLowerCase()];
+          if (newUrl) loadFile(newUrl, newPath.split('/').pop(), newPath, 'replace');
+        } else {
+          const url = fileRegistry.current[currentFileName?.toLowerCase()];
+          if (url) loadFile(url, currentFileName.split('/').pop(), currentFileName, 'replace');
+        }
+
+        releaseLock(newPath, pass);
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 2000);
+      } catch (e) {
+        setSaveStatus('error');
+        setTimeout(() => setSaveStatus('idle'), 3000);
+        if (e.message === 'cancelled') return;
+        alert('Error renaming: ' + e.message);
+      }
+    },
+    [editPass, askPassword, setEditPass, acquireLock, releaseLock, refreshTree, fileRegistry, serverRawCache, sessionIdRef]
+  );
+
+  // ─── Delete ────────────────────────────────────────────────────────────────
+
+  const handleDeleteFile = useCallback(
+    async (filePath, currentFileName, onDeleted) => {
+      if (!window.confirm(`Are you sure you want to delete "${filePath}"?`)) return;
+
+      try {
+        const pass = editPass || (await askPassword());
+        setEditPass(pass);
+        try { sessionStorage.setItem('vault_edit_pass', pass); } catch {}
+
+        const lockData = await acquireLock(filePath, pass);
+
+        setSaveStatus('saving');
+        const res = await fetch('/api/cases', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'delete',
+            path: filePath,
+            password: pass,
+            sessionId: sessionIdRef.current,
+            sha: lockData.sha,
+          }),
+        });
+        if (!res.ok) throw new Error(await res.text());
+
+        serverRawCache.current = {};
+        await refreshTree();
+        onDeleted?.(filePath === currentFileName);
+
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 2000);
+      } catch (e) {
+        setSaveStatus('error');
+        setTimeout(() => setSaveStatus('idle'), 3000);
+        if (e.message === 'cancelled') return;
+        alert('Error deleting: ' + e.message);
+      }
+    },
+    [editPass, askPassword, setEditPass, acquireLock, refreshTree, serverRawCache, sessionIdRef]
+  );
+
+  // ─── Create new note ───────────────────────────────────────────────────────
+
+  const handleCreateNewNote = useCallback(
+    async (setIsEditing, setActiveTab, startKeepAlive) => {
+      let noteName;
+      try {
+        noteName = await askFileName();
+      } catch {
+        return;
+      }
+      if (!noteName) return;
+
+      const cleanName  = noteName.endsWith('.md') ? noteName : `${noteName}.md`;
+      const targetPath = `notes/${cleanName}`;
+
+      const exists =
+        fileRegistry.current[targetPath.toLowerCase()] ||
+        fileRegistry.current[cleanName.toLowerCase()] ||
+        fileRegistry.current[noteName.toLowerCase()];
+
+      if (exists) {
+        alert(`Note "${noteName}" already exists!`);
+        return;
+      }
+
+      try {
+        const lockData = await acquireLock(targetPath, editPass);
+
+        if (lockData.ok && lockData.content) {
+          alert(`Note "${noteName}" already exists on the server!`);
+          releaseLock(targetPath, editPass);
+          return;
+        }
+
+        createAndOpenFile(targetPath);
+        setFileSha(null);
+        setIsEditing(true);
+        setActiveTab(targetPath);
+        startKeepAlive(targetPath, editPass);
+      } catch (e) {
+        if (e.message === 'locked_by_other') {
+          alert('Cannot create. A file with this name is currently being edited by another user.');
+        } else {
+          createAndOpenFile(targetPath);
+          setFileSha(null);
+          setIsEditing(true);
+          setActiveTab(targetPath);
+        }
+      }
+    },
+    [askFileName, editPass, acquireLock, releaseLock, createAndOpenFile, setFileSha, fileRegistry]
+  );
+
+  // ─── Append comment ────────────────────────────────────────────────────────
+
+  const handleAppendComment = useCallback(
+    async (initialValue = '') => {
+      if (!fileName || fileName === 'chat' || fileName === 'filetree') return;
+
+      let comment;
+      try {
+        comment = await askComment(typeof initialValue === 'string' ? initialValue : '');
+      } catch {
+        return;
+      }
+      if (!comment) return;
+
+      try {
+        const pass = editPass || '';
+        const lockData   = await acquireLock(fileName, pass);
+        const freshContent = decodeBase64(lockData.content);
+        const currentSha   = lockData.sha;
+
+        const commentEntry   = `"${comment}"`;
+        const detailsRegex   = /<details[^>]*>\s*<summary>\s*Comments\s*<\/summary>([\s\S]*?)<\/details>/i;
+        const match          = freshContent.match(detailsRegex);
+
+        let updatedContent;
+        if (match) {
+          const oldInner  = match[1].trim();
+          const newInner  = `\n\n${commentEntry}\n${oldInner}\n\n`;
+          const newBlock  = `<details>\n<summary>Comments</summary>${newInner}</details>`;
+          updatedContent  = freshContent.substring(0, match.index) + newBlock + freshContent.substring(match.index + match[0].length);
+        } else {
+          updatedContent = `<details>\n<summary>Comments</summary>\n\n${commentEntry}\n\n</details>\n\n` + freshContent.trim();
+        }
+
+        const res = await fetch('/api/cases', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            path: fileName,
+            content: updatedContent,
+            password: pass,
+            comment: true,
+            sessionId: sessionIdRef.current,
+            sha: currentSha,
+          }),
+        });
+        if (!res.ok) throw new Error(await res.text());
+
+        const data = await res.json();
+        if (data.sha) setFileSha(data.sha);
+
+        serverRawCache.current[fileName] = updatedContent;
+        setOpenFiles((prev) =>
+          prev.map((f) => (f.id === fileName ? { ...f, fetchedContent: updatedContent } : f))
+        );
+        setContent(updatedContent);
+        setContentKey((k) => k + 1);
+        try { localStorage.removeItem(`vault_v3::${fileName}`); } catch {}
+
+        releaseLock(fileName, pass);
+      } catch (e) {
+        if (e.message === 'cancelled') return;
+        if (e.message === 'locked_by_other') {
+          alert('Cannot add comment. File is locked by another user.');
+        } else {
+          alert('Error adding comment: ' + e.message);
+        }
+        handleAppendComment(comment);
+      }
+    },
+    [
+      fileName, editPass, acquireLock, releaseLock, sessionIdRef,
+      setFileSha, serverRawCache, setOpenFiles, setContent, setContentKey, askComment,
+    ]
+  );
+
+  return {
+    saveStatus,
+    saveHandlerRef,
+    handleSaveFile,
+    handleSidebarSave,
+    handleRenameFile,
+    handleDeleteFile,
+    handleCreateNewNote,
+    handleAppendComment,
+  };
+}
