@@ -1,15 +1,15 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { ArrowLeft, Pencil } from 'lucide-react';
-import Chat from './components/Chat';
-import { readCache } from './components/BlockEditor';
-import BlockEditor from './components/BlockEditor';
-import FileSystemItem from './components/FileSystemItem';
-import VaultStyles from './components/VaultStyles';
-import StickySpine from './components/StickySpine';
-import MobileFooter from './components/MobileFooter';
-import PromptOverlays from './components/PromptOverlays';
-import FloatingActions from './components/FloatingActions';
+import Chat from '../../../features/case/components/Chat';
+import { readCache } from '../../../features/case/components/BlockEditor';
+import BlockEditor from '../../../features/case/components/BlockEditor';
+import FileSystemItem from '../../../features/case/components/FileSystemItem';
+import VaultStyles from '../../../features/case/components/VaultStyles';
+import StickySpine from '../../../features/case/components/StickySpine';
+import MobileFooter from '../../../features/case/components/MobileFooter';
+import PromptOverlays from '../../../features/case/components/PromptOverlays';
+import FloatingActions from '../../../features/case/components/FloatingActions';
 import dynamic from 'next/dynamic';
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
@@ -25,7 +25,7 @@ import { useVideoInteraction } from '@/features/case/hooks/useVideoInteraction';
 import { useBeforeUnload }     from '@/features/case/hooks/useBeforeUnload';
 import { usePrompts }          from '@/features/case/hooks/usePrompts';
 
-const GraphView = dynamic(() => import('./components/GraphView'), { ssr: false });
+const GraphView = dynamic(() => import('../../../features/case/components/GraphView'), { ssr: false });
 
 // ─── MAIN VAULT ───────────────────────────────────────────────────────────────
 

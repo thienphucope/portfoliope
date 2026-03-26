@@ -2,7 +2,7 @@ import "@fontsource-variable/roboto";
 import "@fontsource-variable/roboto-mono";
 import "@fontsource/zen-kaku-gothic-new";
 import "./globals.css";
-import Chat from './case/[[...slug]]/components/Chat';
+import Chat from '../features/case/components/Chat';
 import { Analytics } from '@vercel/analytics/react';
 
 export const metadata = {

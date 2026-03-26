@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { readCache } from '../../../app/case/[[...slug]]/components/BlockEditor';
+import { readCache } from '../components/BlockEditor';
 
 const decodeBase64 = (str) => {
   if (!str) return '';
