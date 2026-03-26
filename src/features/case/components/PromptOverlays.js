@@ -1,5 +1,10 @@
 import React from 'react';
 
+/**
+ * Modal overlay components for user interactions in the case vault, handling
+ * password authentication, new note naming, and comment addition prompts.
+ */
+
 export default function PromptOverlays({
   passPrompt,
   setPassPrompt,

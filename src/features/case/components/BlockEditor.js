@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ensureLibsLoaded, postProcess, fitHeading } from './MarkdownEngine';
 
+/**
+ * Block-based Markdown editor component with AI assistance, slash commands,
+ * and real-time rendering for the case vault application.
+ * Supports block navigation, code editing, and integration with file registry.
+ */
+
 // ─── STORAGE HELPERS ──────────────────────────────────────────────────────────
 
 export const cacheKey  = (name) => `vault_v3::${name}`;

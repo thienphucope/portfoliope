@@ -1,5 +1,10 @@
 import React from 'react';
 
+/**
+ * Global styles component for the case vault UI, injecting CSS for typography,
+ * layout, colors, responsive design, block editor, slash menu, and mobile adaptations.
+ */
+
 export default function VaultStyles() {
   return (
     <style jsx global>{`
@@ -457,13 +462,32 @@ export default function VaultStyles() {
           top: 0;
           left: 0;
           width: 100vw;
-          height: 100vh;
+          height: 100dvh;
           z-index: -2;
           pointer-events: none;
-          background-image: url('/casebg2.png');
-          background-size: cover;
-          background-position: center;
-          background-color: black;
+          overflow: hidden;
+          background: black;
+        }
+        .case-background img {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 100vw;
+          height: 100dvh;
+          transform: translate(-50%, -50%) scale(1.5);
+          object-fit: cover;
+        }
+        @media (max-aspect-ratio: 16/9) {
+          .case-background img {
+            width: 177.78vh;
+            height: 100dvh;
+          }
+        }
+        @media (min-aspect-ratio: 16/9) {
+          .case-background img {
+            width: 100vw;
+            height: 56.25vw;
+          }
         }
         .video-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); pointer-events: none; }
 

@@ -360,7 +360,9 @@ export default function CaseClient({ staticRecords = [] }) {
       ].join(' ')}
       ref={appShellRef}
     >
-      <div className="case-background" />
+      <div className="case-background">
+        <img src="/casebg2.png" alt="" />
+      </div>
       <div className="video-overlay" />
 
       <MobileFooter

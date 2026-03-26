@@ -3,6 +3,12 @@ import { useState, useRef, useEffect } from 'react';
 import { ClockIcon, PaperAirplaneIcon, ArrowPathIcon, MagnifyingGlassIcon, SpeakerWaveIcon, MicrophoneIcon } from '@heroicons/react/24/outline';
 import { ensureLibsLoaded, postProcess } from './MarkdownEngine';
 
+/**
+ * AI chat interface component for the case vault application.
+ * Features streaming responses, text-to-speech synthesis, speech recognition,
+ * and integration with RAG backend for contextual queries.
+ */
+
 function MessageContent({ role, content, isStreaming, onLinkClick, libsReady }) {
   const divRef = useRef(null);
 

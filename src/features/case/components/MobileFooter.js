@@ -1,6 +1,11 @@
 import React from 'react';
 import { Plus, ArrowLeft, Pencil, Folder, MessageSquare, MoreVertical, X, ChevronRight } from 'lucide-react';
 
+/**
+ * Mobile-specific footer component for the case vault, providing navigation actions,
+ * overlay toggles, and expandable menu for creating notes and comments.
+ */
+
 export default function MobileFooter({
   isFooterExpanded,
   setIsFooterExpanded,

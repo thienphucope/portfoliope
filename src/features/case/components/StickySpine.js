@@ -1,6 +1,11 @@
 import React from 'react';
 import { Plus } from 'lucide-react';
 
+/**
+ * Sticky navigation spine component for the case vault interface, rendering vertical
+ * tab titles and floating action buttons for file tree, AI chat, and new note creation.
+ */
+
 export default function StickySpine({ 
   showHeader, 
   activeTab, 

@@ -1,6 +1,11 @@
 import React from 'react';
 import { ChevronRight, ChevronDown, Edit2, Trash2 } from 'lucide-react';
 
+/**
+ * Recursive file system tree item component for displaying directories and files
+ * in the case vault sidebar, with support for expansion, selection, and actions.
+ */
+
 const FileSystemItem = ({ item, level = 0, onSelectFile, activeFile, onRename, onDelete }) => {
   const [isOpen, setIsOpen] = React.useState(item.isOpen || false);
   const itemPath = item.repoPath || item.path;

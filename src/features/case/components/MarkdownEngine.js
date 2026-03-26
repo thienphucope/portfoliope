@@ -1,4 +1,11 @@
-// ─── UTILS ────────────────────────────────────────────────────────────────────
+/**
+ * Utility module for Markdown rendering in the case vault application.
+ * Handles loading of external libraries (Marked, Highlight.js, KaTeX, Mermaid),
+ * configuration of Marked.js with custom extensions for wiki links, math, footnotes,
+ * and post-processing for dynamic content like diagrams and equations.
+ */
+
+ // ─── UTILS ────────────────────────────────────────────────────────────────────
 
 export const loadScript = (src) => new Promise((resolve, reject) => {
   if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }

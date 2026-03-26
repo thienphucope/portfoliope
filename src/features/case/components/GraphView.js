@@ -3,6 +3,11 @@ import React, { useMemo, useRef, useEffect, useState, useCallback } from 'react'
 import ForceGraph2D from 'react-force-graph-2d';
 import { forceX, forceY } from 'd3-force';
 
+/**
+ * Interactive force-directed graph visualization component for the case vault.
+ * Displays notes as nodes, wiki links and tags as edges, with search filtering and node selection.
+ */
+
 export default function GraphView({ allFiles, onSelectFile, searchTerm = '', activeNodeId = '', zoomToNodeId, onZoomComplete }) {
   const containerRef = useRef(null);
   const graphRef = useRef(null);

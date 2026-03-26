@@ -7,6 +7,11 @@ import FloatingActions from './FloatingActions';
 import CommentTrigger from './CommentTrigger';
 import dynamic from 'next/dynamic';
 
+/**
+ * Tab panel container component for rendering different content types in the case vault,
+ * including file tree, chat, static content, and editable notes with block editor.
+ */
+
 const GraphView = dynamic(() => import('./GraphView'), { ssr: false });
 
 export default function TabPanel({

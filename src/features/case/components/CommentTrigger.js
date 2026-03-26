@@ -1,6 +1,11 @@
 import React from 'react';
 import { Pencil } from 'lucide-react';
 
+/**
+ * Floating trigger button component for adding comments to notes in the case vault editor.
+ * Positioned at bottom-right with pencil icon and hover tooltip.
+ */
+
 export default function CommentTrigger({ onClick }) {
   return (
     <div

@@ -1,6 +1,11 @@
 import React from 'react';
 import { Share2, Search } from 'lucide-react';
 
+/**
+ * Floating actions toolbar component for the case vault, providing editor controls
+ * (edit/save) and sidebar tools (graph/list toggle, search) based on active tab type.
+ */
+
 export default function FloatingActions({
   tab,
   isEditing,
