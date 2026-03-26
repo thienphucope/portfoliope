@@ -1,8 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { ArrowLeft, Pencil } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Chat from '../../../features/case/components/Chat';
-import { readCache } from '../../../features/case/components/BlockEditor';
 import BlockEditor from '../../../features/case/components/BlockEditor';
 import FileSystemItem from '../../../features/case/components/FileSystemItem';
 import VaultStyles from '../../../features/case/components/VaultStyles';
@@ -10,6 +9,8 @@ import StickySpine from '../../../features/case/components/StickySpine';
 import MobileFooter from '../../../features/case/components/MobileFooter';
 import PromptOverlays from '../../../features/case/components/PromptOverlays';
 import FloatingActions from '../../../features/case/components/FloatingActions';
+import CommentTrigger from '../../../features/case/components/CommentTrigger';
+import TabPanel from '../../../features/case/components/TabPanel';
 import dynamic from 'next/dynamic';
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
@@ -24,6 +25,7 @@ import { useContentCache }     from '@/features/case/hooks/useContentCache';
 import { useVideoInteraction } from '@/features/case/hooks/useVideoInteraction';
 import { useBeforeUnload }     from '@/features/case/hooks/useBeforeUnload';
 import { usePrompts }          from '@/features/case/hooks/usePrompts';
+import { useLinkHandler }      from '@/features/case/hooks/useLinkHandler';
 
 const GraphView = dynamic(() => import('../../../features/case/components/GraphView'), { ssr: false });
 
@@ -306,50 +308,15 @@ export default function CaseClient({ staticRecords = [] }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Internal wiki link resolution ────────────────────────────────────────────
-  const resolveWikiPath = (target) => {
-    const withExt = target.endsWith('.md') ? target : `${target}.md`;
-    return withExt.includes('/') ? withExt : `notes/${withExt}`;
-  };
-
-  const handleLinkClick = useCallback((e) => {
-    const anchor = e.target.closest('a');
-    if (anchor) {
-      const href = anchor.getAttribute('href');
-      if (href && /^https?:\/\//.test(href)) {
-        e.preventDefault();
-        window.open(href, '_blank', 'noopener,noreferrer');
-        return;
-      }
-      if (href?.startsWith('#')) return;
-    }
-
-    const internalLink = e.target.closest('.internal-link');
-    if (!internalLink) return;
-
-    e.preventDefault();
-    const target     = internalLink.getAttribute('data-target') || internalLink.innerText;
-    const serverPath = resolveWikiPath(target);
-    const key        = serverPath.toLowerCase();
-    const baseName   = serverPath.split('/').pop().toLowerCase();
-    const realPath   = fileRegistry.current[key] ?? fileRegistry.current[baseName];
-
-    if (typeof realPath === 'string') {
-      const existing = tabs.find((t) => t.fileData?.path === realPath);
-      if (existing) loadFile(realPath, existing.fileData.name, existing.id);
-      else          loadFile(realPath, serverPath.split('/').pop(), serverPath);
-    } else if (realPath === null) {
-      setActiveTab(serverPath);
-      const openF  = openFiles.find((f) => f.id === serverPath);
-      const cached = readCache(serverPath);
-      const raw    = Array.isArray(cached) && cached.length > 0
-        ? cached.map((b) => b.raw).join('\n\n')
-        : openF?.fetchedContent;
-      applyFileContent(serverPath, raw || `# ${serverPath.split('/').pop().replace('.md', '')}\n*author: <author>*\n*tag: [[Dash Board]]*\n*links:*\n`);
-    } else {
-      createAndOpenFile(target);
-    }
-  }, [loadFile, createAndOpenFile, openFiles, tabs, applyFileContent, fileRegistry, setActiveTab]);
+  const { handleLinkClick } = useLinkHandler({
+    loadFile,
+    createAndOpenFile,
+    openFiles,
+    tabs,
+    applyFileContent,
+    fileRegistry,
+    setActiveTab,
+  });
 
   // ── Filtered tree for sidebar ─────────────────────────────────────────────────
   const filteredTree = useMemo(() => {
@@ -417,137 +384,41 @@ export default function CaseClient({ staticRecords = [] }) {
         setActiveOverlay={setActiveOverlay}
       />
 
-      {tabs.map((tab) => {
-        const isOverlay    = tab.id === 'filetree' || tab.id === 'chat';
-        const isOpen       = isOverlay ? activeOverlay === tab.id : activeTab === tab.id;
-        const isPersistent = tab.id === 'chat' || tab.id === activeTab;
-
-        return (
-          <div
-            key={tab.id}
-            className={`acc-panel ${isOpen ? 'open' : 'closed'} tab-${tab.id}`}
-            data-tab-id={tab.id}
-          >
-            <div className="acc-spine-container" onClick={(e) => handleTabClick(tab, e)}>
-              <div className="acc-spine">{tab.title}</div>
-              {isOpen && (
-                <div
-                  className="mobile-back-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    isOverlay ? setActiveOverlay(null) : window.history.back();
-                  }}
-                >
-                  <ArrowLeft size={24} />
-                </div>
-              )}
-            </div>
-
-            {(isOpen || isPersistent) && (
-              <div
-                className="acc-content"
-                onClick={(e) => e.stopPropagation()}
-                style={!isOpen ? { display: 'none' } : {}}
-              >
-                <FloatingActions
-                  tab={tab}
-                  isEditing={isEditing}
-                  handleToggleEditMode={handleToggleEditMode}
-                  saveStatus={saveStatus}
-                  handleSidebarSave={handleSidebarSave}
-                  viewMode={viewMode}
-                  setViewMode={setViewMode}
-                  showSearch={showSearch}
-                  setShowSearch={setShowSearch}
-                  searchTerm={searchTerm}
-                  setSearchTerm={setSearchTerm}
-                />
-
-                <div className="acc-body">
-                  {tab.type === 'sidebar' && (
-                    <>
-                      {viewMode === 'list' ? (
-                        <div className="file-list" style={{ flex: 1, overflowY: 'auto', padding: '10px 20px' }}>
-                          {filteredTree.map((item, i) => (
-                            <FileSystemItem
-                              key={i}
-                              item={item}
-                              onSelectFile={loadFile}
-                              activeFile={fileName}
-                              onRename={handleRenameFile}
-                              onDelete={handleDeleteFile}
-                            />
-                          ))}
-                        </div>
-                      ) : (
-                        <div style={{ flex: 1, overflow: 'hidden' }}>
-                          <GraphView
-                            allFiles={graphFiles}
-                            onSelectFile={loadFile}
-                            searchTerm={searchTerm}
-                            activeNodeId={fileName}
-                          />
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  {tab.type === 'chat' && (
-                    <div className="chat-container" style={{ flex: 1, overflow: 'hidden' }}>
-                      <Chat isEmbedded={true} onLinkClick={handleLinkClick} />
-                    </div>
-                  )}
-
-                  {(tab.type === 'static' || tab.type === 'editor') && (
-                    <main className="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
-                      <article
-                        className="markdown-container"
-                        style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}
-                        onScroll={(e) => {
-                          const t      = e.target;
-                          const bottom = t.scrollHeight - t.scrollTop <= t.clientHeight + 100;
-                          if (bottom !== isAtBottom) setIsAtBottom(bottom);
-                        }}
-                      >
-                        <BlockEditor
-                          key={contentKey}
-                          content={content}
-                          fileName={fileName}
-                          onLinkClick={handleLinkClick}
-                          onSaveFile={handleSaveFile}
-                          isEditing={tab.type === 'editor' ? isEditing : false}
-                          readOnly={tab.type === 'static'}
-                          onToggleEditing={handleToggleEditMode}
-                          onSaveRef={saveHandlerRef}
-                          fileRegistry={fileRegistry.current}
-                        />
-                      </article>
-
-                      {tab.type === 'editor' && (
-                        <div
-                          className="comment-trigger"
-                          onClick={handleAppendComment}
-                          title="Add comment"
-                          style={{
-                            position: 'absolute', bottom: '30px', right: '30px',
-                            width: '60px', height: '60px', borderRadius: '50%',
-                            backgroundColor: 'var(--colorone)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            cursor: 'pointer', zIndex: 200,
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.3)', color: 'black',
-                          }}
-                        >
-                          <Pencil size={28} />
-                        </div>
-                      )}
-                    </main>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        );
-      })}
+      {tabs.map(tab => (
+        <TabPanel
+          key={tab.id}
+          tab={tab}
+          activeTab={activeTab}
+          activeOverlay={activeOverlay}
+          setActiveOverlay={setActiveOverlay}
+          handleTabClick={handleTabClick}
+          handleLinkClick={handleLinkClick}
+          isEditing={isEditing}
+          handleToggleEditMode={handleToggleEditMode}
+          saveStatus={saveStatus}
+          handleSidebarSave={handleSidebarSave}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          showSearch={showSearch}
+          setShowSearch={setShowSearch}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          filteredTree={filteredTree}
+          loadFile={loadFile}
+          fileName={fileName}
+          handleRenameFile={handleRenameFile}
+          handleDeleteFile={handleDeleteFile}
+          graphFiles={graphFiles}
+          contentKey={contentKey}
+          content={content}
+          handleSaveFile={handleSaveFile}
+          saveHandlerRef={saveHandlerRef}
+          fileRegistry={fileRegistry}
+          isAtBottom={isAtBottom}
+          setIsAtBottom={setIsAtBottom}
+          handleAppendComment={handleAppendComment}
+        />
+      ))}
 
       <PromptOverlays
         passPrompt={passPrompt}       setPassPrompt={setPassPrompt}
