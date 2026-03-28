@@ -8,6 +8,7 @@ Xây dựng serverside như một trung tâm quản lý và cache filetree/graph
 
 Mọi mutation (save, rename, delete) đều phải tải content mới nhất từ github trước khi thực hiện thay đổi và push GitHub 1 lần (batch) để tăng tốc và đều phải cập nhật tree/graph và cả link trong file (optimistic update) để client có thể gọi server để view mà không bị outdate
 
+Raw to initialize, api cho mutation tránh xung đột
 
 ---
 
@@ -56,13 +57,14 @@ Mọi mutation (save, rename, delete) đều phải tải content mới nhất t
 ### 2. Mở file (Click Tab)
 - **Client**: Gọi `GET /api/cases/content?path=` → lấy từ **server cache**.
 - **Response**: `{ html, sha }`.
+- Lưu ý khi click link ở AI chat, filetree, graph node thì toggle tắt tất cả overlay người dùng đọc content
 
 ### 3. Xem FileTree / Graph (Refresh)
 - **Client**: Gọi `GET /api/cases/tree` hoặc `GET /api/cases/graph`.
 
 ### 4. Tạo file mới (Create) & Bắt đầu chỉnh sửa (Edit → Lock)
 - Cùng một flow, chỉ khác ở lock step:
-  - **Edit**: `POST /api/cases/lock` → fetch latest content + sha từ GitHub → trả về `{ sessionId, content, sha, expiresAt }`.
+  - **Edit**: `POST /api/cases/lock` → fetch latest content từ api + sha từ GitHub → trả về `{ sessionId, content, sha, expiresAt }`.
   - **Create**: Client tự tạo URL tạm (`/case/new-file-path`) để hiển thị đúng path ngay trên UI → `POST /api/cases/lock?create=true` → verify path chưa tồn tại → trả về `{ sessionId, content: "", sha: null, expiresAt }`. Khi save thành công, client navigate vào đúng path đó.
 - Client mở editor với content nhận được → user chỉnh sửa.
 
