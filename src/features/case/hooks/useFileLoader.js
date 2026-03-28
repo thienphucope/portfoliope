@@ -1,32 +1,21 @@
 import { useState, useCallback } from 'react';
-
-const decodeBase64 = (str) => {
-  if (!str) return '';
-  try {
-    return decodeURIComponent(
-      atob(str)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-  } catch (e) {
-    console.warn('Base64 decode falling back to simple atob', e);
-    return atob(str);
-  }
-};
+import { decodeBase64 } from '../utils/encoding';
 
 /**
  * Handles fetching file content from the API / CDN fallback,
  * managing the open-files list and active tab, and updating browser history.
  */
-export function useFileLoader({ fileRegistry, serverRawCache, applyFileContent }) {
+export function useFileLoader({ fileRegistry, serverRawCache, applyFileContent, setActiveOverlay }) {
   const [openFiles, setOpenFiles] = useState([]);
   const [activeTab, setActiveTab] = useState(null);
   const [fileSha,   setFileSha]   = useState(null);
 
   const loadFile = useCallback(
     async (path, name, serverPath = null, historyMode = 'push', activate = true) => {
-      if (activate) setActiveTab(serverPath);
+      if (activate) {
+        setActiveTab(serverPath);
+        if (setActiveOverlay) setActiveOverlay(null);
+      }
 
       let repoKey;
       let newContent = '';

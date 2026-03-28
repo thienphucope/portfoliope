@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import { readCache } from '../components/BlockEditor';
+import { readCache } from '../utils/editor';
 
 /**
  * Manages tab clicks, overlay toggling, unsaved-change guards,

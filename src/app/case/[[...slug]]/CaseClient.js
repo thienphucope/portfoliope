@@ -4,7 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 import Chat from '../../../features/case/components/Chat';
 import BlockEditor from '../../../features/case/components/BlockEditor';
 import FileSystemItem from '../../../features/case/components/FileSystemItem';
-import VaultStyles from '../../../features/case/components/VaultStyles';
+import VaultStyles from '../../../features/case/styles/VaultStyles';
 import StickySpine from '../../../features/case/components/StickySpine';
 import MobileFooter from '../../../features/case/components/MobileFooter';
 import PromptOverlays from '../../../features/case/components/PromptOverlays';
@@ -87,7 +87,7 @@ export default function CaseClient({ staticRecords = [] }) {
     activeTab, setActiveTab,
     fileSha,   setFileSha,
     loadFile,
-  } = useFileLoader({ fileRegistry, serverRawCache, applyFileContent });
+  } = useFileLoader({ fileRegistry, serverRawCache, applyFileContent, setActiveOverlay });
 
   // ── Lock Manager ────────────────────────────────────────────────────────────
   const onLockLost = useCallback(() => {
@@ -316,6 +316,7 @@ export default function CaseClient({ staticRecords = [] }) {
     applyFileContent,
     fileRegistry,
     setActiveTab,
+    setActiveOverlay,
   });
 
   // ── Filtered tree for sidebar ─────────────────────────────────────────────────

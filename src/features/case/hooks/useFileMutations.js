@@ -1,19 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
-import { readCache } from '../components/BlockEditor';
-
-const decodeBase64 = (str) => {
-  if (!str) return '';
-  try {
-    return decodeURIComponent(
-      atob(str)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-  } catch {
-    return atob(str);
-  }
-};
+import { readCache } from '../utils/editor';
+import { decodeBase64 } from '../utils/encoding';
 
 /**
  * All write operations: save, create, rename, delete, append comment.

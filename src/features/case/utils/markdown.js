@@ -5,9 +5,10 @@
  * and post-processing for dynamic content like diagrams and equations.
  */
 
- // ─── UTILS ────────────────────────────────────────────────────────────────────
+// ─── UTILS ────────────────────────────────────────────────────────────────────
 
 export const loadScript = (src) => new Promise((resolve, reject) => {
+  if (typeof document === 'undefined') return resolve();
   if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
   const s = document.createElement('script');
   s.src = src; s.onload = resolve; s.onerror = reject;
@@ -15,6 +16,7 @@ export const loadScript = (src) => new Promise((resolve, reject) => {
 });
 
 export const loadStyle = (href) => {
+  if (typeof document === 'undefined') return;
   if (document.querySelector(`link[href="${href}"]`)) return;
   const l = document.createElement('link');
   l.rel = 'stylesheet'; l.href = href;
@@ -110,9 +112,6 @@ export const configureMarked = () => {
           if (m) return { type: 'detailsBlock', raw: m[0] };
         },
         renderer(t) { 
-          // Use marked to parse the content INSIDE the details if needed, 
-          // but here we just want to return the raw HTML for the browser to render.
-          // However, to support markdown INSIDE the details, we should parse it.
           const match = t.raw.match(/<details([^>]*)>([\s\S]*?)<\/details>/i);
           if (match) {
             const attrs = match[1];
@@ -133,6 +132,7 @@ export const configureMarked = () => {
 
 let _libsPromise = null;
 export const ensureLibsLoaded = () => {
+  if (typeof window === 'undefined') return Promise.resolve();
   if (_libsPromise) return _libsPromise;
   _libsPromise = Promise.all([
     loadScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js'),

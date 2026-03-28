@@ -1,10 +1,9 @@
 import React from 'react';
 
 /**
- * Global styles component for the case vault UI, injecting CSS for typography,
- * layout, colors, responsive design, block editor, slash menu, and mobile adaptations.
+ * Global styles component for the case vault UI.
+ * Injected into the app shell to provide theme, layout, and responsive rules.
  */
-
 export default function VaultStyles() {
   return (
     <style jsx global>{`
@@ -1000,12 +999,6 @@ export default function VaultStyles() {
               z-index: 2001;
               transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
               pointer-events: auto; /* Chỉ cho phép tương tác tại quả cầu */
-            }
-
-            .assistive-ball.active {
-              transform: rotate(90deg);
-              background: black;
-              color: #b09278;
             }
 
             .assistive-ball.at-bottom {

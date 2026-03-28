@@ -1,33 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { ensureLibsLoaded, postProcess, fitHeading } from './MarkdownEngine';
+import { ensureLibsLoaded, postProcess, fitHeading } from '../utils/markdown';
+import { useAI } from '../hooks/useAI';
+import { useBlockNavigation } from '../hooks/useBlockNavigation';
+import { readCache, saveCache, mkBlock, cursorToEnd, getLineClass, SLASH_COMMANDS } from '../utils/editor';
 
 /**
  * Block-based Markdown editor component with AI assistance, slash commands,
  * and real-time rendering for the case vault application.
  * Supports block navigation, code editing, and integration with file registry.
  */
-
-// ─── STORAGE HELPERS ──────────────────────────────────────────────────────────
-
-export const cacheKey  = (name) => `vault_v3::${name}`;
-export const readCache = (name) => { try { return JSON.parse(localStorage.getItem(cacheKey(name))); } catch { return null; } };
-export const saveCache = (name, data) => { try { localStorage.setItem(cacheKey(name), JSON.stringify(data)); } catch {} };
-export const mkBlock   = (raw = '', type = 'paragraph') => ({
-  id: `b${Date.now()}${Math.random().toString(36).slice(2, 6)}`,
-  raw, type,
-});
-
-// ─── CURSOR HELPERS ───────────────────────────────────────────────────────────
-
-export const cursorToEnd = (el) => {
-  el.focus();
-  const range = document.createRange();
-  range.selectNodeContents(el);
-  range.collapse(false);
-  const sel = window.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(range);
-};
 
 // ─── BLOCK VIEW (inactive block) ─────────────────────────────────────────────
 
@@ -85,8 +66,8 @@ export const BlockView = ({ block, isEditing, isActive, onActivate, onLinkClick,
 
 export const CodeRawEditor = ({ block, onSave, onDeactivate, onNavigate, cursorPosition = "end" }) => {
   const ref = useRef(null);
-  const abortControllerRef = useRef(null);
   const originalRef = useRef(null);
+  const { isThinking, requestAI } = useAI();
 
   useEffect(() => {
     if (!ref.current) return;
@@ -97,26 +78,13 @@ export const CodeRawEditor = ({ block, onSave, onDeactivate, onNavigate, cursorP
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleBlur = useCallback(() => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      return; // catch block will handle restoration
-    }
+    if (isThinking) return;
     if (ref.current) onSave(ref.current.value);
     onDeactivate();
-  }, [onSave, onDeactivate]);
-
-  const cancelAI = useCallback(() => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-  }, []);
+  }, [onSave, onDeactivate, isThinking]);
 
   const handleKeyDown = useCallback(async (e) => {
     if (e.key === 'Escape') {
-      if (abortControllerRef.current) {
-        cancelAI();
-        return;
-      }
       if (ref.current) onSave(ref.current.value);
       onDeactivate();
       return;
@@ -163,34 +131,18 @@ export const CodeRawEditor = ({ block, onSave, onDeactivate, onNavigate, cursorP
         if (!query) return;
         
         originalRef.current = ref.current.value;
-        ref.current.value = '⏳ AI is thinking (click to cancel)…';
-        
-        const controller = new AbortController();
-        abortControllerRef.current = controller;
-        
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        ref.current.value = '⏳ AI is thinking…';
         
         try {
-          const res  = await fetch('/api/cases', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'ai', query, username: 'BlockEditor' }),
-            signal: controller.signal
-          });
-          clearTimeout(timeoutId);
-          const data = await res.json();
-          abortControllerRef.current = null;
-          onSave(data.response || '*No response from AI.*');
+          const reply = await requestAI(query, [], 'BlockEditor');
+          onSave(reply || '*No response from AI.*');
           onDeactivate();
         } catch (err) {
-          clearTimeout(timeoutId);
           if (ref.current) ref.current.value = originalRef.current;
-          abortControllerRef.current = null;
-          // Stay active so user can edit their prompt
         }
       }
     }
-  }, [onSave, onDeactivate, cancelAI]);
+  }, [onSave, onDeactivate, requestAI]);
 
   // Auto-resize textarea
   const handleInput = useCallback(() => {
@@ -213,79 +165,29 @@ export const CodeRawEditor = ({ block, onSave, onDeactivate, onNavigate, cursorP
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       onInput={handleInput}
-      onClick={cancelAI}
       spellCheck={false}
     />
   );
 };
 
-// ─── LINE TYPE HELPERS ────────────────────────────────────────────────────────
-
-export const getLineClass = (line) => {
-  if (/^###### /.test(line)) return 'rte-h6';
-  if (/^##### /.test(line))  return 'rte-h5';
-  if (/^#### /.test(line))   return 'rte-h4';
-  if (/^### /.test(line))    return 'rte-h3';
-  if (/^## /.test(line))     return 'rte-h2';
-  if (/^# /.test(line))      return 'rte-h1';
-  if (/^[-*+] /.test(line))  return 'rte-ul';
-  if (/^\d+\. /.test(line))  return 'rte-ol';
-  if (/^> /.test(line))      return 'rte-blockquote';
-  if (/^`{3}/.test(line))    return 'rte-codefence';
-  if (/^---+$|^\*\*\*+$/.test(line.trim())) return 'rte-hr';
-  return 'rte-p';
-};
-
 // ─── RAW TEXT EDITOR ─────────────────────────────────────────────────────────
-
-const SLASH_COMMANDS = [
-  { id: 'ai', label: 'AI Prompt', icon: 'AI', template: '/ai ' },
-  { id: 'h1', label: 'Heading 1', icon: 'H1', template: '# ' },
-  { id: 'h2', label: 'Heading 2', icon: 'H2', template: '## ' },
-  { id: 'h3', label: 'Heading 3', icon: 'H3', template: '### ' },
-  { id: 'h4', label: 'Heading 4', icon: 'H4', template: '#### ' },
-  { id: 'h5', label: 'Heading 5', icon: 'H5', template: '##### ' },
-  { id: 'h6', label: 'Heading 6', icon: 'H6', template: '###### ' },
-  { id: 'bold', label: 'Bold', icon: 'B', template: '**Bold**' },
-  { id: 'italic', label: 'Italic', icon: 'I', template: '*Italic*' },
-  { id: 'quote', label: 'Quote', icon: '”', template: '> ' },
-  { id: 'ul', label: 'Bullet List', icon: 'UL', template: '- ' },
-  { id: 'ol', label: 'Numbered List', icon: 'OL', template: '1. ' },
-  { id: 'todo', label: 'Todo List', icon: '☑', template: '- [ ] ' },
-  { id: 'table2', label: 'Table (2x2)', icon: '田2', template: "| Col 1 | Col 2 |\n| --- | --- |\n| Cell 1 | Cell 2 |" },
-  { id: 'table3', label: 'Table (3x2)', icon: '田3', template: "| Col 1 | Col 2 | Col 3 |\n| --- | --- | --- |\n| Cell 1 | Cell 2 | Cell 3 |" },
-  { id: 'code', label: 'Code Block', icon: '</>', template: "```\n\n```" },
-  { id: 'icode', label: 'Inline Code', icon: '`', template: '`code` ' },
-  { id: 'link', label: 'Link', icon: '🔗', template: '[Title](url)' },
-  { id: 'img', label: 'Image', icon: '🖼', template: '![Alt](url)' },
-  { id: 'math', label: 'Math Block', icon: '∑', template: "$$\n\\text{math}\n$$" },
-  { id: 'mermaid', label: 'Mermaid', icon: '🧬', template: "```mermaid\ngraph TD;\nA-->B;\n```" },
-  { id: 'hr', label: 'Divider', icon: '—', template: '---' },
-];
 
 export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNavigate, cursorPosition = 'end' }) => {
   const containerRef = useRef(null);
   const menuRef = useRef(null);
-  const abortControllerRef = useRef(null);
   const originalRef = useRef(null);
   const [slashMenu, setSlashMenu] = useState({ visible: false, x: 0, y: 0, query: '', selectedIndex: 0 });
   const [isEmpty, setIsEmpty] = useState(block.raw === '');
+  const { isThinking, requestAI } = useAI();
 
-  // Use a native listener to stop propagation of the wheel event
-  // This is more robust against parent components with custom scroll handlers
   useEffect(() => {
     const menu = menuRef.current;
     if (!menu || !slashMenu.visible) return;
-
-    const stopWheel = (e) => {
-      e.stopPropagation();
-    };
-
+    const stopWheel = (e) => e.stopPropagation();
     menu.addEventListener('wheel', stopWheel, { passive: false });
     return () => menu.removeEventListener('wheel', stopWheel);
   }, [slashMenu.visible]);
 
-  // Scroll active item into view manually
   useEffect(() => {
     if (slashMenu.visible && menuRef.current) {
       const menu = menuRef.current;
@@ -295,12 +197,8 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
         const menuBottom = menuTop + menu.clientHeight;
         const itemTop = activeItem.offsetTop;
         const itemBottom = itemTop + activeItem.offsetHeight;
-
-        if (itemTop < menuTop) {
-          menu.scrollTop = itemTop;
-        } else if (itemBottom > menuBottom) {
-          menu.scrollTop = itemBottom - menu.clientHeight;
-        }
+        if (itemTop < menuTop) menu.scrollTop = itemTop;
+        else if (itemBottom > menuBottom) menu.scrollTop = itemBottom - menu.clientHeight;
       }
     }
   }, [slashMenu.selectedIndex, slashMenu.visible]);
@@ -309,12 +207,8 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
     const d = document.createElement('div');
     const cls = getLineClass(line);
     d.className = `rte-line ${cls}`;
-    if (line === '') {
-      d.classList.add('rte-empty');
-      d.innerHTML = '<br>';
-    } else {
-      d.textContent = line;
-    }
+    if (line === '') { d.classList.add('rte-empty'); d.innerHTML = '<br>'; }
+    else d.textContent = line;
     return d;
   };
 
@@ -323,10 +217,7 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
   const collectRaw = () => {
     if (!containerRef.current) return '';
     return Array.from(containerRef.current.querySelectorAll('.rte-line'))
-      .map(d => {
-        if (d.classList.contains('rte-empty')) return '';
-        return d.textContent || '';
-      })
+      .map(d => d.classList.contains('rte-empty') ? '' : (d.textContent || ''))
       .join('\n');
   };
 
@@ -344,15 +235,12 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
       const sel = window.getSelection();
       sel.removeAllRanges();
       sel.addRange(range);
-    } else {
-      cursorToEnd(el.lastElementChild || el);
-    }
+    } else cursorToEnd(el.lastElementChild || el);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleInput = useCallback(() => {
     const raw = collectRaw();
     setIsEmpty(raw === '');
-
     const sel = window.getSelection();
     if (!sel || !sel.anchorNode) return;
     let node = sel.anchorNode;
@@ -361,21 +249,15 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
       node = node.parentNode;
     }
     if (!node || node === containerRef.current) return;
-
     const text = node.textContent || '';
     const isLineEmpty = text === '' || node.innerHTML === '<br>';
     node.className = `rte-line ${getLineClass(text)}${isLineEmpty ? ' rte-empty' : ''}`;
-    if (isLineEmpty && !node.querySelector('br')) {
-      node.innerHTML = '<br>';
-    }
+    if (isLineEmpty && !node.querySelector('br')) node.innerHTML = '<br>';
 
-    // Slash menu detection
     if (text.startsWith('/')) {
       const rect = sel.getRangeAt(0).getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
       const menuMaxHeight = 240;
-      const showUpwards = rect.bottom + menuMaxHeight > viewportHeight;
-
+      const showUpwards = rect.bottom + menuMaxHeight > window.innerHeight;
       setSlashMenu(prev => ({
         visible: true,
         x: rect.left,
@@ -383,9 +265,7 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
         query: text.slice(1).toLowerCase(),
         selectedIndex: 0
       }));
-    } else if (slashMenu.visible) {
-      setSlashMenu(prev => ({ ...prev, visible: false }));
-    }
+    } else if (slashMenu.visible) setSlashMenu(prev => ({ ...prev, visible: false }));
   }, [slashMenu.visible]);
 
   const applyCommand = useCallback((cmd) => {
@@ -393,37 +273,19 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
     let node = sel?.anchorNode;
     while (node && !(node.classList && node.classList.contains('rte-line'))) node = node.parentNode;
     if (!node) return;
-
     node.textContent = cmd.template;
     node.className = `rte-line ${getLineClass(cmd.template)}`;
     setSlashMenu({ visible: false, x: 0, y: 0, query: '', selectedIndex: 0 });
     setIsEmpty(collectRaw() === '');
-
-    // Position cursor after template
     cursorToEnd(node);
-    if (cmd.id === 'ai' || cmd.id === 'table' || cmd.id === 'code') {
-      // For these types, we might want to stay in edit mode
-    } else {
-      // For others, maybe save and continue
-    }
   }, []);
 
   const handleBlur = useCallback((e) => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      return;
-    }
-    // Prevent blur if clicking on slash menu
+    if (isThinking) return;
     if (e.relatedTarget?.closest('.slash-menu')) return;
     onSave(collectRaw());
     onDeactivate();
-  }, [onSave, onDeactivate]);
-
-  const cancelAI = useCallback(() => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-  }, []);
+  }, [onSave, onDeactivate, isThinking]);
 
   const getCurrentLineDiv = () => {
     const sel = window.getSelection();
@@ -433,10 +295,6 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
     while (node && node !== container) {
       if (node.nodeType === 1 && node.classList && node.classList.contains('rte-line')) return node;
       node = node.parentNode;
-    }
-    if (node === container) {
-      const lines = container.querySelectorAll('.rte-line');
-      return lines.length > 0 ? lines[sel.anchorOffset === 0 ? 0 : lines.length - 1] : null;
     }
     return null;
   };
@@ -451,72 +309,51 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
 
     if (slashMenu.visible && filteredCommands.length > 0) {
       if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        e.stopPropagation();
+        e.preventDefault(); e.stopPropagation();
         setSlashMenu(prev => ({ ...prev, selectedIndex: (prev.selectedIndex + 1) % filteredCommands.length }));
         return;
       }
       if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        e.stopPropagation();
+        e.preventDefault(); e.stopPropagation();
         setSlashMenu(prev => ({ ...prev, selectedIndex: (prev.selectedIndex - 1 + filteredCommands.length) % filteredCommands.length }));
         return;
       }
       if (e.key === 'Enter' || e.key === 'Tab') {
-        e.preventDefault();
-        e.stopPropagation();
+        e.preventDefault(); e.stopPropagation();
         applyCommand(filteredCommands[slashMenu.selectedIndex]);
         return;
       }
       if (e.key === 'Escape') {
-        e.preventDefault();
-        e.stopPropagation();
-        if (abortControllerRef.current) {
-          cancelAI();
-        } else {
-          setSlashMenu(prev => ({ ...prev, visible: false }));
-        }
+        e.preventDefault(); e.stopPropagation();
+        setSlashMenu(prev => ({ ...prev, visible: false }));
         return;
       }
     }
 
     if (e.key === 'Escape') {
-      if (abortControllerRef.current) {
-        cancelAI();
-        return;
-      }
       onSave(collectRaw());
       onDeactivate();
       return;
     }
 
-    if (e.key === 'Backspace') {
-      const raw = collectRaw();
-      if (raw === '') {
-        e.preventDefault();
-        onSave(raw);
-        onNavigate('up', true);
-        return;
-      }
+    if (e.key === 'Backspace' && collectRaw() === '') {
+      e.preventDefault();
+      onSave('');
+      onNavigate('up', true);
+      return;
     }
 
     if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
       const lineDiv = getCurrentLineDiv();
       const lines = el.querySelectorAll('.rte-line');
-      const firstLine = lines[0];
-      const lastLine  = lines[lines.length - 1];
-      const isFirst = !lineDiv || lineDiv === firstLine || !lineDiv.previousElementSibling;
-      const isLast  = !lineDiv || lineDiv === lastLine  || !lineDiv.nextElementSibling;
+      const isFirst = !lineDiv || lineDiv === lines[0] || !lineDiv.previousElementSibling;
+      const isLast  = !lineDiv || lineDiv === lines[lines.length - 1] || !lineDiv.nextElementSibling;
       if (e.key === 'ArrowUp' && isFirst) {
-        e.preventDefault();
-        onSave(collectRaw());
-        onNavigate('up');
+        e.preventDefault(); onSave(collectRaw()); onNavigate('up');
         return;
       }
       if (e.key === 'ArrowDown' && isLast) {
-        e.preventDefault();
-        onSave(collectRaw());
-        onNavigate('down');
+        e.preventDefault(); onSave(collectRaw()); onNavigate('down');
         return;
       }
     }
@@ -525,75 +362,50 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
       const sel = window.getSelection();
       let lineDiv = sel?.anchorNode;
       while (lineDiv && !(lineDiv.classList && lineDiv.classList.contains('rte-line'))) lineDiv = lineDiv?.parentNode;
-
       const lineText = lineDiv ? (lineDiv.textContent || '') : '';
 
       if (lineText.trim().startsWith('/ai ')) {
         e.preventDefault();
         const query = lineText.trim().slice(4).trim();
         if (!query) return;
-        
         originalRef.current = lineText;
-        if (lineDiv) lineDiv.textContent = '⏳ AI is thinking (click to cancel)…';
-        
-        const controller = new AbortController();
-        abortControllerRef.current = controller;
-        
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-        
+        if (lineDiv) lineDiv.textContent = '⏳ AI is thinking…';
         try {
-          const res  = await fetch('/api/cases', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'ai', query, username: 'BlockEditor' }),
-            signal: controller.signal
-          });
-          clearTimeout(timeoutId);
-          const data = await res.json();
-          abortControllerRef.current = null;
-          onSave(data.response || '*No response from AI.*');
+          const reply = await requestAI(query, [], 'BlockEditor');
+          onSave(reply || '*No response from AI.*');
           onDeactivate();
         } catch (err) {
-          clearTimeout(timeoutId);
           if (lineDiv) lineDiv.textContent = originalRef.current;
-          abortControllerRef.current = null;
         }
         return;
       }
 
       const ulMatch = /^([-*+] )/.exec(lineText);
       const olMatch = /^(\d+)\. /.exec(lineText);
-
-      if (ulMatch && lineText.trim() !== '-' && lineText.trim() !== '*' && lineText.trim() !== '+' && lineText.trim() !== ulMatch[1].trim()) {
+      if (ulMatch && lineText.trim() !== ulMatch[1].trim()) {
         e.preventDefault();
         const newDiv = document.createElement('div');
         newDiv.className = `rte-line ${getLineClass(ulMatch[1])}`;
-        newDiv.dataset.raw = ulMatch[1];
         newDiv.textContent = ulMatch[1];
         lineDiv.after(newDiv);
         cursorToEnd(newDiv);
         return;
       }
-
-      if (olMatch) {
-        const num = parseInt(olMatch[1]);
-        if (lineText.trim() !== `${num}.`) {
-          e.preventDefault();
-          const prefix = `${num + 1}. `;
-          const newDiv = document.createElement('div');
-          newDiv.className = 'rte-line rte-ol';
-          newDiv.textContent = prefix;
-          lineDiv.after(newDiv);
-          cursorToEnd(newDiv);
-          return;
-        }
+      if (olMatch && lineText.trim() !== `${olMatch[1]}.`) {
+        e.preventDefault();
+        const newDiv = document.createElement('div');
+        newDiv.className = 'rte-line rte-ol';
+        newDiv.textContent = `${parseInt(olMatch[1]) + 1}. `;
+        lineDiv.after(newDiv);
+        cursorToEnd(newDiv);
+        return;
       }
 
       e.preventDefault();
       onSave(collectRaw());
       onCreateAfter();
     }
-  }, [onSave, onDeactivate, onCreateAfter, slashMenu, filteredCommands, applyCommand, cancelAI]);
+  }, [onSave, onDeactivate, onCreateAfter, slashMenu, filteredCommands, applyCommand, requestAI]);
 
   return (
     <>
@@ -605,7 +417,6 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
         onInput={handleInput}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
-        onClick={cancelAI}
         spellCheck={false}
         data-placeholder="Type slash / to open command"
       />
@@ -614,10 +425,7 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
           ref={menuRef}
           className="slash-menu"
           style={{ left: slashMenu.x, top: slashMenu.y }}
-          onWheel={e => e.stopPropagation()}
-          onMouseDown={e => {
-            e.preventDefault(); 
-          }}
+          onMouseDown={e => e.preventDefault()}
         >
           {filteredCommands.map((cmd, idx) => (
             <div
@@ -637,7 +445,7 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
 
 // ─── ACTIVE BLOCK ─────────────────────────────────────────────────────────────
 
-export const ActiveBlock = ({ block, onSave, onDeactivate, onCreateAfter, onNavigate, cursorPosition, onLinkClick }) => {
+export const ActiveBlock = ({ block, onSave, onDeactivate, onCreateAfter, onNavigate, cursorPosition }) => {
   if (block.type === 'code' || block.type === 'table') {
     return (
       <CodeRawEditor
@@ -664,28 +472,22 @@ export const ActiveBlock = ({ block, onSave, onDeactivate, onCreateAfter, onNavi
 // ─── BLOCK EDITOR ─────────────────────────────────────────────────────────────
 
 const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, onToggleEditing, onSaveRef, fileRegistry = {} }) => {
-  const [blocks, setBlocks]           = useState([]);
-  const [activeBlockIndex, setActive] = useState(null);
-  const [libsReady, setLibsReady]     = useState(false);
+  const [blocks, setBlocks]       = useState([]);
+  const [libsReady, setLibsReady] = useState(false);
   useEffect(() => { ensureLibsLoaded().then(() => setLibsReady(true)); }, []);
+
+  const { activeBlockIndex, setActive, cursorPos, setCursorPos, createBlockAfter, navigateBlock } = useBlockNavigation({ blocks, setBlocks });
 
   useEffect(() => {
     if (!libsReady || !window.marked || !fileName) return;
     setActive(null);
-
     const cached = readCache(fileName);
     if (Array.isArray(cached) && cached.length > 0) {
-      const migrated = cached.map(b =>
-        b.raw !== undefined ? b : mkBlock(b.html ? b.html.replace(/<[^>]+>/g, '') : '', 'paragraph')
-      );
-      setBlocks(migrated);
+      setBlocks(cached.map(b => b.raw !== undefined ? b : mkBlock(b.html ? b.html.replace(/<[^>]+>/g, '') : '', 'paragraph')));
       return;
     }
-
     const tokens = window.marked.lexer(content || '');
-    const newBlocks = tokens
-      .filter(t => t.type !== 'space')
-      .map(t => mkBlock(t.raw.trimEnd(), t.type));
+    const newBlocks = tokens.filter(t => t.type !== 'space').map(t => mkBlock(t.raw.trimEnd(), t.type));
     setBlocks(newBlocks.length > 0 ? newBlocks : [mkBlock('', 'paragraph')]);
   }, [content, fileName, libsReady]);
 
@@ -703,37 +505,6 @@ const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, on
     });
   }, []);
 
-  const createBlockAfter = useCallback((index) => {
-    const fresh = mkBlock('', 'paragraph');
-    setBlocks(prev => { const n = [...prev]; n.splice(index + 1, 0, fresh); return n; });
-    setActive(index + 1);
-  }, []);
-
-  const [cursorPos, setCursorPos] = useState('end');
-
-  const navigateBlock = useCallback((index, direction, deleteBlock = false) => {
-    if (deleteBlock) {
-      setBlocks(prev => {
-        if (prev.length <= 1) return prev;
-        const n = [...prev];
-        n.splice(index, 1);
-        return n;
-      });
-      setCursorPos('end');
-      setActive(Math.max(0, index - 1));
-      return;
-    }
-    if (direction === 'up' && index > 0) {
-      setCursorPos('end');
-      setActive(index - 1);
-    }
-    if (direction === 'down' && index < blocks.length - 1) {
-      setCursorPos('start');
-      setActive(index + 1);
-    }
-  }, [blocks.length]);
-
-  // Expose save handler to parent via ref
   const blocksRef = useRef(blocks);
   useEffect(() => { blocksRef.current = blocks; }, [blocks]);
 
@@ -770,7 +541,6 @@ const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, on
                 onCreateAfter={() => createBlockAfter(index)}
                 onNavigate={(dir, del) => navigateBlock(index, dir, del)}
                 cursorPosition={cursorPos}
-                onLinkClick={onLinkClick}
               />
             )}
           </div>

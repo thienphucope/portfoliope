@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { readCache } from '../components/BlockEditor';
+import { readCache } from '../utils/editor';
 
 export function useLinkHandler({
   loadFile,
@@ -9,6 +9,7 @@ export function useLinkHandler({
   applyFileContent,
   fileRegistry,
   setActiveTab,
+  setActiveOverlay,
 }) {
   const resolveWikiPath = (target) => {
     const withExt = target.endsWith('.md') ? target : `${target}.md`;
@@ -31,6 +32,7 @@ export function useLinkHandler({
     if (!internalLink) return;
 
     e.preventDefault();
+    if (setActiveOverlay) setActiveOverlay(null);
     const target     = internalLink.getAttribute('data-target') || internalLink.innerText;
     const serverPath = resolveWikiPath(target);
     const key        = serverPath.toLowerCase();

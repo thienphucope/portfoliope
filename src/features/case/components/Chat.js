@@ -1,7 +1,10 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
 import { ClockIcon, PaperAirplaneIcon, ArrowPathIcon, MagnifyingGlassIcon, SpeakerWaveIcon, MicrophoneIcon } from '@heroicons/react/24/outline';
-import { ensureLibsLoaded, postProcess } from './MarkdownEngine';
+import { ensureLibsLoaded, postProcess } from '../utils/markdown';
+import { useAI } from '../hooks/useAI';
+import { useTTS } from '../hooks/useTTS';
+import { useSTT } from '../hooks/useSTT';
 
 /**
  * AI chat interface component for the case vault application.
@@ -40,158 +43,66 @@ function MessageContent({ role, content, isStreaming, onLinkClick, libsReady }) 
 
 export default function Chat({ isEmbedded = false, onLinkClick }) {
   const [isOpen, setIsOpen] = useState(isEmbedded ? true : false);
-  const [showHistory, setShowHistory] = useState(true);
   const [inputValue, setInputValue] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [convo, setConvo] = useState([
     { role: 'assistant', content: "*Ask me anything about this case or contribute by create + a note* \n\n*I can play YouTube video if you want a BGM.* *I can tell Ope's secrets* \n ## 🤡 Pins\n #### 📌 [[The Boy Who Murdered Love]]\n #### 📌 [[Beautiful]] ⬅️ *click to noclip*\n " }
   ]);
 
- 
-  const [streamingText, setStreamingText] = useState('');
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [isThinking, setIsThinking] = useState(false);
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [ragReady, setRagReady] = useState(false);
-  const [isFallback, setIsFallback] = useState(false);
-  const [ttsReady, setTtsReady] = useState(false);
   const [libsReady, setLibsReady] = useState(false);
   const [apiUsername, setApiUsername] = useState('YOU');
-  const [isListening, setIsListening] = useState(false);
   
-  const inputRef = useRef(null);
   const historyRef = useRef(null);
-  const streamingIntervalRef = useRef(null);
-  const audioQueueRef = useRef([]); 
-  const pendingChunksRef = useRef([]); 
-  const isPlayingRef = useRef(false); 
-  const isFetchingRef = useRef(false); 
-  const recognitionRef = useRef(null);
   
-  const displayName = 'YOU';
+  const { isThinking, isStreaming, streamingText, requestAI, streamResponse } = useAI();
+  const { isPlayingAudio, ttsReady, generateAndPlayAudio, checkTtsHealth } = useTTS();
+  const { isListening, startListening } = useSTT({ onResult: setInputValue });
 
   useEffect(() => {
     ensureLibsLoaded().then(() => setLibsReady(true));
   }, []);
 
-  const TTS_API_URL = "https://thienphuc1052004--xtts-api-xttsapi-tts-generate.modal.run";
-  const TTS_HEALTH_URL = "https://thienphuc1052004--xtts-api-xttsapi-ping.modal.run";
-
-  // --- LOGIC HELPER ---
-  const detectLanguage = (text) => /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i.test(text) ? 'vi' : 'en';
-  const normalizeText = (text) => text.toLowerCase().replace(/[^\p{L}\p{N}\s.,!?;:'"()-]/gu, '').replace(/\s+/g, ' ').trim();
-  
-  const splitTextSmart = (text, minWords = 40, mergeLastThreshold = 10) => {
-    const rawSentences = text.match(/[^.!?]+[.!?]*/g) || [text];
-    const chunks = [];
-    let buffer = "";
-    for (const sentence of rawSentences) {
-      const candidate = (buffer + " " + sentence).trim();
-      if (candidate.split(/\s+/).length < minWords) buffer = candidate;
-      else { chunks.push(candidate); buffer = ""; }
-    }
-    if (buffer) chunks.push(buffer);
-    if (chunks.length > 1 && chunks[chunks.length-1].split(/\s+/).length < mergeLastThreshold) chunks[chunks.length-2] += " " + chunks.pop();
-    return chunks;
-  };
-
-  const fetchTTSChunk = async (chunk, lang) => {
-    try {
-      const res = await fetch(TTS_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: chunk, language: lang }),
-      });
-      return res.ok ? await res.blob() : null;
-    } catch { return null; }
-  };
-
-  const processNextChunk = async () => {
-    if (isFetchingRef.current || pendingChunksRef.current.length === 0) return;
-    isFetchingRef.current = true;
-    const { text, lang } = pendingChunksRef.current.shift();
-    const blob = await fetchTTSChunk(text, lang);
-    if (blob) {
-      audioQueueRef.current.push(blob);
-      if (!isPlayingRef.current) playNextAudio();
-    }
-    isFetchingRef.current = false;
-    if (pendingChunksRef.current.length > 0) processNextChunk();
-  };
-
-  const playNextAudio = async () => {
-    if (isPlayingRef.current || audioQueueRef.current.length === 0) {
-      if (audioQueueRef.current.length === 0 && pendingChunksRef.current.length === 0 && !isFetchingRef.current) setIsPlayingAudio(false);
-      return;
-    }
-    isPlayingRef.current = true;
-    setIsPlayingAudio(true);
-    const blob = audioQueueRef.current.shift();
-    const url = URL.createObjectURL(blob);
-    try {
-      await new Promise((res, rej) => {
-        const audio = new Audio(url);
-        audio.onended = () => { URL.revokeObjectURL(url); res(); };
-        audio.onerror = () => { URL.revokeObjectURL(url); rej(); };
-        audio.play().catch(rej);
-      });
-    } catch {}
-    isPlayingRef.current = false;
-    playNextAudio();
-  };
-
-  const generateAndPlayAudio = async (text) => {
-    if (!text || !ttsReady) return;
-    const normalized = normalizeText(text);
-    const lang = detectLanguage(normalized);
-    const chunks = splitTextSmart(normalized);
-    chunks.forEach(c => pendingChunksRef.current.push({ text: c, lang }));
-    processNextChunk(); processNextChunk();
-  };
-
   useEffect(() => {
-    fetch('https://api.ipify.org?format=json').then(r => r.json()).then(d => setApiUsername(`User-${d.ip.replace(/\./g, '-')}`)).catch(() => setApiUsername('Guest'));
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognitionRef.current = new SR();
-      recognitionRef.current.onstart = () => setIsListening(true);
-      recognitionRef.current.onresult = (e) => setInputValue(e.results[e.results.length-1][0].transcript);
-      recognitionRef.current.onend = () => setIsListening(false);
-    }
-  }, []);
+    fetch('https://api.ipify.org?format=json')
+      .then(r => r.json())
+      .then(d => setApiUsername(`User-${d.ip.replace(/\./g, '-')}`))
+      .catch(() => setApiUsername('Guest'));
+    
+    const checkRag = async () => { 
+      try { 
+        if ((await fetch("https://rag-backend-zh2e.onrender.com/status")).ok) setRagReady(true); 
+      } catch{} 
+    };
+    
+    checkRag();
+    checkTtsHealth();
+  }, [checkTtsHealth]);
 
   const handleSend = async () => {
     if (!inputValue.trim() || isSending) return;
-    const msg = inputValue.trim(); setInputValue('');
+    const msg = inputValue.trim(); 
+    setInputValue('');
     setIsSending(true);
-    setIsThinking(true);
+    
     const newConvo = [...convo, { role: 'user', content: msg }];
     setConvo(newConvo);
     setConvo(prev => [...prev, { role: 'assistant', content: '' }]);
     
     try {
-      const r = await fetch("/api/cases", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: 'ai',
-          query: msg,
-          history: convo, // Send previous history for context
-          username: apiUsername
-        })
+      const reply = await requestAI(msg, convo, apiUsername);
+      streamResponse(reply, (fullText) => {
+        setConvo(p => { 
+          const n = [...p]; 
+          n[n.length - 1] = { role: 'assistant', content: fullText }; 
+          return n; 
+        });
       });
-      
-      if (!r.ok) throw new Error("AI request failed");
-      const d = await r.json();
-      const reply = d.response || "No response";
-
-      streamResponse(reply);
       generateAndPlayAudio(reply);
     } catch { 
-      setIsThinking(false);
       setConvo(prev => { 
         const n = [...prev]; 
-        n[n.length-1] = {role:'assistant',content:"LLMs Error"}; 
+        n[n.length - 1] = { role: 'assistant', content: "LLMs Error" }; 
         return n; 
       }); 
     } finally { 
@@ -199,22 +110,9 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
     }
   };
 
-  const streamResponse = (full) => {
-    setIsThinking(false);
-    let i = 0; setIsStreaming(true);
-    const timer = setInterval(() => {
-      if (i < full.length) { setStreamingText(full.slice(0, ++i)); if (historyRef.current) historyRef.current.scrollTop = historyRef.current.scrollHeight; }
-      else { clearInterval(timer); setIsStreaming(false); setConvo(p => { const n=[...p]; n[n.length-1]={role:'assistant',content:full}; return n; }); }
-    }, 5);
-  };
-
-  useEffect(() => {
-    const check = async () => { try { if ((await fetch("https://rag-backend-zh2e.onrender.com/status")).ok) setRagReady(true); } catch{} };
-    const checkTts = async () => { try { if ((await fetch(TTS_HEALTH_URL)).ok) setTtsReady(true); } catch{ setTimeout(checkTts, 5000); } };
-    check(); checkTts();
-  }, []);
-
-  useEffect(() => { if (historyRef.current) historyRef.current.scrollTop = historyRef.current.scrollHeight; }, [convo, streamingText]);
+  useEffect(() => { 
+    if (historyRef.current) historyRef.current.scrollTop = historyRef.current.scrollHeight; 
+  }, [convo, streamingText]);
 
   const style = {
     fontFamily: "'Crimson Text', serif",
@@ -253,7 +151,6 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
           <div className={`${isEmbedded ? 'text-base' : 'text-lg'} flex items-start opacity-90 markdown-content`}>
             <p className="m-0"><strong className="whitespace-nowrap">You:&nbsp;</strong></p>
             <input
-              ref={inputRef}
               autoFocus
               type="text"
               value={inputValue}
@@ -269,7 +166,7 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
 
       {/* Status */}
       <div className="px-5 py-2 flex justify-between items-center opacity-30">
-        <button onClick={() => recognitionRef.current?.start()} className={`${isListening ? 'text-red-500 animate-pulse' : 'text-white/40'}`}>
+        <button onClick={startListening} className={`${isListening ? 'text-red-500 animate-pulse' : 'text-white/40'}`}>
           <MicrophoneIcon className="w-4 h-4" />
         </button>
         <div className="flex space-x-4">

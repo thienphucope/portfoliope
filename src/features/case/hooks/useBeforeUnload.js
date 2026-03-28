@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { cacheKey } from '../utils/editor';
 
 /**
  * Warns the user before closing/refreshing if there are unsaved drafts
@@ -8,13 +9,14 @@ export function useBeforeUnload({ serverRawCache }) {
   useEffect(() => {
     const onBeforeUnload = (e) => {
       const dirtyKeys = [];
+      const prefix = cacheKey('');
 
       try {
         for (let i = 0; i < localStorage.length; i++) {
           const k = localStorage.key(i);
-          if (!k?.startsWith('vault_v3::')) continue;
+          if (!k?.startsWith(prefix)) continue;
 
-          const fp     = k.replace('vault_v3::', '');
+          const fp     = k.replace(prefix, '');
           const cached = (() => {
             try { return JSON.parse(localStorage.getItem(k)); } catch { return null; }
           })();
