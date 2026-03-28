@@ -17,7 +17,7 @@ Raw to initialize, api cho mutation tránh xung đột
 
 ### Adapt `src/features/case/hooks/useContentCache.js` and `useFileRegistry.js` for server-side (move logic to API routes)
 - **Quản lý Cache**: Reuse pre-fetch and cache logic from useContentCache.js to store Vault Tree and Graph on server.
-- **Xây dựng Graph**: Adapt graph building from useContentCache.js (scans .md files for [[wikilinks]] to create Nodes and Edges). Cache dữ liệu graph dùng cho việc xác định file cần update link sau này, không cần duyệt toàn bộ
+- **Xây dựng Graph**: Adapt graph building from useContentCache.js (scans .md files for [[wikilinks]] to create Nodes and Edges). Cache dữ liệu graph dùng cho việc xác định file cần update link sau này, không cần duyệt toàn bộ. Giữ nguyên cơ chế link Zettelkasten kiểu Obsidian: chỉ dùng [[Name]] (phân biệt hoa thường, không có extension .md), hệ thống cấm tạo file cùng tên nên không cần lo về link trùng.
 - **Link Refactoring**: 
     - Khi **Rename**: Tự động quét toàn bộ Vault và cập nhật các link cũ thành link mới, cả trong content của file vì hệ thống zettel có rất nhiều link (adapt from existing link handling in useLinkHandler.js).
     - Khi **Delete**: Xử lý các link "gãy", cứ dim lại thôi.
@@ -174,6 +174,7 @@ Response: { html?, content?, sha }
 - [ ] **Phase 2: API Refactoring**
   - [ ] Chuyển đổi `src/app/api/cases/route.js` sang cấu trúc route con.
 - [ ] **Phase 3: Client Integration**
+  - [ ] Thêm ở client các biến tương ứng để nhận các data từ server như fileRegistry, tree, graph,...
   - [ ] Cập nhật hooks và triển khai cơ chế "Freeze & Refresh".
 - [ ] **Phase 4: Optimization**
   - [ ] Tối ưu hóa việc render hàng loạt ở server.
