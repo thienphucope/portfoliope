@@ -1,5 +1,5 @@
-import HomeClient from '@/components/sections/home/HomeClient';
-import About from '@/components/sections/About';
+import HomeClient from '@/features/home/components/home/HomeClient';
+import About from '@/features/home/components/home/About';
 
 export default async function Page() {
   return (

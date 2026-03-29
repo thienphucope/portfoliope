@@ -32,7 +32,7 @@ export default function HomeHeader({
         </div>
         <div className="flex items-center gap-4 md:gap-10 font-fredericka text-[var(--colorone)]">
           <CaseArchivesButton />
-          <Link href="/privacy" className="text-xl md:text-3xl font-semibold hover:text-white transition-colors">
+          <Link href="/privacy" target="_blank" rel="noopener noreferrer" className="text-xl md:text-3xl font-semibold hover:text-white transition-colors">
             Privacy
           </Link>
         </div>

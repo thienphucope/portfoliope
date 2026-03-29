@@ -2,13 +2,14 @@
 import { useState, useEffect, useRef } from 'react';
 
 import Hero from './Hero';
-import FingerprintEffect from '@/components/FingerprintEffect';
 import SnowEffect from './SnowEffect';
 import HomeHeader from './HomeHeader';
 import HomeFooter from './HomeFooter';
-import useMomentumScroll from '@/hooks/useMomentumScroll';
+import useMomentumScroll from '@/features/home/hooks/useMomentumScroll';
+import useFingerprints from '@/features/home/hooks/useFingerprints';
 
 export default function HomeClient() {
+  const fingerprints = useFingerprints();
   const [mounted, setMounted] = useState(false);
   const [spotlightEnabled, setSpotlightEnabled] = useState(false);
   const [mousePos, setMousePos] = useState({ x: -999, y: -999 });
@@ -169,7 +170,7 @@ useEffect(() => {
           <div ref={musicPlayerDivRef}></div>
         </div>
 
-        <FingerprintEffect />
+        {fingerprints}
 
         {spotlightEnabled && (
           <div className="fixed inset-0 z-20 bg-black pointer-events-none transition-opacity duration-300 opacity-100" style={{
