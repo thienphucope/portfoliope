@@ -28,7 +28,7 @@ export default function Footer() {
       <div className="order-2 lg:order-2 flex gap-6 z-20">
         <div className="social-icon" onMouseEnter={() => handleMouseEnter('youtube')}>
           <a href="https://www.youtube.com/watch?v=zqcrDCynF8k" target="_blank" rel="noopener noreferrer"><FaYoutube className="text-[var(--colorone)] text-3xl md:text-5xl hover:text-white transition-colors" /></a>
-          <span key={hoverKeys['youtube']} className={`social-label ${hoverKeys['youtube'] ? 'animating' : ''}`}>There's</span>
+          <span key={hoverKeys['youtube']} className={`social-label ${hoverKeys['youtube'] ? 'animating' : ''}`}>Theres</span>
         </div>
         <div className="social-icon" onMouseEnter={() => handleMouseEnter('instagram')}>
           <a href="https://www.instagram.com/t22felton/" target="_blank" rel="noopener noreferrer"><FaInstagram className="text-[var(--colorone)] text-3xl md:text-5xl hover:text-white transition-colors" /></a>
