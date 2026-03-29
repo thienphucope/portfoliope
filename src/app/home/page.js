@@ -4,7 +4,7 @@ import HomeClient from '@/features/home/components/home/HomeClient';
 import IntroProject from '@/features/home/components/home/IntroProject';
 
 export default async function HomePage() {
-  const introPath = path.join(process.cwd(), 'src', 'content', 'This Project.md');
+  const introPath = path.join(process.cwd(), 'content', 'This Project.md');
   let introContent = "";
   try {
     if (fs.existsSync(introPath)) {

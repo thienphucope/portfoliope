@@ -3,7 +3,7 @@ import path from 'path';
 import CaseClient from './CaseClient';
 
 export default async function CasePage() {
-  const contentDir = path.join(process.cwd(), 'src', 'content');
+  const contentDir = path.join(process.cwd(), 'content');
   
   // Automatically read all .md files from the folder, 
   // excluding specific page-level content like 'about.md' and 'privacy.md'

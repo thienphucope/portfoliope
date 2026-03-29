@@ -15,7 +15,7 @@ export default function PrivacyContent({ content }) {
     <AudioVisualProvider>
       <div className="min-h-screen bg-[#121212] py-30 px-6 md:px-20 font-lora">
         <div className="max-w-4xl mx-auto">
-          <article className="prose prose-invert prose-lg md:prose-xl max-w-none 
+          <article className="relative z-50 prose prose-invert prose-lg md:prose-xl max-w-none 
             prose-headings:font-fredericka prose-headings:text-[var(--colorone)]
             prose-p:text-gray-300 prose-p:leading-relaxed prose-p:text-justify
             prose-strong:text-[var(--colorone)]
