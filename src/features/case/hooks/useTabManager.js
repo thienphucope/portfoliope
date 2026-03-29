@@ -38,7 +38,38 @@ export function useTabManager({
       }
 
       if (activeTab === tab.id) {
+        // If an overlay is open, close it first
         if (activeOverlay) setActiveOverlay(null);
+
+        // Clicking the already-open tab should close it and return to /case.
+        // Apply the same unsaved-changes guard as when switching tabs.
+        if (isEditing && fileName) {
+          const cached = readCache(fileName);
+          const raw    =
+            Array.isArray(cached) && cached.length > 0
+              ? cached.map((b) => b.raw).join('\n\n')
+              : content;
+          const serverRaw = serverRawCache.current[fileName] || '';
+
+          if (raw.trim() !== serverRaw.trim()) {
+            const wantsToSave = window.confirm(
+              'You have unsaved changes. Do you want to save before leaving?'
+            );
+            if (wantsToSave) await handleSaveFile(raw);
+          }
+
+          stopKeepAlive();
+          if (editPass) releaseLock(fileName, editPass);
+          setIsEditing(false);
+        }
+
+        if (activeTab !== 'filetree' && activeTab !== 'chat' && activeTab !== null) {
+          lastActiveNote.current = activeTab;
+        }
+
+        setActiveTab(null);
+        setActiveOverlay(null);
+        window.history.pushState(null, '', '/case');
         return;
       }
 
