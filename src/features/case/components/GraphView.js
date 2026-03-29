@@ -9,7 +9,7 @@ import { useGraphData } from '../hooks/useGraphData';
  * Displays notes as nodes, wiki links and tags as edges, with search filtering and node selection.
  */
 
-export default function GraphView({ allFiles, onSelectFile, searchTerm = '', activeNodeId = '', zoomToNodeId, onZoomComplete }) {
+export default function GraphView({ allFiles, onSelectFile, searchTerm = '', activeNodeId = '', zoomToNodeId, onZoomComplete, fullContentCache = {} }) {
   const containerRef = useRef(null);
   const graphRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -18,7 +18,7 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
   const [highlightNodes, setHighlightNodes] = useState(new Set());
   const [highlightLinks, setHighlightLinks] = useState(new Set());
 
-  const { graphData, filteredData } = useGraphData({ allFiles, searchTerm });
+  const { graphData, filteredData } = useGraphData({ allFiles, searchTerm, fullContentCache });
 
   useEffect(() => {
     const updateSize = () => {

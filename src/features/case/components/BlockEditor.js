@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ensureLibsLoaded, postProcess, fitHeading } from '../utils/markdown';
 import { useAI } from '../hooks/useAI';
 import { useBlockNavigation } from '../hooks/useBlockNavigation';
-import { readCache, saveCache, mkBlock, cursorToEnd, getLineClass, SLASH_COMMANDS } from '../utils/editor';
+import { mkBlock, cursorToEnd, getLineClass, SLASH_COMMANDS } from '../utils/editor';
 
 /**
  * Block-based Markdown editor component with AI assistance, slash commands,
@@ -481,19 +481,10 @@ const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, on
   useEffect(() => {
     if (!libsReady || !window.marked || !fileName) return;
     setActive(null);
-    const cached = readCache(fileName);
-    if (Array.isArray(cached) && cached.length > 0) {
-      setBlocks(cached.map(b => b.raw !== undefined ? b : mkBlock(b.html ? b.html.replace(/<[^>]+>/g, '') : '', 'paragraph')));
-      return;
-    }
     const tokens = window.marked.lexer(content || '');
     const newBlocks = tokens.filter(t => t.type !== 'space').map(t => mkBlock(t.raw.trimEnd(), t.type));
     setBlocks(newBlocks.length > 0 ? newBlocks : [mkBlock('', 'paragraph')]);
   }, [content, fileName, libsReady]);
-
-  useEffect(() => {
-    if (fileName && blocks.length > 0) saveCache(fileName, blocks);
-  }, [blocks, fileName]);
 
   const saveBlock = useCallback((index, raw) => {
     setBlocks(prev => {

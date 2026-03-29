@@ -1,15 +1,17 @@
 import { useState, useRef, useCallback } from 'react';
-import { readCache } from '../utils/editor';
 import { decodeBase64 } from '../utils/encoding';
+import { ensureLibsLoaded } from '../utils/markdown';
 
 /**
  * All write operations: save, create, rename, delete, append comment.
  * Depends on: lock helpers, prompt helpers, registry, and content state.
+ * Supports optimistic cache updates for instant UI feedback.
  */
 export function useFileMutations({
   sessionIdRef,
   fileRegistry,
   serverRawCache,
+  setFullContentCache,     // Callback to update cache
   fileSha,
   setFileSha,
   editPass,
@@ -30,6 +32,33 @@ export function useFileMutations({
 }) {
   const [saveStatus, setSaveStatus] = useState('idle');
   const saveHandlerRef = useRef(null); // set by BlockEditor
+
+  /** Update cache optimistically when content changes */
+  const updateFileCache = useCallback((filePath, rawContent, htmlContent = null) => {
+    setFullContentCache((prev) => ({
+      ...prev,
+      [filePath]: {
+        raw: rawContent,
+        html: htmlContent || prev?.[filePath]?.html || null,
+        fetchedAt: Date.now(),
+      },
+    }));
+  }, [setFullContentCache]);
+
+  /** Render markdown to HTML and cache it */
+  const renderAndCacheHtml = useCallback(async (filePath, rawContent) => {
+    try {
+      await ensureLibsLoaded();
+      if (window.marked) {
+        const html = window.marked.parse(rawContent);
+        updateFileCache(filePath, rawContent, html);
+        return html;
+      }
+    } catch (e) {
+      console.error('Failed to render HTML for cache:', filePath, e);
+    }
+    updateFileCache(filePath, rawContent, null);
+  }, [updateFileCache]);
 
   // ─── Low-level POST ────────────────────────────────────────────────────────
 
@@ -56,14 +85,20 @@ export function useFileMutations({
       const data = await res.json();
       if (data.sha) setFileSha(data.sha);
 
+      // Update both raw caches
       serverRawCache.current[filePath] = raw;
+      updateFileCache(filePath, raw);  // Update optimistically
+      
+      // Render HTML asynchronously
+      setTimeout(() => renderAndCacheHtml(filePath, raw), 0);
+      
       setContent(raw);
       try { localStorage.removeItem(`vault_v3::${filePath}`); } catch {}
 
       if (isNew) await refreshTree();
       return { ok: true };
     },
-    [fileRegistry, fileSha, sessionIdRef, setFileSha, serverRawCache, setContent, refreshTree]
+    [fileRegistry, fileSha, sessionIdRef, setFileSha, serverRawCache, setContent, refreshTree, updateFileCache, renderAndCacheHtml]
   );
 
   // ─── Save single file ──────────────────────────────────────────────────────
@@ -151,9 +186,28 @@ export function useFileMutations({
             sha: lockData.sha,
           }),
         });
-        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        if (!res.ok || !data?.ok) {
+          throw new Error(data?.error || 'Rename failed');
+        }
 
-        serverRawCache.current = {};
+        // Apply server-authoritative updates only after rename succeeds.
+        const removedFiles = Array.isArray(data.removedFiles) ? data.removedFiles : [oldPath];
+        const changedFiles = data.changedFiles || {};
+
+        for (const removedPath of removedFiles) {
+          delete serverRawCache.current[removedPath];
+        }
+        for (const [changedPath, changedContent] of Object.entries(changedFiles)) {
+          serverRawCache.current[changedPath] = changedContent;
+          updateFileCache(changedPath, changedContent);
+        }
+        setFullContentCache((prev) => {
+          const updated = { ...prev };
+          for (const removedPath of removedFiles) delete updated[removedPath];
+          return updated;
+        });
+
         await refreshTree();
 
         if (currentFileName === oldPath) {
@@ -166,7 +220,7 @@ export function useFileMutations({
           if (url) loadFile(url, currentFileName.split('/').pop(), currentFileName, 'replace');
         }
 
-        releaseLock(newPath, pass);
+        releaseLock(oldPath, pass);
         setSaveStatus('saved');
         setTimeout(() => setSaveStatus('idle'), 2000);
       } catch (e) {
@@ -176,7 +230,7 @@ export function useFileMutations({
         alert('Error renaming: ' + e.message);
       }
     },
-    [editPass, askPassword, setEditPass, acquireLock, releaseLock, refreshTree, fileRegistry, serverRawCache, sessionIdRef]
+    [editPass, askPassword, setEditPass, acquireLock, releaseLock, refreshTree, fileRegistry, serverRawCache, sessionIdRef, updateFileCache, setFullContentCache]
   );
 
   // ─── Delete ────────────────────────────────────────────────────────────────
@@ -206,7 +260,14 @@ export function useFileMutations({
         });
         if (!res.ok) throw new Error(await res.text());
 
-        serverRawCache.current = {};
+        // Clear cache for deleted file
+        delete serverRawCache.current[filePath];
+        setFullContentCache((prev) => {
+          const updated = { ...prev };
+          delete updated[filePath];
+          return updated;
+        });
+
         await refreshTree();
         onDeleted?.(filePath === currentFileName);
 
@@ -219,7 +280,7 @@ export function useFileMutations({
         alert('Error deleting: ' + e.message);
       }
     },
-    [editPass, askPassword, setEditPass, acquireLock, refreshTree, serverRawCache, sessionIdRef]
+    [editPass, askPassword, setEditPass, acquireLock, refreshTree, serverRawCache, sessionIdRef, setFullContentCache]
   );
 
   // ─── Create new note ───────────────────────────────────────────────────────
@@ -327,6 +388,7 @@ export function useFileMutations({
         if (data.sha) setFileSha(data.sha);
 
         serverRawCache.current[fileName] = updatedContent;
+        updateFileCache(fileName, updatedContent);  // Update cache
         setOpenFiles((prev) =>
           prev.map((f) => (f.id === fileName ? { ...f, fetchedContent: updatedContent } : f))
         );

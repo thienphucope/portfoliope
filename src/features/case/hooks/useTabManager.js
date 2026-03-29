@@ -1,5 +1,4 @@
 import { useCallback, useRef } from 'react';
-import { readCache } from '../utils/editor';
 
 /**
  * Manages tab clicks, overlay toggling, unsaved-change guards,
@@ -44,11 +43,7 @@ export function useTabManager({
         // Clicking the already-open tab should close it and return to /case.
         // Apply the same unsaved-changes guard as when switching tabs.
         if (isEditing && fileName) {
-          const cached = readCache(fileName);
-          const raw    =
-            Array.isArray(cached) && cached.length > 0
-              ? cached.map((b) => b.raw).join('\n\n')
-              : content;
+          const raw = content;
           const serverRaw = serverRawCache.current[fileName] || '';
 
           if (raw.trim() !== serverRaw.trim()) {
@@ -77,11 +72,7 @@ export function useTabManager({
 
       // Guard unsaved changes
       if (isEditing && fileName) {
-        const cached = readCache(fileName);
-        const raw    =
-          Array.isArray(cached) && cached.length > 0
-            ? cached.map((b) => b.raw).join('\n\n')
-            : content;
+        const raw = content;
         const serverRaw = serverRawCache.current[fileName] || '';
 
         if (raw.trim() !== serverRaw.trim()) {
@@ -108,12 +99,9 @@ export function useTabManager({
         const cleanPath = tab.id.replace('system::', '');
         window.history.pushState({ repoKey: tab.id }, '', `/case/${cleanPath}`);
       } else if (tab.type === 'editor') {
-        const cached   = readCache(tab.id);
         const openedF  = tabs.find((t) => t.id === tab.id);
 
-        if (Array.isArray(cached) && cached.length > 0) {
-          applyFileContent(tab.id, cached.map((b) => b.raw).join('\n\n'));
-        } else if (openedF?.fileData?.path) {
+        if (openedF?.fileData?.path) {
           loadFile(openedF.fileData.path, openedF.fileData.name, tab.id, 'push');
         } else {
           applyFileContent(tab.id, `# ${tab.title}\nLoading...`);

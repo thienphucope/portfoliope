@@ -1,42 +1,47 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { ensureLibsLoaded } from '../utils/markdown';
 
 /**
- * Pre-fetches and caches the raw markdown content of every file in the vault.
- * Used primarily to build the graph view link graph without lazy loads.
+ * Holds the client mirror of server-managed cache.
+ * Client reads and updates this state optimistically only.
  */
-export function useContentCache({ allFiles, serverRawCache }) {
+export function useContentCache({ serverRawCache }) {
   const [fullContentCache, setFullContentCache] = useState({});
 
-  useEffect(() => {
-    if (allFiles.length === 0) return;
+  /** Render markdown to HTML */
+  const renderMarkdownToHtml = useCallback(async (raw) => {
+    try {
+      await ensureLibsLoaded();
+      if (!window.marked) return raw;
+      return window.marked.parse(raw);
+    } catch (e) {
+      console.error('Failed to render HTML:', e);
+      return raw;
+    }
+  }, []);
 
-    const fetchAll = async () => {
-      const newCache = { ...fullContentCache };
-      let changed    = false;
+  const initializeFromServer = useCallback((contentCache = {}, rawCache = {}) => {
+    setFullContentCache(contentCache || {});
+    serverRawCache.current = { ...(rawCache || {}) };
+  }, [serverRawCache]);
 
-      await Promise.all(
-        allFiles.map(async (file) => {
-          if (!newCache[file.id] && file.path) {
-            try {
-              const res  = await fetch(file.path);
-              const text = await res.text();
-              newCache[file.id]                   = text;
-              serverRawCache.current[file.id]     = text; // Warm raw cache too
-              changed = true;
-            } catch (e) {
-              console.error('Failed to pre-fetch:', file.id, e);
-            }
-          }
-        })
-      );
+  const upsertCacheEntry = useCallback((fileId, raw, html = null, fetchedAt = Date.now()) => {
+    serverRawCache.current[fileId] = raw;
+    setFullContentCache((prev) => ({
+      ...prev,
+      [fileId]: {
+        raw,
+        html: html ?? prev?.[fileId]?.html ?? null,
+        fetchedAt,
+      },
+    }));
+  }, [serverRawCache]);
 
-      if (changed) setFullContentCache(newCache);
-    };
-
-    fetchAll();
-    // Only re-run when the file list changes, not on every cache update
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allFiles]);
-
-  return { fullContentCache, setFullContentCache };
+  return { 
+    fullContentCache, 
+    setFullContentCache,
+    renderMarkdownToHtml,
+    initializeFromServer,
+    upsertCacheEntry,
+  };
 }

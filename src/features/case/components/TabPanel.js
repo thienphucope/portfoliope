@@ -37,6 +37,7 @@ export default function TabPanel({
   handleRenameFile,
   handleDeleteFile,
   graphFiles,
+  fullContentCache,
   contentKey,
   content,
   handleSaveFile,
@@ -113,6 +114,7 @@ export default function TabPanel({
                       onSelectFile={loadFile}
                       searchTerm={searchTerm}
                       activeNodeId={fileName}
+                      fullContentCache={fullContentCache}
                     />
                   </div>
                 )}
