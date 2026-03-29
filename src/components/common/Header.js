@@ -47,7 +47,8 @@ export default function Header({
               <Link 
                 key={link.href}
                 href={link.href} 
-                className={`text-xl md:text-3xl font-bold transition-colors duration-300 ${isActive ? 'text-white underline underline-offset-8' : 'hover:text-white'}`}
+                className={`text-xl md:text-3xl font-bold transition-colors duration-300 ${isActive ? 'line-through' : 'hover:text-white'}`}
+                style={isActive ? { color: 'var(--colorone)', textDecorationThickness: '6px', textDecorationColor: 'white' } : {}}
               >
                 {link.label}
               </Link>
