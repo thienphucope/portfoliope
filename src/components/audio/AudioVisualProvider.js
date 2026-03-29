@@ -39,7 +39,7 @@ export default function AudioVisualProvider({ children }) {
         if (!playerRef.current && musicPlayerDivRef.current) {
           playerRef.current = new window.YT.Player(musicPlayerDivRef.current, {
             height: '0', width: '0', videoId: 'aiKlW8XCABQ',
-            playerVars: { autoplay: 1, loop: 1, playlist: 'aiKlW8XCABQ,6c5YHZhfxco', controls: 0, showinfo: 0, modestbranding: 1 },
+            playerVars: { autoplay: 1, loop: 1, playlist: '9PRnPdgNhMI,6c5YHZhfxco', controls: 0, showinfo: 0, modestbranding: 1 },
             events: {
               onReady: (e) => { e.target.setVolume(50); e.target.playVideo(); },
               onStateChange: (e) => {
