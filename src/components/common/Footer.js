@@ -13,7 +13,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="absolute bottom-0 left-0 right-0 p-4 pb-10 md:p-10 flex flex-col lg:flex-row justify-center lg:justify-between items-center gap-4 lg:gap-0 z-[60] bg-gradient-to-t from-black/80 to-transparent transition-opacity duration-1000 opacity-100">
+    <footer className="absolute bottom-0 left-0 right-0 px-6 md:px-10 py-6 md:py-10 flex flex-col lg:flex-row justify-center lg:justify-between items-center gap-4 lg:gap-0 z-[60] bg-gradient-to-t from-black/80 to-transparent transition-opacity duration-1000 opacity-100">
       <style jsx>{`
         @keyframes floatUp { 
           0% { opacity: 1; transform: translate(-50%, 0) scale(0.5); }

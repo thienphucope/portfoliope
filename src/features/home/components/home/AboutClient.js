@@ -12,7 +12,7 @@ export default function AboutClient() {
   return (
     <AudioVisualProvider>
       {fingerprints}
-      <main className="w-full min-h-[100dvh] flex-shrink-0 relative flex items-start lg:items-center justify-center pt-24 lg:pt-0">
+      <main className="w-full min-h-[100dvh] flex-shrink-0 relative flex items-start lg:items-center justify-center pt-24 lg:pt-0 overflow-hidden">
         <div className="absolute inset-0 z-40 pointer-events-none overflow-hidden">
           <SnowEffect mounted={true} />
         </div>

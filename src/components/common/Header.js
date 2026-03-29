@@ -15,8 +15,8 @@ export default function Header({
 
   const navLinks = [
     { href: '/home', label: 'Home' },
-    { href: '/privacy', label: 'Privacy' },
     { href: '/about', label: 'About' },
+    { href: '/privacy', label: 'Privacy' },
   ];
 
   return (
@@ -33,7 +33,7 @@ export default function Header({
         .title-fly-out.fly-in { animation: flyIn 0.5s forwards; }
         .title-fly-out.fly-cycle { animation: flyOutStayIn 5.5s forwards; }
       `}</style>
-      <header className="absolute top-0 left-0 right-0 p-4 md:p-10 flex justify-between items-center z-[60] transition-opacity duration-1000 opacity-100">
+      <header className="absolute top-0 left-0 right-0 px-6 md:px-10 py-6 md:py-10 flex justify-between items-center z-[60] transition-opacity duration-1000 opacity-100">
         <div className="relative cursor-pointer" onClick={togglePlayPause} onMouseEnter={handleDiskMouseEnter} onMouseLeave={handleDiskMouseLeave}>
           <div className={`disk ${!isPlaying ? 'paused' : ''}`}></div>
           {videoTitle && <span key={animationKey} className={`title-fly-out ${animationClass} font-fredericka`}>{videoTitle}</span>}
