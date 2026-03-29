@@ -1,0 +1,26 @@
+import fs from 'fs';
+import path from 'path';
+import AboutClient from '@/features/home/components/home/AboutClient';
+import Footer from '@/components/common/Footer';
+
+export default async function AboutPage() {
+  const aboutPath = path.join(process.cwd(), 'src', 'content', 'about.md');
+  let aboutContent = "";
+  try {
+    if (fs.existsSync(aboutPath)) {
+      aboutContent = fs.readFileSync(aboutPath, 'utf8');
+    }
+  } catch (e) {
+    console.error("Could not read about.md for About Page", e);
+  }
+
+  return (
+    <div className="min-h-[100dvh] flex flex-col">
+      <div className="relative flex-1">
+        <AboutClient />
+      </div>
+      
+      <Footer />
+    </div>
+  );
+}

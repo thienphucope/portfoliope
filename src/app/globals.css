@@ -3,6 +3,7 @@
 /* -------------------------------------------------------------------------- */
 @import url('https://fonts.googleapis.com/css2?family=Fredericka+the+Great&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Special+Elite&display=swap');
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
@@ -107,6 +108,15 @@ body::-webkit-scrollbar,
 /* Utility Animations */
 @keyframes zoomOut { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.2); opacity: 0; } }
 .animate-zoom-out { animation: zoomOut 1.5s ease-in forwards; }
+
+/* Custom Cursor Global Toggle */
+.custom-cursor-active,
+.custom-cursor-active *,
+.custom-cursor-active a,
+.custom-cursor-active button,
+.custom-cursor-active .cursor-pointer {
+  cursor: none !important;
+}
 
 @keyframes rise { 0% { transform: translateY(100%); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
 .animate-rise { opacity: 0; transform: translateY(100%); animation: rise 1.5s ease-out 1.5s forwards; }

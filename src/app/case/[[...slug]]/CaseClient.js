@@ -289,7 +289,7 @@ export default function CaseClient({ staticRecords = [] }) {
           } else if (actualRepo && githubUrl) {
             loadFile(githubUrl, actualRepo.split('/').pop(), actualRepo, 'replace', true);
           } else {
-            const staticMatch = staticRecords.find((r) => r.id.replace('system::', '').toLowerCase() === lowerTarget);
+            const staticMatch = staticRecords.find((r) => r.id.toLowerCase().replace(/\.md$/, '') === lowerTarget);
             if (staticMatch) {
               setActiveTab(staticMatch.id);
               applyFileContent(staticMatch.id, staticMatch.content);

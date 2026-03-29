@@ -1,27 +1,26 @@
+import fs from 'fs';
+import path from 'path';
 import HomeClient from '@/features/home/components/home/HomeClient';
-import About from '@/features/home/components/home/About';
+import IntroProject from '@/features/home/components/home/IntroProject';
 
-export default async function Page() {
+export default async function HomePage() {
+  const introPath = path.join(process.cwd(), 'src', 'content', 'This Project.md');
+  let introContent = "";
+  try {
+    if (fs.existsSync(introPath)) {
+      introContent = fs.readFileSync(introPath, 'utf8');
+    }
+  } catch (e) {
+    console.error("Could not read This Project.md", e);
+  }
+
   return (
-    <div className="min-h-[100dvh]">
-      {/* SEO Hidden Content */}
-      <div 
-        style={{ display: 'none', visibility: 'hidden', height: 0, overflow: 'hidden' }} 
-        aria-hidden="true"
-      >
-        <h1>Ope Watson - Professional Portfolio & Digital Case Archives</h1>
-        <p>Interactive detective storytelling combined with modern web technologies.</p>
-        {/* Render the component for SEO. React will de-duplicate the data fetch. */}
-        <About />
-      </div>
+    <div className="flex flex-col min-h-screen">
+      <HomeClient />
 
-      {/* 
-        Main Wrapper: 
-        Không để background-color ở đây để thấy được video fixed phía sau.
-      */}
-      <div className="relative">
-        <HomeClient />
-        <About />
+      {/* IntroProject independent section */}
+      <div className="relative z-[70]">
+        <IntroProject content={introContent} />
       </div>
     </div>
   );

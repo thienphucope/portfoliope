@@ -1,127 +1,110 @@
 "use client";
-import { useEffect, useRef } from 'react';
-import Link from 'next/link';
-
-const GLITCH_FONTS = [
-  "'Courier New', monospace",
-  "fantasy",
-  "cursive",
-  "'Impact', sans-serif",
-  "'Georgia', serif",
-  "'Palatino', serif",
-  "monospace",
-  "'Times New Roman', serif",
-];
+import { useEffect, useRef, useState } from 'react';
 
 export default function CaseArchivesButton() {
   const canvasRef = useRef(null);
   const animFrameRef = useRef(null);
-  const phaseRef = useRef("idle");
-  const phaseTimeRef = useRef(0);
-  const fontIndexRef = useRef(0);
-  const glitchSeedRef = useRef(0);
+  const audioRef = useRef(null);
+  const [displayText, setDisplayText] = useState("");
+  
+  const TEXTS = ["Case Archives", "Click Me!"];
+  const TYPE_SPEED = 150; // Tốc độ đánh máy (ms)
+  const PAUSE_DURATION = 1000; // Nghỉ sau khi xong (ms)
+  const FONT_SIZE = 48; // Tăng lên để nét hơn khi scale
+  const FONT_STYLE = "bold " + FONT_SIZE + "px 'Special Elite', 'Courier New', Courier, monospace";
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
-    const SIZE = 30;
-    const TEXT = "Case Archives";
 
     const getColor = () =>
       (typeof window !== 'undefined' && getComputedStyle(document.documentElement).getPropertyValue("--colorone").trim()) || "#e879a0";
 
-    ctx.font = `bold ${SIZE}px 'Fredericka the Great', serif`;
-    canvas.width = Math.ceil(ctx.measureText(TEXT).width) + 20;
-    canvas.height = SIZE + 16;
+    // Thiết lập kích thước canvas dựa trên text dài nhất để tránh nhảy layout
+    ctx.font = FONT_STYLE;
+    const maxWidth = Math.max(...TEXTS.map(t => ctx.measureText(t).width));
+    canvas.width = Math.ceil(maxWidth) + 10;
+    canvas.height = FONT_SIZE + 10;
 
-    const draw = (font, glitch = false) => {
+    let textIndex = 0;
+    let FULL_TEXT = TEXTS[textIndex];
+    let charIndex = 0;
+    let lastTime = 0;
+    let isDeleting = false;
+
+    const render = (text) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.font = `bold ${SIZE}px ${font}`;
+      ctx.font = FONT_STYLE;
       ctx.textBaseline = "middle";
-      const tw = ctx.measureText(TEXT).width;
-      const x = (canvas.width - tw) / 2;
+      ctx.textAlign = "left"; // Gõ từ trái sang phải
+      ctx.fillStyle = getColor();
+      
+      const x = 5; // Bắt đầu từ lề trái canvas
       const y = canvas.height / 2;
-      const color = getColor();
-
-      if (glitch) {
-        const slices = 4;
-        for (let i = 0; i < slices; i++) {
-          const ox = (Math.random() - 0.5) * 16;
-          const oy = (Math.random() - 0.5) * 5;
-          const sh = canvas.height / slices;
-          ctx.save();
-          ctx.beginPath();
-          ctx.rect(0, i * sh, canvas.width, sh);
-          ctx.clip();
-          ctx.globalAlpha = 0.7;
-          ctx.fillStyle = "#ff003c";
-          ctx.fillText(TEXT, x + ox + 3, y + oy);
-          ctx.fillStyle = "#00fff9";
-          ctx.fillText(TEXT, x + ox - 3, y + oy);
-          ctx.globalAlpha = 1;
-          ctx.fillStyle = color;
-          ctx.fillText(TEXT, x + ox, y + oy);
-          ctx.restore();
-        }
-      } else {
-        ctx.fillStyle = color;
-        ctx.fillText(TEXT, x, y);
+      
+      // Vẽ chữ hiện tại
+      ctx.fillText(text, x, y);
+      
+      // Vẽ con trỏ (cursor) nhấp nháy ở cuối dòng chữ đang gõ
+      if (Math.floor(Date.now() / 500) % 2 === 0) {
+        const textWidth = ctx.measureText(text).width;
+        ctx.fillRect(x + textWidth + 2, y - FONT_SIZE/2, 2, FONT_SIZE);
       }
     };
 
-    draw("'Fredericka the Great', serif");
-    phaseRef.current = "glitch";
+    const animate = (time) => {
+      if (!lastTime) lastTime = time;
+      const delta = time - lastTime;
 
-    let last = 0;
-    const loop = (ts) => {
-      const dt = ts - last; last = ts;
-      const phase = phaseRef.current;
-
-      if (phase === "idle") {
-        draw("'Fredericka the Great', serif");
-        phaseTimeRef.current += dt;
-        if (phaseTimeRef.current > 2000) {
-          phaseRef.current = "glitch";
-          phaseTimeRef.current = 0;
-        }
-      } else if (phase === "glitch" || phase === "glitch2") {
-        phaseTimeRef.current += dt;
-        if (Math.floor(ts / 40) !== glitchSeedRef.current) {
-          glitchSeedRef.current = Math.floor(ts / 40);
-          draw("'Fredericka the Great', serif", true);
-        }
-        if (phaseTimeRef.current > 350) {
-          phaseRef.current = phase === "glitch" ? "fontcycle" : "idle";
-          phaseTimeRef.current = 0;
-          fontIndexRef.current = 0;
-        }
-      } else if (phase === "fontcycle") {
-        phaseTimeRef.current += dt;
-        draw(GLITCH_FONTS[fontIndexRef.current % GLITCH_FONTS.length]);
-        if (phaseTimeRef.current > 160) {
-          phaseTimeRef.current = 0;
-          fontIndexRef.current++;
-          if (fontIndexRef.current >= GLITCH_FONTS.length) {
-            phaseRef.current = "glitch2";
-            phaseTimeRef.current = 0;
+      if (delta > (isDeleting ? TYPE_SPEED / 2 : TYPE_SPEED)) {
+        if (!isDeleting) {
+          if (charIndex < FULL_TEXT.length) {
+            charIndex++;
+            setDisplayText(FULL_TEXT.substring(0, charIndex));
+            // Trigger audio ở đây: if (audioRef.current) audioRef.current.play();
+          } else {
+            // Đã đánh xong, đợi một lát rồi xóa hoặc giữ nguyên
+            if (delta > PAUSE_DURATION) {
+              isDeleting = true;
+            } else {
+              // Vẫn render để có hiệu ứng cursor nhấp nháy
+              render(FULL_TEXT);
+              animFrameRef.current = requestAnimationFrame(animate);
+              return;
+            }
+          }
+        } else {
+          if (charIndex > 0) {
+            charIndex--;
+            setDisplayText(FULL_TEXT.substring(0, charIndex));
+          } else {
+            // Khi đã xóa hết, chuyển sang text tiếp theo
+            isDeleting = false;
+            textIndex = (textIndex + 1) % TEXTS.length;
+            FULL_TEXT = TEXTS[textIndex];
           }
         }
+        lastTime = time;
       }
-      animFrameRef.current = requestAnimationFrame(loop);
+
+      render(FULL_TEXT.substring(0, charIndex));
+      animFrameRef.current = requestAnimationFrame(animate);
     };
 
-    animFrameRef.current = requestAnimationFrame(loop);
+    animFrameRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animFrameRef.current);
   }, []);
 
   return (
-    <Link href="/case">
+    <div className="relative w-full">
       <canvas
         ref={canvasRef}
-        className="w-[120px] md:w-auto h-auto cursor-pointer"
-        style={{ display: "inline-block", verticalAlign: "middle" }}
+        className="w-full h-auto opacity-80"
+        style={{ display: "block" }}
       />
-    </Link>
+      {/* Thẻ audio ẩn để bạn gắn src="/type.mp3" vào sau */}
+      <audio ref={audioRef} src="/types.mp3" />
+    </div>
   );
 }

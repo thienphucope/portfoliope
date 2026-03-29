@@ -4,7 +4,7 @@ import { ChevronDown } from 'lucide-react';
 import useFingerprints from '@/features/home/hooks/useFingerprints';
 
 export default function RootPage() {
-  const fingerprints = useFingerprints('black');
+  const fingerprints = useFingerprints('white');
   return (
     <div className="fixed inset-0 bg-[var(--colorone)] flex flex-col justify-center items-center z-[100]">
       {fingerprints}

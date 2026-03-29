@@ -1,7 +1,10 @@
 "use client";
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Fingerprint, Footprints } from 'lucide-react';
+import { Footprints } from 'lucide-react';
 import Link from 'next/link';
+
+import useSpotlight from '@/features/home/hooks/useSpotlight';
+import useCustomCursor from '@/features/home/hooks/useCustomCursor';
 
 export default function Hero() {
   const [displayText, setDisplayText] = useState("");
@@ -9,6 +12,8 @@ export default function Hero() {
   const [displayPronunciation, setDisplayPronunciation] = useState("");
   const [isHoveringPolaroid, setIsHoveringPolaroid] = useState(false);
   const [footprints, setFootprints] = useState([]);
+  const { setSpotlightEnabled, spotlightOverlay } = useSpotlight();
+  const { setCursorType } = useCustomCursor();
 
   const padChar = ' ';
   const originalText = "A counselling detective who helps people make sense of their stories, whether they are struggling with love, loss, or a mystery.";
@@ -76,6 +81,7 @@ export default function Hero() {
 
   return (
     <section className="relative w-full h-full flex items-center justify-center pt-0 pb-32 lg:pt-24 lg:pb-20 overflow-visible">
+      {spotlightOverlay}
       {/* Footprints background on hover */}
       <div className={`absolute inset-[-100px] pointer-events-none transition-opacity duration-500 z-0 ${isHoveringPolaroid ? 'opacity-30' : 'opacity-0'}`}>
         {footprints.map(fp => (
@@ -177,7 +183,7 @@ export default function Hero() {
           bottom: -40px; 
           left: 50%;
           transform: translateX(-50%);
-          font-family: 'Courier New', monospace;
+          font-family: 'Lora', serif;
           font-weight: 900;
           color: #ffffff; 
           font-size: clamp(12px, 2vw, 15px);
@@ -194,7 +200,11 @@ export default function Hero() {
 
       {/* Detective Dossier Card */}
       <div className="flex justify-center relative z-10 w-fit">
-        <div className="detective-card">
+        <div 
+          className="detective-card"
+          onMouseEnter={() => setSpotlightEnabled(true)}
+          onMouseLeave={() => setSpotlightEnabled(false)}
+        >
           
           {/* Left side: Polaroid (Square) */}
           <div className="flex justify-center items-center">
@@ -218,9 +228,16 @@ export default function Hero() {
 
           {/* Right side: Text Intro */}
           <div className="intro-text-content font-fredericka p-8 lg:p-12 lg:pl-10 max-w-2xl relative">
-            {/* Fingerprint in top right of the text content */}
-            <div className="absolute top-0 right-0 text-[var(--colorone)] rotate-[-45deg] opacity-60 pointer-events-none p-4">
-              <Fingerprint className="w-16 h-16 md:w-24 md:h-24 lg:w-32 lg:h-32" />
+            {/* Magnifier in top right of the text content */}
+            <div 
+              className="absolute top-0 right-0 rotate-[-30deg] opacity-60 p-4 cursor-pointer z-50 transition-all duration-300 hover:opacity-100 hover:drop-shadow-[0_0_20px_rgba(194,163,138,0.8)] group/magnifier"
+              onClick={() => setCursorType('magnifier')}
+            >
+              <img 
+                src="/magnifier.webp" 
+                alt="Magnifier" 
+                className="w-25 h-25 md:w-32 md:h-32 lg:w-48 lg:h-48 object-contain transition-transform duration-300 group-hover/magnifier:scale-110"
+              />
             </div>
             <h2
               className="text-3xl md:text-5xl lg:text-7xl xl:text-7xl text-[var(--colorone)] font-bold mb-3 hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default text-center lg:text-left whitespace-pre-wrap"

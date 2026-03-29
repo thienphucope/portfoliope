@@ -4,36 +4,29 @@ import CaseClient from './CaseClient';
 
 export default async function CasePage() {
   const contentDir = path.join(process.cwd(), 'src', 'content');
-  const staticFiles = [
-    { id: 'system::about-project', name: 'About This Project.md', path: 'About This Project.md' },
-    { id: 'system::technical-architecture', name: 'Technical Architecture.md', path: 'Technical Architecture.md' },
-    { id: 'system::interactive-features', name: 'Interactive Features.md', path: 'Interactive Features.md' },
-    { id: 'system::faq', name: 'FAQ.md', path: 'faq.md' },
-    { id: 'system::house-rules', name: 'House Rules.md', path: 'House Rules.md' },
-    { id: 'system::development-journey', name: 'Development Journey.md', path: 'Development Journey.md' }
-  ];
+  
+  // Automatically read all .md files from the folder, 
+  // excluding specific page-level content like 'about.md' and 'privacy.md'
+  const filenames = fs.readdirSync(contentDir)
+    .filter(file => file.endsWith('.md') && file !== 'about.md' && file !== 'privacy.md');
 
-  const initialStaticData = staticFiles.map(file => {
+  const initialStaticData = filenames.map(name => {
     try {
-      const fullPath = path.join(contentDir, file.path);
-      if (fs.existsSync(fullPath)) {
-        return { 
-          ...file, 
-          content: fs.readFileSync(fullPath, 'utf8') 
-        };
-      }
+      const fullPath = path.join(contentDir, name);
+      return { 
+        id: name, 
+        name: name,
+        content: fs.readFileSync(fullPath, 'utf8') 
+      };
     } catch (e) {
-      console.error(`Error reading ${file.name}:`, e);
+      console.error(`Error reading ${name}:`, e);
+      return { id: name, name: name, content: "" };
     }
-    return { ...file, content: "" };
   });
 
   return (
     <main>
-      {/* 
-        Nội dung SEO cho AdSense: Chèn tất cả file tĩnh vào HTML.
-        Giúp AdSense thấy hàng nghìn chữ thực tế về dự án ngay khi trang vừa tải.
-      */}
+      {/* SEO Content for AdSense */}
       <div 
         style={{ 
           display: 'none', 
@@ -51,7 +44,7 @@ export default async function CasePage() {
         ))}
       </div>
 
-      {/* Truyền dữ liệu tĩnh vào Client Component */}
+      {/* Pass static data to Client Component */}
       <CaseClient staticRecords={initialStaticData} />
     </main>
   );

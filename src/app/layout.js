@@ -4,6 +4,7 @@ import "@fontsource/zen-kaku-gothic-new";
 import "./globals.css";
 import Chat from '../features/case/components/Chat';
 import { Analytics } from '@vercel/analytics/react';
+import { CursorProvider } from '../features/home/context/CursorContext';
 
 export const metadata = {
   title: "Ope Watson",
@@ -15,9 +16,13 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         <link rel="icon" href="/ope.png" />
-        {/* Nếu muốn dùng ảnh khác, đổi href thành đường dẫn ảnh, ví dụ /logo.png */}
       </head>
-      <body>{children}<Chat /></body>
+      <body>
+        <CursorProvider>
+          {children}
+          <Chat />
+        </CursorProvider>
+      </body>
       <Analytics />
     </html>
   );
