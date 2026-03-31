@@ -156,7 +156,7 @@ export default function CaseClient({ staticRecords = [] }) {
     insertFileIntoTree(serverPath);
 
     try { localStorage.removeItem(`vault_v3::${serverPath}`); } catch {}
-    const initContent = `# ${title}\n*author: <author>*\n*tag: [[Dash Board]]*\n*links:*\n`;
+    const initContent = `# ${title}\n*author: Ope*\n*tag: #content*\n*links:*\n`;
     applyFileContent(serverPath, initContent);
 
     setOpenFiles((prev) => {

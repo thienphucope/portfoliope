@@ -13,7 +13,7 @@ import { marked } from 'marked';
 const EDIT_PASS = process.env.EDIT_PASS || 'default_hardcoded_pass';
 const fileLocks = new Map();
 const LOCK_TIMEOUT = 30000; // 30 seconds expiration
-const CACHE_TTL_MS = 60_000;
+const CACHE_TTL_MS = 300_000;
 
 let serverTreeCache = [];
 let serverRegistryCache = {};
@@ -186,8 +186,8 @@ export async function POST(request) {
   // 1. Handle File Content Fetching (No password required, no lock)
   if (action === 'get') {
     try {
-      // Always refresh server cache snapshot before serving a tab click.
-      await hydrateServerCache(true);
+      // Refresh snapshot only when cache is stale (TTL-controlled).
+      await hydrateServerCache(false);
     } catch (e) {
       return NextResponse.json({ ok: false, error: e.message || 'Failed to refresh server cache' }, { status: 500 });
     }

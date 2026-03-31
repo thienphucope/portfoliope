@@ -108,25 +108,15 @@ export function useFileMutations({
       const serverRaw = serverRawCache.current[filePath] ?? null;
       if (serverRaw !== null && serverRaw.trim() === raw.trim()) return;
 
-      let pass = editPass;
-      if (!pass) {
-        pass = await askPassword();
-        setEditPass(pass);
-        try { sessionStorage.setItem('vault_edit_pass', pass); } catch {}
-      }
+      // No password prompt on save - only use current editPass (may be empty)
+      const pass = editPass || '';
 
       const result = await doPost(filePath, raw, pass);
       if (result.wrongPass) {
-        setEditPass('');
-        try { sessionStorage.removeItem('vault_edit_pass'); } catch {}
-        const newPass = await askPassword();
-        setEditPass(newPass);
-        try { sessionStorage.setItem('vault_edit_pass', newPass); } catch {}
-        const retry = await doPost(filePath, raw, newPass);
-        if (!retry.ok) throw new Error('Wrong password');
+        throw new Error('Incorrect password. Please edit the file first to authenticate.');
       }
     },
-    [editPass, askPassword, setEditPass, doPost, serverRawCache]
+    [editPass, doPost, serverRawCache]
   );
 
   const handleSaveFile = useCallback(
