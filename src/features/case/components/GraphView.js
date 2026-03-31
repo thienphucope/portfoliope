@@ -74,10 +74,10 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
     const fg = graphRef.current;
 
     const timer = setTimeout(() => {
-      fg.d3Force('charge')?.strength(-200);
+      fg.d3Force('charge')?.strength(-400);
       fg.d3Force('link')?.distance(100).strength(1);
-      fg.d3Force('x', forceX(0).strength(0.03));
-      fg.d3Force('y', forceY(0).strength(0.03));
+      fg.d3Force('x', forceX(0).strength(0.09));
+      fg.d3Force('y', forceY(0).strength(0.09));
       fg.d3Force('center', null);
       fg.resumeAnimation();
     }, 100);
@@ -110,7 +110,7 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
             }
           }}
           onNodeDragStart={() => setNeedsZoom(false)}
-          cooldownTicks={50}
+          cooldownTicks={100}
           onEngineStop={() => {
             if (!graphRef.current) return;
             if (zoomToNodeId) {
@@ -158,8 +158,7 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
             }
 
             const isLabelVisible = isHighlighted && (
-              (node.type === 'tag' ? globalScale > 0.5 : globalScale > 1) || 
-              isActive || 
+              (node.type === 'tag' ? globalScale > 0.5 : globalScale > 1) ||
               node.id === hoveredNodeId
             );
 
