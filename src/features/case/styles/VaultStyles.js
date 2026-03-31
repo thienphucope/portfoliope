@@ -224,6 +224,13 @@ export default function VaultStyles() {
           overflow-wrap: break-word;
         }
 
+        /* Override highlight.js background */
+        pre, code, .hljs { background: transparent !important; }
+        pre code { background: transparent !important; }
+        .code-block pre { background: transparent !important; }
+        .code-block code { background: transparent !important; }
+        .hljs { color: var(--txt) !important; }
+
         .code-raw-editor:focus {
           border-color: rgba(255, 250, 205, 0.4);
           outline: none;
@@ -359,10 +366,11 @@ export default function VaultStyles() {
         .spacer { width:24px; }
 
         .math-block { margin:1.5em 0; overflow-x:auto; display:block; width:100%; }
-        .code-block { background:var(--code-bg); border-radius:8px; margin:1.5em 0; border:1px solid var(--border); overflow:hidden; }
-        .code-header { background:#2a2a2a; padding:5px 15px; display:flex; justify-content:flex-end; border-bottom:1px solid var(--border); }
-        .code-lang { font-size:11px; color:#888; text-transform:uppercase; }
-        pre { margin:0; padding:15px; overflow-x:auto; }
+        .code-block { background:transparent; border-radius:0; margin:1.5em 0; border:1px solid white; overflow:visible; position:relative; border-top-right-radius:8px; }
+        .code-header { display:none; }
+        .code-lang, .code-lang-label { font-size:11px; color:#888; text-transform:uppercase; }
+        .code-lang-label { position:absolute; top:-18px; right:8px; background:transparent; padding:0; z-index:1; }
+        pre { margin:0; padding:15px; overflow-x:auto; background:transparent; }
         .mermaid { background:rgba(255,255,255,.02); padding:20px; border-radius:8px; margin:1.5em 0; display:flex; justify-content:center; }
         blockquote { border-left:3px solid var(--accent); padding-left:1.25em; margin:1.5em 0; font-style:italic; opacity:.8; }
         blockquote blockquote { border-left-color:rgba(255,255,255,.2); margin-left:1em; }
