@@ -54,6 +54,7 @@ export default function CaseClient({ staticRecords = [] }) {
   // ── Refs ────────────────────────────────────────────────────────────────────
   const appShellRef  = useRef(null);
   const sessionIdRef = useRef(Math.random().toString(36).substring(2, 15));
+  const serverGraphRef = useRef({ nodes: [], links: [] });
 
   // ── Stable content setter ───────────────────────────────────────────────────
   const applyFileContent = useCallback((repoKey, newContent) => {
@@ -81,13 +82,57 @@ export default function CaseClient({ staticRecords = [] }) {
     registerLocalFile, insertFileIntoTree,
   } = useFileRegistry();
 
-  // ── File Loader ─────────────────────────────────────────────────────────────
+  // ── Computed file list ───────────────────────────────────────────────────────
+  const getAllFiles = useCallback((nodes, repoPath = '') => {
+    let files = [];
+    nodes.forEach((n) => {
+      if (n.kind === 'file') {
+        files.push({ id: repoPath ? `${repoPath}/${n.name}` : n.name, name: n.name, path: n.path });
+      } else if (n.children) {
+        files = files.concat(getAllFiles(n.children, repoPath ? `${repoPath}/${n.name}` : n.name));
+      }
+    });
+    return files;
+  }, []);
+
+  const allFiles = useMemo(() => getAllFiles(fileTree), [fileTree, getAllFiles]);
+
+  const syncServerStructures = useCallback(({ tree, registry, graph }) => {
+    if (Array.isArray(tree)) {
+      setFileTree(tree);
+      if (registry && typeof registry === 'object') {
+        fileRegistry.current = registry;
+      } else {
+        buildRegistry(tree);
+      }
+    }
+    if (graph && typeof graph === 'object') {
+      serverGraphRef.current = graph;
+    }
+  }, [setFileTree, fileRegistry, buildRegistry]);
+
+  // ── Content Cache (with HTML caching) ───────────────────────────────────────
+  const {
+    fullContentCache,
+    setFullContentCache,
+    initializeFromServer,
+    upsertCacheEntry,
+  } = useContentCache({ serverRawCache });
+
+  // ── File Loader (uses HTML cache for instant loading) ───────────────────────
   const {
     openFiles, setOpenFiles,
     activeTab, setActiveTab,
     fileSha,   setFileSha,
     loadFile,
-  } = useFileLoader({ fileRegistry, serverRawCache, applyFileContent, setActiveOverlay });
+  } = useFileLoader({ 
+    fileRegistry, 
+    serverRawCache, 
+    upsertCacheEntry,
+    syncServerStructures,
+    applyFileContent, 
+    setActiveOverlay 
+  });
 
   // ── Lock Manager ────────────────────────────────────────────────────────────
   const onLockLost = useCallback(() => {
@@ -111,7 +156,7 @@ export default function CaseClient({ staticRecords = [] }) {
     insertFileIntoTree(serverPath);
 
     try { localStorage.removeItem(`vault_v3::${serverPath}`); } catch {}
-    const initContent = `# ${title}\n*author: <author>*\n*tag: [[Dash Board]]*\n*links:*\n`;
+    const initContent = `# ${title}\n*author: Ope*\n*tag: #content*\n*links:*\n`;
     applyFileContent(serverPath, initContent);
 
     setOpenFiles((prev) => {
@@ -134,6 +179,7 @@ export default function CaseClient({ staticRecords = [] }) {
     handleAppendComment,
   } = useFileMutations({
     sessionIdRef, fileRegistry, serverRawCache,
+    setFullContentCache,
     fileSha, setFileSha,
     editPass, setEditPass,
     fileName, content,
@@ -176,24 +222,6 @@ export default function CaseClient({ staticRecords = [] }) {
     startKeepAlive, stopKeepAlive,
     refreshTree, askPassword,
   });
-
-  // ── Computed file list ───────────────────────────────────────────────────────
-  const getAllFiles = useCallback((nodes, repoPath = '') => {
-    let files = [];
-    nodes.forEach((n) => {
-      if (n.kind === 'file') {
-        files.push({ id: repoPath ? `${repoPath}/${n.name}` : n.name, name: n.name, path: n.path });
-      } else if (n.children) {
-        files = files.concat(getAllFiles(n.children, repoPath ? `${repoPath}/${n.name}` : n.name));
-      }
-    });
-    return files;
-  }, []);
-
-  const allFiles = useMemo(() => getAllFiles(fileTree), [fileTree, getAllFiles]);
-
-  // ── Content Cache (graph view) ───────────────────────────────────────────────
-  const { fullContentCache } = useContentCache({ allFiles, serverRawCache });
 
   // ── Scroll Behaviour ─────────────────────────────────────────────────────────
   const tabs = useMemo(() => {
@@ -259,11 +287,20 @@ export default function CaseClient({ staticRecords = [] }) {
   useEffect(() => {
     (async () => {
       try {
-        const rawTree = await fetch('/api/cases', { cache: 'no-store' }).then((r) => r.json());
-        if (!Array.isArray(rawTree)) { setContent(`# API Error\n${rawTree.error || 'Unknown'}`); return; }
+        const bootRes = await fetch('/api/cases', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'bootstrap' }),
+        });
+        const boot = await bootRes.json();
+        if (!bootRes.ok || !boot?.ok || !Array.isArray(boot.tree)) {
+          setContent(`# API Error\n${boot?.error || 'Unknown'}`);
+          return;
+        }
 
-        const repoPathMap = buildRegistry(rawTree);
-        setFileTree(rawTree);
+        const repoPathMap = buildRegistry(boot.tree);
+        setFileTree(boot.tree);
+        initializeFromServer(boot.contentCache || {}, boot.rawCache || {});
 
         const pathParts    = window.location.pathname.split('/').filter(Boolean);
         const rawDefault   = process.env.NEXT_PUBLIC_DEFAULT_VAULT_FILE || 'chat';
@@ -341,7 +378,7 @@ export default function CaseClient({ staticRecords = [] }) {
   const graphFiles = useMemo(() =>
     allFiles.map((f) => ({
       ...f,
-      fetchedContent: fullContentCache[f.id] || openFiles.find((of) => of.id === f.id)?.fetchedContent || '',
+      fetchedContent: fullContentCache[f.id]?.raw || openFiles.find((of) => of.id === f.id)?.fetchedContent || '',
     })),
     [allFiles, fullContentCache, openFiles]
   );
@@ -412,6 +449,7 @@ export default function CaseClient({ staticRecords = [] }) {
           handleRenameFile={handleRenameFile}
           handleDeleteFile={handleDeleteFile}
           graphFiles={graphFiles}
+          fullContentCache={fullContentCache}
           contentKey={contentKey}
           content={content}
           handleSaveFile={handleSaveFile}

@@ -1,5 +1,4 @@
 import { useCallback } from 'react';
-import { readCache } from '../utils/editor';
 
 export function useLinkHandler({
   loadFile,
@@ -46,10 +45,7 @@ export function useLinkHandler({
     } else if (realPath === null) {
       setActiveTab(serverPath);
       const openF  = openFiles.find((f) => f.id === serverPath);
-      const cached = readCache(serverPath);
-      const raw    = Array.isArray(cached) && cached.length > 0
-        ? cached.map((b) => b.raw).join('\n\n')
-        : openF?.fetchedContent;
+      const raw    = openF?.fetchedContent;
       applyFileContent(serverPath, raw || `# ${serverPath.split('/').pop().replace('.md', '')}\n*author: <author>*\n*tag: [[Dash Board]]*\n*links:*\n`);
     } else {
       createAndOpenFile(target);

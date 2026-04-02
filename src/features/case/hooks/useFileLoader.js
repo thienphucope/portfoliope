@@ -1,11 +1,18 @@
 import { useState, useCallback } from 'react';
-import { decodeBase64 } from '../utils/encoding';
 
 /**
  * Handles fetching file content from the API / CDN fallback,
  * managing the open-files list and active tab, and updating browser history.
+ * Uses HTML cache for instant tab loading.
  */
-export function useFileLoader({ fileRegistry, serverRawCache, applyFileContent, setActiveOverlay }) {
+export function useFileLoader({ 
+  fileRegistry, 
+  serverRawCache, 
+  upsertCacheEntry,
+  syncServerStructures,
+  applyFileContent, 
+  setActiveOverlay
+}) {
   const [openFiles, setOpenFiles] = useState([]);
   const [activeTab, setActiveTab] = useState(null);
   const [fileSha,   setFileSha]   = useState(null);
@@ -30,7 +37,7 @@ export function useFileLoader({ fileRegistry, serverRawCache, applyFileContent, 
           const urlParts = new URL(path, window.location.origin).pathname.split('/').slice(1);
           repoKey = serverPath || decodeURIComponent(urlParts.slice(3).join('/'));
 
-          // Try API first for freshest content
+          // Always read from server cache on tab open/click.
           const apiRes = await fetch('/api/cases', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -38,18 +45,28 @@ export function useFileLoader({ fileRegistry, serverRawCache, applyFileContent, 
           });
           const data = await apiRes.json();
 
-          if (data.ok && data.content) {
-            newContent = decodeBase64(data.content);
+          if (data.ok) {
+            if (syncServerStructures) {
+              syncServerStructures({
+                tree: data.tree,
+                registry: data.registry,
+                graph: data.graph,
+                hydratedAt: data.hydratedAt,
+              });
+            }
+            newContent = data.raw || '';
             if (data.sha) setFileSha(data.sha);
+            upsertCacheEntry(repoKey, newContent, data.html ?? null, Date.now());
+            applyFileContent(repoKey, newContent);
           } else {
-            // CDN fallback
+            // Last fallback: raw URL
             const res = await fetch(path);
             newContent = await res.text();
+            upsertCacheEntry(repoKey, newContent, null, Date.now());
+            applyFileContent(repoKey, newContent);
           }
-
-          serverRawCache.current[repoKey] = newContent;
-          applyFileContent(repoKey, newContent);
-        } catch {
+        } catch (e) {
+          console.error('Error loading file:', e);
           repoKey = serverPath || name;
           applyFileContent(repoKey, '# Error\nFailed to load.');
         }
@@ -58,7 +75,13 @@ export function useFileLoader({ fileRegistry, serverRawCache, applyFileContent, 
       if (repoKey && repoKey !== 'error') {
         setOpenFiles((prev) => {
           if (!prev.find((f) => f.id === repoKey)) {
-            return [...prev, { id: repoKey, path, name, serverPath: repoKey, fetchedContent: newContent }];
+            return [...prev, { 
+              id: repoKey, 
+              path, 
+              name, 
+              serverPath: repoKey, 
+              fetchedContent: newContent
+            }];
           }
           return prev.map((f) =>
             f.id === repoKey ? { ...f, fetchedContent: newContent } : f
@@ -79,7 +102,7 @@ export function useFileLoader({ fileRegistry, serverRawCache, applyFileContent, 
         }
       }
     },
-    [applyFileContent, serverRawCache]
+    [applyFileContent, serverRawCache, upsertCacheEntry, syncServerStructures]
   );
 
   return { openFiles, setOpenFiles, activeTab, setActiveTab, fileSha, setFileSha, loadFile };

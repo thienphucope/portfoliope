@@ -57,7 +57,7 @@ export const configureMarked = () => {
           : window.hljs.highlightAuto(code).value;
       } catch (e) {}
     }
-    return `<div class="code-block"><div class="code-header"><span class="code-lang">${lang}</span></div><pre><code class="hljs language-${lang}">${highlighted}</code></pre></div>`;
+    return `<div class="code-block"><span class="code-lang-label">${lang}</span><pre><code class="hljs language-${lang}">${highlighted}</code></pre></div>`;
   };
 
   renderer.heading = (token) => {

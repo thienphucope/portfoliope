@@ -3,6 +3,26 @@
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN || ''; 
 const GITHUB_REPO = 'thienphucope/cases';
 
+const buildHeaders = (withJson = false) => {
+  const headers = {
+    "Accept": "application/vnd.github+json",
+    "User-Agent": "Portfolio-NextJS",
+    "Authorization": `token ${GITHUB_TOKEN}`,
+  };
+  if (withJson) headers["Content-Type"] = "application/json";
+  return headers;
+};
+
+async function detectActiveBranch(headers) {
+  for (const branch of ["main", "master"]) {
+    try {
+      const r = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/branches/${branch}`, { headers });
+      if (r.ok) return branch;
+    } catch {}
+  }
+  return null;
+}
+
 // ─── HELPER: build tree from github ──────────────────────────────────────────
 
 export async function getGithubCasesTree() {
@@ -14,11 +34,7 @@ export async function getGithubCasesTree() {
   let data = null;
   let activeBranch = null;
 
-  const headers = {
-    "Accept": "application/vnd.github+json",
-    "User-Agent": "Portfolio-NextJS",
-    "Authorization": `token ${GITHUB_TOKEN}`
-  };
+  const headers = buildHeaders(false);
 
   for (const branch of branches) {
     const url = `https://api.github.com/repos/${GITHUB_REPO}/git/trees/${branch}?recursive=1`;
@@ -81,11 +97,7 @@ export async function getGithubCasesTree() {
 
 export async function getFileFromGithub(path) {
   if (!GITHUB_TOKEN) return { error: "Missing GITHUB_TOKEN" };
-  const headers = {
-    "Accept": "application/vnd.github+json",
-    "User-Agent": "Portfolio-NextJS",
-    "Authorization": `token ${GITHUB_TOKEN}`
-  };
+  const headers = buildHeaders(false);
   const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`;
   try {
     const resp = await fetch(url, { headers, cache: 'no-store' });
@@ -104,20 +116,8 @@ export async function getFileFromGithub(path) {
 export async function saveToGithub(path, content, create = false, sha = null) {
   if (!GITHUB_TOKEN) return { error: "Missing GITHUB_TOKEN" };
   
-  const headers = {
-    "Accept": "application/vnd.github+json",
-    "User-Agent": "Portfolio-NextJS",
-    "Authorization": `token ${GITHUB_TOKEN}`,
-    "Content-Type": "application/json",
-  };
-
-  let activeBranch = null;
-  for (const branch of ["main", "master"]) {
-    try {
-      const r = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/branches/${branch}`, { headers });
-      if (r.ok) { activeBranch = branch; break; }
-    } catch {}
-  }
+  const headers = buildHeaders(true);
+  const activeBranch = await detectActiveBranch(headers);
 
   if (!activeBranch) return { error: "Could not detect GitHub branch" };
 
@@ -163,20 +163,8 @@ export async function saveToGithub(path, content, create = false, sha = null) {
 
 export async function deleteFromGithub(path, sha) {
   if (!GITHUB_TOKEN) return { error: "Missing GITHUB_TOKEN" };
-  const headers = {
-    "Accept": "application/vnd.github+json",
-    "User-Agent": "Portfolio-NextJS",
-    "Authorization": `token ${GITHUB_TOKEN}`,
-    "Content-Type": "application/json",
-  };
-
-  let activeBranch = null;
-  for (const branch of ["main", "master"]) {
-    try {
-      const r = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/branches/${branch}`, { headers });
-      if (r.ok) { activeBranch = branch; break; }
-    } catch {}
-  }
+  const headers = buildHeaders(true);
+  const activeBranch = await detectActiveBranch(headers);
 
   if (!activeBranch) return { error: "Could not detect GitHub branch" };
 
@@ -196,4 +184,80 @@ export async function deleteFromGithub(path, sha) {
   if (resp.ok) return { ok: true };
   const errorText = await resp.text();
   return { error: `GitHub DELETE error: ${errorText}` };
+}
+
+// ─── HELPER: batch save (single commit for many files) ───────────────────────
+
+export async function batchSaveToGithub(changes = {}, commitMessage = 'Batch update files via Red Vault') {
+  if (!GITHUB_TOKEN) return { error: "Missing GITHUB_TOKEN" };
+  const entries = Object.entries(changes).filter(([path, content]) => path && typeof content === 'string');
+  if (entries.length === 0) return { ok: true, updated: 0 };
+
+  const headers = buildHeaders(true);
+  const activeBranch = await detectActiveBranch(headers);
+  if (!activeBranch) return { error: "Could not detect GitHub branch" };
+
+  const readRefUrl = `https://api.github.com/repos/${GITHUB_REPO}/git/ref/heads/${activeBranch}`;
+  const updateRefUrl = `https://api.github.com/repos/${GITHUB_REPO}/git/refs/heads/${activeBranch}`;
+  const refResp = await fetch(readRefUrl, { headers, cache: 'no-store' });
+  if (!refResp.ok) return { error: `Failed to read branch ref: ${await refResp.text()}` };
+  const refData = await refResp.json();
+  const parentCommitSha = refData?.object?.sha;
+  if (!parentCommitSha) return { error: 'Missing parent commit sha' };
+
+  const commitUrl = `https://api.github.com/repos/${GITHUB_REPO}/git/commits/${parentCommitSha}`;
+  const commitResp = await fetch(commitUrl, { headers, cache: 'no-store' });
+  if (!commitResp.ok) return { error: `Failed to read parent commit: ${await commitResp.text()}` };
+  const commitData = await commitResp.json();
+  const baseTreeSha = commitData?.tree?.sha;
+  if (!baseTreeSha) return { error: 'Missing base tree sha' };
+
+  const treeEntries = [];
+  for (const [path, content] of entries) {
+    const blobResp = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/git/blobs`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ content, encoding: 'utf-8' }),
+    });
+    if (!blobResp.ok) return { error: `Failed to create blob for ${path}: ${await blobResp.text()}` };
+    const blobData = await blobResp.json();
+    treeEntries.push({
+      path,
+      mode: '100644',
+      type: 'blob',
+      sha: blobData.sha,
+    });
+  }
+
+  const treeResp = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/git/trees`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      base_tree: baseTreeSha,
+      tree: treeEntries,
+    }),
+  });
+  if (!treeResp.ok) return { error: `Failed to create tree: ${await treeResp.text()}` };
+  const treeData = await treeResp.json();
+
+  const newCommitResp = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/git/commits`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      message: commitMessage,
+      tree: treeData.sha,
+      parents: [parentCommitSha],
+    }),
+  });
+  if (!newCommitResp.ok) return { error: `Failed to create commit: ${await newCommitResp.text()}` };
+  const newCommitData = await newCommitResp.json();
+
+  const updateRefResp = await fetch(updateRefUrl, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ sha: newCommitData.sha, force: false }),
+  });
+  if (!updateRefResp.ok) return { error: `Failed to update branch ref: ${await updateRefResp.text()}` };
+
+  return { ok: true, updated: entries.length, commitSha: newCommitData.sha, branch: activeBranch };
 }

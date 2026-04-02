@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react';
-import { readCache } from '../utils/editor';
 import { decodeBase64 } from '../utils/encoding';
 
 /**

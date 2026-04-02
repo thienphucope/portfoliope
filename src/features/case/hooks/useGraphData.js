@@ -2,9 +2,10 @@ import { useMemo } from 'react';
 
 /**
  * Hook for processing file list and content into graph nodes and links.
- * Used by GraphView.
+ * Uses fullContentCache for raw markdown content to find links.
+ * Used by GraphView and backlink resolution.
  */
-export function useGraphData({ allFiles, searchTerm }) {
+export function useGraphData({ allFiles, searchTerm, fullContentCache = {} }) {
   const graphData = useMemo(() => {
     const nodes = [];
     const links = [];
@@ -38,10 +39,13 @@ export function useGraphData({ allFiles, searchTerm }) {
 
       degreeMap.set(file.id, 0);
 
+      // Use content from cache first, then fallback to file.fetchedContent
+      const fileContent = fullContentCache[file.id]?.raw || file.fetchedContent || '';
+      
       const tagRegex = /(?<!\S)#([a-zA-Z][a-zA-Z0-9_-]*)/g;
       let tagMatch;
-      if (file.fetchedContent) {
-        while ((tagMatch = tagRegex.exec(file.fetchedContent)) !== null) {
+      if (fileContent) {
+        while ((tagMatch = tagRegex.exec(fileContent)) !== null) {
           const tagName = tagMatch[1].trim().toLowerCase();
           if (!tagNodeMap.has(tagName)) {
             const tagNodeId = `tag-${tagName}`;
@@ -54,11 +58,13 @@ export function useGraphData({ allFiles, searchTerm }) {
     });
 
     allFiles.forEach(file => {
-      if (!file.fetchedContent) return;
+      // Use content from cache first, then fallback to file.fetchedContent
+      const fileContent = fullContentCache[file.id]?.raw || file.fetchedContent || '';
+      if (!fileContent) return;
 
       const linkRegex = /\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g;
       let linkMatch;
-      while ((linkMatch = linkRegex.exec(file.fetchedContent)) !== null) {
+      while ((linkMatch = linkRegex.exec(fileContent)) !== null) {
         let targetName = linkMatch[1].trim().toLowerCase();
         let targetId = nodeMap.get(targetName);
 
@@ -76,7 +82,7 @@ export function useGraphData({ allFiles, searchTerm }) {
 
       const tagRegex = /(?<!\S)#([a-zA-Z][a-zA-Z0-9_-]*)/g;
       let tagMatch;
-      while ((tagMatch = tagRegex.exec(file.fetchedContent)) !== null) {
+      while ((tagMatch = tagRegex.exec(fileContent)) !== null) {
         const tagName = tagMatch[1].trim().toLowerCase();
         const tagNodeId = tagNodeMap.get(tagName);
         if (tagNodeId) {
@@ -93,7 +99,7 @@ export function useGraphData({ allFiles, searchTerm }) {
     });
 
     return { nodes, links };
-  }, [allFiles]);
+  }, [allFiles, fullContentCache]);
 
   const filteredData = useMemo(() => {
     if (!searchTerm) return graphData;
