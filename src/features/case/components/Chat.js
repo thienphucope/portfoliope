@@ -293,11 +293,11 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
   const activeBotMsg = (isStreaming || isThinking) ? streamingText : (convo[convo.length - 1]?.role === 'assistant' ? convo[convo.length - 1].content : '');
 
   const tipsList = [
-    <span>Say <strong className="text-white/80">"no"</strong>, <strong className="text-white/80">"wait"</strong>, <strong className="text-white/80">"stop"</strong>, or tap the mic to interrupt.</span>,
-    <span><strong className="text-white/80">Hold the mic</strong> to continuously record without auto-sending until released.</span>,
-    <span><strong className="text-white/80">Tap the mic</strong> while recording to delete the current message.</span>,
-    <span>If voice recognition stalls, reopen the call or type directly.</span>,
-    <span>Headphones are highly recommended!</span>
+    <span key="tip1">Say <strong className="text-white/80">no</strong>, <strong className="text-white/80">wait</strong>, <strong className="text-white/80">stop</strong>, or tap the mic to interrupt.</span>,
+    <span key="tip2"><strong className="text-white/80">Hold the mic</strong> to continuously record without auto-sending until released.</span>,
+    <span key="tip3"><strong className="text-white/80">Tap the mic</strong> while recording to delete the current message.</span>,
+    <span key="tip4">If voice recognition stalls, reopen the call or type directly.</span>,
+    <span key="tip5">Headphones are highly recommended!</span>
   ];
 
   const style = {
