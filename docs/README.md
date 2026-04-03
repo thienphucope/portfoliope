@@ -1,4 +1,4 @@
-# Deployed [here](opewatson.com)
+# Deployed at opewatson.com
 
 # Portfolio Project - Ope Watson Case Archives
 

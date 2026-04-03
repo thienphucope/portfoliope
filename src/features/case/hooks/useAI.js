@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 /**
  * Hook for client-side AI request and streaming response.
@@ -8,10 +8,30 @@ export function useAI() {
   const [isThinking, setIsThinking] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingText, setStreamingText] = useState('');
+  
+  const abortControllerRef = useRef(null);
+  const streamTimerRef = useRef(null);
+
+  const stopAI = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    if (streamTimerRef.current) {
+      clearInterval(streamTimerRef.current);
+      streamTimerRef.current = null;
+    }
+    setIsThinking(false);
+    setIsStreaming(false);
+  }, []);
 
   const requestAI = useCallback(async (query, history = [], username = 'User') => {
+    stopAI(); // Dừng request cũ nếu có
+    
     setIsThinking(true);
     setStreamingText('');
+    
+    abortControllerRef.current = new AbortController();
     
     try {
       const res = await fetch('/api/cases', {
@@ -23,30 +43,40 @@ export function useAI() {
           history, 
           username 
         }),
+        signal: abortControllerRef.current.signal
       });
 
       if (!res.ok) throw new Error('AI request failed');
       const data = await res.json();
       return data.response || '';
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        throw new Error('Aborted');
+      }
+      throw err;
     } finally {
-      setIsThinking(false);
+      if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
+        setIsThinking(false);
+        abortControllerRef.current = null;
+      }
     }
-  }, []);
+  }, [stopAI]);
 
   const streamResponse = useCallback((fullText, onComplete) => {
     setIsStreaming(true);
     let i = 0;
-    const timer = setInterval(() => {
+    streamTimerRef.current = setInterval(() => {
       if (i < fullText.length) {
         setStreamingText(fullText.slice(0, ++i));
       } else {
-        clearInterval(timer);
+        clearInterval(streamTimerRef.current);
+        streamTimerRef.current = null;
         setIsStreaming(false);
         if (onComplete) onComplete(fullText);
       }
     }, 5);
-    return () => clearInterval(timer);
-  }, []);
+    return () => stopAI();
+  }, [stopAI]);
 
   return {
     isThinking,
@@ -56,6 +86,7 @@ export function useAI() {
     streamingText,
     setStreamingText,
     requestAI,
-    streamResponse
+    streamResponse,
+    stopAI
   };
 }

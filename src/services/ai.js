@@ -2,6 +2,7 @@
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 const XAI_API_KEY = process.env.XAI_API_KEY || '';
+const SEA_LION_API_KEY = process.env.SEA_LION_API_KEY || '';
 const RAG_API_URL = "https://rag-backend-zh2e.onrender.com/rag";
 const SYSTEM_INSTRUCTION = process.env.SYSTEM_INSTRUCTION || " ";
 
@@ -112,7 +113,50 @@ export async function handleAiRequest({ query, history, username }) {
     console.log(`⏭️ [AI Action] Skipping Gemini (GEMINI_API_KEY not set).`);
   }
 
-  // 1c. Final Fallback: RAG
+  // 1c. Fallback to SEA-LION (AI Singapore)
+  if (SEA_LION_API_KEY) {
+    console.log(`📡 [AI Action] Attempting SEA-LION (aisingapore/Gemma-SEA-LION-v4-27B-IT)...`);
+    try {
+      const seaLionResp = await fetch("https://api.sea-lion.ai/v1/chat/completions", {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${SEA_LION_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: "aisingapore/Gemma-SEA-LION-v4-27B-IT",
+          messages: [
+            { role: "system", content: systemInstruction || "You are a helpful assistant." },
+            ...(history || []).map(m => ({
+              role: m.role === 'user' ? 'user' : 'assistant',
+              content: m.content
+            })),
+            { role: "user", content: query }
+          ],
+          temperature: 0.7,
+          max_completion_tokens: 2048,
+        }),
+      });
+
+      if (seaLionResp.ok) {
+        const data = await seaLionResp.json();
+        const text = data.choices?.[0]?.message?.content;
+        if (text) {
+          console.log(`✅ [AI Action] SEA-LION responded successfully.`);
+          return { response: text };
+        }
+      } else {
+        const errorBody = await seaLionResp.text();
+        console.warn(`⚠️ [AI Action] SEA-LION returned status ${seaLionResp.status}: ${errorBody}`);
+      }
+    } catch (e) {
+      console.warn("❌ [AI Action] SEA-LION failed, falling back to RAG:", e.message);
+    }
+  } else {
+    console.log(`⏭️ [AI Action] Skipping SEA-LION (SEA_LION_API_KEY not set).`);
+  }
+
+  // 1d. Final Fallback: RAG
   console.log(`📡 [AI Action] Attempting RAG fallback...`);
   try {
     const ragResp = await fetch(RAG_API_URL, {
