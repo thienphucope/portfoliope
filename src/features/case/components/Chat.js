@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { ClockIcon, PaperAirplaneIcon, PhoneIcon, SpeakerWaveIcon, MicrophoneIcon } from '@heroicons/react/24/outline';
+import { ClockIcon, PaperAirplaneIcon, PhoneIcon, SpeakerWaveIcon, MicrophoneIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { ensureLibsLoaded, postProcess } from '../utils/markdown';
 import { useAI } from '../hooks/useAI';
 import { useTTS } from '../hooks/useTTS';
@@ -57,6 +57,8 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
   const [apiUsername, setApiUsername] = useState('YOU');
   
   const [isLiveCall, setIsLiveCall] = useState(false);
+  const [tipIndex, setTipIndex] = useState(0);
+  const [tipVisible, setTipVisible] = useState(true);
   
   const historyRef = useRef(null);
   const inputRef = useRef(null);
@@ -88,15 +90,21 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
     setInputValue('');
   }, [stopAudio, stopAI]);
 
-  const { isListening, micVolume, startListening, stopListening, pauseListening, clearTranscription } = useSTT({ 
+  const { isListening, micVolume, startListening, stopListening, pauseListening, clearTranscription, startManualMode, stopManualMode } = useSTT({ 
     onResult: (text) => {
+      // Ngăn vòng lặp vô hạn (Infinite Loop) do clearTranscription tự động trả về chuỗi rỗng ''
+      if (!text) {
+        setInputValue('');
+        return;
+      }
+      
       // Nếu máy đang nói/nghĩ: block text hiện trên màn hình, nhưng Lắng Nghe keyword ngắt lời!
       if (isProcessingRef.current) {
         const lower = text.toLowerCase();
         if (/\b(no|wait|interrupt|interupt|stop)\b/i.test(lower)) {
            executeInterrupt();
-           clearTranscription(); // <--- Xoá trắng cặn bộ nhớ STT trước đó
         }
+        clearTranscription(); // <--- CHẶN TRIỆT ĐỂ: Liên tục xoá sạch mọi text thu được khi máy đang nói
         return; // Chặn không cho text lọt vào ô input
       }
       
@@ -116,14 +124,16 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
     if (isLiveCall) {
       if (isProcessing) {
         // KHÔNG TẮT MIC NỮA ĐỂ BẮT KEYWORD NGẮT LỜI (Voice Interruption)!
-        // pauseListening() được bỏ đi, startListening vẫn duy trì.
         startListening();
       } else {
+        // Máy vừa trả lời xong -> flush sạch mọi dư âm vọng lại trong khoảng thời gian vừa qua
+        clearTranscription();
+        setInputValue(''); 
         // Mở lại kết nối nhận diện khi hệ thống rảnh
         startListening();
       }
     }
-  }, [isProcessing, isLiveCall, startListening]);
+  }, [isProcessing, isLiveCall, startListening, clearTranscription]);
 
   // Tính năng ngắt lời thủ công (nhấn nút)
   const handleInterrupt = useCallback((e) => {
@@ -132,11 +142,56 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
         executeInterrupt();
         clearTranscription();
       } else {
-        // Nhấn khi đang rảnh -> ép STT Restart (Phòng hờ Web Speech bị crash ngủ đông)
+        // Nhấn khi đang rảnh -> Tap để KHÓA toàn bộ dữ liệu vừa nhận diện (hủy gửi, xóa trống)
+        clearTranscription();
+        setInputValue('');
         startListening();
       }
     }
   }, [isLiveCall, isProcessing, executeInterrupt, startListening, clearTranscription]);
+
+  const holdTimerRef = useRef(null);
+  const releaseTimerRef = useRef(null);
+  const isHoldingRef = useRef(false);
+  const [isHoldingUI, setIsHoldingUI] = useState(false);
+
+  const handlePointerDown = useCallback((e) => {
+    // Chỉ kích hoạt với click chuột trái hoặc chạm màn hình cảm ứng
+    if (e.button && e.button !== 0) return;
+    if (releaseTimerRef.current) {
+      clearTimeout(releaseTimerRef.current);
+      releaseTimerRef.current = null;
+    }
+    isHoldingRef.current = false;
+    setIsHoldingUI(false);
+    holdTimerRef.current = setTimeout(() => {
+      isHoldingRef.current = true;
+      setIsHoldingUI(true);
+      startManualMode();
+    }, 400); // 400ms để không bị nhầm lẫn giữa Tap (chạm nhanh) và Hold (giữ)
+  }, [startManualMode]);
+
+  const handlePointerUp = useCallback((e) => {
+    if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+    if (isHoldingRef.current) {
+      // Đang giữ -> nhả tay ra, đợi 1s mới đóng gói gửi đi (phòng hờ ng dùng tap nhanh để hủy)
+      isHoldingRef.current = false;
+      setIsHoldingUI(false);
+      releaseTimerRef.current = setTimeout(() => {
+        stopManualMode(); // Nếu không Tap phá thì máy gửi đi
+        releaseTimerRef.current = null;
+      }, 1000);
+    } else {
+      // Tap chạm nhanh (hoặc dập tắt gửi auto ngay trong thời gian chờ 1s vàng)
+      if (releaseTimerRef.current) {
+        clearTimeout(releaseTimerRef.current);
+        releaseTimerRef.current = null;
+      }
+      clearTranscription(); // Dọn dẹp thẳng tay băng ghi âm lập tức hủy toàn bộ quá trình gửi
+      setInputValue('');
+      handleInterrupt(e);
+    }
+  }, [handleInterrupt, stopManualMode, clearTranscription]);
 
   const handleSendAutomated = async (msg) => {
     if (!msg || isSending) return;
@@ -202,6 +257,21 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
       .catch(() => setApiUsername('Guest'));
   }, []);
 
+  useEffect(() => {
+    if (isLiveCall) {
+      setTipIndex(0);
+      setTipVisible(true);
+      const intv = setInterval(() => {
+        setTipVisible(false); // Bắt đầu mờ đi
+        setTimeout(() => {
+          setTipIndex(i => (i + 1) % 5); // Nhảy qua câu tiếp theo
+          setTipVisible(true); // Hiện rõ lại
+        }, 500); // Đợi 500ms cho fade out hẳn xong mới đổi và hiện
+      }, 5000);
+      return () => clearInterval(intv);
+    }
+  }, [isLiveCall]);
+
   useEffect(() => { 
     if (!isStreaming && !isThinking) {
       // Dùng scrollIntoView trên phần tử neo (anchor) dưới cùng của list thay vì gán cứng scrollTop
@@ -221,6 +291,14 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
 
 // Trích xuất dữ liệu để hiển thị bên nửa Live Call
   const activeBotMsg = (isStreaming || isThinking) ? streamingText : (convo[convo.length - 1]?.role === 'assistant' ? convo[convo.length - 1].content : '');
+
+  const tipsList = [
+    <span>Say <strong className="text-white/80">"no"</strong>, <strong className="text-white/80">"wait"</strong>, <strong className="text-white/80">"stop"</strong>, or tap the mic to interrupt.</span>,
+    <span><strong className="text-white/80">Hold the mic</strong> to continuously record without auto-sending until released.</span>,
+    <span><strong className="text-white/80">Tap the mic</strong> while recording to delete the current message.</span>,
+    <span>If voice recognition stalls, reopen the call or type directly.</span>,
+    <span>Headphones are highly recommended!</span>
+  ];
 
   const style = {
     fontFamily: "'Crimson Text', serif",
@@ -262,15 +340,18 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
             
             <div className="shrink-0 py-4 flex items-center justify-center">
                 <div 
-                  onClick={handleInterrupt}
-                  title={isProcessing ? "Click to interrupt" : "Click to wake up"}
-                  className={`w-32 h-32 md:w-40 md:h-40 rounded-full cursor-pointer transition-all duration-100 flex items-center justify-center relative shadow-[0_0_15px_rgba(255,255,255,0.1)]
+                  onPointerDown={handlePointerDown}
+                  onPointerUp={handlePointerUp}
+                  onPointerLeave={(e) => isHoldingRef.current && handlePointerUp(e)}
+                  title={isProcessing ? "Tap to interrupt" : "Tap to clear / Hold to dictate"}
+                  className={`w-32 h-32 md:w-40 md:h-40 rounded-full transition-all duration-100 flex items-center justify-center relative shadow-[0_0_15px_rgba(255,255,255,0.1)] z-10
                     ${isListening && !isProcessing ? 'shadow-[0_0_60px_var(--colorone)]' : ''} 
-                    ${isProcessing ? 'animate-pulse scale-95' : ''}
+                    ${isProcessing ? 'animate-pulse scale-95 cursor-pointer' : 'cursor-pointer'}
+                    ${isHoldingUI ? 'scale-110 shadow-[0_0_70px_#60a5fa]' : ''}
                   `} 
                   style={{ 
                     backgroundColor: 'var(--colorone, #ccc)',
-                    transform: (isListening && !isProcessing) ? `scale(${1 + micVolume * 0.4})` : undefined
+                    transform: (isListening && !isProcessing && !isHoldingUI) ? `scale(${1 + micVolume * 0.4})` : undefined
                   }}
                 >
                   {isProcessing ? (
@@ -282,6 +363,19 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
             </div>
 
             <div className="flex-1 w-full pt-8 flex flex-col items-center justify-start overflow-y-auto custom-scrollbar" onClick={(e) => e.stopPropagation()}>
+              <div className="text-white/50 text-sm max-w-[260px] font-sans leading-relaxed text-center min-h-[6rem] flex items-center justify-center">
+                <div 
+                  className="flex flex-col items-center justify-center"
+                  style={{ 
+                    opacity: tipVisible ? 1 : 0, 
+                    transform: tipVisible ? 'translateY(0)' : 'translateY(-10px)', 
+                    transition: 'all 0.5s ease-in-out' 
+                  }}
+                >
+                  <span className="text-[10px] uppercase tracking-widest text-white/30 mb-2 font-bold block">Tip {tipIndex + 1} of {tipsList.length}</span>
+                  <p>{tipsList[tipIndex]}</p>
+                </div>
+              </div>
             </div>
         </div>
       )}
@@ -299,6 +393,7 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
               if (!content && i !== convo.length-1 && !isMsgThinking) return null;
               return (
                 <div key={i} className={`${isEmbedded ? 'text-base' : 'text-lg'} leading-relaxed text-justify opacity-90`}>
+                  {msg.role === 'user' && i > 0 && <hr className="rte-hr" style={{ margin: '1.5em 0', borderBottom: '1px solid white' }} />}
                   <MessageContent 
                     role={msg.role} 
                     content={content} 
@@ -312,19 +407,22 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
             
             {/* Inline Input (Chỉ hiện khi tắt LiveCall) */}
             {!isStreaming && !isThinking && !isLiveCall && (
-              <div className={`${isEmbedded ? 'text-base' : 'text-lg'} flex items-start opacity-90 markdown-content`}>
-                <p className="m-0"><strong className="whitespace-nowrap">You:&nbsp;</strong></p>
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                  placeholder="type here..."
-                  className="flex-1 bg-transparent border-none focus:ring-0 text-white p-0 leading-relaxed outline-none placeholder-white/20"
-                  style={{ caretColor: 'white' }}
-                />
-              </div>
+              <>
+                {convo.length > 0 && <hr className="rte-hr" style={{ margin: '1.5em 0', borderBottom: '1px solid white' }} />}
+                <div className={`${isEmbedded ? 'text-base' : 'text-lg'} flex items-start opacity-90 markdown-content`}>
+                  <p className="m-0"><strong className="whitespace-nowrap">You:&nbsp;</strong></p>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                    placeholder="type here..."
+                    className="flex-1 bg-transparent border-none focus:ring-0 text-white p-0 leading-relaxed outline-none placeholder-white/20"
+                    style={{ caretColor: 'white' }}
+                  />
+                </div>
+              </>
             )}
             
             {/* Điểm neo (anchor) tàng hình dưới cùng để trượt tới */}

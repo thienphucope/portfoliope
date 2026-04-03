@@ -6,6 +6,7 @@ export function useSTT({ onResult, onSilence }) {
   
   const recognitionRef = useRef(null);
   const silenceTimer = useRef(null);
+  const isManualRef = useRef(false);
   
   // This helps us retain words across sudden short gaps
   const accumulatedRef = useRef('');
@@ -69,23 +70,30 @@ export function useSTT({ onResult, onSilence }) {
         if (callbacks.current.onResult) callbacks.current.onResult(full);
         
         clearTimeout(silenceTimer.current);
-        silenceTimer.current = setTimeout(() => {
-          if (callbacks.current.onSilence && full) {
-            const words = full.trim().split(/\s+/).filter(Boolean);
-            if (words.length < 3) return; // Nếu dưới 3 từ thì bỏ qua không gửi, tiếp tục đợi thêm
+        if (!isManualRef.current) {
+          silenceTimer.current = setTimeout(() => {
+            if (callbacks.current.onSilence && full) {
+              const words = full.trim().split(/\s+/).filter(Boolean);
+              if (words.length < 3) return; // Trả lại 3 từ như cũ!
 
-            callbacks.current.onSilence(full);
-            accumulatedRef.current = '';
-            sessionRef.current = '';
-            if (callbacks.current.onResult) callbacks.current.onResult('');
-            // Ensure STT completely forgets previous sentences after a send
-            try { recognition.abort(); } catch(err) {}
-          }
-        }, 2000);
+              callbacks.current.onSilence(full);
+              accumulatedRef.current = '';
+              sessionRef.current = '';
+              silenceTimer.current = null; // Reset bộ đếm
+              if (callbacks.current.onResult) callbacks.current.onResult('');
+              // Ensure STT completely forgets previous sentences after a send
+              try { recognition.abort(); } catch(err) {}
+            }
+          }, 4000); // Đặt lại 4 giây (ngừng nói 4s mới gửi) thay vì 7 giây quá lâu
+        }
       };
       
       recognition.onend = () => {
-        setIsListening(false); // ALWAYS update UI
+        // Chỉ tắt UI nếu thưc sự người dùng ngắt (hoặc hệ thống ngắt hoàn toàn)
+        if (!shouldListenRef.current) {
+           setIsListening(false); // Ngắt thật
+        }
+        
         if (sessionRef.current.trim()) {
            accumulatedRef.current = accumulatedRef.current 
              ? (accumulatedRef.current + '. ' + sessionRef.current).trim()
@@ -102,7 +110,7 @@ export function useSTT({ onResult, onSilence }) {
               accumulatedRef.current = '';
             }
             try { recognitionRef.current?.start(); } catch(err) {}
-          }, 100);
+          }, 50); // Khởi động lại ngay lập tức ngầm bên dưới
         }
       };
     }
@@ -122,7 +130,11 @@ export function useSTT({ onResult, onSilence }) {
       if (!echoFilterRef.current && navigator.mediaDevices) {
         // Try allocating a stream to force WebRTC hardware echo cancellation
         echoFilterRef.current = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+          audio: { 
+            echoCancellation: true, 
+            noiseSuppression: true, 
+            autoGainControl: false // Tắt tự động khuếch đại âm thanh (AGC) để tránh hút tiếng vọng từ tai nghe 
+          }
         });
 
         // Tính toán âm thanh trực quan thật mượt (Volume Meter)
@@ -144,8 +156,13 @@ export function useSTT({ onResult, onSilence }) {
             sum += dataArrayRef.current[i];
           }
           const average = sum / dataArrayRef.current.length;
-          // Scale volume lên x2 để dễ thấy dao động, giới hạn max là 1
-          setMicVolume(Math.min(1, (average / 128) * 2));
+          
+          // Noise Gate (Ngưỡng lọc ồn tiếng vọng): Chỉ khi âm thanh đủ lớn mới nhảy mic
+          const NOISE_GATE = 15; // Ngưỡng cắt lọc dải âm thanh nhỏ (có thể tăng lên 20-25 nếu vẫn nhạy)
+          const effectiveVolume = average > NOISE_GATE ? average - NOISE_GATE : 0;
+
+          // Tính toán lại tỷ lệ animation sau khi đã cắt tạp âm
+          setMicVolume(Math.min(1, effectiveVolume / 50)); 
           rafRef.current = requestAnimationFrame(trackVolume);
         };
         trackVolume();
@@ -164,13 +181,17 @@ export function useSTT({ onResult, onSilence }) {
   }, []);
 
   const clearTranscription = useCallback(() => {
+    isManualRef.current = false;
     accumulatedRef.current = '';
     sessionRef.current = '';
+    clearTimeout(silenceTimer.current);
+    if (callbacks.current.onResult) callbacks.current.onResult('');
     try { recognitionRef.current?.abort(); } catch(err) {} 
   }, []);
 
   const stopListening = useCallback(() => {
     shouldListenRef.current = false;
+    isManualRef.current = false;
     clearTimeout(silenceTimer.current);
     try { recognitionRef.current?.abort(); } catch (e) {}
     setIsListening(false);
@@ -193,5 +214,30 @@ export function useSTT({ onResult, onSilence }) {
     }
   }, []);
 
-  return { isListening, micVolume, startListening, pauseListening, stopListening, clearTranscription };
+  const startManualMode = useCallback(() => {
+    isManualRef.current = true;
+    clearTimeout(silenceTimer.current);
+    if (!shouldListenRef.current) {
+      startListening();
+    }
+  }, [startListening]);
+
+  const stopManualMode = useCallback(() => {
+    isManualRef.current = false;
+    let full = accumulatedRef.current 
+      ? (accumulatedRef.current + '. ' + sessionRef.current).trim()
+      : sessionRef.current.trim();
+    full = full.replace(/\s*\.\s*\./g, '.');
+    
+    if (full && callbacks.current.onSilence) {
+      callbacks.current.onSilence(full);
+    }
+    accumulatedRef.current = '';
+    sessionRef.current = '';
+    silenceTimer.current = null;
+    if (callbacks.current.onResult) callbacks.current.onResult('');
+    try { recognitionRef.current?.abort(); } catch(err) {} 
+  }, []);
+
+  return { isListening, micVolume, startListening, pauseListening, stopListening, clearTranscription, startManualMode, stopManualMode };
 }
