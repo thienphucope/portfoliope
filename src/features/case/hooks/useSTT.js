@@ -33,6 +33,7 @@ export function useSTT({ onResult, onSilence }) {
       recognitionRef.current = recognition;
       recognition.continuous = true;
       recognition.interimResults = true;
+      recognition.lang = 'en-US'; // Set English for mobile
 
       recognition.onstart = () => setIsListening(true);
       
@@ -42,6 +43,14 @@ export function useSTT({ onResult, onSilence }) {
         if (e.error === 'not-allowed' || e.error === 'audio-capture') {
           setIsListening(false);
           shouldListenRef.current = false;
+        }
+        // Mobile thường bị 'no-speech' hoặc 'aborted' - retry
+        if (e.error === 'no-speech' || e.error === 'aborted') {
+          if (shouldListenRef.current) {
+            setTimeout(() => {
+              try { recognitionRef.current?.start(); } catch(err) {}
+            }, 100);
+          }
         }
       };
 
@@ -130,17 +139,37 @@ export function useSTT({ onResult, onSilence }) {
       if (!echoFilterRef.current && navigator.mediaDevices) {
         try {
           // Try allocating a stream to force WebRTC hardware echo cancellation
-          echoFilterRef.current = await navigator.mediaDevices.getUserMedia({
+          // Mobile Safari cần fallback nếu autoGainControl: false không work
+          let constraints = {
             audio: { 
               echoCancellation: true, 
               noiseSuppression: true, 
-              autoGainControl: false // Tắt tự động khuếch đại âm thanh (AGC) để tránh hút tiếng vọng từ tai nghe 
+              autoGainControl: false
             }
-          });
+          };
+          
+          try {
+            echoFilterRef.current = await navigator.mediaDevices.getUserMedia(constraints);
+          } catch (firstErr) {
+            // Fallback cho mobile không hỗ trợ autoGainControl: false
+            console.warn('Fallback mic constraints:', firstErr);
+            echoFilterRef.current = await navigator.mediaDevices.getUserMedia({
+              audio: { 
+                echoCancellation: true, 
+                noiseSuppression: true
+              }
+            });
+          }
 
           // Tính toán âm thanh trực quan thật mượt (Volume Meter)
           const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
           audioContextRef.current = audioCtx;
+          
+          // Mobile cần resume AudioContext sau user interaction
+          if (audioCtx.state === 'suspended') {
+            await audioCtx.resume();
+          }
+          
           const analyser = audioCtx.createAnalyser();
           analyser.fftSize = 256;
           analyserRef.current = analyser;
