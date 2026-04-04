@@ -942,34 +942,8 @@ export default function VaultStyles() {
             transform: translateY(-50%) scale(0.95);
           }
 
-          .add-note-btn, .filetree-btn, .chatvault-btn {
-            position: absolute !important;
-            top: 50% !important;
-            transform: translateY(-50%) !important;
-            margin: 0 !important;
-            width: 32px !important;
-            height: 32px !important;
-            font-size: 14px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            transition: opacity 0.2s !important;
-          }
-
-          .add-note-btn svg, .filetree-btn svg, .chatvault-btn svg {
-            width: 22px !important;
-            height: 22px !important;
-          }
-
-          .add-note-btn {
-            right: 20px !important;
-            left: auto !important;
-          }
-          .chatvault-btn {
-            right: 60px !important;
-          }
-          .filetree-btn {
-            right: 100px !important;
+          .add-note-btn, .filetree-btn, .chatvault-btn, .mobile-back-btn, .comment-trigger {
+            display: none !important;
           }
 
           .acc-panel {
@@ -1092,120 +1066,106 @@ export default function VaultStyles() {
         }
 
           .mobile-footer {
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center; /* Đưa các item vào giữa */
+            position: fixed;
+            bottom: calc(30px + env(safe-area-inset-bottom));
+            left: 50%;
+            transform: translateX(-50%); /* Căn giữa tuyệt đối */
+            width: auto;
+            height: auto;
+            background: transparent;
+            z-index: 2000;
+            border-top: none;
+            padding: 0;
+            gap: 16px;
+            pointer-events: none;
+          }
+
+          .assistive-ball {
+            width: 48px;
+            height: 48px;
+            background: var(--colortab);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--colorbutton);
+            border: 2px solid var(--colorbutton); /* Thêm viền cùng màu với icon */
+            box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+            cursor: pointer;
+            z-index: 2001;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: auto;
+          }
+
+          .assistive-ball.at-bottom {
+            width: auto;
+            min-width: 48px;
+            border-radius: 24px;
+            padding: 0;
+          }
+
+          .footer-expanded-content {
             display: none;
+            flex-direction: column-reverse;
+            align-items: center; /* Căn giữa các mục menu */
+            gap: 12px;
+            opacity: 0;
+            transform: translateY(20px) scale(0.8);
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          }
+
+          .footer-expanded-content.active {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+          }
+          
+          .footer-item-wrapper {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+          }
+          
+          .footer-item-wrapper:active {
+            transform: scale(0.95);
+          }
+
+          .footer-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--colortab);
+            height: 48px;
+            padding: 0 18px;
+            background: var(--colorbutton);
+            border-radius: 24px;
+            border: 1px solid var(--colortab); /* Thêm viền tương phản nhẹ */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            gap: 12px;
+            white-space: nowrap;
+          }
+
+          .footer-item-label {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            color: var(--colortab);
+            margin-top: 2px;
+          }
+          
+          .footer-item.active-action {
+            background: white;
+          }
+          .footer-item.active-action .footer-item-label {
+            color: black;
           }
 
           @media (max-width: 1024px) and (orientation: portrait), (max-width: 768px) {
-            .mobile-footer {
-              display: flex;
-              flex-direction: column-reverse;
-              align-items: flex-end;
-              position: fixed;
-              bottom: calc(30px + env(safe-area-inset-bottom));
-              right: 20px;
-              width: auto;
-              height: auto;
-              background: transparent;
-              z-index: 2000;
-              border-top: none;
-              padding: 0;
-              gap: 16px;
-              pointer-events: none; /* Tránh chặn thao tác vuốt của ngón cái ở vùng trống */
-            }
-
-            .assistive-ball {
-              width: 48px;
-              height: 48px;
-              background: var(--colortab);
-              border-radius: 50%;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              color: var(--colorbutton);
-              box-shadow: 0 6px 20px rgba(0,0,0,0.6);
-              cursor: pointer;
-              z-index: 2001;
-              transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-              pointer-events: auto; /* Chỉ cho phép tương tác tại quả cầu */
-            }
-
-            .assistive-ball.at-bottom {
-              width: auto;
-              min-width: 48px;
-              border-radius: 24px;
-              padding: 0;
-            }
-
-            .footer-expanded-content {
-              display: none;
-              flex-direction: column-reverse;
-              align-items: flex-end;
-              gap: 12px;
-              opacity: 0;
-              transform: translateY(20px) scale(0.8);
-              pointer-events: none;
-              transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            }
-
-            .footer-expanded-content.active {
-              display: flex;
-              opacity: 1;
-              transform: translateY(0) scale(1);
-              pointer-events: auto;
-            }
-            
-            .footer-item-wrapper {
-              display: flex;
-              align-items: center;
-              cursor: pointer;
-              transition: transform 0.2s;
-            }
-            
-            .footer-item-wrapper:active {
-              transform: scale(0.95);
-            }
-
-            .footer-item {
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              color: var(--colortab);
-              height: 48px;
-              padding: 0 18px;
-              background: var(--colorbutton);
-              border-radius: 24px;
-              box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-              gap: 12px;
-              white-space: nowrap;
-            }
-
-            .footer-item-label {
-              font-family: var(--font-display);
-              font-size: 1.1rem;
-              color: var(--colortab);
-              margin-top: 2px;
-            }
-            
-            .footer-item.active-action {
-              background: white;
-            }
-            .footer-item.active-action .footer-item-label {
-              color: black;
-            }
-
-            .add-note-btn, .filetree-btn, .chatvault-btn, .mobile-back-btn, .comment-trigger {
-              display: none !important;
-            }
-
-            .acc-panel.open {
-              height: calc(100vh - 60px) !important;
-            }
-            
-            .acc-panel.tab-filetree.open,
-            .acc-panel.tab-chat.open {
-               height: calc(100vh - 60px) !important;
-            }
-          }
       `}</style>
   );
 }

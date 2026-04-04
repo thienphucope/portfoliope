@@ -24,7 +24,7 @@ export const saveCache = (name, data) => {
 };
 
 export const mkBlock = (raw = '', type = 'paragraph') => ({
-  id: `b${Date.now()}${Math.random().toString(36).slice(2, 6)}`,
+  id: `b${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
   raw,
   type,
 });

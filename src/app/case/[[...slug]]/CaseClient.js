@@ -6,7 +6,7 @@ import BlockEditor from '../../../features/case/components/BlockEditor';
 import FileSystemItem from '../../../features/case/components/FileSystemItem';
 import VaultStyles from '../../../features/case/styles/VaultStyles';
 import StickySpine from '../../../features/case/components/StickySpine';
-import MobileFooter from '../../../features/case/components/MobileFooter';
+import FunctionBall from '../../../features/case/components/FunctionBall';
 import PromptOverlays from '../../../features/case/components/PromptOverlays';
 import FloatingActions from '../../../features/case/components/FloatingActions';
 import CommentTrigger from '../../../features/case/components/CommentTrigger';
@@ -285,6 +285,11 @@ export default function CaseClient({ staticRecords = [] }) {
 
   // ── Initial load ─────────────────────────────────────────────────────────────
   useEffect(() => {
+    // Đánh dấu đây là điểm dừng gốc của kho lưu trữ
+    if (window.location.pathname === '/case' && !window.history.state) {
+      window.history.replaceState({ isRoot: true }, '', '/case');
+    }
+
     (async () => {
       try {
         const bootRes = await fetch('/api/cases', {
@@ -385,6 +390,10 @@ export default function CaseClient({ staticRecords = [] }) {
 
   const activeTabIndex    = tabs.findIndex((t) => t.id === activeTab);
   const nextTabForActive  = tabs.slice(activeTabIndex + 1).find((t) => t.type === 'editor' || t.type === 'static');
+  const prevTabForActive  = activeTabIndex > 0 
+    ? [...tabs.slice(0, activeTabIndex)].reverse().find((t) => t.type === 'editor' || t.type === 'static')
+    : null;
+
   const showReadMore      = isAtBottom && !isFooterExpanded && nextTabForActive && !activeOverlay;
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -403,7 +412,7 @@ export default function CaseClient({ staticRecords = [] }) {
       </div>
       <div className="video-overlay" />
 
-      <MobileFooter
+      <FunctionBall
         isFooterExpanded={isFooterExpanded}
         setIsFooterExpanded={setIsFooterExpanded}
         showReadMore={showReadMore}
@@ -414,6 +423,12 @@ export default function CaseClient({ staticRecords = [] }) {
         handleAppendComment={handleAppendComment}
         handleTabClick={handleTabClick}
         nextTabForActive={nextTabForActive}
+        prevTabForActive={prevTabForActive}
+        isEditing={isEditing}
+        handleToggleEditMode={handleToggleEditMode}
+        saveStatus={saveStatus}
+        handleSidebarSave={handleSidebarSave}
+        activeTabType={tabs.find(t => t.id === activeTab)?.type}
       />
 
       <StickySpine

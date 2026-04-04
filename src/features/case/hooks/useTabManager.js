@@ -26,6 +26,7 @@ export function useTabManager({
   setShowSearch,
 }) {
   const lastActiveNote = useRef(null);
+  const lastProcessedKey = useRef(null);
 
   // ─── Tab click ─────────────────────────────────────────────────────────────
 
@@ -64,11 +65,14 @@ export function useTabManager({
 
         setActiveTab(null);
         setActiveOverlay(null);
-        window.history.pushState(null, '', '/case');
+        lastProcessedKey.current = null;
+        // Gắn label isRoot để nhận diện trang chủ kho lưu trữ
+        window.history.pushState({ isRoot: true }, '', '/case');
         return;
       }
 
       setActiveOverlay(null);
+      lastProcessedKey.current = tab.id;
 
       // Guard unsaved changes
       if (isEditing && fileName) {
@@ -106,12 +110,6 @@ export function useTabManager({
         } else {
           applyFileContent(tab.id, `# ${tab.title}\nLoading...`);
         }
-
-        const cleanPath = tab.id.replace(/\.md$/, '');
-        const newUrl    = `/case/${cleanPath}`;
-        if (window.location.pathname !== newUrl) {
-          window.history.pushState({ repoKey: tab.id }, '', newUrl);
-        }
       }
     },
     [
@@ -125,13 +123,13 @@ export function useTabManager({
 
   const handlePopState = useCallback(
     (e) => {
-      if (!e.state) {
-        setActiveTab(null);
-        setActiveOverlay(null);
-        return;
-      }
+      const state = e.state || {};
+      const repoKey = state.repoKey || null;
 
-      const { repoKey } = e.state;
+      // Tránh xử lý trùng lặp nếu state không đổi (ngăn freeze khi back/forward nhanh)
+      if (lastProcessedKey.current === repoKey) return;
+      lastProcessedKey.current = repoKey;
+
       if (!repoKey) {
         setActiveTab(null);
         setActiveOverlay(null);
@@ -156,6 +154,7 @@ export function useTabManager({
 
       const realPath = fileRegistry.current[repoKey.toLowerCase()];
       if (realPath) {
+        // Dùng 'none' để không push thêm state vào history khi đang pop
         loadFile(realPath, repoKey.split('/').pop(), repoKey, 'none');
       }
     },

@@ -64,7 +64,7 @@ export function useScrollBehavior({ appShellRef, tabs, setShowHeader }) {
       const spineWidth         = 150;
       const visibleClosedBefore = Math.max(0, tabIndex - 2);
       const tabPosition        = 150 + visibleClosedBefore * spineWidth;
-      const scrollTarget       = Math.max(0, tabPosition - 225);
+      const scrollTarget       = Math.max(0, tabPosition - 150);
 
       const startScroll = appShellRef.current.scrollLeft;
       const distance    = scrollTarget - startScroll;

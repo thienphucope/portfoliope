@@ -4,7 +4,6 @@ import Chat from './Chat';
 import BlockEditor from './BlockEditor';
 import FileSystemItem from './FileSystemItem';
 import FloatingActions from './FloatingActions';
-import CommentTrigger from './CommentTrigger';
 import dynamic from 'next/dynamic';
 
 /**
@@ -144,7 +143,6 @@ export default function TabPanel({
                   }}
                 >
                   <BlockEditor
-                    key={contentKey}
                     content={content}
                     fileName={fileName}
                     onLinkClick={handleLinkClick}
@@ -156,8 +154,6 @@ export default function TabPanel({
                     fileRegistry={fileRegistry.current}
                   />
                 </article>
-
-                {tab.type === 'editor' && <CommentTrigger onClick={handleAppendComment} />}
               </main>
             )}
           </div>
