@@ -496,7 +496,7 @@ export default function VaultStyles() {
             height: 56.25vw;
           }
         }
-        .video-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); pointer-events: none; }
+        .video-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); pointer-events: none; }
 
         /* Hide scrollbar for accordion app container itself */
         .accordion-app::-webkit-scrollbar {
