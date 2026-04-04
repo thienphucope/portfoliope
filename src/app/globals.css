@@ -14,8 +14,21 @@
   --background: #000000; 
   --foreground: #f0f0f0; 
   /* Detective Gold - The primary accent color for the theme */
---colorone: #967f6b;   /* trầm thêm, vẫn ấm và tự nhiên */
---colorspine: #866f5b; /* sâu hơn nhưng chưa chạm tối */
+  --colorone: #ce996f;   /* trầm thêm, vẫn ấm và tự nhiên */
+  /* Tab panel spine color */
+  --colortab: #0e1415;   /* tab mặc định */
+  /* Spine/Navigation bar color */
+  --colorspine: #10161a; /* sâu hơn nhưng chưa chạm tối */
+  /* Text color on spine/tabs */
+  --colortext-spine: #bb865a;
+  /* Button color (icons) */
+  --colorbutton: #bb865a;
+  /* Border color between panels */
+  --colorborder: #bb865a;
+  /* Link color */
+  --colorlink: #bb865a;
+  /* Markdown text color */
+  --colortext-markdown: #e0e0e0;
 }
 
 /* -------------------------------------------------------------------------- */

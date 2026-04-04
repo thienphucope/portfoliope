@@ -15,7 +15,7 @@ export default function VaultStyles() {
           --md-font: 'Lora', serif; --md-size: 19px; --md-line: 1.6;
         }
 
-        body { margin:0; background:var(--bg); color:var(--txt); font-family:'Inter',sans-serif; overflow:hidden; }
+        body { margin:0; background:var(--bg); color:var(--colortext-markdown); font-family:'Inter',sans-serif; overflow:hidden; }
 
         /* Hide all scrollbars */
         *::-webkit-scrollbar {
@@ -61,7 +61,7 @@ export default function VaultStyles() {
           flex-shrink: 0;
         }
         .icon-btn:hover {
-          color: var(--txt);
+          color: var(--colortext-markdown);
           background: rgba(255,255,255,0.07);
           border-color: var(--border);
         }
@@ -217,7 +217,7 @@ export default function VaultStyles() {
           border: 1px solid rgba(255,250,205,0.2);
           border-radius: 4px;
           padding: 15px; /* Match pre padding */
-          color: var(--txt);
+          color: var(--colortext-markdown);
           caret-color: var(--accent);
           white-space: pre-wrap;
           box-shadow: 0 2px 12px rgba(0,0,0,0.5);
@@ -229,7 +229,7 @@ export default function VaultStyles() {
         pre code { background: transparent !important; }
         .code-block pre { background: transparent !important; }
         .code-block code { background: transparent !important; }
-        .hljs { color: var(--txt) !important; }
+        .hljs { color: var(--colortext-markdown) !important; }
 
         .code-raw-editor:focus {
           border-color: rgba(255, 250, 205, 0.4);
@@ -253,7 +253,7 @@ export default function VaultStyles() {
         .pass-modal__title { font-family:'Inter',sans-serif; font-size:14px; font-weight:600; color:var(--accent); }
         .pass-modal__input {
           background: rgba(255,255,255,0.05); border: 1px solid var(--border);
-          border-radius: 8px; padding: 10px 14px; color: var(--txt);
+          border-radius: 8px; padding: 10px 14px; color: var(--colortext-markdown);
           font-family: 'Inter', sans-serif; font-size: 14px; outline: none;
           caret-color: var(--accent);
         }
@@ -261,7 +261,7 @@ export default function VaultStyles() {
         .pass-modal__hint { font-size: 11px; opacity: 0.4; font-family:'Inter',sans-serif; }
 
         /* ── MARKDOWN TYPOGRAPHY ────────────────────────────────────────────── */
-        .markdown-content { font-family:var(--md-font); font-size:var(--md-size); line-height:var(--md-line); color:var(--txt); text-align: justify; }
+        .markdown-content { font-family:var(--md-font); font-size:var(--md-size); line-height:var(--md-line); color:var(--colortext-markdown); text-align: justify; }
         .markdown-content h1 { font-size:2.0em; margin:.8em 0 .4em; color:#fff; font-weight:700; text-align: left; }
         .markdown-content h2 { font-size:1.6em; margin:.7em 0 .3em; color:#fff; font-weight:700; text-align: left; }
         .markdown-content h3 { font-size:1.2em; margin:.6em 0 .2em; color:#fff; font-weight:700; }
@@ -310,7 +310,7 @@ export default function VaultStyles() {
         }
 
         .markdown-content a, .internal-link {
-          color:var(--accent); text-decoration:none; border-bottom:1px dotted var(--accent);
+          color:var(--colorlink); text-decoration:none; border-bottom:1px dotted var(--colorlink);
           padding-right:14px; position:relative; cursor:pointer;
           transition: opacity 0.2s;
         }
@@ -512,7 +512,7 @@ export default function VaultStyles() {
           flex-grow: 0;
           flex-shrink: 0;
           background-color: var(--colorone);
-          border-right: 2px solid rgba(255, 255, 255, 0.2);
+          border-right: 2px solid var(--colorborder);
           cursor: default;
           isolation: isolate;
         }
@@ -534,7 +534,7 @@ export default function VaultStyles() {
           justify-content: center;
           cursor: pointer;
           position: absolute;
-          color: black;
+          color: var(--colorbutton);
           font-weight: bold;
           font-size: 20px;
           z-index: 100;
@@ -556,7 +556,7 @@ export default function VaultStyles() {
           gap: 2rem;
           font-family: 'Fredericka the Great', cursive;
           font-size: 2.8rem;
-          color: black;
+          color: var(--colortext-spine);
           mix-blend-mode: destination-out;
           user-select: none;
           position: absolute;
@@ -574,7 +574,7 @@ export default function VaultStyles() {
           flex-direction: row;
           height: 100%;
           transition: flex-basis 1s cubic-bezier(0.25, 0.8, 0.25, 1), min-width 1s cubic-bezier(0.25, 0.8, 0.25, 1), flex-grow 1s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 1s, opacity 0.5s;
-          border-right: 2px solid rgba(255, 255, 255, 0.2);
+          border-right: 2px solid var(--colorborder);
           overflow: hidden;
           flex-shrink: 0;
         }
@@ -583,7 +583,7 @@ export default function VaultStyles() {
           flex-basis: 150px;
           min-width: 150px;
           flex-grow: 0;
-          background-color: var(--colorone);
+          background-color: var(--colortab);
           cursor: pointer;
           isolation: isolate;
         }
@@ -670,7 +670,7 @@ export default function VaultStyles() {
         .acc-spine-container {
           flex: 0 0 150px;
           height: 100%;
-          background-color: var(--colorone);
+          background-color: var(--colortab);
           cursor: pointer;
           display: flex;
           align-items: top;
@@ -683,7 +683,7 @@ export default function VaultStyles() {
           writing-mode: vertical-rl;
           font-family: 'Fredericka the Great', cursive;
           font-size: 3rem;
-          color: black;
+          color: var(--colortext-spine);
           mix-blend-mode: destination-out;
           white-space: nowrap;
           letter-spacing: 2px;
@@ -915,7 +915,7 @@ export default function VaultStyles() {
           }
 
           .markdown-container {
-            padding: 0 15px 100px !important;
+            padding: 0 8px 100px !important;
             overscroll-behavior: contain;
           }
 
@@ -996,12 +996,12 @@ export default function VaultStyles() {
             .assistive-ball {
               width: 48px;
               height: 48px;
-              background: #b09278;
+              background: var(--colortab);
               border-radius: 50%;
               display: flex;
               align-items: center;
               justify-content: center;
-              color: black;
+              color: var(--colorbutton);
               box-shadow: 0 6px 20px rgba(0,0,0,0.6);
               cursor: pointer;
               z-index: 2001;
@@ -1049,10 +1049,10 @@ export default function VaultStyles() {
               display: flex;
               align-items: center;
               justify-content: center;
-              color: black;
+              color: var(--colortab);
               height: 48px;
               padding: 0 18px;
-              background: #b09278;
+              background: var(--colorbutton);
               border-radius: 24px;
               box-shadow: 0 4px 12px rgba(0,0,0,0.4);
               gap: 12px;
@@ -1062,7 +1062,7 @@ export default function VaultStyles() {
             .footer-item-label {
               font-family: 'Fredericka the Great', cursive;
               font-size: 1.1rem;
-              color: black;
+              color: var(--colortab);
               margin-top: 2px;
             }
             
