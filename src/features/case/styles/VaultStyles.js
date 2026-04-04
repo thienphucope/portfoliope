@@ -693,7 +693,7 @@ export default function VaultStyles() {
         .acc-ope-container {
           flex: 0 0 150px;
           height: 100%;
-          background-color: #b09278;
+          background-color: var(--colorspine);
           cursor: pointer;
           display: flex;
           align-items: center;

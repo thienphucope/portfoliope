@@ -7,7 +7,7 @@ export default function CaseArchivesButton() {
   const audioRef = useRef(null);
   const [displayText, setDisplayText] = useState("");
   
-  const TEXTS = ["Case Archives", "Click Me!"];
+  const TEXTS = ["Case Archives", "Click To Enter!"];
   const TYPE_SPEED = 150; 
   const PAUSE_DURATION = 1000; 
   const FONT_SIZE = 48; 

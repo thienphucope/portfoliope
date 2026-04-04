@@ -14,7 +14,8 @@
   --background: #000000; 
   --foreground: #f0f0f0; 
   /* Detective Gold - The primary accent color for the theme */
-  --colorone: #c2a38a;   
+--colorone: #967f6b;   /* trầm thêm, vẫn ấm và tự nhiên */
+--colorspine: #866f5b; /* sâu hơn nhưng chưa chạm tối */
 }
 
 /* -------------------------------------------------------------------------- */
