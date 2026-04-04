@@ -33,34 +33,37 @@ export default function FunctionBall({
 
   return (
     <div className={`mobile-footer ${isFooterExpanded ? 'expanded' : ''}`}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         
-        {/* Nút Close - Chỉ hiện khi MỞ RỘNG */}
-        {isFooterExpanded && activeTabObj && (
-          <div 
-            className="side-nav-btn"
-            onClick={(e) => handleTabClick(activeTabObj, e)}
-            title="Close Tab"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m16 17 5-5-5-5"></path>
-              <path d="M21 12H9"></path>
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-            </svg>
-          </div>
-        )}
-
-        {/* Nút Back - Chỉ hiện khi MỞ RỘNG */}
+        {/* Nút bên trái FunctionBall */}
         {isFooterExpanded && (
-          <div 
-            className="side-nav-btn"
-            onClick={(e) => {
-              if (prevTabForActive) handleTabClick(prevTabForActive, e);
-              else window.history.back();
-            }}
-            title={prevTabForActive ? `Back to ${prevTabForActive.title}` : "Back"}
-          >
-            <ChevronLeft size={24} />
+          <div style={{ position: 'absolute', right: '100%', marginRight: '16px', display: 'flex', gap: '16px' }}>
+            {/* Nút Close */}
+            {activeTabObj && (
+              <div 
+                className="side-nav-btn"
+                onClick={(e) => handleTabClick(activeTabObj, e)}
+                title="Close Tab"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m16 17 5-5-5-5"></path>
+                  <path d="M21 12H9"></path>
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                </svg>
+              </div>
+            )}
+
+            {/* Nút Back */}
+            <div 
+              className="side-nav-btn"
+              onClick={(e) => {
+                if (prevTabForActive) handleTabClick(prevTabForActive, e);
+                else window.history.back();
+              }}
+              title={prevTabForActive ? `Back to ${prevTabForActive.title}` : "Back"}
+            >
+              <ChevronLeft size={24} />
+            </div>
           </div>
         )}
 
@@ -82,14 +85,16 @@ export default function FunctionBall({
           )}
         </div>
 
-        {/* Nút Next - Chỉ hiện khi MỞ RỘNG */}
+        {/* Nút bên phải FunctionBall (Next) */}
         {isFooterExpanded && nextTabForActive && (
-          <div 
-            className="side-nav-btn"
-            onClick={(e) => handleTabClick(nextTabForActive, e)}
-            title={`Next: ${nextTabForActive.title}`}
-          >
-            <ChevronRight size={24} />
+          <div style={{ position: 'absolute', left: '100%', marginLeft: '16px' }}>
+            <div 
+              className="side-nav-btn"
+              onClick={(e) => handleTabClick(nextTabForActive, e)}
+              title={`Next: ${nextTabForActive.title}`}
+            >
+              <ChevronRight size={24} />
+            </div>
           </div>
         )}
       </div>

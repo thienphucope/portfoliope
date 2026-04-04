@@ -980,7 +980,7 @@ export default function VaultStyles() {
             position: relative !important;
           }
 
-          .acc-panel.open:not(.tab-filetree):not(.tab-chat) .acc-spine-container {
+          .acc-panel.open .acc-spine-container {
             display: none !important;
           }
 
@@ -999,7 +999,7 @@ export default function VaultStyles() {
             opacity: 1 !important;
           }
 
-          .acc-panel.open:not(.tab-filetree):not(.tab-chat) .acc-content {
+          .acc-panel.open .acc-content {
             height: 100% !important;
           }
 
@@ -1045,7 +1045,7 @@ export default function VaultStyles() {
 
           .acc-panel.tab-filetree .acc-spine-container,
           .acc-panel.tab-chat .acc-spine-container {
-            display: flex !important;
+            display: none !important;
           }
 
           .acc-panel.tab-filetree .file-list {
