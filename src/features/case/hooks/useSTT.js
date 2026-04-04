@@ -1,5 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
+// Detect mobile browser
+const isMobile = () => {
+  if (typeof navigator === 'undefined') return false;
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+};
+
 export function useSTT({ onResult, onSilence }) {
   const [isListening, setIsListening] = useState(false);
   const [micVolume, setMicVolume] = useState(0); // Track volume (0 to 1)
@@ -14,6 +20,8 @@ export function useSTT({ onResult, onSilence }) {
   
   const shouldListenRef = useRef(false);
   const echoFilterRef = useRef(null);
+  const isMobileDevice = useRef(isMobile());
+  const isRestartingRef = useRef(false); // Prevent double restart on mobile
   
   // Audio node refs for volume
   const audioContextRef = useRef(null);
@@ -26,31 +34,56 @@ export function useSTT({ onResult, onSilence }) {
     callbacks.current = { onResult, onSilence };
   }, [onResult, onSilence]);
 
+  // Safe restart helper for mobile
+  const safeRestart = useCallback((delay = 100) => {
+    if (isRestartingRef.current || !shouldListenRef.current) return;
+    isRestartingRef.current = true;
+    
+    setTimeout(() => {
+      if (shouldListenRef.current && recognitionRef.current) {
+        try { 
+          recognitionRef.current.start(); 
+        } catch(err) {
+          console.warn('STT restart err:', err);
+        }
+      }
+      isRestartingRef.current = false;
+    }, delay);
+  }, []);
+
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       const recognition = new SR();
       recognitionRef.current = recognition;
-      recognition.continuous = true;
+      
+      // Mobile Safari doesn't support continuous well, use shorter sessions
+      recognition.continuous = !isMobileDevice.current;
       recognition.interimResults = true;
-      recognition.lang = 'en-US'; // Set English for mobile
+      recognition.lang = 'en-US';
+      // Set max alternatives for better accuracy on mobile
+      recognition.maxAlternatives = 1;
 
-      recognition.onstart = () => setIsListening(true);
+      recognition.onstart = () => {
+        isRestartingRef.current = false;
+        setIsListening(true);
+      };
       
       recognition.onerror = (e) => {
         console.warn('STT Mic err:', e.error);
+        isRestartingRef.current = false;
+        
         // Ngắt thẳng nếu bị từ chối quyền hoặc lỗi thật sự nặng
-        if (e.error === 'not-allowed' || e.error === 'audio-capture') {
+        if (e.error === 'not-allowed' || e.error === 'audio-capture' || e.error === 'service-not-allowed') {
           setIsListening(false);
           shouldListenRef.current = false;
+          return;
         }
-        // Mobile thường bị 'no-speech' hoặc 'aborted' - retry
-        if (e.error === 'no-speech' || e.error === 'aborted') {
-          if (shouldListenRef.current) {
-            setTimeout(() => {
-              try { recognitionRef.current?.start(); } catch(err) {}
-            }, 100);
-          }
+        
+        // Mobile thường bị 'no-speech' hoặc 'aborted' hoặc 'network' - retry
+        if (shouldListenRef.current && (e.error === 'no-speech' || e.error === 'aborted' || e.error === 'network')) {
+          // Longer delay for mobile to prevent rapid restart loops
+          safeRestart(isMobileDevice.current ? 300 : 100);
         }
       };
 
@@ -112,18 +145,17 @@ export function useSTT({ onResult, onSilence }) {
         }
         
         if (shouldListenRef.current) {
-          setTimeout(() => {
-            // Force clean state on automatic restart if there's no pending timeout
-            if (!silenceTimer.current) {
-              sessionRef.current = '';
-              accumulatedRef.current = '';
-            }
-            try { recognitionRef.current?.start(); } catch(err) {}
-          }, 50); // Khởi động lại ngay lập tức ngầm bên dưới
+          // Force clean state on automatic restart if there's no pending timeout
+          if (!silenceTimer.current) {
+            sessionRef.current = '';
+            accumulatedRef.current = '';
+          }
+          // Use longer delay for mobile to ensure clean restart
+          safeRestart(isMobileDevice.current ? 200 : 50);
         }
       };
     }
-  }, []);
+  }, [safeRestart]);
 
   const startListening = useCallback(async () => {
     if (shouldListenRef.current) {
@@ -132,75 +164,84 @@ export function useSTT({ onResult, onSilence }) {
     }
     
     shouldListenRef.current = true;
+    isRestartingRef.current = false;
     accumulatedRef.current = '';
     sessionRef.current = '';
     
     try {
       if (!echoFilterRef.current && navigator.mediaDevices) {
         try {
-          // Try allocating a stream to force WebRTC hardware echo cancellation
-          // Mobile Safari cần fallback nếu autoGainControl: false không work
-          let constraints = {
-            audio: { 
-              echoCancellation: true, 
-              noiseSuppression: true, 
-              autoGainControl: false
-            }
-          };
+          // Mobile-friendly constraints - simpler for better compatibility
+          let constraints = isMobileDevice.current 
+            ? { audio: true } // Simplest constraint for mobile
+            : {
+                audio: { 
+                  echoCancellation: true, 
+                  noiseSuppression: true, 
+                  autoGainControl: true
+                }
+              };
           
           try {
             echoFilterRef.current = await navigator.mediaDevices.getUserMedia(constraints);
           } catch (firstErr) {
-            // Fallback cho mobile không hỗ trợ autoGainControl: false
+            // Fallback to basic audio
             console.warn('Fallback mic constraints:', firstErr);
-            echoFilterRef.current = await navigator.mediaDevices.getUserMedia({
-              audio: { 
-                echoCancellation: true, 
-                noiseSuppression: true
-              }
-            });
+            echoFilterRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
           }
 
           // Tính toán âm thanh trực quan thật mượt (Volume Meter)
-          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          audioContextRef.current = audioCtx;
-          
-          // Mobile cần resume AudioContext sau user interaction
-          if (audioCtx.state === 'suspended') {
-            await audioCtx.resume();
-          }
-          
-          const analyser = audioCtx.createAnalyser();
-          analyser.fftSize = 256;
-          analyserRef.current = analyser;
-          dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
-          
-          const src = audioCtx.createMediaStreamSource(echoFilterRef.current);
-          src.connect(analyser);
-
-          const trackVolume = () => {
-            if (!analyserRef.current) return;
-            analyserRef.current.getByteFrequencyData(dataArrayRef.current);
-            let sum = 0;
-            for (let i = 0; i < dataArrayRef.current.length; i++) {
-              sum += dataArrayRef.current[i];
-            }
-            const average = sum / dataArrayRef.current.length;
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) {
+            const audioCtx = new AudioContextClass();
+            audioContextRef.current = audioCtx;
             
-            // Noise Gate (Ngưỡng lọc ồn tiếng vọng): Chỉ khi âm thanh đủ lớn mới nhảy mic
-            const NOISE_GATE = 15; // Ngưỡng cắt lọc dải âm thanh nhỏ (có thể tăng lên 20-25 nếu vẫn nhạy)
-            const effectiveVolume = average > NOISE_GATE ? average - NOISE_GATE : 0;
+            // Mobile cần resume AudioContext sau user interaction
+            if (audioCtx.state === 'suspended') {
+              await audioCtx.resume();
+            }
+            
+            const analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256;
+            analyserRef.current = analyser;
+            dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
+            
+            const src = audioCtx.createMediaStreamSource(echoFilterRef.current);
+            src.connect(analyser);
 
-            // Tính toán lại tỷ lệ animation sau khi đã cắt tạp âm
-            setMicVolume(Math.min(1, effectiveVolume / 50)); 
-            rafRef.current = requestAnimationFrame(trackVolume);
-          };
-          trackVolume();
+            const trackVolume = () => {
+              if (!analyserRef.current) return;
+              analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+              let sum = 0;
+              for (let i = 0; i < dataArrayRef.current.length; i++) {
+                sum += dataArrayRef.current[i];
+              }
+              const average = sum / dataArrayRef.current.length;
+              
+              // Noise Gate (Ngưỡng lọc ồn tiếng vọng): Chỉ khi âm thanh đủ lớn mới nhảy mic
+              const NOISE_GATE = 15;
+              const effectiveVolume = average > NOISE_GATE ? average - NOISE_GATE : 0;
+
+              setMicVolume(Math.min(1, effectiveVolume / 50)); 
+              rafRef.current = requestAnimationFrame(trackVolume);
+            };
+            trackVolume();
+          }
         } catch (mediaErr) {
-          console.warn('Điện thoại không hỗ trợ tắt autoGain, bỏ qua tính năng volume đồ hoạ:', mediaErr);
+          console.warn('Volume visualization not supported:', mediaErr);
         }
       }
-      recognitionRef.current?.start();
+      
+      // Start recognition
+      try {
+        recognitionRef.current?.start();
+      } catch (startErr) {
+        console.warn('Initial STT start error:', startErr);
+        // Retry once after small delay (important for mobile)
+        setTimeout(() => {
+          try { recognitionRef.current?.start(); } catch(e) {}
+        }, 100);
+      }
     } catch (e) {
       console.warn('STT Mic err:', e);
     }
@@ -208,6 +249,7 @@ export function useSTT({ onResult, onSilence }) {
 
   const pauseListening = useCallback(() => {
     shouldListenRef.current = false;
+    isRestartingRef.current = false;
     clearTimeout(silenceTimer.current);
     try { recognitionRef.current?.abort(); } catch (e) {}
     setIsListening(false);
@@ -225,6 +267,7 @@ export function useSTT({ onResult, onSilence }) {
   const stopListening = useCallback(() => {
     shouldListenRef.current = false;
     isManualRef.current = false;
+    isRestartingRef.current = false;
     clearTimeout(silenceTimer.current);
     try { recognitionRef.current?.abort(); } catch (e) {}
     setIsListening(false);
