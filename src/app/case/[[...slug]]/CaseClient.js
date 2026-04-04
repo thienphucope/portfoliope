@@ -429,6 +429,7 @@ export default function CaseClient({ staticRecords = [] }) {
         saveStatus={saveStatus}
         handleSidebarSave={handleSidebarSave}
         activeTabType={tabs.find(t => t.id === activeTab)?.type}
+        activeTabObj={tabs.find(t => t.id === activeTab)}
       />
 
       <StickySpine

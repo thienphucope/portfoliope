@@ -23,7 +23,8 @@ export default function FunctionBall({
   handleToggleEditMode,
   saveStatus,
   handleSidebarSave,
-  activeTabType
+  activeTabType,
+  activeTabObj
 }) {
   // Chỉ cho phép dùng các chức năng này khi có tab đang active (editor hoặc static)
   // và không bị overlay (filetree/chat) che mất
@@ -34,6 +35,21 @@ export default function FunctionBall({
     <div className={`mobile-footer ${isFooterExpanded ? 'expanded' : ''}`}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         
+        {/* Nút Close - Chỉ hiện khi MỞ RỘNG */}
+        {isFooterExpanded && activeTabObj && (
+          <div 
+            className="side-nav-btn"
+            onClick={(e) => handleTabClick(activeTabObj, e)}
+            title="Close Tab"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m16 17 5-5-5-5"></path>
+              <path d="M21 12H9"></path>
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            </svg>
+          </div>
+        )}
+
         {/* Nút Back - Chỉ hiện khi MỞ RỘNG */}
         {isFooterExpanded && (
           <div 

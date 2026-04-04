@@ -58,23 +58,6 @@ export default function TabPanel({
     >
       <div className="acc-spine-container" onClick={(e) => handleTabClick(tab, e)}>
         <div className="acc-spine">{tab.title}</div>
-        {isOpen && (
-          <div
-            className="tab-close-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              // Gọi handleTabClick với tab hiện tại khi nó đang mở 
-              // sẽ kích hoạt logic đóng tab và đẩy URL về /case
-              handleTabClick(tab, e);
-            }}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m16 17 5-5-5-5"></path>
-              <path d="M21 12H9"></path>
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-            </svg>
-          </div>
-        )}
       </div>
 
       {(isOpen || isPersistent) && (

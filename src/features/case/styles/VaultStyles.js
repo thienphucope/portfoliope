@@ -980,6 +980,10 @@ export default function VaultStyles() {
             position: relative !important;
           }
 
+          .acc-panel.open:not(.tab-filetree):not(.tab-chat) .acc-spine-container {
+            display: none !important;
+          }
+
           .acc-spine {
             writing-mode: horizontal-tb !important;
             font-size: 1.1rem !important;
@@ -993,6 +997,10 @@ export default function VaultStyles() {
             flex: 1 !important;
             animation: none !important;
             opacity: 1 !important;
+          }
+
+          .acc-panel.open:not(.tab-filetree):not(.tab-chat) .acc-content {
+            height: 100% !important;
           }
 
           .acc-body {
