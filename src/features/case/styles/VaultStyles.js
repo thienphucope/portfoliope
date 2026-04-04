@@ -241,24 +241,24 @@ export default function VaultStyles() {
         /* Password modal */
         .pass-overlay {
           position: fixed; inset: 0; z-index: 9999;
-          background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+          background: var(--colortab); backdrop-filter: blur(4px);
           display: flex; align-items: center; justify-content: center;
         }
         .pass-modal {
-          background: #1a1a1a; border: 1px solid rgba(255,250,205,0.25);
+          background: var(--colortab); border: 1px solid var(--colortext-spine);
           border-radius: 12px; padding: 24px 28px; min-width: 300px;
           display: flex; flex-direction: column; gap: 12px;
           box-shadow: 0 8px 40px rgba(0,0,0,0.7);
         }
-        .pass-modal__title { font-family:'Inter',sans-serif; font-size:14px; font-weight:600; color:var(--accent); }
+        .pass-modal__title { font-family:'Inter',sans-serif; font-size:14px; font-weight:600; color:var(--colortext-spine); }
         .pass-modal__input {
-          background: rgba(255,255,255,0.05); border: 1px solid var(--border);
-          border-radius: 8px; padding: 10px 14px; color: var(--colortext-markdown);
+          background: rgba(255,255,255,0.05); border: 1px solid var(--colortext-spine);
+          border-radius: 8px; padding: 10px 14px; color: var(--colortext-spine);
           font-family: 'Inter', sans-serif; font-size: 14px; outline: none;
-          caret-color: var(--accent);
+          caret-color: var(--colortext-spine);
         }
-        .pass-modal__input:focus { border-color: rgba(255,250,205,0.4); }
-        .pass-modal__hint { font-size: 11px; opacity: 0.4; font-family:'Inter',sans-serif; }
+        .pass-modal__input:focus { border-color: var(--colortext-spine); }
+        .pass-modal__hint { font-size: 11px; opacity: 0.6; font-family:'Inter',sans-serif; color: var(--colortext-spine); }
 
         /* ── MARKDOWN TYPOGRAPHY ────────────────────────────────────────────── */
         .markdown-content { font-family:var(--md-font); font-size:var(--md-size); line-height:var(--md-line); color:var(--colortext-markdown); text-align: justify; }
@@ -551,33 +551,61 @@ export default function VaultStyles() {
 
         .acc-ope {
           display: flex;
-          flex-direction: column;
           align-items: center;
-          gap: 2rem;
+          justify-content: center;
           font-family: var(--font-display);
           font-size: 2.8rem;
           color: var(--colortext-spine);
           mix-blend-mode: destination-out;
           user-select: none;
-          position: absolute;
-          bottom: 40px;
           cursor: pointer;
+          margin-top: auto;
+          margin-bottom: 30px;
+          position: relative;
         }
-        .ope-txt, .watson-txt {
+        .ope-txt {
           writing-mode: vertical-rl;
           white-space: nowrap;
           letter-spacing: 2px;
+          transition: opacity 0.3s ease;
+          opacity: 0;
+          position: absolute;
+          pointer-events: none;
+        }
+        .ope-txt-archive {
+          writing-mode: vertical-rl;
+          white-space: nowrap;
+          letter-spacing: 2px;
+          transition: opacity 0.3s ease;
+          opacity: 1;
+        }
+        .acc-ope:hover .ope-txt {
+          opacity: 1;
+          pointer-events: auto;
+        }
+        .acc-ope:hover .ope-txt-archive {
+          opacity: 0;
+          pointer-events: none;
         }
 
         .acc-panel {
           display: flex;
           flex-direction: row;
           height: 100%;
-          transition: flex-basis 1s cubic-bezier(0.25, 0.8, 0.25, 1), min-width 1s cubic-bezier(0.25, 0.8, 0.25, 1), flex-grow 1s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 1s, opacity 0.5s;
+          transition: flex-basis 1s cubic-bezier(0.25, 0.8, 0.25, 1), min-width 1s cubic-bezier(0.25, 0.8, 0.25, 1), flex-grow 1s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 1s, opacity 0.5s, border-color 0.3s;
           border-right: 2px solid var(--colorborder);
           overflow: hidden;
           flex-shrink: 0;
         }
+
+        /* Ẩn title các thanh tab khi hover vào content */
+        .accordion-app:has(.acc-content:hover) .acc-panel:not(.sticky-spine) {
+          border-right-color: var(--colortab) !important;
+        }
+        .accordion-app:has(.acc-content:hover) .acc-spine {
+          opacity: 0 !important;
+        }
+
 
         .acc-panel.closed {
           flex-basis: 150px;
@@ -688,6 +716,7 @@ export default function VaultStyles() {
           white-space: nowrap;
           letter-spacing: 2px;
           user-select: none;
+          transition: opacity 0.3s ease;
         }
         
         .acc-ope-container {
@@ -722,7 +751,6 @@ export default function VaultStyles() {
           display: flex;
           flex-direction: column;
           background-color: var(--colortab);
-        }
         }
 
         /* Hide all scrollbars inside panel bodies */
@@ -806,9 +834,30 @@ export default function VaultStyles() {
             cursor: pointer;
           }
 
-          .ope-txt, .watson-txt {
+          .ope-txt {
             writing-mode: horizontal-tb !important;
             white-space: nowrap !important;
+            transition: opacity 0.3s ease;
+            opacity: 0;
+            position: absolute;
+            pointer-events: none;
+          }
+
+          .ope-txt-archive {
+            writing-mode: horizontal-tb !important;
+            white-space: nowrap !important;
+            transition: opacity 0.3s ease;
+            opacity: 1;
+          }
+
+          .acc-ope:hover .ope-txt {
+            opacity: 1;
+            pointer-events: auto;
+          }
+
+          .acc-ope:hover .ope-txt-archive {
+            opacity: 0;
+            pointer-events: none;
           }
 
           .mobile-back-btn {

@@ -320,7 +320,8 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
       {isLiveCall && (
         <div 
           ref={liveUIRef}
-          className="w-full shrink-0 md:w-1/2 h-full flex flex-col items-center justify-between p-5 md:p-10 border-l border-white/10 bg-black/40 backdrop-blur-sm relative snap-center order-2"
+          className="w-full shrink-0 md:w-1/2 h-full flex flex-col items-center justify-between p-5 md:p-10 border-l bg-transparent relative snap-center order-2"
+          style={{ borderColor: 'var(--colorborder)' }}
         >
             <div className="flex-1 w-full flex flex-col justify-end pb-8 overflow-y-auto custom-scrollbar" onClick={(e) => e.stopPropagation()}>
                 <textarea
@@ -334,6 +335,7 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
                   }}
                   placeholder="Listening, or type your prompt..."
                   className="bg-transparent text-center text-white/90 text-2xl font-bold border-none focus:ring-0 outline-none w-full w-full resize-none placeholder-white/20 custom-scrollbar"
+                  style={{ fontFamily: 'md-font' }}
                   rows={4}
                 />
             </div>
@@ -351,7 +353,7 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
                     ${isHoldingUI ? 'scale-110 shadow-[0_0_70px_#60a5fa]' : ''}
                   `} 
                   style={{ 
-                    backgroundColor: 'var(--colorone, #ccc)',
+                    backgroundColor: isHoldingUI ? '#60a5fa' : 'var(--colorone, #ccc)',
                     transform: (isListening && !isProcessing && !isHoldingUI) ? `scale(${1 + micVolume * 0.4})` : undefined,
                     WebkitUserSelect: 'none',
                     WebkitTouchCallout: 'none',
@@ -367,7 +369,7 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
             </div>
 
             <div className="flex-1 w-full pt-8 flex flex-col items-center justify-start overflow-y-auto custom-scrollbar" onClick={(e) => e.stopPropagation()}>
-              <div className="text-white/50 text-sm max-w-[260px] font-sans leading-relaxed text-center min-h-[6rem] flex items-center justify-center">
+              <div className="text-white/50 text-sm max-w-[260px] font-sans leading-relaxed text-center min-h-[6rem] flex items-center justify-center" style={{ fontFamily: 'md-font' }}>
                 <div 
                   className="flex flex-col items-center justify-center"
                   style={{ 
@@ -389,7 +391,7 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
         className={`w-full shrink-0 ${isLiveCall ? 'md:w-1/2' : 'w-full'} h-full flex flex-col bg-transparent relative snap-center order-1`}
       >
           <div ref={historyRef} className="flex-1 overflow-y-auto p-5 custom-scrollbar chat-history">
-            <div className="max-w-3xl mx-auto w-full space-y-5">
+            <div className="max-w-[1000px] mx-auto w-full space-y-5">
             {convo.map((msg, i) => {
               const isMsgStreaming = (i === convo.length - 1 && isStreaming);
               const isMsgThinking = (i === convo.length - 1 && isThinking);
@@ -436,7 +438,7 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
 
           {/* Status (Chỉ hiện khi tắt LiveCall) */}
           {!isLiveCall && (
-              <div className="max-w-3xl w-full mx-auto px-5 py-2 flex justify-start items-center opacity-30">
+              <div className="max-w-[1000px] w-full mx-auto px-5 py-2 flex justify-start items-center opacity-30">
                 <button onClick={startListening} className={`${isListening && !isLiveCall ? 'text-red-500 animate-pulse' : 'text-white/40'}`} title="Hold to Dictate">
                   <MicrophoneIcon className="w-4 h-4" />
                 </button>
