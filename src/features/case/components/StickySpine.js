@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Network, LogOut } from 'lucide-react';
+import { Plus, Network, ArrowLeft } from 'lucide-react';
 
 /**
  * Sticky navigation spine component for the case vault interface, rendering vertical
@@ -40,17 +40,19 @@ export default function StickySpine({
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
             </svg>
           </div>
-          <button 
-            className="tab-close-btn" 
-            onClick={(e) => { e.stopPropagation(); handleCloseTab(); }} 
-            title="Close Tab"
-          >
-            <LogOut size={20} />
-          </button>
+          
           <div className="acc-ope" onClick={() => window.location.href = '/about'}>
             <div className="ope-txt-archive">Case Archives</div>
             <div className="ope-txt">Ope Watson</div>
           </div>
+
+          <button 
+            className="mobile-exit-btn" 
+            onClick={(e) => { e.stopPropagation(); window.location.href = '/about'; }} 
+            title="Exit Case"
+          >
+            <ArrowLeft size={24} strokeWidth={2.5} />
+          </button>
         </div>
       </div>
     </div>

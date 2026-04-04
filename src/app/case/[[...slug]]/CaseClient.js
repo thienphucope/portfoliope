@@ -430,6 +430,7 @@ export default function CaseClient({ staticRecords = [] }) {
           key={tab.id}
           tab={tab}
           activeTab={activeTab}
+          setActiveTab={setActiveTab}
           activeOverlay={activeOverlay}
           setActiveOverlay={setActiveOverlay}
           handleTabClick={handleTabClick}

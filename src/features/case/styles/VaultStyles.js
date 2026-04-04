@@ -775,7 +775,24 @@ export default function VaultStyles() {
           display: none;
         }
 
+        .mobile-exit-btn {
+          display: none;
+        }
+
+        .tab-close-btn {
+          display: none;
+        }
+
         @media (max-width: 1024px) and (orientation: portrait), (max-width: 768px) {
+          /* Không ẩn title các thanh tab khi bật content trên mobile */
+          .accordion-app:has(.acc-content:hover) .acc-panel:not(.sticky-spine) {
+            border-right: none !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+          }
+          .accordion-app:has(.acc-content:hover) .acc-spine {
+            opacity: 1 !important;
+          }
+
           .accordion-app {
             flex-direction: column !important;
             overflow-y: auto !important;
@@ -801,7 +818,7 @@ export default function VaultStyles() {
           }
 
           .header-hidden {
-            transform: none;
+            transform: translateY(-100%);
           }
 
           .acc-ope-container {
@@ -864,8 +881,39 @@ export default function VaultStyles() {
             display: none !important;
           }
 
+          .mobile-exit-btn {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: transparent;
+            border: none;
+            color: var(--colortext-spine);
+            padding: 0;
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity 0.2s, transform 0.2s;
+            mix-blend-mode: destination-out;
+          }
+          
+          .mobile-exit-btn:active {
+            transform: translateY(-50%) scale(0.9);
+            opacity: 1;
+          }
+
           .tab-close-btn {
-            display: none;
+            display: none !important;
+          }
+
+          .accordion-app.has-active .tab-close-btn {
+            display: flex !important;
+            width: 40px !important;
+            height: 40px !important;
             align-items: center;
             justify-content: center;
             position: absolute;
@@ -873,8 +921,6 @@ export default function VaultStyles() {
             top: 50%;
             transform: translateY(-50%);
             z-index: 1001;
-            width: 40px;
-            height: 40px;
             padding: 0;
             background: transparent;
             border: 1.5px solid transparent;
@@ -884,11 +930,6 @@ export default function VaultStyles() {
             font-size: 22px;
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             mix-blend-mode: screen;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-          }
-
-          .accordion-app.has-active .tab-close-btn {
-            display: flex !important;
           }
 
           .tab-close-btn:hover {
@@ -969,6 +1010,7 @@ export default function VaultStyles() {
             writing-mode: horizontal-tb !important;
             font-size: 1.1rem !important;
             letter-spacing: 1px !important;
+            opacity: 1 !important;
           }
 
           .acc-content {

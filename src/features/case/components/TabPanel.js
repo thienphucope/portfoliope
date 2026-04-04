@@ -17,6 +17,7 @@ const GraphView = dynamic(() => import('./GraphView'), { ssr: false });
 export default function TabPanel({
   tab,
   activeTab,
+  setActiveTab,
   activeOverlay,
   setActiveOverlay,
   handleTabClick,
@@ -60,13 +61,17 @@ export default function TabPanel({
         <div className="acc-spine">{tab.title}</div>
         {isOpen && (
           <div
-            className="mobile-back-btn"
+            className="tab-close-btn"
             onClick={(e) => {
               e.stopPropagation();
-              isOverlay ? setActiveOverlay(null) : window.history.back();
+              isOverlay ? setActiveOverlay(null) : setActiveTab(null);
             }}
           >
-            <ArrowLeft size={24} />
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m16 17 5-5-5-5"></path>
+              <path d="M21 12H9"></path>
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            </svg>
           </div>
         )}
       </div>
