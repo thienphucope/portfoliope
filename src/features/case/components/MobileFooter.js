@@ -25,7 +25,7 @@ export default function MobileFooter({
           className={`assistive-ball ${isFooterExpanded ? 'active' : ''} ${showReadMore ? 'at-bottom' : ''}`}
         >
           {isFooterExpanded ? (
-            <div onClick={() => setIsFooterExpanded(false)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px' }}>
+            <div onClick={() => setIsFooterExpanded(false)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', color: 'var(--colorbutton)' }}>
               <X size={28} />
             </div>
           ) : (
@@ -33,7 +33,7 @@ export default function MobileFooter({
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <div 
                   onClick={() => setIsFooterExpanded(true)}
-                  style={{ width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  style={{ width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--colorbutton)' }}
                 >
                   <MoreVertical size={24} />
                 </div>
@@ -42,12 +42,14 @@ export default function MobileFooter({
                   onClick={(e) => handleTabClick(nextTabForActive, e)}
                   style={{ padding: '0 16px 0 10px', height: '48px', display: 'flex', alignItems: 'center', gap: '8px' }}
                 >
-                  <span className="footer-item-label" style={{ fontSize: '0.95rem' }}>{nextTabForActive.title}</span>
-                  <ChevronRight size={22} />
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.95rem', color: 'var(--colorbutton)', marginTop: '2px' }}>{nextTabForActive.title}</span>
+                  <div style={{ color: 'var(--colorbutton)' }}>
+                    <ChevronRight size={22} />
+                  </div>
                 </div>
               </div>
             ) : (
-              <div onClick={() => setIsFooterExpanded(true)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px' }}>
+              <div onClick={() => setIsFooterExpanded(true)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', color: 'var(--colorbutton)' }}>
                 <MoreVertical size={28} />
               </div>
             )

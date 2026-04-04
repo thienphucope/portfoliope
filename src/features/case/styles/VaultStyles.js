@@ -801,7 +801,7 @@ export default function VaultStyles() {
           }
 
           .header-hidden {
-            transform: translateY(-100%);
+            transform: none;
           }
 
           .acc-ope-container {
@@ -861,7 +861,11 @@ export default function VaultStyles() {
           }
 
           .mobile-back-btn {
-            display: flex !important;
+            display: none !important;
+          }
+
+          .tab-close-btn {
+            display: none;
             align-items: center;
             justify-content: center;
             position: absolute;
@@ -869,9 +873,32 @@ export default function VaultStyles() {
             top: 50%;
             transform: translateY(-50%);
             z-index: 1001;
-            color: black;
-            mix-blend-mode: destination-out;
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            background: transparent;
+            border: 1.5px solid transparent;
+            border-radius: 8px;
+            color: var(--colorbutton);
             cursor: pointer;
+            font-size: 22px;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            mix-blend-mode: screen;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+          }
+
+          .accordion-app.has-active .tab-close-btn {
+            display: flex !important;
+          }
+
+          .tab-close-btn:hover {
+            border-color: var(--colorbutton);
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 8px 20px rgba(255, 250, 205, 0.4);
+          }
+
+          .tab-close-btn:active {
+            transform: translateY(-50%) scale(0.95);
           }
 
           .add-note-btn, .filetree-btn, .chatvault-btn {

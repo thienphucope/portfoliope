@@ -422,6 +422,7 @@ export default function CaseClient({ staticRecords = [] }) {
         activeOverlay={activeOverlay}
         handleCreateNewNote={handleCreateNewNote}
         setActiveOverlay={setActiveOverlay}
+        setActiveTab={setActiveTab}
       />
 
       {tabs.map(tab => (
