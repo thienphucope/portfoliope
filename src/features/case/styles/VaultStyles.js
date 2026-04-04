@@ -12,7 +12,7 @@ export default function VaultStyles() {
         :root {
           --bg: #121212; --txt: #e0e0e0; --accent: #FFFACD;
           --border: rgba(255,255,255,0.1); --code-bg: #1e1e1e;
-          --md-font: 'Lora', serif; --md-size: 19px; --md-line: 1.6;
+          --md-size: 19px; --md-line: 1.6;
         }
 
         body { margin:0; background:var(--bg); color:var(--colortext-markdown); font-family:'Inter',sans-serif; overflow:hidden; }
@@ -77,7 +77,7 @@ export default function VaultStyles() {
 
         .file-list { flex:1; overflow-y:auto; padding:10px; }
 
-        .main-content { flex:1; overflow-y:auto; display:flex; justify-content:center; padding:10px 15px; background:var(--bg); }
+        .main-content { flex:1; overflow-y:auto; display:flex; justify-content:center; padding:10px 15px; background:var(--colortab); }
         .main-content::-webkit-scrollbar-thumb {
           background-color: rgba(255, 255, 255, 0.2);
         }
@@ -85,7 +85,7 @@ export default function VaultStyles() {
           background-color: rgba(255, 255, 255, 0.4);
         }
         
-        .markdown-container { max-width:1000px; width:100%; box-sizing:border-box; padding-bottom: 100px; }
+        .markdown-container { max-width:1000px; width:100%; box-sizing:border-box; padding-bottom: 100px; background-color: var(--colortab); }
 
         .chat-panel { height:100dvh; background:var(--bg); flex-shrink:0; border-left:1px solid var(--border); overflow:hidden; }
         .chat-container { height:100%; width:100%; position:relative; }
@@ -554,7 +554,7 @@ export default function VaultStyles() {
           flex-direction: column;
           align-items: center;
           gap: 2rem;
-          font-family: 'Fredericka the Great', cursive;
+          font-family: var(--font-display);
           font-size: 2.8rem;
           color: var(--colortext-spine);
           mix-blend-mode: destination-out;
@@ -681,7 +681,7 @@ export default function VaultStyles() {
 
         .acc-spine {
           writing-mode: vertical-rl;
-          font-family: 'Fredericka the Great', cursive;
+          font-family: var(--font-display);
           font-size: 3rem;
           color: var(--colortext-spine);
           mix-blend-mode: destination-out;
@@ -721,6 +721,8 @@ export default function VaultStyles() {
           position: relative;
           display: flex;
           flex-direction: column;
+          background-color: var(--colortab);
+        }
         }
 
         /* Hide all scrollbars inside panel bodies */
@@ -1060,7 +1062,7 @@ export default function VaultStyles() {
             }
 
             .footer-item-label {
-              font-family: 'Fredericka the Great', cursive;
+              font-family: var(--font-display);
               font-size: 1.1rem;
               color: var(--colortab);
               margin-top: 2px;

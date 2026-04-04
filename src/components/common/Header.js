@@ -36,10 +36,10 @@ export default function Header({
       <header className="absolute top-0 left-0 right-0 px-6 md:px-10 py-6 md:py-10 flex justify-between items-center z-[60] transition-opacity duration-1000 opacity-100">
         <div className="relative cursor-pointer" onClick={togglePlayPause} onMouseEnter={handleDiskMouseEnter} onMouseLeave={handleDiskMouseLeave}>
           <div className={`disk ${!isPlaying ? 'paused' : ''}`}></div>
-          {videoTitle && <span key={animationKey} className={`title-fly-out ${animationClass} font-fredericka`}>{videoTitle}</span>}
+          {videoTitle && <span key={animationKey} className={`title-fly-out ${animationClass} font-fredericka`} style={{ fontFamily: 'var(--font-display)' }}>{videoTitle}</span>}
         </div>
         
-        <nav className="flex items-center gap-6 md:gap-10 font-fredericka text-[var(--colorone)]">
+        <nav className="flex items-center gap-6 md:gap-10 text-[var(--colorone)]" style={{ fontFamily: 'var(--font-display)' }}>
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             

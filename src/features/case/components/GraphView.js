@@ -146,8 +146,8 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
             ctx.beginPath();
             ctx.arc(node.x, node.y, size, 0, 2 * Math.PI, false);
 
-            const fillStyle = isActive ? '#add8e6' : (node.type === 'tag' ? '#fece9e' : (isMatch ? '#808080' : 'rgba(128, 128, 128, 0.2)'));
-            ctx.fillStyle = isHighlighted ? fillStyle : 'rgba(128, 128, 128, 0.1)';
+            const fillStyle = isActive ? '#add8e6' : (node.type === 'tag' ? '#fece9e' : (isMatch ? '#ffffff' : '#ffffff'));
+            ctx.fillStyle = isHighlighted ? fillStyle : '#ffffff';
             ctx.fill();
 
             if (isHighlighted) {

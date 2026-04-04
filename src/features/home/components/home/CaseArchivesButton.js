@@ -10,8 +10,7 @@ export default function CaseArchivesButton() {
   const TEXTS = ["Case Archives", "Click To Enter!"];
   const TYPE_SPEED = 150; 
   const PAUSE_DURATION = 1000; 
-  const FONT_SIZE = 48; 
-  const FONT_STYLE = `bold ${FONT_SIZE}px 'Special Elite', 'Courier New', Courier, monospace`;
+  const FONT_SIZE = 48;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -24,7 +23,11 @@ export default function CaseArchivesButton() {
 
     const getColor = () =>
       (typeof window !== 'undefined' && getComputedStyle(document.documentElement).getPropertyValue("--colorone").trim()) || "#e879a0";
+    
+    const getDisplayFont = () =>
+      (typeof window !== 'undefined' && getComputedStyle(document.documentElement).getPropertyValue("--font-display").trim()) || "'Fredericka the Great', cursive";
 
+    const FONT_STYLE = `${FONT_SIZE}px ${getDisplayFont()}`;
     ctx.font = FONT_STYLE;
     const maxWidth = Math.max(...TEXTS.map(t => ctx.measureText(t).width));
     canvas.width = Math.ceil(maxWidth) + 10;
@@ -59,7 +62,7 @@ export default function CaseArchivesButton() {
 
     const render = (text) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.font = FONT_STYLE;
+      ctx.font = `${FONT_SIZE}px ${getDisplayFont()}`;
       ctx.textBaseline = "middle";
       ctx.textAlign = "left"; 
       ctx.fillStyle = getColor();

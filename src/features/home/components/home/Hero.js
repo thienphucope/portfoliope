@@ -98,8 +98,7 @@ export default function Hero() {
       </div>
 
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fredericka+the+Great&display=swap');
-        .font-fredericka { font-family: 'Fredericka the Great', cursive; }
+        .font-fredericka { font-family: var(--font-display); }
         
         .detective-card {
           background: transparent;

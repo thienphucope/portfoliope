@@ -3,6 +3,7 @@
 /* -------------------------------------------------------------------------- */
 @import url('https://fonts.googleapis.com/css2?family=Fredericka+the+Great&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Old+Standard+TT:ital@0;1&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Special+Elite&display=swap');
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
@@ -14,21 +15,27 @@
   --background: #000000; 
   --foreground: #f0f0f0; 
   /* Detective Gold - The primary accent color for the theme */
-  --colorone: #ce996f;   /* trầm thêm, vẫn ấm và tự nhiên */
+  --colorone: #ba9170;   /* trầm thêm, vẫn ấm và tự nhiên */
   /* Tab panel spine color */
   --colortab: #0e1415;   /* tab mặc định */
   /* Spine/Navigation bar color */
   --colorspine: #10161a; /* sâu hơn nhưng chưa chạm tối */
   /* Text color on spine/tabs */
-  --colortext-spine: #bb865a;
+  --colortext-spine: #ba9170;
   /* Button color (icons) */
-  --colorbutton: #bb865a;
+  --colorbutton: #ba9170;
   /* Border color between panels */
-  --colorborder: #bb865a;
+  --colorborder: #ba9170;
   /* Link color */
-  --colorlink: #bb865a;
+  --colorlink: #ba9170;
   /* Markdown text color */
   --colortext-markdown: #e0e0e0;
+  /* Markdown typography */
+  --md-font: 'Lora', serif; /* Default: 'Old Standard TT', serif; */
+  --md-size: 19px;
+  --md-line: 1.6;
+  /* Display font (headings, titles) */
+  --font-display: 'Fredericka the Great', cursive; /* Default: 'Lora', serif; */
 }
 
 /* -------------------------------------------------------------------------- */
@@ -73,7 +80,7 @@ body::-webkit-scrollbar,
   src: url('https://fonts.googleapis.com/css2?family=Caveat&display=swap');
 }
 
-.font-fredericka { font-family: 'Fredericka the Great', cursive; }
+.font-fredericka { font-family: var(--font-display); }
 .font-lora { font-family: 'Lora', serif; }
 .font-handwritten { font-family: 'Caveat', cursive; }
 

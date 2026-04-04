@@ -15,7 +15,7 @@ export default function HomeClient() {
 
   return (
     <AudioVisualProvider>
-      <div className="min-h-screen relative flex flex-col font-lora">
+      <div className="min-h-screen relative flex flex-col" style={{ fontFamily: 'var(--md-font)' }}>
         {fingerprints}
         {spotlightOverlay}
 
