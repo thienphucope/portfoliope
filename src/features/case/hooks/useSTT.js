@@ -128,44 +128,48 @@ export function useSTT({ onResult, onSilence }) {
     
     try {
       if (!echoFilterRef.current && navigator.mediaDevices) {
-        // Try allocating a stream to force WebRTC hardware echo cancellation
-        echoFilterRef.current = await navigator.mediaDevices.getUserMedia({
-          audio: { 
-            echoCancellation: true, 
-            noiseSuppression: true, 
-            autoGainControl: false // Tắt tự động khuếch đại âm thanh (AGC) để tránh hút tiếng vọng từ tai nghe 
-          }
-        });
+        try {
+          // Try allocating a stream to force WebRTC hardware echo cancellation
+          echoFilterRef.current = await navigator.mediaDevices.getUserMedia({
+            audio: { 
+              echoCancellation: true, 
+              noiseSuppression: true, 
+              autoGainControl: false // Tắt tự động khuếch đại âm thanh (AGC) để tránh hút tiếng vọng từ tai nghe 
+            }
+          });
 
-        // Tính toán âm thanh trực quan thật mượt (Volume Meter)
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        audioContextRef.current = audioCtx;
-        const analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 256;
-        analyserRef.current = analyser;
-        dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
-        
-        const src = audioCtx.createMediaStreamSource(echoFilterRef.current);
-        src.connect(analyser);
-
-        const trackVolume = () => {
-          if (!analyserRef.current) return;
-          analyserRef.current.getByteFrequencyData(dataArrayRef.current);
-          let sum = 0;
-          for (let i = 0; i < dataArrayRef.current.length; i++) {
-            sum += dataArrayRef.current[i];
-          }
-          const average = sum / dataArrayRef.current.length;
+          // Tính toán âm thanh trực quan thật mượt (Volume Meter)
+          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          audioContextRef.current = audioCtx;
+          const analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 256;
+          analyserRef.current = analyser;
+          dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
           
-          // Noise Gate (Ngưỡng lọc ồn tiếng vọng): Chỉ khi âm thanh đủ lớn mới nhảy mic
-          const NOISE_GATE = 15; // Ngưỡng cắt lọc dải âm thanh nhỏ (có thể tăng lên 20-25 nếu vẫn nhạy)
-          const effectiveVolume = average > NOISE_GATE ? average - NOISE_GATE : 0;
+          const src = audioCtx.createMediaStreamSource(echoFilterRef.current);
+          src.connect(analyser);
 
-          // Tính toán lại tỷ lệ animation sau khi đã cắt tạp âm
-          setMicVolume(Math.min(1, effectiveVolume / 50)); 
-          rafRef.current = requestAnimationFrame(trackVolume);
-        };
-        trackVolume();
+          const trackVolume = () => {
+            if (!analyserRef.current) return;
+            analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+            let sum = 0;
+            for (let i = 0; i < dataArrayRef.current.length; i++) {
+              sum += dataArrayRef.current[i];
+            }
+            const average = sum / dataArrayRef.current.length;
+            
+            // Noise Gate (Ngưỡng lọc ồn tiếng vọng): Chỉ khi âm thanh đủ lớn mới nhảy mic
+            const NOISE_GATE = 15; // Ngưỡng cắt lọc dải âm thanh nhỏ (có thể tăng lên 20-25 nếu vẫn nhạy)
+            const effectiveVolume = average > NOISE_GATE ? average - NOISE_GATE : 0;
+
+            // Tính toán lại tỷ lệ animation sau khi đã cắt tạp âm
+            setMicVolume(Math.min(1, effectiveVolume / 50)); 
+            rafRef.current = requestAnimationFrame(trackVolume);
+          };
+          trackVolume();
+        } catch (mediaErr) {
+          console.warn('Điện thoại không hỗ trợ tắt autoGain, bỏ qua tính năng volume đồ hoạ:', mediaErr);
+        }
       }
       recognitionRef.current?.start();
     } catch (e) {

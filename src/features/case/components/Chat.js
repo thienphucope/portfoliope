@@ -340,18 +340,22 @@ export default function Chat({ isEmbedded = false, onLinkClick }) {
             
             <div className="shrink-0 py-4 flex items-center justify-center">
                 <div 
+                  onContextMenu={(e) => e.preventDefault()}
                   onPointerDown={handlePointerDown}
                   onPointerUp={handlePointerUp}
                   onPointerLeave={(e) => isHoldingRef.current && handlePointerUp(e)}
                   title={isProcessing ? "Tap to interrupt" : "Tap to clear / Hold to dictate"}
-                  className={`w-32 h-32 md:w-40 md:h-40 rounded-full transition-all duration-100 flex items-center justify-center relative shadow-[0_0_15px_rgba(255,255,255,0.1)] z-10
+                  className={`select-none w-32 h-32 md:w-40 md:h-40 rounded-full transition-all duration-100 flex items-center justify-center relative shadow-[0_0_15px_rgba(255,255,255,0.1)] z-10
                     ${isListening && !isProcessing ? 'shadow-[0_0_60px_var(--colorone)]' : ''} 
                     ${isProcessing ? 'animate-pulse scale-95 cursor-pointer' : 'cursor-pointer'}
                     ${isHoldingUI ? 'scale-110 shadow-[0_0_70px_#60a5fa]' : ''}
                   `} 
                   style={{ 
                     backgroundColor: 'var(--colorone, #ccc)',
-                    transform: (isListening && !isProcessing && !isHoldingUI) ? `scale(${1 + micVolume * 0.4})` : undefined
+                    transform: (isListening && !isProcessing && !isHoldingUI) ? `scale(${1 + micVolume * 0.4})` : undefined,
+                    WebkitUserSelect: 'none',
+                    WebkitTouchCallout: 'none',
+                    touchAction: 'none'
                   }}
                 >
                   {isProcessing ? (
