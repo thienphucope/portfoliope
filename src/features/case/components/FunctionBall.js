@@ -37,11 +37,11 @@ export default function FunctionBall({
 
   return (
     <div className={`mobile-footer ${isFooterExpanded ? 'expanded' : ''} ${isHidden ? 'hidden-ball' : ''}`}>
-      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="ball-container">
         
-        {/* Nút bên trái FunctionBall */}
+        {/* Nút bên trái/trên FunctionBall */}
         {isFooterExpanded && (
-          <div style={{ position: 'absolute', right: '100%', marginRight: '16px', display: 'flex', gap: '16px' }}>
+          <div className="left-nav-buttons">
             {/* Nút Close */}
             {activeTabObj && (
               <div 
@@ -89,9 +89,9 @@ export default function FunctionBall({
           )}
         </div>
 
-        {/* Nút bên phải FunctionBall (Next) */}
+        {/* Nút bên phải/dưới FunctionBall (Next) */}
         {isFooterExpanded && nextTabForActive && (
-          <div style={{ position: 'absolute', left: '100%', marginLeft: '16px' }}>
+          <div className="right-nav-buttons">
             <div 
               className="side-nav-btn"
               onClick={(e) => handleTabClick(nextTabForActive, e)}
@@ -104,6 +104,13 @@ export default function FunctionBall({
       </div>
       
       <div className={`footer-expanded-content ${isFooterExpanded ? 'active' : ''}`}>
+        <div className="footer-item-wrapper" onClick={() => { setIsFooterExpanded(false); setActiveOverlay(activeOverlay === 'chat' ? null : 'chat'); }}>
+          <div className={`footer-item ${activeOverlay === 'chat' ? 'active-action' : ''}`}>
+            <span className="footer-item-label">AI Chat</span>
+            <MessageSquare size={20} />
+          </div>
+        </div>
+
         <div className="footer-item-wrapper" onClick={() => { setIsFooterExpanded(false); setActiveOverlay(activeOverlay === 'filetree' ? null : 'filetree'); }}>
           <div className={`footer-item ${activeOverlay === 'filetree' ? 'active-action' : ''}`}>
             <span className="footer-item-label">File Tree</span>
@@ -111,17 +118,23 @@ export default function FunctionBall({
           </div>
         </div>
 
+        {/* Comment Button - Hiện khi canComment */}
+        {canComment && (
+          <div 
+            className="footer-item-wrapper" 
+            onClick={() => { setIsFooterExpanded(false); handleAppendComment(); }}
+          >
+            <div className="footer-item">
+              <span className="footer-item-label">Comment</span>
+              <MessageSquare size={20} />
+            </div>
+          </div>
+        )}
+
         <div className="footer-item-wrapper" onClick={() => { setIsFooterExpanded(false); handleCreateNewNote(); }}>
           <div className="footer-item">
             <span className="footer-item-label">New Note</span>
             <Plus size={22} />
-          </div>
-        </div>
-
-        <div className="footer-item-wrapper" onClick={() => { setIsFooterExpanded(false); setActiveOverlay(activeOverlay === 'chat' ? null : 'chat'); }}>
-          <div className={`footer-item ${activeOverlay === 'chat' ? 'active-action' : ''}`}>
-            <span className="footer-item-label">AI Chat</span>
-            <MessageSquare size={20} />
           </div>
         </div>
 
@@ -158,19 +171,6 @@ export default function FunctionBall({
             </div>
           </div>
         )}
-
-        {/* Comment Button - Hiện khi canComment */}
-        {canComment && (
-          <div 
-            className="footer-item-wrapper" 
-            onClick={() => { setIsFooterExpanded(false); handleAppendComment(); }}
-          >
-            <div className="footer-item">
-              <span className="footer-item-label">Comment</span>
-              <Pencil size={20} />
-            </div>
-          </div>
-        )}
       </div>
 
       <style jsx>{`
@@ -179,6 +179,61 @@ export default function FunctionBall({
         }
         .mobile-footer.hidden-ball {
           transform: translate(-50%, 150%) !important;
+        }
+        .ball-container {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .left-nav-buttons, .right-nav-buttons {
+          position: absolute;
+          display: flex;
+          gap: 16px;
+        }
+        .left-nav-buttons {
+          right: 100%;
+          margin-right: 16px;
+        }
+        .right-nav-buttons {
+          left: 100%;
+          margin-left: 16px;
+        }
+        @media (min-width: 1025px), (min-width: 769px) and (orientation: landscape) {
+          .left-nav-buttons {
+            right: unset;
+            bottom: 100%;
+            margin-right: 0;
+            margin-bottom: 16px;
+            flex-direction: column;
+          }
+          .right-nav-buttons {
+            left: unset;
+            top: 100%;
+            margin-left: 0;
+            margin-top: 16px;
+            flex-direction: column;
+          }
+          .mobile-footer {
+            top: 50% !important;
+            bottom: unset !important;
+            right: 32px !important;
+            left: unset !important;
+            transform: translateY(-50%) !important;
+            flex-direction: row-reverse !important;
+          }
+          .mobile-footer.hidden-ball {
+            transform: translate(150%, -50%) !important;
+          }
+          .footer-expanded-content {
+            flex-direction: column-reverse !important;
+            gap: 16px;
+            margin-right: 16px;
+          }
+          .footer-item {
+            flex-direction: row-reverse !important;
+            justify-content: flex-start;
+          }
         }
         .side-nav-btn {
           width: 40px;
