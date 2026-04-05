@@ -510,8 +510,8 @@ export default function VaultStyles() {
           position: sticky;
           left: 0;
           z-index: 50;
-          flex-basis: 150px;
-          min-width: 150px;
+          flex-basis: 112.5px;
+          min-width: 112.5px;
           flex-grow: 0;
           flex-shrink: 0;
           background-color: var(--colorone);
@@ -650,9 +650,9 @@ export default function VaultStyles() {
         .acc-panel.tab-filetree.open,
         .acc-panel.tab-chat.open {
           position: fixed;
-          left: 150px;
+          left: 112.5px;
           top: 0;
-          width: calc(100vw - 150px);
+          width: calc(100vw - 112.5px);
           height: 100vh;
           z-index: 45;
           flex-basis: auto !important;
@@ -712,7 +712,7 @@ export default function VaultStyles() {
 
         .acc-spine {
           writing-mode: vertical-rl;
-          font-family: var(--font-display);
+          font-family: var(--font-title-block, var(--font-display));
           font-size: 3rem;
           color: var(--colortext-spine);
           mix-blend-mode: destination-out;
@@ -1164,7 +1164,7 @@ export default function VaultStyles() {
           }
 
           .footer-item-label {
-            font-family: var(--font-display);
+            font-family: var(--font-title-block, var(--font-display));
             font-size: 1.1rem;
             color: var(--colortab);
             margin-top: 2px;
