@@ -75,11 +75,11 @@ export default function FunctionBall({
           className={`assistive-ball ${isFooterExpanded ? 'active' : ''} ${showReadMore ? 'at-bottom' : ''}`}
         >
           {isFooterExpanded ? (
-            <div onClick={() => setIsFooterExpanded(false)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', color: 'var(--colorbutton)' }}>
+            <div onClick={() => setIsFooterExpanded(false)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', color: 'var(--colortab)' }}>
               <X size={28} />
             </div>
           ) : (
-            <div onClick={() => setIsFooterExpanded(true)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', color: 'var(--colorbutton)' }}>
+            <div onClick={() => setIsFooterExpanded(true)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', color: 'var(--colortab)' }}>
               <div className="ball-icon">
                   <div className="dot"></div>
                   <div className="dot"></div>

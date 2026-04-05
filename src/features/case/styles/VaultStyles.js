@@ -1098,12 +1098,12 @@ export default function VaultStyles() {
           .assistive-ball {
             width: 48px;
             height: 48px;
-            background: var(--colortab);
+            background: var(--colorbutton);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--colorbutton);
+            color: var(--colortab);
             border: 2px solid var(--colorbutton); /* Thêm viền cùng màu với icon */
             box-shadow: 0 6px 20px rgba(0,0,0,0.6);
             cursor: pointer;
@@ -1113,9 +1113,9 @@ export default function VaultStyles() {
           }
 
           .assistive-ball.at-bottom {
-            width: auto;
+            width: 48px;
             min-width: 48px;
-            border-radius: 24px;
+            border-radius: 50%;
             padding: 0;
           }
 
