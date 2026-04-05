@@ -31,7 +31,7 @@ const GraphView = dynamic(() => import('../../../features/case/components/GraphV
 
 // ─── MAIN VAULT ───────────────────────────────────────────────────────────────
 
-export default function CaseClient({ staticRecords = [] }) {
+export default function CaseClient({ staticRecords = [], serverHydratedData = null }) {
   // ── Core content state ──────────────────────────────────────────────────────
   const [content,      setContent]      = useState('');
   const [fileName,     setFileName]     = useState('');
@@ -55,7 +55,7 @@ export default function CaseClient({ staticRecords = [] }) {
   // ── Refs ────────────────────────────────────────────────────────────────────
   const appShellRef  = useRef(null);
   const sessionIdRef = useRef(Math.random().toString(36).substring(2, 15));
-  const serverGraphRef = useRef({ nodes: [], links: [] });
+  const serverGraphRef = useRef(serverHydratedData?.graph || { nodes: [], links: [] });
 
   // ── Stable content setter ───────────────────────────────────────────────────
   const applyFileContent = useCallback((repoKey, newContent) => {
@@ -291,63 +291,70 @@ export default function CaseClient({ staticRecords = [] }) {
       window.history.replaceState({ isRoot: true }, '', '/case');
     }
 
-    (async () => {
-      try {
-        const bootRes = await fetch('/api/cases', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'bootstrap' }),
-        });
-        const boot = await bootRes.json();
-        if (!bootRes.ok || !boot?.ok || !Array.isArray(boot.tree)) {
-          setContent(`# API Error\n${boot?.error || 'Unknown'}`);
-          return;
-        }
+    const initialize = (data) => {
+      const repoPathMap = buildRegistry(data.tree);
+      setFileTree(data.tree);
+      initializeFromServer(data.contentCache || {}, data.rawCache || {});
 
-        const repoPathMap = buildRegistry(boot.tree);
-        setFileTree(boot.tree);
-        initializeFromServer(boot.contentCache || {}, boot.rawCache || {});
+      const pathParts    = window.location.pathname.split('/').filter(Boolean);
+      const rawDefault   = process.env.NEXT_PUBLIC_DEFAULT_VAULT_FILE || 'chat';
+      const cleanDefault = rawDefault.replace(/\.md$/, '');
 
-        const pathParts    = window.location.pathname.split('/').filter(Boolean);
-        const rawDefault   = process.env.NEXT_PUBLIC_DEFAULT_VAULT_FILE || 'chat';
-        const cleanDefault = rawDefault.replace(/\.md$/, '');
+      let targetSlug = cleanDefault;
+      if (pathParts[0] === 'case' && pathParts.length > 1) {
+        targetSlug = decodeURIComponent(pathParts.slice(1).join('/'));
+      }
 
-        let targetSlug = cleanDefault;
-        if (pathParts[0] === 'case' && pathParts.length > 1) {
-          targetSlug = decodeURIComponent(pathParts.slice(1).join('/'));
-        }
+      const cleanTarget  = targetSlug.replace(/\.md$/, '');
+      const forceTab     = (cleanTarget === 'chat' || cleanTarget === 'filetree') ? cleanTarget : null;
+      const lowerTarget  = cleanTarget.toLowerCase();
+      const actualRepo   = repoPathMap[lowerTarget] || repoPathMap[lowerTarget + '.md'];
+      const githubUrl    = fileRegistry.current[lowerTarget] || fileRegistry.current[lowerTarget + '.md'];
 
-        const cleanTarget  = targetSlug.replace(/\.md$/, '');
-        const forceTab     = (cleanTarget === 'chat' || cleanTarget === 'filetree') ? cleanTarget : null;
-        const lowerTarget  = cleanTarget.toLowerCase();
-        const actualRepo   = repoPathMap[lowerTarget] || repoPathMap[lowerTarget + '.md'];
-        const githubUrl    = fileRegistry.current[lowerTarget] || fileRegistry.current[lowerTarget + '.md'];
-
-        setTimeout(() => {
-          if (forceTab) {
-            setActiveOverlay(forceTab);
+      setTimeout(() => {
+        if (forceTab) {
+          setActiveOverlay(forceTab);
+          const defRepo = repoPathMap[cleanDefault.toLowerCase()] || repoPathMap[cleanDefault.toLowerCase() + '.md'];
+          const defUrl  = fileRegistry.current[cleanDefault.toLowerCase()] || fileRegistry.current[cleanDefault.toLowerCase() + '.md'];
+          if (defRepo && defUrl) loadFile(defUrl, defRepo.split('/').pop(), defRepo, 'replace', false);
+        } else if (actualRepo && githubUrl) {
+          loadFile(githubUrl, actualRepo.split('/').pop(), actualRepo, 'replace', true);
+        } else {
+          const staticMatch = staticRecords.find((r) => r.id.toLowerCase().replace(/\.md$/, '') === lowerTarget);
+          if (staticMatch) {
+            setActiveTab(staticMatch.id);
+            applyFileContent(staticMatch.id, staticMatch.content);
+          } else {
             const defRepo = repoPathMap[cleanDefault.toLowerCase()] || repoPathMap[cleanDefault.toLowerCase() + '.md'];
             const defUrl  = fileRegistry.current[cleanDefault.toLowerCase()] || fileRegistry.current[cleanDefault.toLowerCase() + '.md'];
-            if (defRepo && defUrl) loadFile(defUrl, defRepo.split('/').pop(), defRepo, 'replace', false);
-          } else if (actualRepo && githubUrl) {
-            loadFile(githubUrl, actualRepo.split('/').pop(), actualRepo, 'replace', true);
-          } else {
-            const staticMatch = staticRecords.find((r) => r.id.toLowerCase().replace(/\.md$/, '') === lowerTarget);
-            if (staticMatch) {
-              setActiveTab(staticMatch.id);
-              applyFileContent(staticMatch.id, staticMatch.content);
-            } else {
-              const defRepo = repoPathMap[cleanDefault.toLowerCase()] || repoPathMap[cleanDefault.toLowerCase() + '.md'];
-              const defUrl  = fileRegistry.current[cleanDefault.toLowerCase()] || fileRegistry.current[cleanDefault.toLowerCase() + '.md'];
-              if (defRepo && defUrl) loadFile(defUrl, defRepo.split('/').pop(), defRepo, 'replace', true);
-            }
+            if (defRepo && defUrl) loadFile(defUrl, defRepo.split('/').pop(), defRepo, 'replace', true);
           }
-        }, 500);
-      } catch (e) {
-        console.error('Initialization error:', e);
-        setContent('# Connection Error\nFailed to connect to API.');
-      }
-    })();
+        }
+      }, 300);
+    };
+
+    if (serverHydratedData) {
+      initialize(serverHydratedData);
+    } else {
+      (async () => {
+        try {
+          const bootRes = await fetch('/api/cases', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'bootstrap' }),
+          });
+          const boot = await bootRes.json();
+          if (bootRes.ok && boot?.ok && Array.isArray(boot.tree)) {
+            initialize(boot);
+          } else {
+            setContent(`# API Error\n${boot?.error || 'Unknown'}`);
+          }
+        } catch (e) {
+          console.error('Initialization error:', e);
+          setContent('# Connection Error\nFailed to connect to API.');
+        }
+      })();
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

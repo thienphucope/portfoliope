@@ -1,12 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 import CaseClient from './CaseClient';
+import { hydrateServerCache } from '@/services/caseProvider';
 
-export default async function CasePage() {
+export default async function CasePage({ params }) {
+  // 1. Fetch static records from local content folder
   const contentDir = path.join(process.cwd(), 'content');
-  
-  // Automatically read all .md files from the folder, 
-  // excluding specific page-level content like 'about.md' and 'privacy.md'
   const filenames = fs.readdirSync(contentDir)
     .filter(file => file.endsWith('.md') && file !== 'about.md' && file !== 'privacy.md');
 
@@ -24,9 +23,27 @@ export default async function CasePage() {
     }
   });
 
+  // 2. Fetch GitHub data using the shared service
+  let githubData = null;
+  try {
+    githubData = await hydrateServerCache(false);
+  } catch (e) {
+    console.error("Failed to hydrate server cache in CasePage:", e);
+  }
+
+  // Combine for SEO rendering
+  const seoArticles = [
+    ...initialStaticData,
+    ...(githubData ? Object.entries(githubData.rawCache).map(([path, raw]) => ({
+      id: path,
+      name: path.split('/').pop(),
+      content: raw
+    })) : [])
+  ];
+
   return (
     <main>
-      {/* SEO Content for AdSense */}
+      {/* SEO Content for AdSense - Hidden from users but visible to crawlers */}
       <div 
         style={{ 
           display: 'none', 
@@ -36,16 +53,21 @@ export default async function CasePage() {
         }} 
         aria-hidden="true"
       >
-        {initialStaticData.map(f => (
-          <article key={f.id}>
+        {seoArticles.map(f => (
+          <article key={f.id} id={`seo-${f.id}`}>
             <h2>{f.name}</h2>
-            {f.content}
+            <div dangerouslySetInnerHTML={{ 
+              __html: githubData?.htmlCache?.[f.id] || f.content 
+            }} />
           </article>
         ))}
       </div>
 
-      {/* Pass static data to Client Component */}
-      <CaseClient staticRecords={initialStaticData} />
+      {/* Pass both static data and hydrated GitHub data to Client Component */}
+      <CaseClient 
+        staticRecords={initialStaticData} 
+        serverHydratedData={githubData}
+      />
     </main>
   );
 }

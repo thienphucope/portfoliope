@@ -1,7 +1,6 @@
 // src/app/api/cases/route.js
 import { NextResponse } from 'next/server';
 import { 
-  getGithubCasesTree, 
   getFileFromGithub, 
   saveToGithub, 
   deleteFromGithub,
@@ -9,125 +8,27 @@ import {
 } from '@/services/github';
 import { handleAiRequest } from '@/services/ai';
 import { marked } from 'marked';
+import { 
+  hydrateServerCache, 
+  getCacheSnapshot, 
+  updateFileInCache, 
+  deleteFileFromCache 
+} from '@/services/caseProvider';
 
 const EDIT_PASS = process.env.EDIT_PASS || 'default_hardcoded_pass';
 const fileLocks = new Map();
 const LOCK_TIMEOUT = 30000; // 30 seconds expiration
-const CACHE_TTL_MS = 300_000;
-
-let serverTreeCache = [];
-let serverRegistryCache = {};
-let serverRawCache = {};
-let serverHtmlCache = {};
-let serverShaCache = {};
-let serverGraphCache = { nodes: [], links: [] };
-let cacheHydratedAt = 0;
 
 function decodeContent(base64) {
   return Buffer.from(base64 || '', 'base64').toString('utf8');
-}
-
-function buildRegistryFromTree(tree) {
-  const registry = {};
-  const walk = (nodes, repoPath = '') => {
-    for (const n of nodes || []) {
-      if (n.kind === 'file') {
-        const fullRepoPath = n.repoPath || (repoPath ? `${repoPath}/${n.name}` : n.name);
-        const lowerFull = fullRepoPath.toLowerCase();
-        const lowerName = (n.name || '').toLowerCase();
-        const lowerNoExt = lowerName.replace(/\.md$/i, '');
-        registry[lowerFull] = n.path;
-        registry[lowerName] = n.path;
-        registry[lowerNoExt] = n.path;
-      } else if (n.kind === 'directory' && n.children) {
-        walk(n.children, repoPath ? `${repoPath}/${n.name}` : n.name);
-      }
-    }
-  };
-  walk(tree);
-  return registry;
-}
-
-function buildGraphFromRaw(rawMap) {
-  const nodes = Object.keys(rawMap).map((id) => ({
-    id,
-    name: id.split('/').pop().replace(/\.md$/i, ''),
-  }));
-
-  const byFullPath = new Set(Object.keys(rawMap).map((k) => k.toLowerCase()));
-  const byName = {};
-  for (const path of Object.keys(rawMap)) {
-    const nameOnly = path.split('/').pop().replace(/\.md$/i, '').toLowerCase();
-    if (!byName[nameOnly]) byName[nameOnly] = path;
-  }
-
-  const links = [];
-  for (const [source, raw] of Object.entries(rawMap)) {
-    const matches = String(raw || '').match(/\[\[([^\]]+)\]\]/g) || [];
-    for (const m of matches) {
-      const targetRaw = m.slice(2, -2).trim();
-      if (!targetRaw) continue;
-      const targetLower = targetRaw.toLowerCase();
-      let target = null;
-      if (targetLower.endsWith('.md') && byFullPath.has(targetLower)) {
-        target = Object.keys(rawMap).find((k) => k.toLowerCase() === targetLower) || null;
-      } else if (byFullPath.has(`${targetLower}.md`)) {
-        target = Object.keys(rawMap).find((k) => k.toLowerCase() === `${targetLower}.md`) || null;
-      } else {
-        target = byName[targetLower] || null;
-      }
-      if (target) links.push({ source, target, type: 'backlink' });
-    }
-  }
-
-  return { nodes, links };
-}
-
-async function hydrateServerCache(force = false) {
-  const isFresh = Date.now() - cacheHydratedAt < CACHE_TTL_MS;
-  if (!force && isFresh && serverTreeCache.length > 0) return;
-
-  const tree = await getGithubCasesTree();
-  if (!Array.isArray(tree)) throw new Error('Failed to fetch cases from GitHub');
-
-  const fileRepoPaths = [];
-  const walk = (nodes) => {
-    for (const n of nodes || []) {
-      if (n.kind === 'file' && n.repoPath) fileRepoPaths.push(n.repoPath);
-      if (n.children) walk(n.children);
-    }
-  };
-  walk(tree);
-
-  const nextRaw = {};
-  const nextHtml = {};
-  const nextSha = {};
-  await Promise.all(
-    fileRepoPaths.map(async (repoPath) => {
-      const fileData = await getFileFromGithub(repoPath);
-      if (!fileData?.ok) return;
-      const raw = decodeContent(fileData.content);
-      nextRaw[repoPath] = raw;
-      nextHtml[repoPath] = marked.parse(raw || '');
-      if (fileData.sha) nextSha[repoPath] = fileData.sha;
-    })
-  );
-
-  serverTreeCache = tree;
-  serverRegistryCache = buildRegistryFromTree(tree);
-  serverRawCache = nextRaw;
-  serverHtmlCache = nextHtml;
-  serverShaCache = nextSha;
-  serverGraphCache = buildGraphFromRaw(nextRaw);
-  cacheHydratedAt = Date.now();
 }
 
 // ─── GET: fetch file tree ─────────────────────────────────────────────────────
 
 export async function GET() {
   try {
-    await hydrateServerCache(false);
-    return NextResponse.json(serverTreeCache);
+    const snapshot = await hydrateServerCache(false);
+    return NextResponse.json(snapshot.tree);
   } catch (e) {
     return NextResponse.json({ error: e.message || 'Failed to fetch cases from GitHub' }, { status: 500 });
   }
@@ -153,24 +54,10 @@ export async function POST(request) {
 
   if (action === 'bootstrap') {
     try {
-      await hydrateServerCache(true);
-      const contentCache = {};
-      for (const [key, raw] of Object.entries(serverRawCache)) {
-        contentCache[key] = {
-          raw,
-          html: serverHtmlCache[key] || null,
-          fetchedAt: cacheHydratedAt,
-        };
-      }
+      const snapshot = await hydrateServerCache(true);
       return NextResponse.json({
         ok: true,
-        tree: serverTreeCache,
-        registry: serverRegistryCache,
-        rawCache: serverRawCache,
-        htmlCache: serverHtmlCache,
-        contentCache,
-        graph: serverGraphCache,
-        hydratedAt: cacheHydratedAt,
+        ...snapshot
       });
     } catch (e) {
       return NextResponse.json({ error: e.message || 'Bootstrap failed' }, { status: 500 });
@@ -186,32 +73,31 @@ export async function POST(request) {
   // 1. Handle File Content Fetching (No password required, no lock)
   if (action === 'get') {
     try {
-      // Refresh snapshot only when cache is stale (TTL-controlled).
       await hydrateServerCache(false);
     } catch (e) {
       return NextResponse.json({ ok: false, error: e.message || 'Failed to refresh server cache' }, { status: 500 });
     }
 
-    if (!Object.prototype.hasOwnProperty.call(serverRawCache, finalPath)) {
+    const snapshot = getCacheSnapshot();
+    if (!Object.prototype.hasOwnProperty.call(snapshot.rawCache, finalPath)) {
       const fileData = await getFileFromGithub(finalPath);
       if (!fileData?.ok) return NextResponse.json({ ok: false, error: fileData?.error || 'Not found' }, { status: 404 });
       const raw = decodeContent(fileData.content);
-      serverRawCache[finalPath] = raw;
-      serverHtmlCache[finalPath] = marked.parse(raw || '');
-      if (fileData.sha) serverShaCache[finalPath] = fileData.sha;
-      serverGraphCache = buildGraphFromRaw(serverRawCache);
+      updateFileInCache(finalPath, raw, fileData.sha, marked.parse(raw || ''));
     }
+
+    const updatedSnapshot = getCacheSnapshot();
     return NextResponse.json({
       ok: true,
       path: finalPath,
-      raw: serverRawCache[finalPath] || '',
-      html: serverHtmlCache[finalPath] || null,
-      sha: serverShaCache[finalPath] || null,
+      raw: updatedSnapshot.rawCache[finalPath] || '',
+      html: updatedSnapshot.htmlCache[finalPath] || null,
+      sha: updatedSnapshot.shaCache[finalPath] || null,
       fromCache: true,
-      tree: serverTreeCache,
-      registry: serverRegistryCache,
-      graph: serverGraphCache,
-      hydratedAt: cacheHydratedAt,
+      tree: updatedSnapshot.tree,
+      registry: updatedSnapshot.registry,
+      graph: updatedSnapshot.graph,
+      hydratedAt: updatedSnapshot.hydratedAt,
     });
   }
 
@@ -225,10 +111,7 @@ export async function POST(request) {
     const fileData = await getFileFromGithub(finalPath);
     if (fileData?.ok) {
       const raw = decodeContent(fileData.content);
-      serverRawCache[finalPath] = raw;
-      serverHtmlCache[finalPath] = marked.parse(raw || '');
-      if (fileData.sha) serverShaCache[finalPath] = fileData.sha;
-      serverGraphCache = buildGraphFromRaw(serverRawCache);
+      updateFileInCache(finalPath, raw, fileData.sha, marked.parse(raw || ''));
     }
     return NextResponse.json({ ok: true, locked: true, ...fileData });
   }
@@ -259,10 +142,7 @@ export async function POST(request) {
     const result = await deleteFromGithub(finalPath, sha);
     if (result.ok) {
       fileLocks.delete(finalPath);
-      delete serverRawCache[finalPath];
-      delete serverHtmlCache[finalPath];
-      delete serverShaCache[finalPath];
-      serverGraphCache = buildGraphFromRaw(serverRawCache);
+      deleteFileFromCache(finalPath);
       return NextResponse.json(result);
     }
     return NextResponse.json({ error: result.error }, { status: 500 });
@@ -296,14 +176,15 @@ export async function POST(request) {
       return NextResponse.json({ error: `Delete old file failed: ${deleteResult.error}` }, { status: 500 });
     }
 
-    // 4. Update backlinks only (use graph cache instead of scanning all files)
+    // 4. Update backlinks only
     const oldBase = finalPath.replace('.md', '');
     const newBase = finalNewPath.replace('.md', '');
     const oldNameOnly = oldBase.split('/').pop();
     const newNameOnly = newBase.split('/').pop();
 
-    console.log(`🔗 [Rename] Updating backlinks from graph cache...`);
-    const backlinkFileIds = (serverGraphCache?.links || [])
+    console.log(`🔗 [Rename] Updating backlinks...`);
+    const currentSnapshot = getCacheSnapshot();
+    const backlinkFileIds = (currentSnapshot.graph?.links || [])
       .filter((link) => link?.target === finalPath && link?.type === 'backlink')
       .map((link) => link.source);
     const uniqueBacklinks = Array.from(new Set(backlinkFileIds.filter((id) => id && id !== finalPath && id !== finalNewPath)));
@@ -314,7 +195,7 @@ export async function POST(request) {
       const nameRegex = new RegExp(`\\[\\[${oldNameOnly.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\]\\]`, 'g');
 
       for (const filePath of uniqueBacklinks) {
-        let text = serverRawCache[filePath] || '';
+        let text = currentSnapshot.rawCache[filePath] || '';
         if (!text) {
           const fileData = await getFileFromGithub(filePath);
           if (!fileData?.ok) continue;
@@ -335,20 +216,20 @@ export async function POST(request) {
           return NextResponse.json({ error: `Batch backlink update failed: ${batchResult.error}` }, { status: 500 });
         }
         for (const [changedPath, changedContent] of Object.entries(changedFiles)) {
-          serverRawCache[changedPath] = changedContent;
-          serverHtmlCache[changedPath] = marked.parse(changedContent || '');
+          updateFileInCache(changedPath, changedContent, null, marked.parse(changedContent || ''));
         }
       }
     }
 
     fileLocks.delete(finalPath);
     await hydrateServerCache(true);
+    const finalSnapshot = getCacheSnapshot();
     return NextResponse.json({
       ok: true,
       path: finalNewPath,
-      tree: serverTreeCache,
+      tree: finalSnapshot.tree,
       changedFiles: {
-        [finalNewPath]: serverRawCache[finalNewPath] || finalContent,
+        [finalNewPath]: finalSnapshot.rawCache[finalPath] || finalContent,
         ...changedFiles,
       },
       removedFiles: [finalPath],
@@ -367,10 +248,7 @@ export async function POST(request) {
   
   if (result.ok) {
     fileLocks.delete(finalPath); // Release lock after successful save
-    serverRawCache[finalPath] = content;
-    serverHtmlCache[finalPath] = marked.parse(content || '');
-    if (result.sha) serverShaCache[finalPath] = result.sha;
-    serverGraphCache = buildGraphFromRaw(serverRawCache);
+    updateFileInCache(finalPath, content, result.sha, marked.parse(content || ''));
     console.log(`✅ [API Route] Saved to GitHub successfully.`);
     return NextResponse.json(result);
   } else {
