@@ -7,7 +7,7 @@ import React from 'react';
 export default function VaultStyles() {
   return (
     <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Prata&display=swap');
 
         :root {
           --bg: #121212; --txt: #e0e0e0; --accent: #FFFACD;
@@ -271,7 +271,7 @@ export default function VaultStyles() {
           width: 100%;
           white-space: nowrap;
           overflow: hidden;
-          font-family: var(--md-font);
+          font-family: var(--font-title-block, var(--md-font));
           font-weight: 700;
           color: #fff;
           line-height: 1;
