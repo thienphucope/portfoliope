@@ -31,7 +31,7 @@ const GraphView = dynamic(() => import('../../../features/case/components/GraphV
 
 // ─── MAIN VAULT ───────────────────────────────────────────────────────────────
 
-export default function CaseClient({ staticRecords = [], serverHydratedData = null }) {
+export default function CaseClient({ serverHydratedData = null }) {
   // ── Core content state ──────────────────────────────────────────────────────
   const [content,      setContent]      = useState('');
   const [fileName,     setFileName]     = useState('');
@@ -230,7 +230,6 @@ export default function CaseClient({ staticRecords = [], serverHydratedData = nu
       { id: 'filetree', title: 'File Tree', type: 'sidebar' },
       { id: 'chat',     title: 'AI Chat Vault', type: 'chat' },
     ];
-    staticRecords.forEach((f) => base.push({ id: f.id, title: f.name.replace('.md', ''), type: 'static', content: f.content }));
 
     if (fileTree.length === 0) {
       for (let i = 0; i < 20; i++) base.push({ id: `placeholder-${i}`, title: '...', type: 'placeholder' });
@@ -240,7 +239,7 @@ export default function CaseClient({ staticRecords = [], serverHydratedData = nu
     const sorted = [...allFiles].sort((a, b) => a.name.localeCompare(b.name));
     sorted.forEach((f) => base.push({ id: f.id, title: f.name.replace('.md', ''), type: 'editor', fileData: f }));
     return base;
-  }, [allFiles, fileTree.length, staticRecords]);
+  }, [allFiles, fileTree.length]);
 
   const { scrollToTab } = useScrollBehavior({ appShellRef, tabs, setShowHeader, setShowFunctionBall });
 
@@ -255,7 +254,7 @@ export default function CaseClient({ staticRecords = [], serverHydratedData = nu
     isEditing, setIsEditing,
     fileName, content, editPass,
     serverRawCache, fileRegistry,
-    staticRecords, applyFileContent,
+    applyFileContent,
     loadFile, handleSaveFile,
     releaseLock, stopKeepAlive,
     setShowSearch,
@@ -320,15 +319,9 @@ export default function CaseClient({ staticRecords = [], serverHydratedData = nu
         } else if (actualRepo && githubUrl) {
           loadFile(githubUrl, actualRepo.split('/').pop(), actualRepo, 'replace', true);
         } else {
-          const staticMatch = staticRecords.find((r) => r.id.toLowerCase().replace(/\.md$/, '') === lowerTarget);
-          if (staticMatch) {
-            setActiveTab(staticMatch.id);
-            applyFileContent(staticMatch.id, staticMatch.content);
-          } else {
-            const defRepo = repoPathMap[cleanDefault.toLowerCase()] || repoPathMap[cleanDefault.toLowerCase() + '.md'];
-            const defUrl  = fileRegistry.current[cleanDefault.toLowerCase()] || fileRegistry.current[cleanDefault.toLowerCase() + '.md'];
-            if (defRepo && defUrl) loadFile(defUrl, defRepo.split('/').pop(), defRepo, 'replace', true);
-          }
+          const defRepo = repoPathMap[cleanDefault.toLowerCase()] || repoPathMap[cleanDefault.toLowerCase() + '.md'];
+          const defUrl  = fileRegistry.current[cleanDefault.toLowerCase()] || fileRegistry.current[cleanDefault.toLowerCase() + '.md'];
+          if (defRepo && defUrl) loadFile(defUrl, defRepo.split('/').pop(), defRepo, 'replace', true);
         }
       }, 300);
     };

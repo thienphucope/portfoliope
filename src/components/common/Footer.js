@@ -24,7 +24,9 @@ export default function Footer() {
         .social-label { position: absolute; top: 50%; left: 50%; white-space: nowrap; color: var(--colorone); font-size: 0.5rem; font-weight: bold; pointer-events: none; opacity: 0; }
         .social-label.animating { animation: floatUp 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
       `}</style>
-      <div className="order-1 lg:order-1 text-[var(--colorone)] font-bold text-xs md:text-xl opacity-60" style={{ fontFamily: 'var(--font-display)' }}>Scroll down for more info!</div>
+      <div className="order-1 lg:order-1 opacity-60 hover:opacity-100 transition-opacity" style={{ fontFamily: 'var(--font-display)' }}>
+        <a href="/terms" className="text-[var(--colorone)] font-bold text-xs md:text-xl underline decoration-[var(--colorone)]/30 underline-offset-4">Terms of Services</a>
+      </div>
       <div className="order-2 lg:order-2 flex gap-6 z-20">
         <div className="social-icon" onMouseEnter={() => handleMouseEnter('youtube')}>
           <a href="https://www.youtube.com/watch?v=zqcrDCynF8k" target="_blank" rel="noopener noreferrer"><FaYoutube className="text-[var(--colorone)] text-3xl md:text-5xl hover:text-white transition-colors" /></a>

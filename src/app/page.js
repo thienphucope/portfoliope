@@ -1,10 +1,22 @@
 "use client";
 import Link from 'next/link';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { ChevronDown } from 'lucide-react';
 import useFingerprints from '@/features/home/hooks/useFingerprints';
 
 export default function RootPage() {
   const fingerprints = useFingerprints('white');
+  const router = useRouter();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      router.push('/home');
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [router]);
+
   return (
     <div className="fixed inset-0 bg-[var(--colorone)] flex flex-col justify-center items-center z-[100]">
       {fingerprints}
