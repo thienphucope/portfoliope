@@ -152,18 +152,55 @@ export const ensureLibsLoaded = () => {
 
 // ─── DOM POST-PROCESSING (KaTeX + Mermaid) ───────────────────────────────────
 
-export const fitHeading = (el) => {
+export const fitHeading = (el, maxSize = 500) => {
   if (!el || !el.parentElement) return;
-  const maxW = el.parentElement.clientWidth || 800;
-  if (maxW === 0) return;
-  el.style.whiteSpace = 'nowrap';
-  let lo = 12, hi = 500;
-  for (let i = 0; i < 24; i++) {
-    const mid = (lo + hi) / 2;
-    el.style.fontSize = mid + 'px';
-    if (el.scrollWidth <= maxW) lo = mid; else hi = mid;
-  }
-  el.style.fontSize = lo + 'px';
+  const parent = el.parentElement;
+  
+  const run = () => {
+    const parentRect = parent.getBoundingClientRect();
+    if (parentRect.width <= 0) return;
+
+    const style = window.getComputedStyle(parent);
+    const paddingX = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+    const availableWidth = parentRect.width - paddingX - 1; // 1px margin of error
+
+    // Save current styles to restore later if needed
+    const originalDisplay = el.style.display;
+    const originalWidth = el.style.width;
+    const originalWhiteSpace = el.style.whiteSpace;
+
+    // Set styles for measurement
+    el.style.display = 'inline-block';
+    el.style.width = 'auto';
+    el.style.whiteSpace = 'nowrap';
+
+    let low = 12;
+    let high = maxSize;
+    let best = low;
+
+    // Binary search with sub-pixel precision
+    for (let i = 0; i < 20; i++) {
+      const mid = (low + high) / 2;
+      el.style.fontSize = mid + 'px';
+      
+      // Use getBoundingClientRect().width for sub-pixel accuracy
+      if (el.getBoundingClientRect().width <= availableWidth) {
+        best = mid;
+        low = mid;
+      } else {
+        high = mid;
+      }
+    }
+
+    el.style.fontSize = best + 'px';
+
+    // Restore layout styles
+    el.style.display = originalDisplay || 'inline-block';
+    el.style.width = originalWidth || 'auto';
+    el.style.whiteSpace = originalWhiteSpace || 'nowrap';
+  };
+
+  run();
 };
 
 export const postProcess = (el) => {

@@ -12,6 +12,7 @@ export default function VaultStyles() {
         :root {
           --bg: #121212; --txt: #e0e0e0; --accent: #FFFACD;
           --border: rgba(255,255,255,0.1); --code-bg: #1e1e1e;
+          --md-font: 'Lora', serif;
           --md-size: 19px; --md-line: 1.6;
         }
 
@@ -265,19 +266,21 @@ export default function VaultStyles() {
         .markdown-content h1 { font-size:2.0em; margin:.8em 0 .4em; color:#fff; font-weight:700; text-align: left; }
         .markdown-content h2 { font-size:1.6em; margin:.7em 0 .3em; color:#fff; font-weight:700; text-align: left; }
         .markdown-content h3 { font-size:1.2em; margin:.6em 0 .2em; color:#fff; font-weight:700; }
-        .markdown-content h6.fit-heading {
+        .markdown-content .fit-heading {
           display: block;
           width: 100%;
           white-space: nowrap;
           overflow: hidden;
           font-family: var(--md-font);
-          font-weight: 900;
-          font-style: italic;
+          font-weight: 700;
           color: #fff;
           line-height: 1;
           margin: 0.3em 0;
           letter-spacing: -0.03em;
           opacity: 0.95;
+        }
+        .markdown-content h6.fit-heading {
+          font-style: italic;
         }
         .markdown-content p  { margin-bottom:1.25em; }
 
@@ -375,7 +378,7 @@ export default function VaultStyles() {
         blockquote { border-left:3px solid var(--accent); padding-left:1.25em; margin:1.5em 0; font-style:italic; opacity:.8; }
         blockquote blockquote { border-left-color:rgba(255,255,255,.2); margin-left:1em; }
         .img-circle { border-radius:50%; aspect-ratio:1/1; object-fit:cover; max-width:200px; display:block; margin:2em auto; }
-        img { max-width:100%; border-radius:8px; margin:1.5em 0; }
+        img { width: 100%; height: auto; border-radius: 8px; margin: 1.5em 0; }
         .video-container { position:relative; padding-bottom:56.25%; height:0; margin:1.5em 0; }
         .video-container iframe { position:absolute; top:0; left:0; width:100%; height:100%; border-radius:8px; pointer-events: none; }
         .video-container.interactable iframe { pointer-events: auto; }

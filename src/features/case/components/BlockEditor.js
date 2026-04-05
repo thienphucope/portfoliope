@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { ensureLibsLoaded, postProcess, fitHeading } from '../utils/markdown';
 import { useAI } from '../hooks/useAI';
 import { useBlockNavigation } from '../hooks/useBlockNavigation';
@@ -9,6 +9,75 @@ import { mkBlock, cursorToEnd, getLineClass, SLASH_COMMANDS } from '../utils/edi
  * and real-time rendering for the case vault application.
  * Supports block navigation, code editing, and integration with file registry.
  */
+
+// ─── TITLE BLOCK (fixed file name header) ────────────────────────────────────
+
+const TitleBlock = ({ fileName }) => {
+  const titleRef = useRef(null);
+  
+  const displayTitle = useMemo(() => {
+    if (!fileName) return '';
+    return fileName.split('/').pop().replace(/\.md$/, '');
+  }, [fileName]);
+
+  const updateSize = useCallback(() => {
+    const el = titleRef.current;
+    if (el) {
+      fitHeading(el, 120);
+    }
+  }, []);
+
+  useEffect(() => {
+    const el = titleRef.current;
+    if (!el) return;
+
+    // Initial calculation
+    updateSize();
+
+    // Re-calculate on window resize
+    window.addEventListener('resize', updateSize);
+
+    // Re-calculate when parent container size changes (e.g. sidebar toggle)
+    const observer = new ResizeObserver(() => {
+      updateSize();
+    });
+
+    if (el.parentElement) {
+      observer.observe(el.parentElement);
+    }
+
+    // Sometimes fonts load late
+    const fontTimer = setTimeout(updateSize, 500);
+    
+    return () => {
+      window.removeEventListener('resize', updateSize);
+      observer.disconnect();
+      clearTimeout(fontTimer);
+    };
+  }, [displayTitle, updateSize]);
+
+  if (!displayTitle) return null;
+
+  return (
+    <div className="block-wrapper title-block" style={{ padding: '0 2px', overflow: 'visible', width: '100%', boxSizing: 'border-box' }}>
+      <div className="block-content markdown-content" style={{ textAlign: 'center', overflow: 'visible', width: '100%' }}>
+        <h1 
+          ref={titleRef} 
+          className="fit-heading" 
+          style={{ 
+            display: 'inline-block',
+            whiteSpace: 'nowrap',
+            overflow: 'visible',
+            textAlign: 'center',
+            margin: '0 0 2rem 0'
+          }}
+        >
+          {displayTitle}
+        </h1>
+      </div>
+    </div>
+  );
+};
 
 // ─── BLOCK VIEW (inactive block) ─────────────────────────────────────────────
 
@@ -512,6 +581,7 @@ const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, on
 
   return (
     <div className="block-editor">
+      <TitleBlock fileName={fileName} />
       {blocks.map((block, index) => {
         const isActive = activeBlockIndex === index && isEditing;
         return (
