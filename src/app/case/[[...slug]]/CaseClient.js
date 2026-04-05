@@ -40,6 +40,7 @@ export default function CaseClient({ staticRecords = [] }) {
   // ── UI state ────────────────────────────────────────────────────────────────
   const [activeOverlay,      setActiveOverlay]      = useState(null); // 'filetree' | 'chat' | null
   const [showHeader,         setShowHeader]          = useState(true);
+  const [showFunctionBall,   setShowFunctionBall]    = useState(true);
   const [isFooterExpanded,   setIsFooterExpanded]    = useState(false);
   const [isAtBottom,         setIsAtBottom]          = useState(false);
   const [searchTerm,         setSearchTerm]          = useState('');
@@ -241,7 +242,7 @@ export default function CaseClient({ staticRecords = [] }) {
     return base;
   }, [allFiles, fileTree.length, staticRecords]);
 
-  const { scrollToTab } = useScrollBehavior({ appShellRef, tabs, setShowHeader });
+  const { scrollToTab } = useScrollBehavior({ appShellRef, tabs, setShowHeader, setShowFunctionBall });
 
   useEffect(() => {
     if (activeTab && !activeOverlay) scrollToTab(activeTab);
@@ -416,6 +417,8 @@ export default function CaseClient({ staticRecords = [] }) {
         isFooterExpanded={isFooterExpanded}
         setIsFooterExpanded={setIsFooterExpanded}
         showReadMore={showReadMore}
+        showFunctionBall={showFunctionBall}
+        isAtBottom={isAtBottom}
         activeOverlay={activeOverlay}
         setActiveOverlay={setActiveOverlay}
         handleCreateNewNote={handleCreateNewNote}

@@ -8,7 +8,7 @@ import { useRef, useEffect, useCallback } from 'react';
  * - Tab-change → smooth animated horizontal scroll to target tab
  * - Mobile header show/hide on scroll
  */
-export function useScrollBehavior({ appShellRef, tabs, setShowHeader }) {
+export function useScrollBehavior({ appShellRef, tabs, setShowHeader, setShowFunctionBall }) {
   const isTabScrolling      = useRef(false);
   const tabAnimId           = useRef(null);
   const targetScrollX       = useRef(null);
@@ -27,15 +27,20 @@ export function useScrollBehavior({ appShellRef, tabs, setShowHeader }) {
       const currentScrollY = target.scrollTop || window.scrollY;
       const diff = currentScrollY - (target._lastScrollY || 0);
 
-      if (diff > 10 && currentScrollY > 100) setShowHeader(false);
-      else if (diff < -10)                    setShowHeader(true);
+      if (diff > 10 && currentScrollY > 100) {
+        setShowHeader(false);
+        if (setShowFunctionBall) setShowFunctionBall(false);
+      } else if (diff < -10) {
+        setShowHeader(true);
+        if (setShowFunctionBall) setShowFunctionBall(true);
+      }
 
       target._lastScrollY = currentScrollY;
     };
 
     window.addEventListener('scroll', handleGlobalScroll, true);
     return () => window.removeEventListener('scroll', handleGlobalScroll, true);
-  }, [setShowHeader]);
+  }, [setShowHeader, setShowFunctionBall]);
 
   // ─── Scroll to specific tab ────────────────────────────────────────────────
 

@@ -11,6 +11,8 @@ export default function FunctionBall({
   isFooterExpanded,
   setIsFooterExpanded,
   showReadMore,
+  showFunctionBall = true,
+  isAtBottom = false,
   activeOverlay,
   setActiveOverlay,
   handleCreateNewNote,
@@ -31,8 +33,10 @@ export default function FunctionBall({
   const canEdit = !activeOverlay && activeTabType === 'editor';
   const canComment = !activeOverlay && (activeTabType === 'editor' || activeTabType === 'static');
 
+  const isHidden = !showFunctionBall && !isAtBottom && !isFooterExpanded;
+
   return (
-    <div className={`mobile-footer ${isFooterExpanded ? 'expanded' : ''}`}>
+    <div className={`mobile-footer ${isFooterExpanded ? 'expanded' : ''} ${isHidden ? 'hidden-ball' : ''}`}>
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         
         {/* Nút bên trái FunctionBall */}
@@ -170,6 +174,12 @@ export default function FunctionBall({
       </div>
 
       <style jsx>{`
+        .mobile-footer {
+          transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .mobile-footer.hidden-ball {
+          transform: translate(-50%, 150%) !important;
+        }
         .side-nav-btn {
           width: 40px;
           height: 40px;
