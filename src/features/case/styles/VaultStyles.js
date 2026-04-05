@@ -273,7 +273,7 @@ export default function VaultStyles() {
           overflow: hidden;
           font-family: var(--font-title-block, var(--md-font));
           font-weight: 700;
-          color: #fff;
+          color: var(--colortext-spine);
           line-height: 1;
           margin: 0.3em 0;
           letter-spacing: -0.03em;

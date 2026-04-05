@@ -69,7 +69,8 @@ const TitleBlock = ({ fileName }) => {
             whiteSpace: 'nowrap',
             overflow: 'visible',
             textAlign: 'center',
-            margin: '0 0 2rem 0'
+            padding: '2rem 0',
+            margin: '0'
           }}
         >
           {displayTitle}
