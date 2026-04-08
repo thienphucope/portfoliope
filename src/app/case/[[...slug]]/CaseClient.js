@@ -298,6 +298,7 @@ export default function CaseClient({ serverHydratedData = null }) {
       const pathParts    = window.location.pathname.split('/').filter(Boolean);
       const rawDefault   = process.env.NEXT_PUBLIC_DEFAULT_VAULT_FILE || 'chat';
       const cleanDefault = rawDefault.replace(/\.md$/, '');
+      const isCaseRoot   = pathParts.length === 1 && pathParts[0] === 'case';
 
       let targetSlug = cleanDefault;
       if (pathParts[0] === 'case' && pathParts.length > 1) {
@@ -305,7 +306,9 @@ export default function CaseClient({ serverHydratedData = null }) {
       }
 
       const cleanTarget  = targetSlug.replace(/\.md$/, '');
-      const forceTab     = (cleanTarget === 'chat' || cleanTarget === 'filetree') ? cleanTarget : null;
+      const forceTab     = isCaseRoot
+        ? 'filetree'
+        : ((cleanTarget === 'chat' || cleanTarget === 'filetree') ? cleanTarget : null);
       const lowerTarget  = cleanTarget.toLowerCase();
       const actualRepo   = repoPathMap[lowerTarget] || repoPathMap[lowerTarget + '.md'];
       const githubUrl    = fileRegistry.current[lowerTarget] || fileRegistry.current[lowerTarget + '.md'];

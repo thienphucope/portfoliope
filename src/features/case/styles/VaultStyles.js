@@ -548,6 +548,12 @@ export default function VaultStyles() {
           transform: scale(1.1);
         }
 
+        .filetree-btn.active,
+        .chatvault-btn.active {
+          color: #ffffff;
+          opacity: 1;
+        }
+
         .add-note-btn { top: 40px; }
         .filetree-btn { top: 140px; }
         .chatvault-btn { top: 240px; }
