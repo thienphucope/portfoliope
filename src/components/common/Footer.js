@@ -41,7 +41,7 @@ export default function Footer() {
           <span key={hoverKeys['github']} className={`social-label ${hoverKeys['github'] ? 'animating' : ''}`}>about</span>
         </div>
         <div className="social-icon" onMouseEnter={() => handleMouseEnter('email')}>
-          <a href="mailto:thienphucmain@gmail.com"><FaEnvelope className="text-[var(--colorone)] text-3xl md:text-5xl hover:text-white transition-colors" /></a>
+          <a href="mailto:thienphucmain1052004@gmail.com"><FaEnvelope className="text-[var(--colorone)] text-3xl md:text-5xl hover:text-white transition-colors" /></a>
           <span key={hoverKeys['email']} className={`social-label ${hoverKeys['email'] ? 'animating' : ''}`}>me</span>
         </div>
         <div className="social-icon" onMouseEnter={() => handleMouseEnter('twitter')}>
