@@ -1,8 +1,15 @@
 import { useState, useRef, useCallback } from 'react';
 
+// const TTS_API_URL = "https://thienphuc1052004--xtts-api-xttsapi-tts-generate.modal.run";
+// const TTS_STREAM_URL = "https://thienphuc1052004--xtts-api-xttsapi-tts-stream.modal.run";
+// const TTS_HEALTH_URL = "https://thienphuc1052004--xtts-api-xttsapi-ping.modal.run";
+// const TTS_INTERRUPT_URL = "https://thienphuc1052004--xtts-api-xttsapi-tts-interrupt.modal.run";
+
 const TTS_API_URL = "https://thienphuc1052004--xtts-api-xttsapi-tts-generate.modal.run";
-const TTS_STREAM_URL = "https://thienphuc1052004--xtts-api-xttsapi-tts-stream.modal.run";
-const TTS_HEALTH_URL = "https://thienphuc1052004--xtts-api-xttsapi-ping.modal.run";const TTS_INTERRUPT_URL = "https://thienphuc1052004--xtts-api-xttsapi-tts-interrupt.modal.run";
+const TTS_STREAM_URL = "https://thienphuc1052004--xtts-ft-api-xttsftapi-tts-stream.modal.run";
+const TTS_HEALTH_URL = "https://thienphuc1052004--xtts-ft-api-xttsftapi-ping.modal.run";
+const TTS_INTERRUPT_URL = "https://thienphuc1052004--xtts-ft-api-xttsftapi-tts-interrupt.modal.run";
+
 /**
  * Hook for Text-to-Speech synthesis using external Modal API.
  * Manages audio queue and chunk-based playback.
