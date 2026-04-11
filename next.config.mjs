@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  serverExternalPackages: ['msedge-tts', 'ws'],
   async redirects() {
     return [
       {
