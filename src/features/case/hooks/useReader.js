@@ -8,9 +8,9 @@ export function useReader() {
   const [isPaused, setIsPaused] = useState(false);
   const [cefrLevel, setCefrLevel] = useState(() => {
     if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('sonia_cefr') || 'none';
+      return sessionStorage.getItem('sonia_cefr') || 'b1';
     }
-    return 'none';
+    return 'b1';
   });
   
   // Load speed từ sessionStorage để persistent
@@ -227,9 +227,38 @@ export function useReader() {
             if (signal.aborted) return false;
             const word = difficultWords[index];
             const entry = cefrDict[word];
-            const defs = entry.definitions && entry.definitions.length > 0 
-              ? entry.definitions[0] 
-              : null;
+            
+            // Priority 1: Try Free Dictionary API
+            let defs = null;
+            let type = entry?.pos || "";
+
+            try {
+              const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`, { signal });
+              if (response.ok) {
+                const data = await response.json();
+                if (Array.isArray(data) && data.length > 0) {
+                  const apiEntry = data[0];
+                  if (apiEntry.meanings && apiEntry.meanings.length > 0) {
+                    const firstMeaning = apiEntry.meanings[0];
+                    type = firstMeaning.partOfSpeech || type;
+                    const firstDef = firstMeaning.definitions && firstMeaning.definitions.length > 0
+                      ? firstMeaning.definitions[0].definition
+                      : null;
+                    if (firstDef) {
+                      defs = { pos: type, def: firstDef };
+                    }
+                  }
+                }
+              }
+            } catch (err) {
+              if (err.name === 'AbortError') return false;
+              console.warn(`[Reader] API definition failed for ${word}, falling back to local.`);
+            }
+
+            // Priority 2: Fallback to local dictionary
+            if (!defs && entry && entry.definitions && entry.definitions.length > 0) {
+              defs = entry.definitions[0];
+            }
             
             if (defs) {
               // Word index message
@@ -237,11 +266,11 @@ export function useReader() {
               if (signal.aborted) return false;
 
               // 1. Play Intro: Word, Level, Type
-              const intro = `Word: ${word}. Level: ${entry.level}. Type: ${entry.pos || defs.pos}.`;
+              const intro = `Word: ${word}. Level: ${entry?.level || 'Unknown'}. Type: ${defs.pos || type}.`;
               const introSuccess = await playText(intro, 'en-male', signal);
               if (!introSuccess || signal.aborted) return false;
 
-              // 2. Play Definition sentence by sentence to avoid long wait
+              // 2. Play Definition sentence by sentence
               const sentences = defs.def.match(/[^.!?。！？]+[.!?。！？]?/g) || [defs.def];
               for (let i = 0; i < sentences.length; i++) {
                 if (signal.aborted) return false;
@@ -252,6 +281,11 @@ export function useReader() {
 
               if (signal.aborted) return false;
               await new Promise(r => setTimeout(r, 300));
+            } else if (entry) {
+              // Priority 3: Only word and level if no definition found
+              await playText(`Word number ${index + 1}.`, 'en-male', signal);
+              const basicInfo = `Word: ${word}. Level: ${entry.level}. No definition found.`;
+              await playText(basicInfo, 'en-male', signal);
             }
           }
 
