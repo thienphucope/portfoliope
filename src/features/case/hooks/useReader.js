@@ -2,11 +2,21 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 
 export function useReader() {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentText, setCurrentText] = useState('');
+  const [isPaused, setIsPaused] = useState(false);
+  
+  // Load speed từ sessionStorage để persistent
+  const [playbackRate, setPlaybackRate] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return parseFloat(sessionStorage.getItem('sonia_speed') || '1.0');
+    }
+    return 1.0;
+  });
+  
   const audioRef = useRef(null);
   const accumulatedTextRef = useRef('');
   const abortControllerRef = useRef(null);
   const lastLangRef = useRef('en');
+  const resolvePlaybackRef = useRef(null);
 
   const stop = useCallback(() => {
     if (abortControllerRef.current) {
@@ -20,8 +30,40 @@ export function useReader() {
     accumulatedTextRef.current = '';
     lastLangRef.current = 'en';
     setIsPlaying(false);
+    setIsPaused(false);
     setCurrentText('');
+    if (resolvePlaybackRef.current) {
+      resolvePlaybackRef.current(false);
+      resolvePlaybackRef.current = null;
+    }
   }, []);
+
+  const pause = useCallback(() => {
+    if (audioRef.current && isPlaying && !isPaused) {
+      audioRef.current.pause();
+      setIsPaused(true);
+    }
+  }, [isPlaying, isPaused]);
+
+  const resume = useCallback(() => {
+    if (audioRef.current && isPlaying && isPaused) {
+      audioRef.current.play().catch(console.error);
+      setIsPaused(false);
+    }
+  }, [isPlaying, isPaused]);
+
+  const setSpeed = useCallback((rate) => {
+    setPlaybackRate(rate);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('sonia_speed', rate.toString());
+    }
+    // Áp dụng ngay lập tức cho audio đang phát
+    if (audioRef.current) {
+      audioRef.current.playbackRate = rate;
+    }
+  }, []);
+
+  const [currentText, setCurrentText] = useState('');
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -41,6 +83,7 @@ export function useReader() {
     accumulatedTextRef.current = (accumulatedTextRef.current + ' ' + cleanText).trim();
     setCurrentText(accumulatedTextRef.current);
     setIsPlaying(true);
+    setIsPaused(false);
 
     const endsWithTerminator = /[.!?。！？]$/.test(cleanText);
     if (!immediate && !endsWithTerminator) {
@@ -51,48 +94,36 @@ export function useReader() {
     const rawText = accumulatedTextRef.current;
     accumulatedTextRef.current = '';
 
-    // Strip emoji và ký tự không đọc được
     const textToRead = rawText
-      .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')  // emoji
-      .replace(/[\u{1F300}-\u{1F9FF}]/gu, '')  // misc emoji
-      .replace(/[\u{2600}-\u{27BF}]/gu, '')    // symbols
-      .replace(/[\u{1F900}-\u{1F9FF}]/gu, '')  // supplemental symbols
-      .replace(/[\u{1FA00}-\u{1FAFF}]/gu, '')  // chess, tools...
-      .replace(/[&<>'"]/g, '')                  // XML/HTML special chars
-      .replace(/[#@$%^*+=|\\{}[\]~`]/g, '')    // misc punctuation
-      .replace(/[\u200B-\u200F\uFEFF\u00AD]/g, '')  // zero-width, soft hyphen, BOM
-      .replace(/[\u2000-\u206F]/g, ' ')             // unicode spaces & formatting chars
-      .replace(/[^\S\r\n]+/g, ' ')             // normalize spaces
+      .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')
+      .replace(/[\u{1F300}-\u{1F9FF}]/gu, '')
+      .replace(/[\u{2600}-\u{27BF}]/gu, '')
+      .replace(/[\u{1F900}-\u{1F9FF}]/gu, '')
+      .replace(/[\u{1FA00}-\u{1FAFF}]/gu, '')
+      .replace(/[&<>'"]/g, '')
+      .replace(/[#@$%^*+=|\\{}[\]~`]/g, '')
+      .replace(/[\u200B-\u200F\uFEFF\u00AD]/g, '')
+      .replace(/[\u2000-\u206F]/g, ' ')
+      .replace(/[^\S\r\n]+/g, ' ')
       .trim();
 
-    // Nếu chỉ còn dấu câu hoặc số, hoặc quá ngắn, bỏ qua không gọi API
     if (!textToRead || !/[a-zA-Z\u4e00-\u9fa5\u1EA0-\u1EF9]/.test(textToRead)) return true;
 
-    // Create a new AbortController for this request
     if (abortControllerRef.current) abortControllerRef.current.abort();
     abortControllerRef.current = new AbortController();
     const signal = abortControllerRef.current.signal;
 
-    // Language Detection
     const isChinese = /[\u4e00-\u9fa5]/.test(textToRead);
     const isVietnamese = /[\u1EA0-\u1EF9\u0110\u0111\u00C0-\u00FF]/.test(textToRead);
     const hasLetters = /[a-zA-Z]/.test(textToRead);
 
     let lang = lastLangRef.current;
-
-    if (isChinese) {
-      lang = 'zh';
-    } else if (isVietnamese) {
-      lang = 'vi';
-    } else if (hasLetters) {
-      lang = 'en';
-    }
-    // If only numbers/symbols, keep lastLangRef.current
-
+    if (isChinese) lang = 'zh';
+    else if (isVietnamese) lang = 'vi';
+    else if (hasLetters) lang = 'en';
     lastLangRef.current = lang;
 
     try {
-      // Google TTS (vi) has a ~200 char limit.
       const chunks = lang === 'vi' && textToRead.length > 200 
         ? textToRead.match(/.{1,200}(?=\s|$)|.{1,200}/g) || [textToRead]
         : [textToRead];
@@ -107,24 +138,21 @@ export function useReader() {
           signal,
         });
 
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.error || 'TTS failed');
-        }
+        if (!response.ok) throw new Error('TTS failed');
 
         const blob = await response.blob();
         if (signal.aborted) return false;
-        if (blob.size < 100) throw new Error('Invalid audio blob');
-
         const url = URL.createObjectURL(blob);
 
-        if (!audioRef.current) {
-          audioRef.current = new Audio();
-        }
-
+        if (!audioRef.current) audioRef.current = new Audio();
         audioRef.current.src = url;
+        
+        // Luôn áp dụng playbackRate mới nhất trước khi phát
+        const currentRate = parseFloat(sessionStorage.getItem('sonia_speed') || '1.0');
+        audioRef.current.playbackRate = currentRate;
 
         await new Promise((resolve) => {
+          resolvePlaybackRef.current = resolve;
           const cleanup = () => {
             if (audioRef.current) {
               audioRef.current.removeEventListener('ended', handleEnded);
@@ -132,34 +160,20 @@ export function useReader() {
             }
             signal.removeEventListener('abort', handleAbort);
             URL.revokeObjectURL(url);
+            resolvePlaybackRef.current = null;
           };
 
-          const handleEnded = () => {
-            cleanup();
-            resolve(true);
-          };
-          const handleError = (e) => {
-            console.error('[Reader] Audio Error:', e);
-            cleanup();
-            resolve(false);
-          };
-          const handleAbort = () => {
-            cleanup();
-            resolve(false);
-          };
+          const handleEnded = () => { cleanup(); resolve(true); };
+          const handleError = (e) => { console.error('[Reader] Audio Error:', e); cleanup(); resolve(false); };
+          const handleAbort = () => { cleanup(); resolve(false); };
 
           signal.addEventListener('abort', handleAbort);
           audioRef.current.addEventListener('ended', handleEnded);
           audioRef.current.addEventListener('error', handleError);
 
           audioRef.current.play().catch(err => {
-            if (err.name !== 'AbortError' && !signal.aborted) {
-              console.error('[Reader] Playback failed:', err);
-            }
-            if (!signal.aborted) {
-              cleanup();
-              resolve(false);
-            }
+            if (err.name !== 'AbortError' && !signal.aborted) console.error('[Reader] Playback failed:', err);
+            if (!signal.aborted) { cleanup(); resolve(false); }
           });
         });
       }
@@ -170,7 +184,10 @@ export function useReader() {
       setIsPlaying(false);
       return false;
     }
-  }, []);
+  }, []); // Remove dependency on playbackRate to avoid recreation
 
-  return { readChunk, stop, isPlaying, currentText };
+  return { 
+    readChunk, stop, pause, resume, setSpeed,
+    isPlaying, isPaused, playbackRate, currentText 
+  };
 }

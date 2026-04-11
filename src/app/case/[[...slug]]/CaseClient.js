@@ -27,7 +27,7 @@ import { usePrompts }          from '@/features/case/hooks/usePrompts';
 import { useLinkHandler }      from '@/features/case/hooks/useLinkHandler';
 
 import { useReader } from '@/features/case/hooks/useReader';
-import { Volume2, VolumeX } from 'lucide-react';
+import { Volume2, VolumeX, Play, Pause, Square, Zap } from 'lucide-react';
 
 const GraphView = dynamic(() => import('../../../features/case/components/GraphView'), { ssr: false });
 
@@ -526,52 +526,94 @@ export default function CaseClient({ serverHydratedData = null }) {
       {(pendingReadConfirm || reader.isPlaying) && (
         <div 
           className="global-reader-bar"
-          onClick={(e) => {
-            e.stopPropagation();
-            if (reader.isPlaying) {
-              reader.stop();
-            } else if (pendingReadConfirm) {
-              pendingReadConfirm();
-              setPendingReadConfirm(null);
-            }
-          }}
-          title={reader.isPlaying ? "Stop Reading" : "Start Reading"}
+          onClick={(e) => e.stopPropagation()}
           style={{
             position: 'fixed',
             top: '20px',
             left: '50%',
             transform: 'translateX(-50%)',
             zIndex: 10000,
-            cursor: 'pointer',
-            background: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(12px)',
+            background: 'rgba(0,0,0,0.7)',
+            backdropFilter: 'blur(16px)',
             borderRadius: '40px',
-            padding: '10px 24px',
+            padding: '8px 24px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '10px',
+            gap: '18px',
             border: '1px solid var(--colorbutton, #FFFACD)',
-            boxShadow: '0 0 20px rgba(255,250,205,0.3)',
-            animation: reader.isPlaying ? 'pulseStop 2s infinite' : 'fadeInDown 0.3s ease-out',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(255,250,205,0.2)',
+            animation: 'fadeInDown 0.3s ease-out',
             color: 'white',
-            fontSize: '14px',
-            fontWeight: '600',
             transition: 'all 0.3s ease'
           }}
         >
-          {reader.isPlaying ? (
-            <VolumeX size={20} color="var(--colorbutton, #FFFACD)" />
+          {pendingReadConfirm ? (
+            <div 
+              className="reader-confirm-btn"
+              onClick={() => {
+                pendingReadConfirm();
+                setPendingReadConfirm(null);
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+            >
+              <Volume2 size={20} color="var(--colorbutton, #FFFACD)" />
+              <span style={{ fontSize: '14px', fontWeight: '600' }}>Click to Start Sonia</span>
+            </div>
           ) : (
-            <Volume2 size={20} color="var(--colorbutton, #FFFACD)" />
+            <>
+              <div 
+                className="reader-ctrl-btn"
+                onClick={() => reader.isPaused ? reader.resume() : reader.pause()}
+                title={reader.isPaused ? "Resume" : "Pause"}
+                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+              >
+                {reader.isPaused ? (
+                  <Play size={20} fill="var(--colorbutton, #FFFACD)" color="var(--colorbutton, #FFFACD)" />
+                ) : (
+                  <Pause size={20} fill="var(--colorbutton, #FFFACD)" color="var(--colorbutton, #FFFACD)" />
+                )}
+              </div>
+
+              <div 
+                className="reader-ctrl-btn"
+                onClick={() => reader.stop()}
+                title="Stop"
+                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+              >
+                <Square size={18} fill="white" color="white" />
+              </div>
+
+              <div 
+                className="reader-speed-toggle"
+                onClick={() => {
+                  const rates = [1.0, 1.25, 1.5, 2.0];
+                  const idx = rates.indexOf(reader.playbackRate);
+                  const next = rates[(idx + 1) % rates.length];
+                  reader.setSpeed(next);
+                }}
+                style={{ 
+                  cursor: 'pointer', 
+                  fontSize: '13px', 
+                  fontWeight: '800', 
+                  color: 'var(--colorbutton, #FFFACD)',
+                  background: 'rgba(255,250,205,0.1)',
+                  padding: '4px 10px',
+                  borderRadius: '12px',
+                  minWidth: '45px',
+                  textAlign: 'center',
+                  userSelect: 'none'
+                }}
+              >
+                {reader.playbackRate}x
+              </div>
+            </>
           )}
-          <span>{reader.isPlaying ? 'Stop Reading' : 'Start Reading'}</span>
+
           <style dangerouslySetInnerHTML={{ __html: `
-            @keyframes pulseStop {
-              0% { box-shadow: 0 0 5px rgba(255,250,205,0.2); }
-              50% { box-shadow: 0 0 25px rgba(255,250,205,0.5); }
-              100% { box-shadow: 0 0 5px rgba(255,250,205,0.2); }
-            }
+            .reader-ctrl-btn { opacity: 0.8; transition: all 0.2s; }
+            .reader-ctrl-btn:hover { opacity: 1; transform: scale(1.1); }
+            .reader-speed-toggle:hover { background: rgba(255,250,205,0.2); }
             @keyframes fadeInDown {
               from { opacity: 0; transform: translate(-50%, -20px); }
               to { opacity: 1; transform: translate(-50%, 0); }
