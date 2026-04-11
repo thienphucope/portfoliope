@@ -1,5 +1,7 @@
 import { useCallback, useRef } from 'react';
 
+const OVERLAY_TABS = new Set(['filetree', 'chat', 'pdf']);
+
 /**
  * Manages tab clicks, overlay toggling, unsaved-change guards,
  * and browser history pop-state restoration.
@@ -32,7 +34,7 @@ export function useTabManager({
 
   const handleTabClick = useCallback(
     async (tab, e) => {
-      if (tab.id === 'filetree' || tab.id === 'chat') {
+      if (OVERLAY_TABS.has(tab.id)) {
         setActiveOverlay((prev) => (prev === tab.id ? null : tab.id));
         return;
       }
@@ -59,7 +61,7 @@ export function useTabManager({
           setIsEditing(false);
         }
 
-        if (activeTab !== 'filetree' && activeTab !== 'chat' && activeTab !== null) {
+        if (activeTab !== null && !OVERLAY_TABS.has(activeTab)) {
           lastActiveNote.current = activeTab;
         }
 
@@ -91,7 +93,7 @@ export function useTabManager({
         setIsEditing(false);
       }
 
-      if (activeTab !== 'filetree' && activeTab !== 'chat' && activeTab !== null) {
+      if (activeTab !== null && !OVERLAY_TABS.has(activeTab)) {
         lastActiveNote.current = activeTab;
       }
 
@@ -136,7 +138,7 @@ export function useTabManager({
         return;
       }
 
-      if (repoKey === 'chat' || repoKey === 'filetree') {
+      if (OVERLAY_TABS.has(repoKey)) {
         setActiveOverlay(repoKey);
         return;
       }

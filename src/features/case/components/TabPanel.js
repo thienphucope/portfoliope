@@ -1,55 +1,30 @@
 import React from 'react';
-import { ArrowLeft } from 'lucide-react';
-import Chat from './Chat';
 import BlockEditor from './BlockEditor';
-import FileSystemItem from './FileSystemItem';
-import FloatingActions from './FloatingActions';
-import dynamic from 'next/dynamic';
-
-/**
- * Tab panel container component for rendering different content types in the case vault,
- * including file tree, chat, static content, and editable notes with block editor.
- */
-
-const GraphView = dynamic(() => import('./GraphView'), { ssr: false });
+import { VolumeX } from 'lucide-react';
 
 export default function TabPanel({
   tab,
   activeTab,
-  setActiveTab,
-  activeOverlay,
-  setActiveOverlay,
   handleTabClick,
   handleLinkClick,
   isEditing,
   handleToggleEditMode,
   saveStatus,
   handleSidebarSave,
-  viewMode,
-  setViewMode,
-  showSearch,
-  setShowSearch,
-  searchTerm,
-  setSearchTerm,
-  filteredTree,
-  loadFile,
   fileName,
-  handleRenameFile,
-  handleDeleteFile,
-  graphFiles,
-  fullContentCache,
-  contentKey,
   content,
   handleSaveFile,
   saveHandlerRef,
   fileRegistry,
   isAtBottom,
   setIsAtBottom,
-  handleAppendComment,
+  reader,
 }) {
-  const isOverlay = tab.id === 'filetree' || tab.id === 'chat';
-  const isOpen = isOverlay ? activeOverlay === tab.id : activeTab === tab.id;
-  const isPersistent = tab.id === 'chat' || tab.id === activeTab;
+  const isOpen = activeTab === tab.id;
+  const { stop, isPlaying } = reader;
+
+  // TabPanel chỉ xử lý các tab editor hoặc static
+  if (tab.type !== 'editor' && tab.type !== 'static') return null;
 
   return (
     <div
@@ -60,87 +35,71 @@ export default function TabPanel({
         <div className="acc-spine">{tab.title}</div>
       </div>
 
-      {(isOpen || isPersistent) && (
+      {isOpen && (
         <div
           className="acc-content"
           onClick={(e) => e.stopPropagation()}
-          style={!isOpen ? { display: 'none' } : {}}
         >
-          <FloatingActions
-            tab={tab}
-            isEditing={isEditing}
-            handleToggleEditMode={handleToggleEditMode}
-            saveStatus={saveStatus}
-            handleSidebarSave={handleSidebarSave}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-            showSearch={showSearch}
-            setShowSearch={setShowSearch}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-          />
+          {isPlaying && (
+            <div 
+              className="global-stop-reader"
+              onClick={stop}
+              title="Stop Reading"
+              style={{
+                position: 'absolute',
+                top: '12px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 1000,
+                cursor: 'pointer',
+                background: 'rgba(0,0,0,0.5)',
+                backdropFilter: 'blur(8px)',
+                borderRadius: '50%',
+                padding: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1px solid var(--colorbutton)',
+                boxShadow: '0 0 15px var(--colorbutton)',
+                animation: 'pulseStop 2s infinite'
+              }}
+            >
+              <VolumeX size={24} color="var(--colorbutton)" />
+              <style dangerouslySetInnerHTML={{ __html: `
+                @keyframes pulseStop {
+                  0% { box-shadow: 0 0 5px var(--colorbutton); }
+                  50% { box-shadow: 0 0 20px var(--colorbutton); }
+                  100% { box-shadow: 0 0 5px var(--colorbutton); }
+                }
+              `}} />
+            </div>
+          )}
 
           <div className="acc-body">
-            {tab.type === 'sidebar' && (
-              <>
-                {viewMode === 'list' ? (
-                  <div className="file-list" style={{ flex: 1, overflowY: 'auto', padding: '10px 20px' }}>
-                    {filteredTree.map((item, i) => (
-                      <FileSystemItem
-                        key={i}
-                        item={item}
-                        onSelectFile={loadFile}
-                        activeFile={fileName}
-                        onRename={handleRenameFile}
-                        onDelete={handleDeleteFile}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div style={{ flex: 1, overflow: 'hidden' }}>
-                    <GraphView
-                      allFiles={graphFiles}
-                      onSelectFile={loadFile}
-                      searchTerm={searchTerm}
-                      activeNodeId={fileName}
-                      fullContentCache={fullContentCache}
-                    />
-                  </div>
-                )}
-              </>
-            )}
-
-            {tab.type === 'chat' && (
-              <div className="chat-container" style={{ flex: 1, overflow: 'hidden' }}>
-                <Chat isEmbedded={true} onLinkClick={handleLinkClick} />
-              </div>
-            )}
-
-            {(tab.type === 'static' || tab.type === 'editor') && (
-              <main className="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
-                <article
-                  className="markdown-container"
-                  style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}
-                  onScroll={(e) => {
-                    const t = e.target;
-                    const bottom = t.scrollHeight - t.scrollTop <= t.clientHeight + 100;
-                    if (bottom !== isAtBottom) setIsAtBottom(bottom);
-                  }}
-                >
-                  <BlockEditor
-                    content={content}
-                    fileName={fileName}
-                    onLinkClick={handleLinkClick}
-                    onSaveFile={handleSaveFile}
-                    isEditing={tab.type === 'editor' ? isEditing : false}
-                    readOnly={tab.type === 'static'}
-                    onToggleEditing={handleToggleEditMode}
-                    onSaveRef={saveHandlerRef}
-                    fileRegistry={fileRegistry.current}
-                  />
-                </article>
-              </main>
-            )}
+            <main className="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+              <article
+                className="markdown-container"
+                style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}
+                onScroll={(e) => {
+                  const t = e.target;
+                  const bottom = t.scrollHeight - t.scrollTop <= t.clientHeight + 100;
+                  if (bottom !== isAtBottom) setIsAtBottom(bottom);
+                }}
+              >
+                <BlockEditor
+                  content={content}
+                  fileName={fileName}
+                  onLinkClick={handleLinkClick}
+                  onSaveFile={handleSaveFile}
+                  isEditing={tab.type === 'editor' ? isEditing : false}
+                  readOnly={tab.type === 'static'}
+                  onToggleEditing={handleToggleEditMode}
+                  onSaveRef={saveHandlerRef}
+                  fileRegistry={fileRegistry.current}
+                  reader={reader}
+                />
+              </article>
+            </main>
           </div>
         </div>
       )}

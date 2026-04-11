@@ -4,6 +4,8 @@ import { useAI } from '../hooks/useAI';
 import { useBlockNavigation } from '../hooks/useBlockNavigation';
 import { mkBlock, cursorToEnd, getLineClass, SLASH_COMMANDS } from '../utils/editor';
 
+import { X, ChevronLeft, ChevronRight, Volume2, VolumeX, FileText, Upload, Plus, Minus } from 'lucide-react';
+
 /**
  * Block-based Markdown editor component with AI assistance, slash commands,
  * and real-time rendering for the case vault application.
@@ -12,7 +14,7 @@ import { mkBlock, cursorToEnd, getLineClass, SLASH_COMMANDS } from '../utils/edi
 
 // ─── TITLE BLOCK (fixed file name header) ────────────────────────────────────
 
-const TitleBlock = ({ fileName }) => {
+const TitleBlock = ({ fileName, reader }) => {
   const titleRef = useRef(null);
   
   const displayTitle = useMemo(() => {
@@ -59,7 +61,7 @@ const TitleBlock = ({ fileName }) => {
   if (!displayTitle) return null;
 
   return (
-    <div className="block-wrapper title-block" style={{ padding: '0 2px', overflow: 'visible', width: '100%', boxSizing: 'border-box' }}>
+    <div className="block-wrapper title-block" style={{ padding: '0 2px', overflow: 'visible', width: '100%', boxSizing: 'border-box', position: 'relative' }}>
       <div className="block-content markdown-content" style={{ textAlign: 'center', overflow: 'visible', width: '100%' }}>
         <h1 
           ref={titleRef} 
@@ -82,8 +84,14 @@ const TitleBlock = ({ fileName }) => {
 
 // ─── BLOCK VIEW (inactive block) ─────────────────────────────────────────────
 
-export const BlockView = ({ block, isEditing, isActive, onActivate, onLinkClick, fileRegistry = {} }) => {
+export const BlockView = ({ block, isEditing, isActive, isReading, onActivate, onLinkClick, onDoubleClick, fileRegistry = {} }) => {
   const divRef = useRef(null);
+
+  useEffect(() => {
+    if (isReading && divRef.current) {
+      divRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [isReading]);
 
   useEffect(() => {
     if (!divRef.current || !window.marked) return;
@@ -126,8 +134,9 @@ export const BlockView = ({ block, isEditing, isActive, onActivate, onLinkClick,
   return (
     <div
       ref={divRef}
-      className={`block-content markdown-content block-view${isEditing ? ' editable-mode' : ''}${isActive ? ' block-view-hidden' : ''}`}
+      className={`block-content markdown-content block-view${isEditing ? ' editable-mode' : ''}${isActive ? ' block-view-hidden' : ''}${isReading ? ' block-reading-highlight' : ''}`}
       onClick={handleClick}
+      onDoubleClick={onDoubleClick}
     />
   );
 };
@@ -541,9 +550,13 @@ export const ActiveBlock = ({ block, onSave, onDeactivate, onCreateAfter, onNavi
 
 // ─── BLOCK EDITOR ─────────────────────────────────────────────────────────────
 
-const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, onToggleEditing, onSaveRef, fileRegistry = {} }) => {
+const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, onToggleEditing, onSaveRef, fileRegistry = {}, reader }) => {
   const [blocks, setBlocks]       = useState([]);
   const [libsReady, setLibsReady] = useState(false);
+  const [readingBlockIndex, setReadingBlockIndex] = useState(-1);
+  const isAutoReadingRef = useRef(false);
+  const readingIndexRef = useRef(-1);
+
   useEffect(() => { ensureLibsLoaded().then(() => setLibsReady(true)); }, []);
 
   const { activeBlockIndex, setActive, cursorPos, setCursorPos, createBlockAfter, navigateBlock } = useBlockNavigation({ blocks, setBlocks });
@@ -555,6 +568,55 @@ const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, on
     const newBlocks = tokens.filter(t => t.type !== 'space').map(t => mkBlock(t.raw.trimEnd(), t.type));
     setBlocks(newBlocks.length > 0 ? newBlocks : [mkBlock('', 'paragraph')]);
   }, [content, fileName, libsReady]);
+
+  const { readChunk, stop, isPlaying } = reader || {};
+
+  const stripMarkdown = useCallback((raw) => {
+    if (!window.marked) return raw;
+    const html = window.marked.parse(raw);
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body.textContent || "";
+  }, []);
+
+  const startReadingFrom = useCallback(async (startIndex) => {
+    if (!readChunk) return;
+    isAutoReadingRef.current = true;
+    readingIndexRef.current = startIndex;
+    setReadingBlockIndex(startIndex);
+    
+    while (isAutoReadingRef.current && readingIndexRef.current < blocks.length) {
+      setReadingBlockIndex(readingIndexRef.current);
+      const block = blocks[readingIndexRef.current];
+      const cleanText = stripMarkdown(block.raw);
+      if (cleanText.trim()) {
+        const success = await readChunk(cleanText);
+        if (!success) {
+          isAutoReadingRef.current = false;
+          setReadingBlockIndex(-1);
+          return;
+        }
+      }
+      readingIndexRef.current += 1;
+    }
+    isAutoReadingRef.current = false;
+    readingIndexRef.current = -1;
+    setReadingBlockIndex(-1);
+  }, [readChunk, blocks, stripMarkdown]);
+
+  const handleStop = useCallback(() => {
+    isAutoReadingRef.current = false;
+    readingIndexRef.current = -1;
+    setReadingBlockIndex(-1);
+    stop?.();
+  }, [stop]);
+
+  useEffect(() => {
+    if (!isPlaying) {
+      isAutoReadingRef.current = false;
+      readingIndexRef.current = -1;
+      setReadingBlockIndex(-1);
+    }
+  }, [isPlaying]);
 
   const saveBlock = useCallback((index, raw) => {
     setBlocks(prev => {
@@ -585,14 +647,18 @@ const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, on
       <TitleBlock fileName={fileName} />
       {blocks.map((block, index) => {
         const isActive = activeBlockIndex === index && isEditing;
+        const isReading = isPlaying && readingBlockIndex === index;
+
         return (
           <div key={block.id} className="block-wrapper">
             <BlockView
               block={block}
               isEditing={isEditing}
               isActive={isActive}
+              isReading={isReading}
               onActivate={() => { setCursorPos('end'); setActive(index); }}
               onLinkClick={onLinkClick}
+              onDoubleClick={() => startReadingFrom(index)}
               fileRegistry={fileRegistry}
             />
             {isActive && (
@@ -608,6 +674,16 @@ const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, on
           </div>
         );
       })}
+      <style jsx global>{`
+        .block-reading-highlight {
+          background-color: var(--colorlink) !important;
+          color: var(--background) !important;
+          border-radius: 4px;
+          transition: background-color 0.3s ease, color 0.3s ease;
+          box-shadow: 0 0 12px var(--colorlink);
+          padding: 4px 8px;
+        }
+      `}</style>
     </div>
   );
 };

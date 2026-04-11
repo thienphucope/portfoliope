@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, ArrowLeft, Pencil, Folder, MessageSquare, X, ChevronRight, ChevronLeft, Save, Eye, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Plus, Pencil, Folder, MessageSquare, X, ChevronRight, ChevronLeft, Save, Eye, Loader2, CheckCircle2, AlertCircle, FileText } from 'lucide-react';
 
 /**
  * FunctionBall component (formerly MobileFooter) providing navigation actions,
@@ -115,6 +115,13 @@ export default function FunctionBall({
           <div className={`footer-item ${activeOverlay === 'filetree' ? 'active-action' : ''}`}>
             <span className="footer-item-label">File Tree</span>
             <Folder size={20} />
+          </div>
+        </div>
+
+        <div className="footer-item-wrapper" onClick={() => { setIsFooterExpanded(false); setActiveOverlay(activeOverlay === 'pdf' ? null : 'pdf'); }}>
+          <div className={`footer-item ${activeOverlay === 'pdf' ? 'active-action' : ''}`}>
+            <span className="footer-item-label">PDF Reader</span>
+            <FileText size={20} />
           </div>
         </div>
 

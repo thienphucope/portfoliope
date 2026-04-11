@@ -1,16 +1,15 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import Chat from '../../../features/case/components/Chat';
 import BlockEditor from '../../../features/case/components/BlockEditor';
-import FileSystemItem from '../../../features/case/components/FileSystemItem';
 import VaultStyles from '../../../features/case/styles/VaultStyles';
 import StickySpine from '../../../features/case/components/StickySpine';
 import FunctionBall from '../../../features/case/components/FunctionBall';
 import PromptOverlays from '../../../features/case/components/PromptOverlays';
-import FloatingActions from '../../../features/case/components/FloatingActions';
-import CommentTrigger from '../../../features/case/components/CommentTrigger';
 import TabPanel from '../../../features/case/components/TabPanel';
+import FileTreeOverlay from '../../../features/case/components/FileTreeOverlay';
+import ChatOverlay from '../../../features/case/components/ChatOverlay';
+import PDFOverlay from '../../../features/case/components/PDFOverlay';
 import dynamic from 'next/dynamic';
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
@@ -27,18 +26,22 @@ import { useBeforeUnload }     from '@/features/case/hooks/useBeforeUnload';
 import { usePrompts }          from '@/features/case/hooks/usePrompts';
 import { useLinkHandler }      from '@/features/case/hooks/useLinkHandler';
 
+import { useReader } from '@/features/case/hooks/useReader';
+
 const GraphView = dynamic(() => import('../../../features/case/components/GraphView'), { ssr: false });
 
 // ─── MAIN VAULT ───────────────────────────────────────────────────────────────
 
 export default function CaseClient({ serverHydratedData = null }) {
+  const reader = useReader();
+
   // ── Core content state ──────────────────────────────────────────────────────
   const [content,      setContent]      = useState('');
   const [fileName,     setFileName]     = useState('');
   const [contentKey,   setContentKey]   = useState(0);
 
   // ── UI state ────────────────────────────────────────────────────────────────
-  const [activeOverlay,      setActiveOverlay]      = useState(null); // 'filetree' | 'chat' | null
+  const [activeOverlay,      setActiveOverlay]      = useState(null); // 'filetree' | 'chat' | 'pdf' | null
   const [showHeader,         setShowHeader]          = useState(true);
   const [showFunctionBall,   setShowFunctionBall]    = useState(true);
   const [isFooterExpanded,   setIsFooterExpanded]    = useState(false);
@@ -229,6 +232,7 @@ export default function CaseClient({ serverHydratedData = null }) {
     const base = [
       { id: 'filetree', title: 'File Tree', type: 'sidebar' },
       { id: 'chat',     title: 'AI Chat Vault', type: 'chat' },
+      { id: 'pdf',      title: 'PDF Reader', type: 'pdf' },
     ];
 
     if (fileTree.length === 0) {
@@ -308,7 +312,7 @@ export default function CaseClient({ serverHydratedData = null }) {
       const cleanTarget  = targetSlug.replace(/\.md$/, '');
       const forceTab     = isCaseRoot
         ? 'filetree'
-        : ((cleanTarget === 'chat' || cleanTarget === 'filetree') ? cleanTarget : null);
+        : ((cleanTarget === 'chat' || cleanTarget === 'filetree' || cleanTarget === 'pdf') ? cleanTarget : null);
       const lowerTarget  = cleanTarget.toLowerCase();
       const actualRepo   = repoPathMap[lowerTarget] || repoPathMap[lowerTarget + '.md'];
       const githubUrl    = fileRegistry.current[lowerTarget] || fileRegistry.current[lowerTarget + '.md'];
@@ -408,6 +412,7 @@ export default function CaseClient({ serverHydratedData = null }) {
         activeTab || activeOverlay      ? 'has-active'      : '',
         activeOverlay === 'filetree'    ? 'filetree-active' : '',
         activeOverlay === 'chat'        ? 'chat-active'     : '',
+        activeOverlay === 'pdf'         ? 'pdf-active'      : '',
       ].join(' ')}
       ref={appShellRef}
     >
@@ -447,41 +452,54 @@ export default function CaseClient({ serverHydratedData = null }) {
         setActiveTab={setActiveTab}
       />
 
-      {tabs.map(tab => (
+      <FileTreeOverlay
+        isOpen={activeOverlay === 'filetree'}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        showSearch={showSearch}
+        setShowSearch={setShowSearch}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        filteredTree={filteredTree}
+        loadFile={loadFile}
+        fileName={fileName}
+        handleRenameFile={handleRenameFile}
+        handleDeleteFile={handleDeleteFile}
+        graphFiles={graphFiles}
+        fullContentCache={fullContentCache}
+      />
+
+      <ChatOverlay
+        isOpen={activeOverlay === 'chat'}
+        handleLinkClick={handleLinkClick}
+        reader={reader}
+      />
+
+      <PDFOverlay
+        isOpen={activeOverlay === 'pdf'}
+        setActiveOverlay={setActiveOverlay}
+        reader={reader}
+      />
+
+      {tabs.filter(t => t.type === 'editor' || t.type === 'static').map(tab => (
         <TabPanel
           key={tab.id}
           tab={tab}
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          activeOverlay={activeOverlay}
-          setActiveOverlay={setActiveOverlay}
           handleTabClick={handleTabClick}
           handleLinkClick={handleLinkClick}
           isEditing={isEditing}
           handleToggleEditMode={handleToggleEditMode}
           saveStatus={saveStatus}
           handleSidebarSave={handleSidebarSave}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          showSearch={showSearch}
-          setShowSearch={setShowSearch}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          filteredTree={filteredTree}
-          loadFile={loadFile}
           fileName={fileName}
-          handleRenameFile={handleRenameFile}
-          handleDeleteFile={handleDeleteFile}
-          graphFiles={graphFiles}
-          fullContentCache={fullContentCache}
-          contentKey={contentKey}
           content={content}
           handleSaveFile={handleSaveFile}
           saveHandlerRef={saveHandlerRef}
           fileRegistry={fileRegistry}
           isAtBottom={isAtBottom}
           setIsAtBottom={setIsAtBottom}
-          handleAppendComment={handleAppendComment}
+          reader={reader}
         />
       ))}
 

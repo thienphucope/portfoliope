@@ -1,5 +1,7 @@
 import { useRef, useEffect, useCallback } from 'react';
 
+const OVERLAY_TABS = new Set(['filetree', 'chat', 'pdf']);
+
 /**
  * Handles all custom scroll logic for the accordion app shell:
  * - Mouse-wheel → horizontal scroll of the app shell
@@ -51,7 +53,7 @@ export function useScrollBehavior({ appShellRef, tabs, setShowHeader, setShowFun
       if (tabIndex === -1) return;
 
       // Overlay tabs don't trigger horizontal scroll
-      if (tabId === 'filetree' || tabId === 'chat') return;
+      if (OVERLAY_TABS.has(tabId)) return;
 
       const isMobileVertical =
         (window.innerWidth <= 1024 && window.innerHeight > window.innerWidth) ||
@@ -69,7 +71,7 @@ export function useScrollBehavior({ appShellRef, tabs, setShowHeader, setShowFun
       const spineWidth         = 150;
       const visibleClosedBefore = Math.max(0, tabIndex - 2);
       const tabPosition        = 150 + visibleClosedBefore * spineWidth;
-      const scrollTarget       = Math.max(0, tabPosition - 225);
+      const scrollTarget       = Math.max(0, tabPosition - 380);
 
       const startScroll = appShellRef.current.scrollLeft;
       const distance    = scrollTarget - startScroll;
