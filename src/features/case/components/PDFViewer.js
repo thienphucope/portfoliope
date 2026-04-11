@@ -9,7 +9,7 @@ import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 
 // Internal component for lazy loading each page
-const LazyPage = ({ pageNumber, width, height, fitMode, scale, onPageLoadSuccess, onVisible, rootRef }) => {
+const LazyPage = ({ pageNumber, width, height, fitMode, scale, pageAspectRatio, onPageLoadSuccess, rootRef }) => {
   const [isVisible, setIsVisible] = useState(false);
   const containerRef = useRef(null);
 
@@ -21,20 +21,19 @@ const LazyPage = ({ pageNumber, width, height, fitMode, scale, onPageLoadSuccess
         if (entry.isIntersecting) {
           setIsVisible(true);
         }
-        if (entry.intersectionRatio > 0.1) {
-          onVisible(pageNumber);
-        }
       },
       { 
         root: rootRef.current,
-        rootMargin: '400px',
-        threshold: [0, 0.1, 0.5]
+        rootMargin: '1000px', // Pre-load buffer
+        threshold: [0, 0.1]
       }
     );
 
     if (containerRef.current) observer.observe(containerRef.current);
     return () => observer.disconnect();
-  }, [pageNumber, onVisible, rootRef]);
+  }, [pageNumber, rootRef]);
+
+  const calculatedHeight = fitMode === 'height' ? height : (width * pageAspectRatio);
 
   return (
     <div 
@@ -42,13 +41,14 @@ const LazyPage = ({ pageNumber, width, height, fitMode, scale, onPageLoadSuccess
       className="pdf-page-wrapper" 
       data-page-number={pageNumber}
       style={{ 
-        minHeight: isVisible ? 'auto' : '200px',
+        minHeight: calculatedHeight || '200px',
         width: '100%',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        marginBottom: '0px', // Đưa padding/margin về 0
-        position: 'relative'
+        marginBottom: '10px',
+        position: 'relative',
+        background: '#1a1a1a'
       }}
     >
       {isVisible ? (
@@ -61,9 +61,15 @@ const LazyPage = ({ pageNumber, width, height, fitMode, scale, onPageLoadSuccess
           onLoadSuccess={(page) => onPageLoadSuccess(page, pageNumber)}
           renderTextLayer
           renderAnnotationLayer
+          loading={
+            <div className="pdf-page-loading" style={{ height: calculatedHeight }}>
+              <div className="pdf-loading-spinner" />
+              <span>Page {pageNumber}</span>
+            </div>
+          }
         />
       ) : (
-        <div className="pdf-page-loading" style={{ height: fitMode === 'height' ? height : '200px' }}>
+        <div className="pdf-page-loading" style={{ height: calculatedHeight }}>
           <div className="pdf-loading-spinner" />
           <span>Page {pageNumber}</span>
         </div>
@@ -74,16 +80,18 @@ const LazyPage = ({ pageNumber, width, height, fitMode, scale, onPageLoadSuccess
 
 export default function PDFViewer({ onClose, reader, isOpen }) {
   const [file, setFile] = useState(null);
+  const [pdfDoc, setPdfDoc] = useState(null);
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [pageInput, setPageInput] = useState('1');
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [scale, setScale] = useState(1.0);
-  const [containerWidth, setContainerWidth] = useState(null);
-  const [containerHeight, setContainerHeight] = useState(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(0);
   const [currentBlockText, setCurrentBlockText] = useState("");
   const [pageAspectRatio, setPageAspectRatio] = useState(1.414); // Mặc định là A4
   const [fitMode, setFitMode] = useState('width'); // 'width' | 'height'
+  const [bodyEl, setBodyEl] = useState(null);
 
   const { readChunk, stop, isPlaying, currentText, triggerRead } = reader || {};
 
@@ -96,19 +104,70 @@ export default function PDFViewer({ onClose, reader, isOpen }) {
   const fileInputRef = useRef(null);
   const bodyRef = useRef(null);
 
+  // Set body element and initial size
+  const onBodyRef = useCallback((node) => {
+    if (node) {
+      bodyRef.current = node;
+      setBodyEl(node);
+      setContainerWidth(node.clientWidth);
+      setContainerHeight(node.clientHeight);
+    }
+  }, []);
+
+  // Use ResizeObserver for more robust sizing
+  useEffect(() => {
+    if (!bodyEl) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0) setContainerWidth(width);
+        if (height > 0) setContainerHeight(height);
+      }
+    });
+
+    resizeObserver.observe(bodyEl);
+    return () => resizeObserver.disconnect();
+  }, [bodyEl]);
+
+  // Handle linear page tracking via scroll
+  useEffect(() => {
+    if (!bodyEl || !numPages || !containerWidth || !containerHeight) return;
+
+    const handleScroll = () => {
+      // Don't sync state while jumping/auto-reading to avoid jitter
+      if (isJumpingRef.current || isAutoReadingRef.current) return;
+      
+      const scrollTop = bodyEl.scrollTop;
+      const pageHeight = fitMode === 'height' ? containerHeight : (containerWidth * pageAspectRatio);
+      const totalPageHeight = pageHeight + 10; // 10 is marginBottom
+      
+      // Calculate which page is mostly in view (the rounding + 1 logic)
+      const newPage = Math.round(scrollTop / totalPageHeight) + 1;
+      const clampedPage = Math.max(1, Math.min(numPages, newPage));
+      
+      if (clampedPage !== pageNumberRef.current) {
+        setPageNumber(clampedPage);
+      }
+    };
+
+    bodyEl.addEventListener('scroll', handleScroll, { passive: true });
+    return () => bodyEl.removeEventListener('scroll', handleScroll);
+  }, [bodyEl, numPages, fitMode, containerWidth, containerHeight, pageAspectRatio]);
+
   // Highlight and Scroll logic
   useEffect(() => {
-    if (!bodyRef.current) return;
+    if (!bodyEl) return;
 
     // Luôn xóa highlight cũ trước
-    const prevHighlights = bodyRef.current.querySelectorAll('.pdf-text-highlight');
+    const prevHighlights = bodyEl.querySelectorAll('.pdf-text-highlight');
     prevHighlights.forEach(el => el.classList.remove('pdf-text-highlight'));
 
     const textToHighlight = currentBlockText || currentText;
     if (!textToHighlight || !isPlaying) return;
 
     // Chỉ tìm trong trang hiện tại để tránh nhảy lung tung
-    const currentPage = bodyRef.current.querySelector(`[data-page-number="${pageNumber}"]`);
+    const currentPage = bodyEl.querySelector(`[data-page-number="${pageNumber}"]`);
     if (!currentPage) return;
 
     const spans = currentPage.querySelectorAll('.react-pdf__Page__textContent span');
@@ -127,15 +186,38 @@ export default function PDFViewer({ onClose, reader, isOpen }) {
     if (firstMatch) {
       // firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }, [currentText, currentBlockText, isPlaying, pageNumber]);
+  }, [currentText, currentBlockText, isPlaying, pageNumber, bodyEl]);
 
   useEffect(() => {
-    const el = bodyRef.current;
-    if (!el) return;
+    if (!bodyEl) return;
     const handleWheelNative = (e) => e.stopPropagation();
-    el.addEventListener('wheel', handleWheelNative, { passive: false });
-    return () => el.removeEventListener('wheel', handleWheelNative);
-  }, []);
+    bodyEl.addEventListener('wheel', handleWheelNative, { passive: false });
+    return () => bodyEl.removeEventListener('wheel', handleWheelNative);
+  }, [bodyEl]);
+
+  const goToPage = useCallback((num, behavior = 'smooth') => {
+    const target = bodyEl?.querySelector(`[data-page-number="${num}"]`);
+    if (target && bodyEl) {
+      isJumpingRef.current = true;
+      const top = target.offsetTop;
+      bodyEl.scrollTo({ top, behavior });
+      
+      // Sau khi nhảy xong thì mới cho phép đồng bộ lại pageNumber
+      const delay = behavior === 'auto' ? 100 : 800;
+      setTimeout(() => {
+        isJumpingRef.current = false;
+      }, delay);
+    }
+  }, [bodyEl]);
+
+  // Handle internal links in PDF (Official react-pdf way)
+  const handleItemClick = useCallback(({ pageNumber: targetPageNumber }) => {
+    if (targetPageNumber) {
+      const diff = Math.abs(targetPageNumber - pageNumberRef.current);
+      goToPage(targetPageNumber, diff > 5 ? 'auto' : 'smooth');
+      setPageNumber(targetPageNumber);
+    }
+  }, [goToPage]);
 
   const handlePageIndicatorClick = (p) => {
     if (p === pageNumber) return;
@@ -145,21 +227,6 @@ export default function PDFViewer({ onClose, reader, isOpen }) {
     setPageNumber(p);
   };
 
-  const goToPage = useCallback((num, behavior = 'smooth') => {
-    const target = bodyRef.current?.querySelector(`[data-page-number="${num}"]`);
-    if (target && bodyRef.current) {
-      isJumpingRef.current = true;
-      const top = target.offsetTop;
-      bodyRef.current.scrollTo({ top, behavior });
-      
-      // Sau khi nhảy xong thì mới cho phép đồng bộ lại pageNumber
-      const delay = behavior === 'auto' ? 100 : 800;
-      setTimeout(() => {
-        isJumpingRef.current = false;
-      }, delay);
-    }
-  }, []);
-
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e) => {
@@ -168,22 +235,6 @@ export default function PDFViewer({ onClose, reader, isOpen }) {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose, isOpen]);
-
-  useEffect(() => {
-    const updateSize = () => {
-      if (bodyRef.current) {
-        setContainerWidth(bodyRef.current.clientWidth);
-        setContainerHeight(bodyRef.current.clientHeight);
-      }
-    };
-    updateSize();
-    const timer = setTimeout(updateSize, 150);
-    window.addEventListener('resize', updateSize);
-    return () => {
-      window.removeEventListener('resize', updateSize);
-      clearTimeout(timer);
-    };
-  }, []);
 
   useEffect(() => {
     pageNumberRef.current = pageNumber;
@@ -206,7 +257,9 @@ export default function PDFViewer({ onClose, reader, isOpen }) {
 
   useEffect(() => () => stop?.(), [stop]);
 
-  const onDocumentLoadSuccess = ({ numPages }) => {
+  const onDocumentLoadSuccess = async (pdf) => {
+    const { numPages } = pdf;
+    setPdfDoc(pdf);
     setNumPages(numPages);
     setPageNumber(1);
     pageNumberRef.current = 1;
@@ -215,18 +268,24 @@ export default function PDFViewer({ onClose, reader, isOpen }) {
     isAutoReadingRef.current = false;
     textContentRef.current = {};
     setCurrentBlockText("");
-    if (bodyRef.current) {
-      setContainerWidth(bodyRef.current.clientWidth);
-      setContainerHeight(bodyRef.current.clientHeight);
+    
+    try {
+      const firstPage = await pdf.getPage(1);
+      if (firstPage) {
+        const viewport = firstPage.getViewport({ scale: 1 });
+        setPageAspectRatio(viewport.height / viewport.width);
+      }
+    } catch (err) {
+      console.error("Error getting first page aspect ratio:", err);
+    }
+
+    if (bodyEl) {
+      setContainerWidth(bodyEl.clientWidth);
+      setContainerHeight(bodyEl.clientHeight);
     }
   };
 
   const onPageLoadSuccess = async (page, pNum) => {
-    // Cập nhật tỷ lệ khung hình từ trang thực tế
-    if (page.width && page.height) {
-      setPageAspectRatio(page.height / page.width);
-    }
-
     const textContent = await page.getTextContent();
     textContentRef.current[pNum] = textContent.items
       .map((item) => item.str)
@@ -331,6 +390,7 @@ export default function PDFViewer({ onClose, reader, isOpen }) {
     if (selectedFile && selectedFile.type === 'application/pdf') {
       stop?.();
       setFile(selectedFile);
+      setPdfDoc(null);
       setPageNumber(1);
       setNumPages(null);
     }
@@ -370,7 +430,7 @@ export default function PDFViewer({ onClose, reader, isOpen }) {
   return (
     <div className="pdf-viewer-overlay">
       <div
-        ref={bodyRef}
+        ref={onBodyRef}
         className="pdf-body"
         onDoubleClick={handleDoubleClick}
         onWheel={(e) => e.stopPropagation()}
@@ -388,50 +448,23 @@ export default function PDFViewer({ onClose, reader, isOpen }) {
           <Document 
             file={file} 
             onLoadSuccess={onDocumentLoadSuccess} 
+            onItemClick={handleItemClick}
             loading={<div className="pdf-loading">Opening your document...</div>} 
             className={`pdf-document fit-${fitMode}`}
           >
-            {Array.from(new Array(numPages), (el, index) => {
-              const p = index + 1;
-              const isNeighbor = Math.abs(p - pageNumber) <= 5;
-              
-              if (isNeighbor) {
-                return (
-                  <LazyPage
-                    key={`page_${p}`}
-                    pageNumber={p}
-                    width={containerWidth} // Không trừ 40 nữa
-                    height={containerHeight} // Không trừ 60 nữa
-                    fitMode={fitMode}
-                    scale={scale}
-                    onPageLoadSuccess={onPageLoadSuccess}
-                    onVisible={(num) => {
-                      if (!isJumpingRef.current && !isAutoReadingRef.current) {
-                        setPageNumber(num);
-                      }
-                    }}
-                    rootRef={bodyRef}
-                  />
-                );
-              } else {
-                const calculatedHeight = fitMode === 'height' 
-                  ? containerHeight 
-                  : (containerWidth * pageAspectRatio);
-                
-                return (
-                  <div 
-                    key={`placeholder_${p}`} 
-                    className="pdf-page-wrapper placeholder" 
-                    data-page-number={p}
-                    style={{ 
-                      height: calculatedHeight || '800px',
-                      width: '100%',
-                      marginBottom: '0px'
-                    }}
-                  />
-                );
-              }
-            })}
+            {containerWidth > 0 && Array.from(new Array(numPages), (el, index) => (
+              <LazyPage
+                key={`page_${index + 1}`}
+                pageNumber={index + 1}
+                width={containerWidth}
+                height={containerHeight}
+                fitMode={fitMode}
+                scale={scale}
+                pageAspectRatio={pageAspectRatio}
+                onPageLoadSuccess={onPageLoadSuccess}
+                rootRef={bodyRef}
+              />
+            ))}
           </Document>
         )}
       </div>
