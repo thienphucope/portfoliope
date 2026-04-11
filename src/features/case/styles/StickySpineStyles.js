@@ -110,6 +110,7 @@ export default function StickySpineStyles() {
           isolation: isolate;
         }
 
+        /* Hide exit button on PC */
         .mobile-exit-btn {
           display: none;
         }

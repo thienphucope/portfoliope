@@ -14,7 +14,7 @@ import { X, ChevronLeft, ChevronRight, Volume2, VolumeX, FileText, Upload, Plus,
 
 // ─── TITLE BLOCK (fixed file name header) ────────────────────────────────────
 
-const TitleBlock = ({ fileName, reader }) => {
+const TitleBlock = ({ fileName, reader, onDoubleClick, isReading }) => {
   const titleRef = useRef(null);
   
   const displayTitle = useMemo(() => {
@@ -32,25 +32,11 @@ const TitleBlock = ({ fileName, reader }) => {
   useEffect(() => {
     const el = titleRef.current;
     if (!el) return;
-
-    // Initial calculation
     updateSize();
-
-    // Re-calculate on window resize
     window.addEventListener('resize', updateSize);
-
-    // Re-calculate when parent container size changes (e.g. sidebar toggle)
-    const observer = new ResizeObserver(() => {
-      updateSize();
-    });
-
-    if (el.parentElement) {
-      observer.observe(el.parentElement);
-    }
-
-    // Sometimes fonts load late
+    const observer = new ResizeObserver(() => updateSize());
+    if (el.parentElement) observer.observe(el.parentElement);
     const fontTimer = setTimeout(updateSize, 500);
-    
     return () => {
       window.removeEventListener('resize', updateSize);
       observer.disconnect();
@@ -61,7 +47,11 @@ const TitleBlock = ({ fileName, reader }) => {
   if (!displayTitle) return null;
 
   return (
-    <div className="block-wrapper title-block" style={{ padding: '0 2px', overflow: 'visible', width: '100%', boxSizing: 'border-box', position: 'relative' }}>
+    <div 
+      className={`block-wrapper title-block ${isReading ? 'block-reading-highlight' : ''}`} 
+      style={{ padding: '0 2px', overflow: 'visible', width: '100%', boxSizing: 'border-box', position: 'relative' }}
+      onDoubleClick={(e) => reader?.triggerRead ? reader.triggerRead(e, () => onDoubleClick()) : onDoubleClick()}
+    >
       <div className="block-content markdown-content" style={{ textAlign: 'center', overflow: 'visible', width: '100%' }}>
         <h1 
           ref={titleRef} 
@@ -86,12 +76,6 @@ const TitleBlock = ({ fileName, reader }) => {
 
 export const BlockView = ({ block, isEditing, isActive, isReading, onActivate, onLinkClick, onDoubleClick, fileRegistry = {} }) => {
   const divRef = useRef(null);
-
-  useEffect(() => {
-    if (isReading && divRef.current) {
-      divRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, [isReading]);
 
   useEffect(() => {
     if (!divRef.current || !window.marked) return;
@@ -578,22 +562,47 @@ const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, on
     return doc.body.textContent || "";
   }, []);
 
+  const handleStop = useCallback(() => {
+    isAutoReadingRef.current = false;
+    readingIndexRef.current = -1;
+    setReadingBlockIndex(-1);
+    stop?.();
+  }, [stop]);
+
   const startReadingFrom = useCallback(async (startIndex) => {
     if (!readChunk) return;
+    
+    handleStop();
+    await new Promise(r => setTimeout(r, 100));
+
     isAutoReadingRef.current = true;
     readingIndexRef.current = startIndex;
     setReadingBlockIndex(startIndex);
     
+    // Reading loop
     while (isAutoReadingRef.current && readingIndexRef.current < blocks.length) {
       setReadingBlockIndex(readingIndexRef.current);
-      const block = blocks[readingIndexRef.current];
-      const cleanText = stripMarkdown(block.raw);
-      if (cleanText.trim()) {
-        const success = await readChunk(cleanText);
-        if (!success) {
-          isAutoReadingRef.current = false;
-          setReadingBlockIndex(-1);
-          return;
+      
+      let textToRead = "";
+      if (readingIndexRef.current === -1) {
+        // Special case for title
+        textToRead = fileName.split('/').pop().replace(/\.md$/, '');
+      } else {
+        const block = blocks[readingIndexRef.current];
+        textToRead = stripMarkdown(block.raw);
+      }
+
+      if (textToRead.trim()) {
+        // Split by sentences for smoother delivery while keeping block highlight
+        const sentences = textToRead.match(/[^.!?。！？]+[.!?。！？]?/g) || [textToRead];
+        for (const sentence of sentences) {
+          if (!isAutoReadingRef.current) break;
+          const success = await readChunk(sentence.trim(), undefined, true);
+          if (!success) {
+            isAutoReadingRef.current = false;
+            setReadingBlockIndex(-1);
+            return;
+          }
         }
       }
       readingIndexRef.current += 1;
@@ -601,14 +610,7 @@ const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, on
     isAutoReadingRef.current = false;
     readingIndexRef.current = -1;
     setReadingBlockIndex(-1);
-  }, [readChunk, blocks, stripMarkdown]);
-
-  const handleStop = useCallback(() => {
-    isAutoReadingRef.current = false;
-    readingIndexRef.current = -1;
-    setReadingBlockIndex(-1);
-    stop?.();
-  }, [stop]);
+  }, [readChunk, blocks, stripMarkdown, handleStop, fileName]);
 
   useEffect(() => {
     if (!isPlaying) {
@@ -644,7 +646,7 @@ const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, on
 
   return (
     <div className="block-editor">
-      <TitleBlock fileName={fileName} />
+      <TitleBlock fileName={fileName} reader={reader} onDoubleClick={() => startReadingFrom(-1)} isReading={isPlaying && readingBlockIndex === -1} />
       {blocks.map((block, index) => {
         const isActive = activeBlockIndex === index && isEditing;
         const isReading = isPlaying && readingBlockIndex === index;
@@ -658,7 +660,7 @@ const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, on
               isReading={isReading}
               onActivate={() => { setCursorPos('end'); setActive(index); }}
               onLinkClick={onLinkClick}
-              onDoubleClick={() => startReadingFrom(index)}
+              onDoubleClick={(e) => reader?.triggerRead ? reader.triggerRead(e, () => startReadingFrom(index)) : startReadingFrom(index)}
               fileRegistry={fileRegistry}
             />
             {isActive && (
@@ -677,11 +679,14 @@ const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, on
       <style jsx global>{`
         .block-reading-highlight {
           background-color: var(--colorlink) !important;
-          color: var(--background) !important;
+          color: var(--colortab) !important;
           border-radius: 4px;
           transition: background-color 0.3s ease, color 0.3s ease;
           box-shadow: 0 0 12px var(--colorlink);
           padding: 4px 8px;
+        }
+        .block-reading-highlight :is(h1, h2, h3, h4, h5, h6, p, span, li, a, code, div) {
+          color: var(--colortab) !important;
         }
       `}</style>
     </div>

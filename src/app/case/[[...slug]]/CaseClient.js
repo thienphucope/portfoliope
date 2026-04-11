@@ -27,6 +27,7 @@ import { usePrompts }          from '@/features/case/hooks/usePrompts';
 import { useLinkHandler }      from '@/features/case/hooks/useLinkHandler';
 
 import { useReader } from '@/features/case/hooks/useReader';
+import { Volume2, VolumeX } from 'lucide-react';
 
 const GraphView = dynamic(() => import('../../../features/case/components/GraphView'), { ssr: false });
 
@@ -34,6 +35,25 @@ const GraphView = dynamic(() => import('../../../features/case/components/GraphV
 
 export default function CaseClient({ serverHydratedData = null }) {
   const reader = useReader();
+  const [pendingReadConfirm, setPendingReadConfirm] = useState(null); // onConfirm function
+
+  const triggerRead = useCallback((e, onConfirm) => {
+    // Nếu đang chơi rồi thì thôi
+    if (reader.isPlaying) return;
+
+    setPendingReadConfirm(() => onConfirm);
+
+    // Tự lặn sau 5s nếu không click
+    setTimeout(() => {
+      setPendingReadConfirm(prev => (prev === onConfirm ? null : prev));
+    }, 5000);
+  }, [reader.isPlaying]);
+
+  // Extend reader object with our new trigger
+  const augmentedReader = useMemo(() => ({
+    ...reader,
+    triggerRead
+  }), [reader, triggerRead]);
 
   // ── Core content state ──────────────────────────────────────────────────────
   const [content,      setContent]      = useState('');
@@ -472,13 +492,13 @@ export default function CaseClient({ serverHydratedData = null }) {
       <ChatOverlay
         isOpen={activeOverlay === 'chat'}
         handleLinkClick={handleLinkClick}
-        reader={reader}
+        reader={augmentedReader}
       />
 
       <PDFOverlay
         isOpen={activeOverlay === 'pdf'}
         setActiveOverlay={setActiveOverlay}
-        reader={reader}
+        reader={augmentedReader}
       />
 
       {tabs.filter(t => t.type === 'editor' || t.type === 'static').map(tab => (
@@ -499,9 +519,66 @@ export default function CaseClient({ serverHydratedData = null }) {
           fileRegistry={fileRegistry}
           isAtBottom={isAtBottom}
           setIsAtBottom={setIsAtBottom}
-          reader={reader}
+          reader={augmentedReader}
         />
       ))}
+
+      {(pendingReadConfirm || reader.isPlaying) && (
+        <div 
+          className="global-reader-bar"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (reader.isPlaying) {
+              reader.stop();
+            } else if (pendingReadConfirm) {
+              pendingReadConfirm();
+              setPendingReadConfirm(null);
+            }
+          }}
+          title={reader.isPlaying ? "Stop Reading" : "Start Reading"}
+          style={{
+            position: 'fixed',
+            top: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 10000,
+            cursor: 'pointer',
+            background: 'rgba(0,0,0,0.6)',
+            backdropFilter: 'blur(12px)',
+            borderRadius: '40px',
+            padding: '10px 24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            border: '1px solid var(--colorbutton, #FFFACD)',
+            boxShadow: '0 0 20px rgba(255,250,205,0.3)',
+            animation: reader.isPlaying ? 'pulseStop 2s infinite' : 'fadeInDown 0.3s ease-out',
+            color: 'white',
+            fontSize: '14px',
+            fontWeight: '600',
+            transition: 'all 0.3s ease'
+          }}
+        >
+          {reader.isPlaying ? (
+            <VolumeX size={20} color="var(--colorbutton, #FFFACD)" />
+          ) : (
+            <Volume2 size={20} color="var(--colorbutton, #FFFACD)" />
+          )}
+          <span>{reader.isPlaying ? 'Stop Reading' : 'Start Reading'}</span>
+          <style dangerouslySetInnerHTML={{ __html: `
+            @keyframes pulseStop {
+              0% { box-shadow: 0 0 5px rgba(255,250,205,0.2); }
+              50% { box-shadow: 0 0 25px rgba(255,250,205,0.5); }
+              100% { box-shadow: 0 0 5px rgba(255,250,205,0.2); }
+            }
+            @keyframes fadeInDown {
+              from { opacity: 0; transform: translate(-50%, -20px); }
+              to { opacity: 1; transform: translate(-50%, 0); }
+            }
+          `}} />
+        </div>
+      )}
 
       <PromptOverlays
         passPrompt={passPrompt}       setPassPrompt={setPassPrompt}

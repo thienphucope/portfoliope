@@ -61,6 +61,15 @@ export default function EditorStyles() {
           box-shadow: none;
         }
 
+        .block-reading-highlight {
+          background-color: var(--colorlink) !important;
+          color: var(--background) !important;
+          border-radius: 4px;
+          transition: background-color 0.3s ease, color 0.3s ease;
+          box-shadow: 0 0 12px var(--colorlink);
+          padding: 4px 8px;
+        }
+
         /* ── TEXTAREA EDITORS ──────────────────────────────────────────────── */
 
         .raw-text-editor {

@@ -5,13 +5,20 @@ export function useReader() {
   const [currentText, setCurrentText] = useState('');
   const audioRef = useRef(null);
   const accumulatedTextRef = useRef('');
+  const abortControllerRef = useRef(null);
+  const lastLangRef = useRef('en');
 
   const stop = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
     }
     accumulatedTextRef.current = '';
+    lastLangRef.current = 'en';
     setIsPlaying(false);
     setCurrentText('');
   }, []);
@@ -25,9 +32,9 @@ export function useReader() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isPlaying, stop]);
 
-  const readChunk = useCallback(async (text, voice = 'en-GB-SoniaNeural') => {
+  const readChunk = useCallback(async (text, voice, immediate = true) => {
     if (!text) return true;
-    
+
     let cleanText = text.trim();
     if (!cleanText || /^http|www\.|^\//i.test(cleanText)) return true;
 
@@ -36,76 +43,128 @@ export function useReader() {
     setIsPlaying(true);
 
     const endsWithTerminator = /[.!?。！？]$/.test(cleanText);
-    if (!endsWithTerminator) {
+    if (!immediate && !endsWithTerminator) {
       await new Promise(r => setTimeout(r, 50));
       return true;
     }
 
-    const textToRead = accumulatedTextRef.current;
+    const rawText = accumulatedTextRef.current;
     accumulatedTextRef.current = '';
 
+    // Strip emoji và ký tự không đọc được
+    const textToRead = rawText
+      .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')  // emoji
+      .replace(/[\u{1F300}-\u{1F9FF}]/gu, '')  // misc emoji
+      .replace(/[\u{2600}-\u{27BF}]/gu, '')    // symbols
+      .replace(/[\u{1F900}-\u{1F9FF}]/gu, '')  // supplemental symbols
+      .replace(/[\u{1FA00}-\u{1FAFF}]/gu, '')  // chess, tools...
+      .replace(/[&<>'"]/g, '')                  // XML/HTML special chars
+      .replace(/[#@$%^*+=|\\{}[\]~`]/g, '')    // misc punctuation
+      .replace(/[\u200B-\u200F\uFEFF\u00AD]/g, '')  // zero-width, soft hyphen, BOM
+      .replace(/[\u2000-\u206F]/g, ' ')             // unicode spaces & formatting chars
+      .replace(/[^\S\r\n]+/g, ' ')             // normalize spaces
+      .trim();
+
+    if (!textToRead) return true;
+
+    // Create a new AbortController for this request
+    if (abortControllerRef.current) abortControllerRef.current.abort();
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+
     // Language Detection
-    let selectedVoice = voice;
     const isChinese = /[\u4e00-\u9fa5]/.test(textToRead);
-    // Robust Vietnamese regex covering all accented characters
-    const isVietnamese = /[àáâãèéêìíòóôõùúýăđĩũơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]/i.test(textToRead);
+    const isVietnamese = /[\u1EA0-\u1EF9\u0110\u0111\u00C0-\u00FF]/.test(textToRead);
+    const hasLetters = /[a-zA-Z]/.test(textToRead);
+
+    let lang = lastLangRef.current;
 
     if (isChinese) {
-      selectedVoice = 'zh-CN-XiaoxiaoNeural';
+      lang = 'zh';
     } else if (isVietnamese) {
-      // Trying HoaiMyNeural - ensuring the string is exact
-      selectedVoice = 'vi-VN-HoaiMyNeural';
+      lang = 'vi';
+    } else if (hasLetters) {
+      lang = 'en';
     }
+    // If only numbers/symbols, keep lastLangRef.current
 
-    console.log(`[Reader] Voice: ${selectedVoice} | Text: ${textToRead.slice(0, 30)}...`);
+    lastLangRef.current = lang;
 
     try {
-      const response = await fetch('/api/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: textToRead, voice: selectedVoice }),
-      });
+      // Google TTS (vi) has a ~200 char limit.
+      const chunks = lang === 'vi' && textToRead.length > 200 
+        ? textToRead.match(/.{1,200}(?=\s|$)|.{1,200}/g) || [textToRead]
+        : [textToRead];
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error || 'TTS failed');
-      }
-      
-      const blob = await response.blob();
-      if (blob.size < 100) throw new Error('Invalid audio blob');
-      
-      const url = URL.createObjectURL(blob);
-
-      if (!audioRef.current) {
-        audioRef.current = new Audio();
-      }
-      
-      audioRef.current.src = url;
-
-      return new Promise((resolve) => {
-        const handleEnded = () => {
-          URL.revokeObjectURL(url);
-          audioRef.current.removeEventListener('ended', handleEnded);
-          audioRef.current.removeEventListener('error', handleError);
-          resolve(true);
-        };
-        const handleError = (e) => {
-          console.error('[Reader] Audio Error:', e);
-          URL.revokeObjectURL(url);
-          audioRef.current.removeEventListener('ended', handleEnded);
-          audioRef.current.removeEventListener('error', handleError);
-          resolve(false);
-        };
-
-        audioRef.current.addEventListener('ended', handleEnded);
-        audioRef.current.addEventListener('error', handleError);
+      for (const chunk of chunks) {
+        if (signal.aborted) return false;
         
-        audioRef.current.play().catch(err => {
-          console.error('[Reader] Playback failed:', err);
-          resolve(false);
+        const response = await fetch('/api/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: chunk, voice: lang }),
+          signal,
         });
-      });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error || 'TTS failed');
+        }
+
+        const blob = await response.blob();
+        if (signal.aborted) return false;
+        if (blob.size < 100) throw new Error('Invalid audio blob');
+
+        const url = URL.createObjectURL(blob);
+
+        if (!audioRef.current) {
+          audioRef.current = new Audio();
+        }
+
+        audioRef.current.src = url;
+
+        await new Promise((resolve) => {
+          const cleanup = () => {
+            if (audioRef.current) {
+              audioRef.current.removeEventListener('ended', handleEnded);
+              audioRef.current.removeEventListener('error', handleError);
+            }
+            signal.removeEventListener('abort', handleAbort);
+            URL.revokeObjectURL(url);
+          };
+
+          const handleEnded = () => {
+            cleanup();
+            resolve(true);
+          };
+          const handleError = (e) => {
+            console.error('[Reader] Audio Error:', e);
+            cleanup();
+            resolve(false);
+          };
+          const handleAbort = () => {
+            cleanup();
+            resolve(false);
+          };
+
+          signal.addEventListener('abort', handleAbort);
+          audioRef.current.addEventListener('ended', handleEnded);
+          audioRef.current.addEventListener('error', handleError);
+
+          audioRef.current.play().catch(err => {
+            if (err.name !== 'AbortError' && !signal.aborted) {
+              console.error('[Reader] Playback failed:', err);
+            }
+            if (!signal.aborted) {
+              cleanup();
+              resolve(false);
+            }
+          });
+        });
+      }
+      return true;
     } catch (e) {
+      if (e.name === 'AbortError') return false;
       console.error('[Reader] TTS Catch:', e);
       setIsPlaying(false);
       return false;

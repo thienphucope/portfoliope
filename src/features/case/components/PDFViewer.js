@@ -56,6 +56,7 @@ const LazyPage = ({ pageNumber, width, scale, onPageLoadSuccess, onVisible, root
           pageNumber={pageNumber}
           width={width}
           scale={scale}
+          devicePixelRatio={typeof window !== 'undefined' ? window.devicePixelRatio * 4 : 4}
           onLoadSuccess={(page) => onPageLoadSuccess(page, pageNumber)}
           renderTextLayer
           renderAnnotationLayer
@@ -77,7 +78,7 @@ export default function PDFViewer({ onClose, reader, isOpen }) {
   const [scale, setScale] = useState(1.0);
   const [containerWidth, setContainerWidth] = useState(null);
 
-  const { readChunk, stop, isPlaying, currentText } = reader || {};
+  const { readChunk, stop, isPlaying, currentText, triggerRead } = reader || {};
 
   const textContentRef = useRef({}); 
   const pageNumberRef = useRef(1);
@@ -115,7 +116,7 @@ export default function PDFViewer({ onClose, reader, isOpen }) {
     }
     
     if (firstMatch) {
-      firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }, [currentText, isPlaying, pageNumber]);
 
@@ -172,6 +173,13 @@ export default function PDFViewer({ onClose, reader, isOpen }) {
     numPagesRef.current = numPages;
   }, [numPages]);
 
+  useEffect(() => {
+    if (!isPlaying) {
+      isAutoReadingRef.current = false;
+      readingIndexRef.current = -1;
+    }
+  }, [isPlaying]);
+
   useEffect(() => () => stop?.(), [stop]);
 
   const onDocumentLoadSuccess = ({ numPages }) => {
@@ -217,6 +225,7 @@ export default function PDFViewer({ onClose, reader, isOpen }) {
   }, [readChunk]);
 
   const handleDoubleClick = (e) => {
+    if (isPlaying) return;
     const selection = window.getSelection();
     const selected = selection ? selection.toString().trim() : '';
     const clickedText = selected || e.target?.textContent?.trim() || '';
@@ -228,8 +237,15 @@ export default function PDFViewer({ onClose, reader, isOpen }) {
     const currentLines = textContentRef.current[pNum] || [];
     const index = currentLines.findIndex((item) => item.includes(clickedText));
     if (index !== -1) {
-      setPageNumber(pNum);
-      startReadingFrom(index, pNum);
+      if (triggerRead) {
+        triggerRead(e, () => {
+          setPageNumber(pNum);
+          startReadingFrom(index, pNum);
+        });
+      } else {
+        setPageNumber(pNum);
+        startReadingFrom(index, pNum);
+      }
     }
   };
 
@@ -258,17 +274,6 @@ export default function PDFViewer({ onClose, reader, isOpen }) {
             <Upload size={22} color="var(--colorbutton)" />
           </div>
           <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".pdf" style={{ display: 'none' }} />
-          {file && (
-            <>
-              {isPlaying ? (
-                <button onClick={handleStop} title="Stop Reading" className="pdf-stop-btn">
-                  <VolumeX size={24} color="var(--colorbutton)" />
-                </button>
-              ) : (
-                <Volume2 size={24} className="pdf-idle-audio" color="var(--colorbutton)" />
-              )}
-            </>
-          )}
         </div>
         <div className="pdf-header-right" />
       </div>
@@ -330,7 +335,11 @@ export default function PDFViewer({ onClose, reader, isOpen }) {
           display: flex; justify-content: space-between; align-items: center;
           gap: 16px; background: transparent; z-index: 20; height: 60px;
         }
-        .pdf-header-center { flex: 1; display: flex; justify-content: center; align-items: center; gap: 20px; }
+        .pdf-header-center { flex: 1; display: flex; justify-content: center; align-items: center; gap: 30px; }
+        .pdf-zoom-controls { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); }
+        .pdf-zoom-btn { background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 50%; transition: background 0.2s; }
+        .pdf-zoom-btn:hover { background: rgba(255,255,255,0.1); }
+        .pdf-scale-info { font-size: 12px; color: var(--colorbutton); min-width: 40px; text-align: center; font-weight: 600; }
         .pdf-stop-btn, .pdf-idle-audio { background: none; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
         .pdf-body { 
           flex: 1; 
@@ -408,7 +417,7 @@ export default function PDFViewer({ onClose, reader, isOpen }) {
         .pdf-nav-line { width: 12px; height: 2px; background: rgba(255, 255, 255, 0.2); transition: all 0.2s; }
         .pdf-nav-dot.active .pdf-nav-line { width: 24px; background: var(--colorbutton); }
         .pdf-nav-label { position: absolute; right: 30px; font-size: 10px; color: var(--colorbutton); font-weight: bold; }
-        .pdf-text-highlight { background-color: var(--colorlink) !important; color: var(--background) !important; border-radius: 2px; box-shadow: 0 0 8px var(--colorlink); padding: 0 2px; }
+        .pdf-text-highlight { background-color: var(--colorlink) !important; color: var(--colortab) !important; border-radius: 2px; box-shadow: 0 0 8px var(--colorlink); padding: 0 2px; }
         @media (max-width: 1024px) { .pdf-viewer-overlay { padding-top: 50px; } .pdf-body { padding-bottom: 180px; } .pdf-side-nav { display: none; } }
       `}} />
     </div>
