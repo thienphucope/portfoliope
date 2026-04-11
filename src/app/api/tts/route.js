@@ -10,6 +10,7 @@ export async function POST(req) {
 
     const voiceMap = {
       'en': 'en-GB-SoniaNeural',
+      'en-male': 'en-GB-RyanNeural',
       'zh': 'zh-CN-XiaoxiaoNeural',
       'vi': 'vi-google'
     };

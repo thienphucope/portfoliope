@@ -555,10 +555,9 @@ export default function CaseClient({ serverHydratedData = null }) {
                 pendingReadConfirm();
                 setPendingReadConfirm(null);
               }}
-              style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+              style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
             >
               <Volume2 size={20} color="var(--colorbutton, #FFFACD)" />
-              <span style={{ fontSize: '14px', fontWeight: '600' }}>Click to Start Sonia</span>
             </div>
           ) : (
             <>
@@ -607,6 +606,33 @@ export default function CaseClient({ serverHydratedData = null }) {
               >
                 {reader.playbackRate}x
               </div>
+
+              <div 
+                className="reader-cefr-toggle"
+                onClick={() => {
+                  const levels = ['none', 'a1', 'a2', 'b1', 'b2', 'c1', 'c2'];
+                  const idx = levels.indexOf(reader.cefrLevel);
+                  const next = levels[(idx + 1) % levels.length];
+                  reader.updateCefrLevel(next);
+                }}
+                title="Learning English Level"
+                style={{ 
+                  cursor: 'pointer', 
+                  fontSize: '11px', 
+                  fontWeight: '900', 
+                  color: reader.cefrLevel === 'none' ? 'rgba(255,250,205,0.4)' : '#000',
+                  background: reader.cefrLevel === 'none' ? 'rgba(255,250,205,0.05)' : 'var(--colorbutton, #FFFACD)',
+                  padding: '4px 8px',
+                  borderRadius: '10px',
+                  minWidth: '40px',
+                  textAlign: 'center',
+                  userSelect: 'none',
+                  textTransform: 'uppercase',
+                  border: reader.cefrLevel === 'none' ? '1px solid rgba(255,250,205,0.1)' : 'none'
+                }}
+              >
+                {reader.cefrLevel === 'none' ? 'Off' : reader.cefrLevel}
+              </div>
             </>
           )}
 
@@ -614,6 +640,8 @@ export default function CaseClient({ serverHydratedData = null }) {
             .reader-ctrl-btn { opacity: 0.8; transition: all 0.2s; }
             .reader-ctrl-btn:hover { opacity: 1; transform: scale(1.1); }
             .reader-speed-toggle:hover { background: rgba(255,250,205,0.2); }
+            .reader-cefr-toggle { transition: all 0.2s; }
+            .reader-cefr-toggle:hover { transform: scale(1.05); filter: brightness(1.1); }
             @keyframes fadeInDown {
               from { opacity: 0; transform: translate(-50%, -20px); }
               to { opacity: 1; transform: translate(-50%, 0); }
