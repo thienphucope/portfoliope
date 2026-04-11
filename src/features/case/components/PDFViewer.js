@@ -77,6 +77,7 @@ export default function PDFViewer({ onClose, reader, isOpen }) {
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
   const [containerWidth, setContainerWidth] = useState(null);
+  const [currentBlockText, setCurrentBlockText] = useState("");
 
   const { readChunk, stop, isPlaying, currentText, triggerRead } = reader || {};
 
@@ -96,20 +97,21 @@ export default function PDFViewer({ onClose, reader, isOpen }) {
     const prevHighlights = bodyRef.current.querySelectorAll('.pdf-text-highlight');
     prevHighlights.forEach(el => el.classList.remove('pdf-text-highlight'));
 
-    if (!currentText || !isPlaying) return;
+    const textToHighlight = currentBlockText || currentText;
+    if (!textToHighlight || !isPlaying) return;
 
     // Chỉ tìm trong trang hiện tại để tránh nhảy lung tung
     const currentPage = bodyRef.current.querySelector(`[data-page-number="${pageNumber}"]`);
     if (!currentPage) return;
 
     const spans = currentPage.querySelectorAll('.react-pdf__Page__textContent span');
-    const cleanCurrent = currentText.toLowerCase().trim();
+    const cleanCurrent = textToHighlight.toLowerCase().trim();
     let firstMatch = null;
 
     for (const span of spans) {
       const txt = span.textContent.trim().toLowerCase();
-      // So khớp chính xác hơn để tránh rải rác
-      if (txt.length > 3 && cleanCurrent.includes(txt)) {
+      // So khớp: nếu mẩu văn bản nằm trong Block/Câu đang đọc
+      if (txt.length > 2 && cleanCurrent.includes(txt)) {
         span.classList.add('pdf-text-highlight');
         if (!firstMatch) firstMatch = span;
       }
@@ -118,7 +120,7 @@ export default function PDFViewer({ onClose, reader, isOpen }) {
     if (firstMatch) {
       // firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }, [currentText, isPlaying, pageNumber]);
+  }, [currentText, currentBlockText, isPlaying, pageNumber]);
 
   useEffect(() => {
     const el = bodyRef.current;
@@ -177,6 +179,7 @@ export default function PDFViewer({ onClose, reader, isOpen }) {
     if (!isPlaying) {
       isAutoReadingRef.current = false;
       readingIndexRef.current = -1;
+      setCurrentBlockText("");
     }
   }, [isPlaying]);
 
@@ -190,6 +193,7 @@ export default function PDFViewer({ onClose, reader, isOpen }) {
     readingIndexRef.current = -1;
     isAutoReadingRef.current = false;
     textContentRef.current = {};
+    setCurrentBlockText("");
     if (bodyRef.current) setContainerWidth(bodyRef.current.clientWidth);
   };
 
@@ -198,31 +202,75 @@ export default function PDFViewer({ onClose, reader, isOpen }) {
     textContentRef.current[pNum] = textContent.items
       .map((item) => item.str)
       .filter((str) => str.trim().length > 0);
-
-    if (isAutoReadingRef.current && pNum === pageNumberRef.current && readingIndexRef.current >= 0) {
-      startReadingFrom(readingIndexRef.current, pNum);
-    }
   };
 
   const startReadingFrom = useCallback(async (startIndex, pNum) => {
     isAutoReadingRef.current = true;
-    readingIndexRef.current = startIndex;
-    const currentLines = textContentRef.current[pNum] || [];
-    
-    while (isAutoReadingRef.current && readingIndexRef.current < currentLines.length) {
-      const text = currentLines[readingIndexRef.current];
-      if (text) {
-        const success = await readChunk(text);
-        if (!success) {
-          isAutoReadingRef.current = false;
-          return;
+    let currentP = pNum;
+    let currentIndex = startIndex;
+    let accumulatedBlock = "";
+
+    while (isAutoReadingRef.current && currentP <= numPagesRef.current) {
+      setPageNumber(currentP);
+      goToPage(currentP);
+
+      // Chờ cho đến khi nội dung trang được load
+      let attempts = 0;
+      while (!textContentRef.current[currentP] && attempts < 100) {
+        await new Promise(r => setTimeout(r, 100));
+        attempts++;
+        if (!isAutoReadingRef.current) return;
+      }
+
+      const currentLines = textContentRef.current[currentP] || [];
+      
+      for (let i = currentIndex; i < currentLines.length; i++) {
+        if (!isAutoReadingRef.current) return;
+        
+        const text = currentLines[i];
+        accumulatedBlock += (accumulatedBlock ? " " : "") + text;
+        
+        const isLastInPage = i === currentLines.length - 1;
+        const hasTerminator = /[.!?。！？]$/.test(text.trim());
+
+        // Nếu xác định được 1 Block (kết thúc câu hoặc hết trang)
+        if (hasTerminator || isLastInPage) {
+          setCurrentBlockText(accumulatedBlock); // Highlight cả Block
+          
+          // Tách Block này thành các câu nhỏ hơn (nếu có)
+          const sentences = accumulatedBlock.match(/[^.!?。！？]+[.!?。！？]?/g) || [accumulatedBlock];
+          
+          for (const sentence of sentences) {
+            const trimmed = sentence.trim();
+            if (trimmed) {
+              // Gửi từng câu đi đọc ngay lập tức (immediate = true)
+              const success = await readChunk(trimmed, null, true);
+              if (!success) {
+                isAutoReadingRef.current = false;
+                setCurrentBlockText("");
+                return;
+              }
+            }
+            if (!isAutoReadingRef.current) return;
+          }
+          accumulatedBlock = ""; // Xóa block sau khi đã đọc xong các câu bên trong
         }
       }
-      readingIndexRef.current += 1;
+
+      // Chuẩn bị sang trang tiếp theo
+      if (isAutoReadingRef.current) {
+        if (currentP < numPagesRef.current) {
+          currentP += 1;
+          currentIndex = 0;
+        } else {
+          isAutoReadingRef.current = false;
+        }
+      }
     }
+    
     isAutoReadingRef.current = false;
     readingIndexRef.current = -1;
-  }, [readChunk]);
+  }, [readChunk, goToPage]);
 
   const handleDoubleClick = (e) => {
     if (isPlaying) return;

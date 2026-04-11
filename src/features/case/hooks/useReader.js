@@ -65,7 +65,8 @@ export function useReader() {
       .replace(/[^\S\r\n]+/g, ' ')             // normalize spaces
       .trim();
 
-    if (!textToRead) return true;
+    // Nếu chỉ còn dấu câu hoặc số, hoặc quá ngắn, bỏ qua không gọi API
+    if (!textToRead || !/[a-zA-Z\u4e00-\u9fa5\u1EA0-\u1EF9]/.test(textToRead)) return true;
 
     // Create a new AbortController for this request
     if (abortControllerRef.current) abortControllerRef.current.abort();
