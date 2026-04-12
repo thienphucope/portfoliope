@@ -12,14 +12,29 @@ export function useReader() {
     }
     return 'b1';
   });
+
+  const cefrLevelRef = useRef(cefrLevel);
+  useEffect(() => {
+    cefrLevelRef.current = cefrLevel;
+  }, [cefrLevel]);
+
+  const explainedWordsRef = useRef(new Set());
   
-  // Load speed từ sessionStorage để persistent
+  const clearHistory = useCallback(() => {
+    explainedWordsRef.current.clear();
+  }, []);
+  
   const [playbackRate, setPlaybackRate] = useState(() => {
     if (typeof window !== 'undefined') {
       return parseFloat(sessionStorage.getItem('sonia_speed') || '1.0');
     }
     return 1.0;
   });
+
+  const playbackRateRef = useRef(playbackRate);
+  useEffect(() => {
+    playbackRateRef.current = playbackRate;
+  }, [playbackRate]);
   
   const audioRef = useRef(null);
   const accumulatedTextRef = useRef('');
@@ -41,11 +56,12 @@ export function useReader() {
     setIsPlaying(false);
     setIsPaused(false);
     setCurrentText('');
+    clearHistory();
     if (resolvePlaybackRef.current) {
       resolvePlaybackRef.current(false);
       resolvePlaybackRef.current = null;
     }
-  }, []);
+  }, [clearHistory]);
 
   const pause = useCallback(() => {
     if (audioRef.current && isPlaying && !isPaused) {
@@ -66,7 +82,6 @@ export function useReader() {
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('sonia_speed', rate.toString());
     }
-    // Áp dụng ngay lập tức cho audio đang phát
     if (audioRef.current) {
       audioRef.current.playbackRate = rate;
     }
@@ -110,6 +125,18 @@ export function useReader() {
     const cleaned = cleanText(text);
     if (!cleaned || !/[a-zA-Z\u4e00-\u9fa5\u1EA0-\u1EF9]/.test(cleaned)) return true;
 
+    // Update UI text for Spritz/Highlighting
+    setCurrentText(cleaned);
+
+    // 4x Speed Secret: No TTS, just simulate timing for Spritz
+    const currentRate = playbackRateRef.current;
+    if (currentRate === 4.0) {
+      const wordsCount = cleaned.split(/\s+/).filter(Boolean).length;
+      // Approx 500-600 WPM -> ~120ms per word
+      await new Promise(r => setTimeout(r, wordsCount * 120));
+      return true;
+    }
+
     const chunks = lang === 'vi' && cleaned.length > 200 
       ? cleaned.match(/.{1,200}(?=\s|$)|.{1,200}/g) || [cleaned]
       : [cleaned];
@@ -132,8 +159,6 @@ export function useReader() {
 
       if (!audioRef.current) audioRef.current = new Audio();
       audioRef.current.src = url;
-      
-      const currentRate = parseFloat(sessionStorage.getItem('sonia_speed') || '1.0');
       audioRef.current.playbackRate = currentRate;
 
       await new Promise((resolve) => {
@@ -172,7 +197,6 @@ export function useReader() {
     if (!chunkText || /^http|www\.|^\//i.test(chunkText)) return true;
 
     accumulatedTextRef.current = (accumulatedTextRef.current + ' ' + chunkText).trim();
-    setCurrentText(accumulatedTextRef.current);
     setIsPlaying(true);
     setIsPaused(false);
 
@@ -203,13 +227,16 @@ export function useReader() {
       const success = await playText(rawText, lang, signal);
       if (!success || signal.aborted) return false;
 
-      // English learning logic
-      if (lang === 'en' && cefrLevel !== 'none') {
+      // English learning logic - Using current level from Ref
+      const currentLevel = cefrLevelRef.current;
+      const currentRate = playbackRateRef.current;
+      if (lang === 'en' && currentLevel !== 'none' && currentRate !== 4.0) {
         const words = rawText.toLowerCase().match(/\b[a-z]{3,}\b/g) || [];
         const uniqueWords = [...new Set(words)];
-        const thresholdIndex = CEFR_LEVELS.indexOf(cefrLevel);
+        const thresholdIndex = CEFR_LEVELS.indexOf(currentLevel);
         
         const difficultWords = uniqueWords.filter(w => {
+          if (explainedWordsRef.current.has(w)) return false;
           const entry = cefrDict[w];
           if (!entry) return false;
           const wordLevelIndex = CEFR_LEVELS.indexOf(entry.level.toLowerCase());
@@ -279,6 +306,7 @@ export function useReader() {
                 if (!defPartSuccess) break;
               }
 
+              explainedWordsRef.current.add(word);
               if (signal.aborted) return false;
               await new Promise(r => setTimeout(r, 300));
             } else if (entry) {
@@ -286,6 +314,7 @@ export function useReader() {
               await playText(`Word number ${index + 1}.`, 'en-male', signal);
               const basicInfo = `Word: ${word}. Level: ${entry.level}. No definition found.`;
               await playText(basicInfo, 'en-male', signal);
+              explainedWordsRef.current.add(word);
             }
           }
 
@@ -301,10 +330,10 @@ export function useReader() {
       setIsPlaying(false);
       return false;
     }
-  }, [cefrLevel, playText]);
+  }, [playText]);
 
   return { 
-    readChunk, stop, pause, resume, setSpeed, updateCefrLevel,
+    readChunk, stop, pause, resume, setSpeed, updateCefrLevel, clearHistory,
     isPlaying, isPaused, playbackRate, cefrLevel, currentText 
   };
 }

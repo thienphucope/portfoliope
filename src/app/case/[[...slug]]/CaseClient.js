@@ -31,6 +31,102 @@ import { Volume2, VolumeX, Play, Pause, Square, Zap } from 'lucide-react';
 
 const GraphView = dynamic(() => import('../../../features/case/components/GraphView'), { ssr: false });
 
+// ─── Spritz Overlay Component ────────────────────────────────────────────────
+const SpritzOverlay = ({ text, isPlaying, isPaused, playbackRate }) => {
+  const [words, setWords] = useState([]);
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (!text) return;
+    const w = text.split(/\s+/).filter(Boolean);
+    setWords(w);
+    setIndex(0);
+  }, [text]);
+
+  useEffect(() => {
+    if (!isPlaying || isPaused || playbackRate !== 4.0 || index >= words.length) return;
+
+    const word = words[index] || "";
+    const baseDuration = 110; 
+    const extra = (word.length > 8 ? 40 : 0) + (/[.,!?;]/.test(word) ? 60 : 0);
+    
+    const timer = setTimeout(() => {
+      setIndex(i => i + 1);
+    }, baseDuration + extra);
+
+    return () => clearTimeout(timer);
+  }, [index, words, isPlaying, isPaused, playbackRate]);
+
+  if (playbackRate !== 4.0 || !isPlaying || words.length === 0) return null;
+
+  return (
+    <div 
+      className="spritz-overlay"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'var(--colortab, #000)',
+        color: 'var(--colorbutton, #FFFACD)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+        userSelect: 'none'
+      }}
+    >
+      <div 
+        className="spritz-word"
+        style={{
+          fontSize: '6vw',
+          fontWeight: '400',
+          fontFamily: 'monospace',
+          textAlign: 'center',
+          letterSpacing: '-0.02em',
+          textTransform: 'lowercase'
+        }}
+      >
+        {words[index] || words[words.length - 1]}
+      </div>
+    </div>
+  );
+};
+
+// ─── Music Player Component ──────────────────────────────────────────────────
+const MusicPlayer = ({ isPlaying, isPaused, playbackRate }) => {
+  const iframeRef = useRef(null);
+
+  useEffect(() => {
+    if (playbackRate === 4.0 && isPlaying && !isPaused && iframeRef.current) {
+      // Set volume to 50% after iframe loads
+      const timer = setTimeout(() => {
+        iframeRef.current?.contentWindow?.postMessage(JSON.stringify({
+          event: 'command',
+          func: 'setVolume',
+          args: [50]
+        }), '*');
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [isPlaying, isPaused, playbackRate]);
+
+  if (playbackRate !== 4.0 || !isPlaying) return null;
+  
+  return (
+    <div style={{ width: 0, height: 0, overflow: 'hidden', position: 'absolute', pointerEvents: 'none' }}>
+      <iframe 
+        ref={iframeRef}
+        width="560" 
+        height="315" 
+        src={`https://www.youtube.com/embed/c7O91GDWGPU?autoplay=1&loop=1&playlist=c7O91GDWGPU&controls=0&showinfo=0&autohide=1&enablejsapi=1${isPaused ? '&mute=1' : ''}`}
+        title="YouTube music player" 
+        frameBorder="0" 
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+        referrerPolicy="strict-origin-when-cross-origin" 
+      ></iframe>
+    </div>
+  );
+};
+
 // ─── MAIN VAULT ───────────────────────────────────────────────────────────────
 
 export default function CaseClient({ serverHydratedData = null }) {
@@ -38,49 +134,39 @@ export default function CaseClient({ serverHydratedData = null }) {
   const [pendingReadConfirm, setPendingReadConfirm] = useState(null); // onConfirm function
 
   const triggerRead = useCallback((e, onConfirm) => {
-    // Nếu đang chơi rồi thì thôi
     if (reader.isPlaying) return;
-
     setPendingReadConfirm(() => onConfirm);
-
-    // Tự lặn sau 5s nếu không click
     setTimeout(() => {
       setPendingReadConfirm(prev => (prev === onConfirm ? null : prev));
     }, 5000);
   }, [reader.isPlaying]);
 
-  // Extend reader object with our new trigger
   const augmentedReader = useMemo(() => ({
     ...reader,
     triggerRead
   }), [reader, triggerRead]);
 
-  // ── Core content state ──────────────────────────────────────────────────────
   const [content,      setContent]      = useState('');
   const [fileName,     setFileName]     = useState('');
   const [contentKey,   setContentKey]   = useState(0);
 
-  // ── UI state ────────────────────────────────────────────────────────────────
-  const [activeOverlay,      setActiveOverlay]      = useState(null); // 'filetree' | 'chat' | 'pdf' | null
+  const [activeOverlay,      setActiveOverlay]      = useState(null); 
   const [showHeader,         setShowHeader]          = useState(true);
   const [showFunctionBall,   setShowFunctionBall]    = useState(true);
   const [isFooterExpanded,   setIsFooterExpanded]    = useState(false);
   const [isAtBottom,         setIsAtBottom]          = useState(false);
   const [searchTerm,         setSearchTerm]          = useState('');
   const [showSearch,         setShowSearch]          = useState(false);
-  const [viewMode,           setViewMode]            = useState('graph'); // 'list' | 'graph'
+  const [viewMode,           setViewMode]            = useState('graph'); 
 
-  // ── Auth ────────────────────────────────────────────────────────────────────
   const [editPass, setEditPass] = useState(() => {
     try { return sessionStorage.getItem('vault_edit_pass') || ''; } catch { return ''; }
   });
 
-  // ── Refs ────────────────────────────────────────────────────────────────────
   const appShellRef  = useRef(null);
   const sessionIdRef = useRef(Math.random().toString(36).substring(2, 15));
   const serverGraphRef = useRef(serverHydratedData?.graph || { nodes: [], links: [] });
 
-  // ── Stable content setter ───────────────────────────────────────────────────
   const applyFileContent = useCallback((repoKey, newContent) => {
     React.startTransition(() => {
       setFileName(repoKey);
@@ -90,7 +176,6 @@ export default function CaseClient({ serverHydratedData = null }) {
     });
   }, []);
 
-  // ── Prompts ─────────────────────────────────────────────────────────────────
   const {
     passPrompt,    setPassPrompt,
     namePrompt,    setNamePrompt,
@@ -98,7 +183,6 @@ export default function CaseClient({ serverHydratedData = null }) {
     askPassword, askFileName, askComment,
   } = usePrompts();
 
-  // ── File Registry & Tree ────────────────────────────────────────────────────
   const {
     fileTree, setFileTree,
     fileRegistry, serverRawCache,
@@ -106,7 +190,6 @@ export default function CaseClient({ serverHydratedData = null }) {
     registerLocalFile, insertFileIntoTree,
   } = useFileRegistry();
 
-  // ── Computed file list ───────────────────────────────────────────────────────
   const getAllFiles = useCallback((nodes, repoPath = '') => {
     let files = [];
     nodes.forEach((n) => {
@@ -135,7 +218,6 @@ export default function CaseClient({ serverHydratedData = null }) {
     }
   }, [setFileTree, fileRegistry, buildRegistry]);
 
-  // ── Content Cache (with HTML caching) ───────────────────────────────────────
   const {
     fullContentCache,
     setFullContentCache,
@@ -143,7 +225,6 @@ export default function CaseClient({ serverHydratedData = null }) {
     upsertCacheEntry,
   } = useContentCache({ serverRawCache });
 
-  // ── File Loader (uses HTML cache for instant loading) ───────────────────────
   const {
     openFiles, setOpenFiles,
     activeTab, setActiveTab,
@@ -158,7 +239,6 @@ export default function CaseClient({ serverHydratedData = null }) {
     setActiveOverlay 
   });
 
-  // ── Lock Manager ────────────────────────────────────────────────────────────
   const onLockLost = useCallback(() => {
     setIsEditing(false);
     alert('Connection lost or file locked by another user. Returning to view mode.');
@@ -169,7 +249,6 @@ export default function CaseClient({ serverHydratedData = null }) {
     onLockLost,
   });
 
-  // ── Create-and-open (shared between mutations and editor) ───────────────────
   const createAndOpenFile = useCallback((target) => {
     const withExt    = target.endsWith('.md') ? target : `${target}.md`;
     const serverPath = withExt.includes('/') ? withExt : `notes/${withExt}`;
@@ -193,7 +272,6 @@ export default function CaseClient({ serverHydratedData = null }) {
     setActiveOverlay(null);
   }, [applyFileContent, registerLocalFile, insertFileIntoTree, setOpenFiles, setActiveTab]);
 
-  // ── File Mutations ──────────────────────────────────────────────────────────
   const {
     saveStatus, saveHandlerRef,
     handleSaveFile, handleSidebarSave,
@@ -213,7 +291,6 @@ export default function CaseClient({ serverHydratedData = null }) {
     askPassword, askFileName, askComment,
   });
 
-  // Bind loadFile into rename/delete callbacks
   const handleRenameFile = useCallback(
     (oldPath) => _handleRenameFile(oldPath, fileName, loadFile),
     [_handleRenameFile, fileName, loadFile]
@@ -237,7 +314,6 @@ export default function CaseClient({ serverHydratedData = null }) {
     [_handleCreateNewNote, setActiveTab, startKeepAlive]
   );
 
-  // ── Editor State ─────────────────────────────────────────────────────────────
   const { isEditing, setIsEditing, handleToggleEditMode } = useEditorState({
     fileName, editPass, setEditPass,
     fileRegistry, serverRawCache,
@@ -247,7 +323,6 @@ export default function CaseClient({ serverHydratedData = null }) {
     refreshTree, askPassword,
   });
 
-  // ── Scroll Behaviour ─────────────────────────────────────────────────────────
   const tabs = useMemo(() => {
     const base = [
       { id: 'filetree', title: 'File Tree', type: 'sidebar' },
@@ -271,7 +346,6 @@ export default function CaseClient({ serverHydratedData = null }) {
     if (activeTab && !activeOverlay) scrollToTab(activeTab);
   }, [activeTab, activeOverlay, scrollToTab]);
 
-  // ── Tab Manager ──────────────────────────────────────────────────────────────
   const { handleTabClick, handlePopState } = useTabManager({
     tabs, activeTab, setActiveTab,
     activeOverlay, setActiveOverlay,
@@ -289,13 +363,9 @@ export default function CaseClient({ serverHydratedData = null }) {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [handlePopState]);
 
-  // ── Video interaction glass break ────────────────────────────────────────────
   useVideoInteraction();
-
-  // ── Dirty-draft before-unload guard ─────────────────────────────────────────
   useBeforeUnload({ serverRawCache });
 
-  // ── Bottom-of-page detection ─────────────────────────────────────────────────
   useEffect(() => {
     const checkBottom = () => {
       const container = document.querySelector('.acc-panel.open .markdown-container');
@@ -307,9 +377,7 @@ export default function CaseClient({ serverHydratedData = null }) {
     return () => clearTimeout(t);
   }, [content, activeTab, activeOverlay, tabs.length]);
 
-  // ── Initial load ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    // Đánh dấu đây là điểm dừng gốc của kho lưu trữ
     if (window.location.pathname === '/case' && !window.history.state) {
       window.history.replaceState({ isRoot: true }, '', '/case');
     }
@@ -375,7 +443,6 @@ export default function CaseClient({ serverHydratedData = null }) {
         }
       })();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const { handleLinkClick } = useLinkHandler({
@@ -389,7 +456,6 @@ export default function CaseClient({ serverHydratedData = null }) {
     setActiveOverlay,
   });
 
-  // ── Filtered tree for sidebar ─────────────────────────────────────────────────
   const filteredTree = useMemo(() => {
     const filterNodes = (nodes, forceOpen = false) =>
       nodes.reduce((acc, node) => {
@@ -424,7 +490,6 @@ export default function CaseClient({ serverHydratedData = null }) {
 
   const showReadMore      = isAtBottom && !isFooterExpanded && nextTabForActive && !activeOverlay;
 
-  // ─────────────────────────────────────────────────────────────────────────────
   return (
     <div
       className={[
@@ -440,6 +505,19 @@ export default function CaseClient({ serverHydratedData = null }) {
         <img src="/casebg2.png" alt="" />
       </div>
       <div className="video-overlay" />
+
+      <SpritzOverlay 
+        text={reader.currentText} 
+        isPlaying={reader.isPlaying} 
+        isPaused={reader.isPaused} 
+        playbackRate={reader.playbackRate} 
+      />
+
+      <MusicPlayer
+        isPlaying={reader.isPlaying}
+        isPaused={reader.isPaused}
+        playbackRate={reader.playbackRate}
+      />
 
       <FunctionBall
         isFooterExpanded={isFooterExpanded}
@@ -587,21 +665,29 @@ export default function CaseClient({ serverHydratedData = null }) {
                 className="reader-speed-toggle"
                 onClick={() => {
                   const rates = [1.0, 1.25, 1.5, 2.0];
-                  const idx = rates.indexOf(reader.playbackRate);
-                  const next = rates[(idx + 1) % rates.length];
+                  let next;
+                  if (reader.playbackRate === 4.0) {
+                    next = 1.0;
+                  } else if (reader.playbackRate === 2.0) {
+                    next = reader.isPaused ? 4.0 : 1.0;
+                  } else {
+                    const idx = rates.indexOf(reader.playbackRate);
+                    next = idx === -1 ? 1.0 : rates[(idx + 1) % rates.length];
+                  }
                   reader.setSpeed(next);
                 }}
                 style={{ 
                   cursor: 'pointer', 
                   fontSize: '13px', 
                   fontWeight: '800', 
-                  color: 'var(--colorbutton, #FFFACD)',
-                  background: 'rgba(255,250,205,0.1)',
+                  color: reader.playbackRate === 4.0 ? '#FF4500' : 'var(--colorbutton, #FFFACD)',
+                  background: reader.playbackRate === 4.0 ? 'rgba(255,69,0,0.2)' : 'rgba(255,250,205,0.1)',
                   padding: '4px 10px',
                   borderRadius: '12px',
                   minWidth: '45px',
                   textAlign: 'center',
-                  userSelect: 'none'
+                  userSelect: 'none',
+                  transition: 'all 0.3s ease'
                 }}
               >
                 {reader.playbackRate}x
