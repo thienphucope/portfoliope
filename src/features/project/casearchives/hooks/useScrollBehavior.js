@@ -128,7 +128,7 @@ export function useScrollBehavior({ appShellRef, tabs, setShowHeader, setShowFun
       }
 
       // 2. Inner vertical-scrollable elements
-      const vScrollable = e.target.closest('.markdown-container, .file-list, .chat-history');
+      const vScrollable = e.target.closest('.markdown-container, .file-list, .chat-history, .horizontal-tabs-container');
       if (vScrollable) {
         const canUp   = vScrollable.scrollTop > 0;
         const canDown = Math.ceil(vScrollable.scrollTop + vScrollable.clientHeight) < vScrollable.scrollHeight;

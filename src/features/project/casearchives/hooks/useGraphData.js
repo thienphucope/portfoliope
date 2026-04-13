@@ -5,10 +5,11 @@ import { useMemo } from 'react';
  * Uses fullContentCache for raw markdown content to find links.
  * Used by GraphView and backlink resolution.
  */
-export function useGraphData({ allFiles, searchTerm, fullContentCache = {} }) {
+export function useGraphData({ allFiles = [], searchTerm, fullContentCache = {} }) {
   const graphData = useMemo(() => {
     const nodes = [];
     const links = [];
+    if (!allFiles || !Array.isArray(allFiles)) return { nodes, links };
     const nodeMap = new Map();
     const degreeMap = new Map();
     const tagNodeMap = new Map();

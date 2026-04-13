@@ -21,7 +21,7 @@ export default function RootPage() {
     <div className="fixed inset-0 bg-[var(--colorone)] flex flex-col justify-center items-center z-[100]">
       {fingerprints}
       <ChevronDown className="text-white w-8 h-8 animate-bounce mb-0" />
-      <Link href="/project" passHref>
+      <Link href="/project/casearchives" passHref>
         <Fingerprint className="text-white w-24 h-24 cursor-pointer animate-pulse" />
       </Link>
       <div className="text-white font-fredericka text-xs md:text-2xl opacity-90 mt-4">

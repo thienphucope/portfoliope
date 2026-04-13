@@ -22,7 +22,7 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
 
   // Xác định các node khớp với searchTerm
   const matchingNodeIds = useMemo(() => {
-    if (!searchTerm) return new Set();
+    if (!searchTerm || !graphData.nodes) return new Set();
     const term = searchTerm.toLowerCase();
     return new Set(
       graphData.nodes
@@ -33,7 +33,7 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
 
   // Tự động zoom nếu chỉ còn 1 candidate
   useEffect(() => {
-    if (matchingNodeIds.size === 1 && graphRef.current) {
+    if (matchingNodeIds.size === 1 && graphRef.current && graphData.nodes) {
       const targetId = Array.from(matchingNodeIds)[0];
       const node = graphData.nodes.find(n => n.id === targetId);
       if (node && node.x !== undefined) {

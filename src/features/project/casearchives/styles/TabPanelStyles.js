@@ -48,6 +48,107 @@ export default function TabPanelStyles() {
           background-color: transparent;
         }
 
+        .accordion-app.pc-layout {
+          display: grid;
+          grid-template-columns: 84.375px 2fr 1fr;
+          grid-template-rows: 1fr;
+          width: 100vw;
+          height: 100vh;
+          overflow: hidden;
+        }
+
+        .pc-layout .sticky-spine {
+          grid-column: 1;
+          height: 100vh;
+        }
+
+        .pc-layout .main-note-area {
+          grid-column: 2;
+          height: 100vh;
+          overflow: hidden;
+          background: var(--colortab);
+          border-right: 2px solid var(--colorborder);
+          position: relative;
+        }
+
+        .pc-layout .side-widgets-area {
+          grid-column: 3;
+          height: 100vh;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          background: var(--colortab);
+        }
+
+        .pc-layout .mini-graph-container {
+          flex: 1;
+          min-height: 40%;
+          border-bottom: 2px solid var(--colorborder);
+          background: var(--colortab);
+        }
+
+        .pc-layout .horizontal-tabs-container {
+          flex: 1;
+          min-height: 0; /* Critical for flex scrolling */
+          overflow-y: auto !important;
+          background: var(--colortab);
+          display: flex;
+          flex-direction: column;
+          scrollbar-width: none !important; /* Hide for Firefox */
+          -ms-overflow-style: none !important; /* Hide for IE */
+          pointer-events: auto; /* Ensure it catches mouse events */
+        }
+
+        .pc-layout .horizontal-tabs-container::-webkit-scrollbar {
+          display: none !important; /* Hide for Chrome/Safari */
+        }
+
+        .pc-layout .tab-item-horizontal {
+          padding: 15px 20px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.2); /* Soft white border */
+          cursor: pointer;
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          color: var(--colortext-spine);
+          font-family: 'Prata', serif;
+          font-size: 1.1rem;
+          flex-shrink: 0;
+        }
+
+        .pc-layout .tab-item-horizontal:hover {
+          background: rgba(255,250,205,0.1);
+        }
+
+        .pc-layout .tab-item-horizontal.active {
+          background: var(--colortext-spine);
+          color: var(--colortab);
+          filter: invert(1);
+        }
+
+        .pc-layout .main-note-area .acc-panel {
+          border-right: none;
+          flex-basis: 100%;
+          min-width: 100%;
+        }
+
+        .pc-layout .main-note-area .acc-spine-container {
+          display: none;
+        }
+
+        .pc-layout .main-note-area .acc-content {
+          width: 100%;
+          opacity: 1;
+          animation: none;
+        }
+
+        /* Title in Panel */
+        .pc-layout .main-note-area .editor-header h1,
+        .pc-layout .main-note-area .panel-title {
+          font-family: 'Prata', serif !important;
+        }
+
         .acc-spine-container {
           flex: 0 0 150px;
           height: 100%;
@@ -62,7 +163,7 @@ export default function TabPanelStyles() {
 
         .acc-spine {
           writing-mode: vertical-rl;
-          font-family: var(--font-title-block, var(--font-display));
+          font-family: 'Prata', serif;
           font-size: 3rem;
           color: var(--colortext-spine);
           mix-blend-mode: destination-out;

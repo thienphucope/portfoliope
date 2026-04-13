@@ -158,6 +158,14 @@ export default function CaseClient({ serverHydratedData = null }) {
   const [searchTerm,         setSearchTerm]          = useState('');
   const [showSearch,         setShowSearch]          = useState(false);
   const [viewMode,           setViewMode]            = useState('graph'); 
+  const [isMobile,           setIsMobile]            = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const [editPass, setEditPass] = useState(() => {
     try { return sessionStorage.getItem('vault_edit_pass') || ''; } catch { return ''; }
@@ -399,7 +407,7 @@ export default function CaseClient({ serverHydratedData = null }) {
 
       const cleanTarget  = targetSlug.replace(/\.md$/, '');
       const forceTab     = isCaseRoot
-        ? 'filetree'
+        ? null
         : ((cleanTarget === 'chat' || cleanTarget === 'filetree' || cleanTarget === 'pdf') ? cleanTarget : null);
       const lowerTarget  = cleanTarget.toLowerCase();
       const actualRepo   = repoPathMap[lowerTarget] || repoPathMap[lowerTarget + '.md'];
@@ -407,10 +415,12 @@ export default function CaseClient({ serverHydratedData = null }) {
 
       setTimeout(() => {
         if (forceTab) {
-          setActiveOverlay(forceTab);
           const defRepo = repoPathMap[cleanDefault.toLowerCase()] || repoPathMap[cleanDefault.toLowerCase() + '.md'];
           const defUrl  = fileRegistry.current[cleanDefault.toLowerCase()] || fileRegistry.current[cleanDefault.toLowerCase() + '.md'];
-          if (defRepo && defUrl) loadFile(defUrl, defRepo.split('/').pop(), defRepo, 'replace', false);
+          if (defRepo && defUrl) {
+            loadFile(defUrl, defRepo.split('/').pop(), defRepo, 'replace', isCaseRoot);
+          }
+          setActiveOverlay(forceTab);
         } else if (actualRepo && githubUrl) {
           loadFile(githubUrl, actualRepo.split('/').pop(), actualRepo, 'replace', true);
         } else {
@@ -494,6 +504,7 @@ export default function CaseClient({ serverHydratedData = null }) {
     <div
       className={[
         'accordion-app',
+        !isMobile ? 'pc-layout' : '',
         activeTab || activeOverlay      ? 'has-active'      : '',
         activeOverlay === 'filetree'    ? 'filetree-active' : '',
         activeOverlay === 'chat'        ? 'chat-active'     : '',
@@ -519,87 +530,209 @@ export default function CaseClient({ serverHydratedData = null }) {
         playbackRate={reader.playbackRate}
       />
 
-      <FunctionBall
-        isFooterExpanded={isFooterExpanded}
-        setIsFooterExpanded={setIsFooterExpanded}
-        showReadMore={showReadMore}
-        showFunctionBall={showFunctionBall}
-        isAtBottom={isAtBottom}
-        activeOverlay={activeOverlay}
-        setActiveOverlay={setActiveOverlay}
-        handleCreateNewNote={handleCreateNewNote}
-        fileName={fileName}
-        handleAppendComment={handleAppendComment}
-        handleTabClick={handleTabClick}
-        nextTabForActive={nextTabForActive}
-        prevTabForActive={prevTabForActive}
-        isEditing={isEditing}
-        handleToggleEditMode={handleToggleEditMode}
-        saveStatus={saveStatus}
-        handleSidebarSave={handleSidebarSave}
-        activeTabType={tabs.find(t => t.id === activeTab)?.type}
-        activeTabObj={tabs.find(t => t.id === activeTab)}
-      />
+      {!isMobile ? (
+        <>
+          <StickySpine
+            showHeader={showHeader}
+            activeTab={activeTab}
+            activeOverlay={activeOverlay}
+            handleCreateNewNote={handleCreateNewNote}
+            setActiveOverlay={setActiveOverlay}
+            setActiveTab={setActiveTab}
+          />
 
-      <StickySpine
-        showHeader={showHeader}
-        activeTab={activeTab}
-        activeOverlay={activeOverlay}
-        handleCreateNewNote={handleCreateNewNote}
-        setActiveOverlay={setActiveOverlay}
-        setActiveTab={setActiveTab}
-      />
+          <div className="main-note-area">
+            {activeOverlay === 'filetree' && (
+              <FileTreeOverlay
+                isOpen={true}
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+                showSearch={showSearch}
+                setShowSearch={setShowSearch}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                filteredTree={filteredTree}
+                loadFile={loadFile}
+                fileName={fileName}
+                handleRenameFile={handleRenameFile}
+                handleDeleteFile={handleDeleteFile}
+                graphFiles={graphFiles}
+                fullContentCache={fullContentCache}
+              />
+            )}
+            {activeOverlay === 'chat' && (
+              <ChatOverlay
+                isOpen={true}
+                handleLinkClick={handleLinkClick}
+                reader={augmentedReader}
+              />
+            )}
+            {activeOverlay === 'pdf' && (
+              <PDFOverlay
+                isOpen={true}
+                setActiveOverlay={setActiveOverlay}
+                reader={augmentedReader}
+              />
+            )}
+            {!activeOverlay && tabs.filter(t => t.type === 'editor' || t.type === 'static').map(tab => (
+              tab.id === activeTab && (
+                <TabPanel
+                  key={tab.id}
+                  tab={tab}
+                  activeTab={activeTab}
+                  handleTabClick={handleTabClick}
+                  handleLinkClick={handleLinkClick}
+                  isEditing={isEditing}
+                  handleToggleEditMode={handleToggleEditMode}
+                  saveStatus={saveStatus}
+                  handleSidebarSave={handleSidebarSave}
+                  fileName={fileName}
+                  content={content}
+                  handleSaveFile={handleSaveFile}
+                  saveHandlerRef={saveHandlerRef}
+                  fileRegistry={fileRegistry}
+                  isAtBottom={isAtBottom}
+                  setIsAtBottom={setIsAtBottom}
+                  reader={augmentedReader}
+                />
+              )
+            ))}
+          </div>
 
-      <FileTreeOverlay
-        isOpen={activeOverlay === 'filetree'}
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        showSearch={showSearch}
-        setShowSearch={setShowSearch}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        filteredTree={filteredTree}
-        loadFile={loadFile}
-        fileName={fileName}
-        handleRenameFile={handleRenameFile}
-        handleDeleteFile={handleDeleteFile}
-        graphFiles={graphFiles}
-        fullContentCache={fullContentCache}
-      />
+          <div className="side-widgets-area">
+            <div className="mini-graph-container">
+              <GraphView 
+                allFiles={graphFiles} 
+                onSelectFile={(path, name, id) => {
+                  const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md'];
+                  if (githubUrl) {
+                    loadFile(githubUrl, name, id, 'push', true);
+                  }
+                }}
+                activeNodeId={activeTab}
+                fullContentCache={fullContentCache}
+              />
+            </div>
+            <div className="horizontal-tabs-container">
+              {tabs.filter(t => t.type !== 'placeholder').map(tab => (
+                <div 
+                  key={tab.id}
+                  className={`tab-item-horizontal ${(activeTab === tab.id || activeOverlay === tab.id) ? 'active' : ''}`}
+                  onClick={(e) => handleTabClick(tab, e)}
+                >
+                  {tab.title}
+                </div>
+              ))}
+            </div>
+          </div>
 
-      <ChatOverlay
-        isOpen={activeOverlay === 'chat'}
-        handleLinkClick={handleLinkClick}
-        reader={augmentedReader}
-      />
+          <FunctionBall
+            isFooterExpanded={isFooterExpanded}
+            setIsFooterExpanded={setIsFooterExpanded}
+            showReadMore={showReadMore}
+            showFunctionBall={showFunctionBall}
+            isAtBottom={isAtBottom}
+            activeOverlay={activeOverlay}
+            setActiveOverlay={setActiveOverlay}
+            handleCreateNewNote={handleCreateNewNote}
+            fileName={fileName}
+            handleAppendComment={handleAppendComment}
+            handleTabClick={handleTabClick}
+            nextTabForActive={nextTabForActive}
+            prevTabForActive={prevTabForActive}
+            isEditing={isEditing}
+            handleToggleEditMode={handleToggleEditMode}
+            saveStatus={saveStatus}
+            handleSidebarSave={handleSidebarSave}
+            activeTabType={tabs.find(t => t.id === activeTab)?.type}
+            activeTabObj={tabs.find(t => t.id === activeTab)}
+          />
+        </>
+      ) : (
+        <>
+          <FunctionBall
+            isFooterExpanded={isFooterExpanded}
+            setIsFooterExpanded={setIsFooterExpanded}
+            showReadMore={showReadMore}
+            showFunctionBall={showFunctionBall}
+            isAtBottom={isAtBottom}
+            activeOverlay={activeOverlay}
+            setActiveOverlay={setActiveOverlay}
+            handleCreateNewNote={handleCreateNewNote}
+            fileName={fileName}
+            handleAppendComment={handleAppendComment}
+            handleTabClick={handleTabClick}
+            nextTabForActive={nextTabForActive}
+            prevTabForActive={prevTabForActive}
+            isEditing={isEditing}
+            handleToggleEditMode={handleToggleEditMode}
+            saveStatus={saveStatus}
+            handleSidebarSave={handleSidebarSave}
+            activeTabType={tabs.find(t => t.id === activeTab)?.type}
+            activeTabObj={tabs.find(t => t.id === activeTab)}
+          />
 
-      <PDFOverlay
-        isOpen={activeOverlay === 'pdf'}
-        setActiveOverlay={setActiveOverlay}
-        reader={augmentedReader}
-      />
+          <StickySpine
+            showHeader={showHeader}
+            activeTab={activeTab}
+            activeOverlay={activeOverlay}
+            handleCreateNewNote={handleCreateNewNote}
+            setActiveOverlay={setActiveOverlay}
+            setActiveTab={setActiveTab}
+          />
 
-      {tabs.filter(t => t.type === 'editor' || t.type === 'static').map(tab => (
-        <TabPanel
-          key={tab.id}
-          tab={tab}
-          activeTab={activeTab}
-          handleTabClick={handleTabClick}
-          handleLinkClick={handleLinkClick}
-          isEditing={isEditing}
-          handleToggleEditMode={handleToggleEditMode}
-          saveStatus={saveStatus}
-          handleSidebarSave={handleSidebarSave}
-          fileName={fileName}
-          content={content}
-          handleSaveFile={handleSaveFile}
-          saveHandlerRef={saveHandlerRef}
-          fileRegistry={fileRegistry}
-          isAtBottom={isAtBottom}
-          setIsAtBottom={setIsAtBottom}
-          reader={augmentedReader}
-        />
-      ))}
+          <FileTreeOverlay
+            isOpen={activeOverlay === 'filetree'}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            showSearch={showSearch}
+            setShowSearch={setShowSearch}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            filteredTree={filteredTree}
+            loadFile={loadFile}
+            fileName={fileName}
+            handleRenameFile={handleRenameFile}
+            handleDeleteFile={handleDeleteFile}
+            graphFiles={graphFiles}
+            fullContentCache={fullContentCache}
+          />
+
+          <ChatOverlay
+            isOpen={activeOverlay === 'chat'}
+            handleLinkClick={handleLinkClick}
+            reader={augmentedReader}
+          />
+
+          <PDFOverlay
+            isOpen={activeOverlay === 'pdf'}
+            setActiveOverlay={setActiveOverlay}
+            reader={augmentedReader}
+          />
+
+          {tabs.filter(t => t.type === 'editor' || t.type === 'static').map(tab => (
+            <TabPanel
+              key={tab.id}
+              tab={tab}
+              activeTab={activeTab}
+              handleTabClick={handleTabClick}
+              handleLinkClick={handleLinkClick}
+              isEditing={isEditing}
+              handleToggleEditMode={handleToggleEditMode}
+              saveStatus={saveStatus}
+              handleSidebarSave={handleSidebarSave}
+              fileName={fileName}
+              content={content}
+              handleSaveFile={handleSaveFile}
+              saveHandlerRef={saveHandlerRef}
+              fileRegistry={fileRegistry}
+              isAtBottom={isAtBottom}
+              setIsAtBottom={setIsAtBottom}
+              reader={augmentedReader}
+            />
+          ))}
+        </>
+      )}
 
       {(pendingReadConfirm || reader.isPlaying) && (
         <div 

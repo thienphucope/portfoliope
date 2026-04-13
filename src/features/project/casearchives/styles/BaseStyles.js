@@ -8,11 +8,12 @@ export default function BaseStyles() {
         :root {
           --bg: #121212; --txt: #e0e0e0; --accent: #FFFACD;
           --border: rgba(255,255,255,0.1); --code-bg: #1e1e1e;
-          --md-font: 'Lora', serif;
+          --md-font: 'Prata', serif;
+          --font-display: 'Prata', serif;
           --md-size: 19px; --md-line: 1.6;
         }
 
-        body { margin:0; background:var(--bg); color:var(--colortext-markdown); font-family:'Inter',sans-serif; overflow:hidden; }
+        body { margin:0; background:var(--bg); color:var(--colortext-markdown); font-family:'Prata', serif; overflow:hidden; }
 
         /* Hide all scrollbars */
         *::-webkit-scrollbar {
