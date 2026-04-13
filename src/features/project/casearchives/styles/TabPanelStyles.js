@@ -49,31 +49,77 @@ export default function TabPanelStyles() {
         }
 
         .accordion-app.pc-layout {
-          display: grid;
-          grid-template-columns: 84.375px 2fr 1fr;
-          grid-template-rows: 1fr;
+          display: flex;
+          flex-direction: row;
           width: 100vw;
           height: 100vh;
           overflow: hidden;
         }
 
         .pc-layout .sticky-spine {
-          grid-column: 1;
+          flex: 0 0 84.375px;
           height: 100vh;
         }
 
-        .pc-layout .main-note-area {
-          grid-column: 2;
+        .windows-container {
+          flex: 1;
+          display: flex;
+          gap: 10px;
+          padding: 10px;
           height: 100vh;
+          background: rgba(0, 0, 0, 0.2);
+          transition: all 0.3s ease;
+          overflow: hidden;
+        }
+
+        .windows-container.has-editor.has-others .window-frame[data-id="editor"] {
+          flex: 1.5;
+        }
+
+        .windows-container.has-editor:not(.has-others) .window-frame[data-id="editor"],
+        .windows-container.has-editor:has(.secondary-windows.all-hidden) .window-frame[data-id="editor"] {
+          flex: 1;
+        }
+
+        /* If there's no editor, but multiple others, they can split evenly or stack.
+           Based on requirement, secondary windows stack vertically. */
+        .secondary-windows {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          height: 100%;
+          min-width: 0;
+          transition: all 0.3s ease;
+        }
+
+        .secondary-windows.all-hidden {
+          flex: 0;
+          margin: 0;
+          padding: 0;
+          display: none;
+        }
+
+        .secondary-windows .window-frame {
+          flex: 1;
+          min-height: 0;
+        }
+
+        .windows-container.has-maximized {
+          display: block;
+          padding: 0;
+          gap: 0;
+        }
+
+        .pc-layout .main-note-area {
+          height: 100%;
           overflow: hidden;
           background: var(--colortab);
-          border-right: 2px solid var(--colorborder);
           position: relative;
         }
 
         .pc-layout .side-widgets-area {
-          grid-column: 3;
-          height: 100vh;
+          height: 100%;
           display: flex;
           flex-direction: column;
           overflow: hidden;
@@ -127,25 +173,57 @@ export default function TabPanelStyles() {
           filter: invert(1);
         }
 
-        .pc-layout .main-note-area .acc-panel {
-          border-right: none;
-          flex-basis: 100%;
-          min-width: 100%;
+        /* Window Frame specific overrides */
+        .window-frame .acc-panel {
+          border-right: none !important;
+          flex-basis: 100% !important;
+          min-width: 100% !important;
+          background: transparent !important;
+          height: 100% !important;
         }
 
-        .pc-layout .main-note-area .acc-spine-container {
-          display: none;
+        .window-frame .acc-spine-container {
+          display: none !important;
         }
 
-        .pc-layout .main-note-area .acc-content {
+        .window-frame .acc-content {
+          width: 100% !important;
+          opacity: 1 !important;
+          animation: none !important;
+          height: 100% !important;
+          display: flex !important;
+        }
+
+        .window-frame .acc-body {
+          flex: 1 !important;
+          height: 100% !important;
+        }
+
+        .window-frame .main-content {
+          padding: 0;
+          height: 100% !important;
+        }
+
+        .window-frame .markdown-container {
+          max-width: 100%;
+          padding: 20px;
+        }
+
+        .window-content > div {
+          height: 100%;
           width: 100%;
-          opacity: 1;
-          animation: none;
+        }
+
+        /* Ensure Chat, Graph, PDF fill window */
+        .window-frame .chat-container,
+        .window-frame .pdf-container,
+        .window-frame .file-list {
+          height: 100% !important;
+          width: 100% !important;
         }
 
         /* Title in Panel */
-        .pc-layout .main-note-area .editor-header h1,
-        .pc-layout .main-note-area .panel-title {
+        .window-title-text {
           font-family: 'Prata', serif !important;
         }
 

@@ -1,9 +1,8 @@
 import React from 'react';
-import { Plus, Network, ArrowLeft, FileText } from 'lucide-react';
+import { Network, ArrowLeft, FileText, BookOpen } from 'lucide-react';
 
 /**
- * Sticky navigation spine component for the case vault interface, rendering vertical
- * tab titles and floating action buttons for file tree, AI chat, PDF reader, and new note creation.
+ * Sticky navigation spine component for the case vault interface.
  */
 
 export default function StickySpine({ 
@@ -12,32 +11,24 @@ export default function StickySpine({
   activeOverlay, 
   handleCreateNewNote, 
   setActiveOverlay,
-  setActiveTab
+  setActiveTab,
+  openWindows = []
 }) {
-  const handleCloseTab = () => {
-    setActiveTab(null);
-    setActiveOverlay(null);
-  };
+  const isWinOpen = (id) => openWindows.includes(id) || activeOverlay === id;
 
   return (
     <div className={`acc-panel sticky-spine ${(!showHeader || activeTab || activeOverlay) ? 'header-hidden' : ''}`}>
       <div className="acc-ope-container" style={{ width: '100%', flex: '1' }}>
         <div className="spine-content">
-          <div className="add-note-btn" onClick={(e) => { e.stopPropagation(); handleCreateNewNote(); }} title="New Note">
-            <Plus size={33} />
-          </div>
-          <div
-            className={`filetree-btn ${activeOverlay === 'filetree' ? 'active' : ''}`}
-            onClick={(e) => {
-            e.stopPropagation();
-            setActiveOverlay(prev => prev === 'filetree' ? null : 'filetree');
-            }}
-            title="File Tree"
+          <div 
+            className={`add-note-btn ${isWinOpen('editor') ? 'active' : ''}`} 
+            onClick={(e) => { e.stopPropagation(); setActiveOverlay(prev => prev === 'editor' ? null : 'editor'); }} 
+            title="Toggle Notes"
           >
-            <Network size={25} strokeWidth={2} />
+            <BookOpen size={30} strokeWidth={2} />
           </div>
           <div
-            className={`chatvault-btn ${activeOverlay === 'chat' ? 'active' : ''}`}
+            className={`chatvault-btn ${isWinOpen('chat') ? 'active' : ''}`}
             onClick={(e) => { 
             e.stopPropagation(); 
             setActiveOverlay(prev => prev === 'chat' ? null : 'chat');
@@ -50,7 +41,7 @@ export default function StickySpine({
           </div>
 
           <div
-            className={`pdfviewer-btn ${activeOverlay === 'pdf' ? 'active' : ''}`}
+            className={`pdfviewer-btn ${isWinOpen('pdf') ? 'active' : ''}`}
             onClick={(e) => {
               e.stopPropagation();
               setActiveOverlay(prev => prev === 'pdf' ? null : 'pdf');
@@ -58,6 +49,17 @@ export default function StickySpine({
             title="PDF Reader"
           >
             <FileText size={24} strokeWidth={2} />
+          </div>
+
+          <div
+            className={`graph-btn ${isWinOpen('graph') ? 'active' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveOverlay(prev => prev === 'graph' ? null : 'graph');
+            }}
+            title="Graph View"
+          >
+            <Network size={25} strokeWidth={2} />
           </div>
           
           <div className="acc-ope" onClick={() => window.location.href = '/about'}>

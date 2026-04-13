@@ -330,7 +330,7 @@ export function useFileMutations({
 
   const handleAppendComment = useCallback(
     async (initialValue = '') => {
-      if (!fileName || fileName === 'chat' || fileName === 'filetree') return;
+      if (!fileName || fileName === 'chat') return;
 
       let comment;
       try {

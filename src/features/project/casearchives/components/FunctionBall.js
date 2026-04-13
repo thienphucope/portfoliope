@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Pencil, Folder, MessageSquare, X, ChevronRight, ChevronLeft, Save, Eye, Loader2, CheckCircle2, AlertCircle, FileText } from 'lucide-react';
+import { Plus, Pencil, Folder, MessageSquare, X, ChevronRight, ChevronLeft, Save, Eye, Loader2, CheckCircle2, AlertCircle, FileText, Network } from 'lucide-react';
 
 /**
  * FunctionBall component (formerly MobileFooter) providing navigation actions,
@@ -26,7 +26,8 @@ export default function FunctionBall({
   saveStatus,
   handleSidebarSave,
   activeTabType,
-  activeTabObj
+  activeTabObj,
+  openWindows = []
 }) {
   // Chỉ cho phép dùng các chức năng này khi có tab đang active (editor hoặc static)
   // và không bị overlay (filetree/chat) che mất
@@ -34,6 +35,8 @@ export default function FunctionBall({
   const canComment = !activeOverlay && (activeTabType === 'editor' || activeTabType === 'static');
 
   const isHidden = !showFunctionBall && !isAtBottom && !isFooterExpanded;
+
+  const isWinActive = (id) => openWindows.includes(id) || activeOverlay === id;
 
   return (
     <div className={`mobile-footer ${isFooterExpanded ? 'expanded' : ''} ${isHidden ? 'hidden-ball' : ''}`}>
@@ -104,24 +107,24 @@ export default function FunctionBall({
       </div>
       
       <div className={`footer-expanded-content ${isFooterExpanded ? 'active' : ''}`}>
-        <div className="footer-item-wrapper" onClick={() => { setIsFooterExpanded(false); setActiveOverlay(activeOverlay === 'chat' ? null : 'chat'); }}>
-          <div className={`footer-item ${activeOverlay === 'chat' ? 'active-action' : ''}`}>
+        <div className="footer-item-wrapper" onClick={() => { setIsFooterExpanded(false); setActiveOverlay('chat'); }}>
+          <div className={`footer-item ${isWinActive('chat') ? 'active-action' : ''}`}>
             <span className="footer-item-label">AI Chat</span>
             <MessageSquare size={20} />
           </div>
         </div>
 
-        <div className="footer-item-wrapper" onClick={() => { setIsFooterExpanded(false); setActiveOverlay(activeOverlay === 'filetree' ? null : 'filetree'); }}>
-          <div className={`footer-item ${activeOverlay === 'filetree' ? 'active-action' : ''}`}>
-            <span className="footer-item-label">File Tree</span>
-            <Folder size={20} />
+        <div className="footer-item-wrapper" onClick={() => { setIsFooterExpanded(false); setActiveOverlay('pdf'); }}>
+          <div className={`footer-item ${isWinActive('pdf') ? 'active-action' : ''}`}>
+            <span className="footer-item-label">PDF Reader</span>
+            <FileText size={20} />
           </div>
         </div>
 
-        <div className="footer-item-wrapper" onClick={() => { setIsFooterExpanded(false); setActiveOverlay(activeOverlay === 'pdf' ? null : 'pdf'); }}>
-          <div className={`footer-item ${activeOverlay === 'pdf' ? 'active-action' : ''}`}>
-            <span className="footer-item-label">PDF Reader</span>
-            <FileText size={20} />
+        <div className="footer-item-wrapper" onClick={() => { setIsFooterExpanded(false); setActiveOverlay('graph'); }}>
+          <div className={`footer-item ${isWinActive('graph') ? 'active-action' : ''}`}>
+            <span className="footer-item-label">Graph View</span>
+            <Network size={20} />
           </div>
         </div>
 

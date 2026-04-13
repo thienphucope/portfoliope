@@ -267,9 +267,9 @@ export default function MobileStyles() {
             display: none !important;
           }
 
-          .acc-panel.tab-filetree.open,
           .acc-panel.tab-chat.open,
-          .acc-panel.tab-pdf.open {
+          .acc-panel.tab-pdf.open,
+          .acc-panel.tab-graph.open {
             position: relative !important;
             left: 0 !important;
             width: 100% !important;
@@ -277,30 +277,15 @@ export default function MobileStyles() {
             backdrop-filter: none !important;
           }
 
-          .acc-panel.tab-filetree .acc-spine-container,
           .acc-panel.tab-chat .acc-spine-container,
-          .acc-panel.tab-pdf .acc-spine-container {
+          .acc-panel.tab-pdf .acc-spine-container,
+          .acc-panel.tab-graph .acc-spine-container {
             display: none !important;
           }
 
-          .acc-panel.tab-filetree .file-list {
-            display: flex !important;
-            flex-direction: column !important;
-            padding: 20px !important;
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-            column-width: auto !important;
-          }
-
-          .acc-panel.tab-filetree .file-list > div {
-            flex: 0 0 auto !important;
-            width: 100% !important;
-            margin-bottom: 20px !important;
-          }
-
-          .filetree-active .acc-panel.open:not(.tab-filetree),
           .chat-active .acc-panel.open:not(.tab-chat),
-          .pdf-active .acc-panel.open:not(.tab-pdf) {
+          .pdf-active .acc-panel.open:not(.tab-pdf),
+          .graph-active .acc-panel.open:not(.tab-graph) {
             display: none !important;
           }
 

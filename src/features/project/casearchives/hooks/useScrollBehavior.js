@@ -1,6 +1,6 @@
 import { useRef, useEffect, useCallback } from 'react';
 
-const OVERLAY_TABS = new Set(['filetree', 'chat', 'pdf']);
+const OVERLAY_TABS = new Set(['chat', 'pdf']);
 
 /**
  * Handles all custom scroll logic for the accordion app shell:

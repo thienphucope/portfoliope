@@ -2,7 +2,6 @@ import React from 'react';
 import BaseStyles from './BaseStyles';
 import StickySpineStyles from './StickySpineStyles';
 import TabPanelStyles from './TabPanelStyles';
-import FileTreeStyles from './FileTreeStyles';
 import ChatStyles from './ChatStyles';
 import PDFStyles from './PDFStyles';
 import EditorStyles from './EditorStyles';
@@ -21,7 +20,6 @@ export default function VaultStyles() {
       <BaseStyles />
       <StickySpineStyles />
       <TabPanelStyles />
-      <FileTreeStyles />
       <ChatStyles />
       <PDFStyles />
       <EditorStyles />

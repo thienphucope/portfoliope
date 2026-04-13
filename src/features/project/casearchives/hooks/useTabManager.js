@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react';
 
-const OVERLAY_TABS = new Set(['filetree', 'chat', 'pdf']);
+const OVERLAY_TABS = new Set(['chat', 'pdf']);
 
 /**
  * Manages tab clicks, overlay toggling, unsaved-change guards,
@@ -98,7 +98,6 @@ export function useTabManager({
       }
 
       setActiveTab(tab.id);
-      if (tab.id === 'filetree') setShowSearch(true);
 
       if (tab.type === 'static') {
         applyFileContent(tab.id, tab.content);

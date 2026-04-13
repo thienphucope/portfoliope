@@ -27,7 +27,7 @@ export default function StickySpineStyles() {
           justify-content: center;
         }
 
-        .add-note-btn, .filetree-btn, .chatvault-btn, .pdfviewer-btn {
+        .add-note-btn, .chatvault-btn, .pdfviewer-btn, .graph-btn {
           width: 60px;
           height: 60px;
           display: flex;
@@ -43,22 +43,22 @@ export default function StickySpineStyles() {
           z-index: 100;
           transition: transform 0.2s, opacity 0.2s;
         }
-        .add-note-btn:hover, .filetree-btn:hover, .chatvault-btn:hover, .pdfviewer-btn:hover {
+        .add-note-btn:hover, .chatvault-btn:hover, .pdfviewer-btn:hover, .graph-btn:hover {
           opacity: 0.7;
           transform: translateX(-50%) scale(1.1);
         }
 
-        .filetree-btn.active,
         .chatvault-btn.active,
-        .pdfviewer-btn.active {
+        .pdfviewer-btn.active,
+        .graph-btn.active {
           color: #ffffff;
           opacity: 1;
         }
 
         .add-note-btn { top: 30px; }
-        .filetree-btn { top: 100px; }
-        .chatvault-btn { top: 170px; }
-        .pdfviewer-btn { top: 240px; }
+        .chatvault-btn { top: 100px; }
+        .pdfviewer-btn { top: 170px; }
+        .graph-btn { top: 240px; }
 
         .acc-ope {
           display: flex;

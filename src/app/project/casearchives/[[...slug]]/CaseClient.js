@@ -7,9 +7,9 @@ import StickySpine from '@/features/project/casearchives/components/StickySpine'
 import FunctionBall from '@/features/project/casearchives/components/FunctionBall';
 import PromptOverlays from '@/features/project/casearchives/components/PromptOverlays';
 import TabPanel from '@/features/project/casearchives/components/TabPanel';
-import FileTreeOverlay from '@/features/project/casearchives/components/FileTreeOverlay';
 import ChatOverlay from '@/features/project/casearchives/components/ChatOverlay';
 import PDFOverlay from '@/features/project/casearchives/components/PDFOverlay';
+import WindowFrame from '@/features/project/casearchives/components/WindowFrame';
 import dynamic from 'next/dynamic';
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
@@ -30,6 +30,30 @@ import { useReader } from '@/features/project/casearchives/hooks/useReader';
 import { Volume2, VolumeX, Play, Pause, Square, Zap } from 'lucide-react';
 
 const GraphView = dynamic(() => import('@/features/project/casearchives/components/GraphView'), { ssr: false });
+
+// ─── Mobile Graph Overlay ─────────────────────────────────────────────────────
+const GraphOverlay = ({ isOpen, graphFiles, activeTab, loadFile, fileRegistry, fullContentCache }) => {
+  if (!isOpen) return null;
+  return (
+    <div className={`acc-panel open tab-graph`} data-tab-id="graph">
+      <div className="acc-content" onClick={(e) => e.stopPropagation()}>
+        <div className="acc-body">
+          <GraphView 
+            allFiles={graphFiles} 
+            onSelectFile={(path, name, id) => {
+              const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md'];
+              if (githubUrl) {
+                loadFile(githubUrl, name, id, 'push', true);
+              }
+            }}
+            activeNodeId={activeTab}
+            fullContentCache={fullContentCache}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // ─── Spritz Overlay Component ────────────────────────────────────────────────
 const SpritzOverlay = ({ text, isPlaying, isPaused, playbackRate }) => {
@@ -128,6 +152,8 @@ const MusicPlayer = ({ isPlaying, isPaused, playbackRate }) => {
 };
 
 // ─── MAIN VAULT ───────────────────────────────────────────────────────────────
+const PDFViewer = dynamic(() => import('@/features/project/casearchives/components/PDFViewer'), { ssr: false });
+const Chat = dynamic(() => import('@/features/project/casearchives/components/Chat'), { ssr: false });
 
 export default function CaseClient({ serverHydratedData = null }) {
   const reader = useReader();
@@ -151,6 +177,50 @@ export default function CaseClient({ serverHydratedData = null }) {
   const [contentKey,   setContentKey]   = useState(0);
 
   const [activeOverlay,      setActiveOverlay]      = useState(null); 
+  const [openWindows,        setOpenWindows]        = useState(['editor']);
+  const [maximizedWindow,    setMaximizedWindow]    = useState(null);
+  const [everOpened,         setEverOpened]         = useState(['editor']);
+  const [isLiveCallActive,   setIsLiveCallActive]   = useState(false);
+  const chatRef = useRef(null);
+
+  useEffect(() => {
+    setEverOpened(prev => {
+      const next = [...prev];
+      let changed = false;
+      openWindows.forEach(id => {
+        if (!next.includes(id)) {
+          next.push(id);
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [openWindows]);
+
+  const toggleWindow = useCallback((id) => {
+    setOpenWindows(prev => {
+      if (prev.includes(id)) {
+        // If it's the last window, don't close it if it's 'editor'
+        if (prev.length === 1 && id === 'editor') return prev;
+        return prev.filter(w => w !== id);
+      }
+      return [...prev, id];
+    });
+    setMaximizedWindow(null);
+  }, []);
+
+  const closeWindow = useCallback((id) => {
+    setOpenWindows(prev => {
+      if (prev.length === 1 && id === 'editor') return prev;
+      return prev.filter(w => w !== id);
+    });
+    if (maximizedWindow === id) setMaximizedWindow(null);
+  }, [maximizedWindow]);
+
+  const toggleMaximize = useCallback((id) => {
+    setMaximizedWindow(prev => prev === id ? null : id);
+  }, []);
+
   const [showHeader,         setShowHeader]          = useState(true);
   const [showFunctionBall,   setShowFunctionBall]    = useState(true);
   const [isFooterExpanded,   setIsFooterExpanded]    = useState(false);
@@ -237,7 +307,7 @@ export default function CaseClient({ serverHydratedData = null }) {
     openFiles, setOpenFiles,
     activeTab, setActiveTab,
     fileSha,   setFileSha,
-    loadFile,
+    loadFile: _loadFile,
   } = useFileLoader({ 
     fileRegistry, 
     serverRawCache, 
@@ -246,6 +316,13 @@ export default function CaseClient({ serverHydratedData = null }) {
     applyFileContent, 
     setActiveOverlay 
   });
+
+  const loadFile = useCallback((...args) => {
+    if (!isMobile) {
+      setOpenWindows(prev => prev.includes('editor') ? prev : [...prev, 'editor']);
+    }
+    return _loadFile(...args);
+  }, [_loadFile, isMobile]);
 
   const onLockLost = useCallback(() => {
     setIsEditing(false);
@@ -333,9 +410,9 @@ export default function CaseClient({ serverHydratedData = null }) {
 
   const tabs = useMemo(() => {
     const base = [
-      { id: 'filetree', title: 'File Tree', type: 'sidebar' },
       { id: 'chat',     title: 'AI Chat Vault', type: 'chat' },
       { id: 'pdf',      title: 'PDF Reader', type: 'pdf' },
+      { id: 'graph',    title: 'Graph View', type: 'static' },
     ];
 
     if (fileTree.length === 0) {
@@ -408,7 +485,7 @@ export default function CaseClient({ serverHydratedData = null }) {
       const cleanTarget  = targetSlug.replace(/\.md$/, '');
       const forceTab     = isCaseRoot
         ? null
-        : ((cleanTarget === 'chat' || cleanTarget === 'filetree' || cleanTarget === 'pdf') ? cleanTarget : null);
+        : ((cleanTarget === 'chat' || cleanTarget === 'pdf' || cleanTarget === 'graph') ? cleanTarget : null);
       const lowerTarget  = cleanTarget.toLowerCase();
       const actualRepo   = repoPathMap[lowerTarget] || repoPathMap[lowerTarget + '.md'];
       const githubUrl    = fileRegistry.current[lowerTarget] || fileRegistry.current[lowerTarget + '.md'];
@@ -420,7 +497,8 @@ export default function CaseClient({ serverHydratedData = null }) {
           if (defRepo && defUrl) {
             loadFile(defUrl, defRepo.split('/').pop(), defRepo, 'replace', isCaseRoot);
           }
-          setActiveOverlay(forceTab);
+          if (!isMobile) toggleWindow(forceTab);
+          else setActiveOverlay(forceTab);
         } else if (actualRepo && githubUrl) {
           loadFile(githubUrl, actualRepo.split('/').pop(), actualRepo, 'replace', true);
         } else {
@@ -466,24 +544,6 @@ export default function CaseClient({ serverHydratedData = null }) {
     setActiveOverlay,
   });
 
-  const filteredTree = useMemo(() => {
-    const filterNodes = (nodes, forceOpen = false) =>
-      nodes.reduce((acc, node) => {
-        const matches = node.name.toLowerCase().includes(searchTerm.toLowerCase());
-        if (node.kind === 'directory' && node.children) {
-          const children = filterNodes(node.children, forceOpen);
-          if (children.length > 0 || matches || forceOpen) {
-            acc.push({ ...node, children, isOpen: forceOpen || children.length > 0 || matches });
-          }
-        } else if (matches || !searchTerm) {
-          acc.push(node);
-        }
-        return acc;
-      }, []);
-
-    return filterNodes(fileTree, activeOverlay === 'filetree' || !!searchTerm);
-  }, [fileTree, searchTerm, activeOverlay]);
-
   const graphFiles = useMemo(() =>
     allFiles.map((f) => ({
       ...f,
@@ -500,15 +560,41 @@ export default function CaseClient({ serverHydratedData = null }) {
 
   const showReadMore      = isAtBottom && !isFooterExpanded && nextTabForActive && !activeOverlay;
 
+  const activeTabPanel = useMemo(() => {
+    const activeT = tabs.find(t => t.id === activeTab);
+    if (!activeT) return null;
+    return (
+      <TabPanel
+        key={activeT.id}
+        tab={activeT}
+        activeTab={activeTab}
+        handleTabClick={handleTabClick}
+        handleLinkClick={handleLinkClick}
+        isEditing={isEditing}
+        handleToggleEditMode={handleToggleEditMode}
+        saveStatus={saveStatus}
+        handleSidebarSave={handleSidebarSave}
+        fileName={fileName}
+        content={content}
+        handleSaveFile={handleSaveFile}
+        saveHandlerRef={saveHandlerRef}
+        fileRegistry={fileRegistry}
+        isAtBottom={isAtBottom}
+        setIsAtBottom={setIsAtBottom}
+        reader={augmentedReader}
+      />
+    );
+  }, [activeTab, tabs, handleTabClick, handleLinkClick, isEditing, handleToggleEditMode, saveStatus, handleSidebarSave, fileName, content, handleSaveFile, saveHandlerRef, fileRegistry, isAtBottom, augmentedReader]);
+
   return (
     <div
       className={[
         'accordion-app',
         !isMobile ? 'pc-layout' : '',
         activeTab || activeOverlay      ? 'has-active'      : '',
-        activeOverlay === 'filetree'    ? 'filetree-active' : '',
         activeOverlay === 'chat'        ? 'chat-active'     : '',
         activeOverlay === 'pdf'         ? 'pdf-active'      : '',
+        activeOverlay === 'graph'       ? 'graph-active'    : '',
       ].join(' ')}
       ref={appShellRef}
     >
@@ -537,93 +623,124 @@ export default function CaseClient({ serverHydratedData = null }) {
             activeTab={activeTab}
             activeOverlay={activeOverlay}
             handleCreateNewNote={handleCreateNewNote}
-            setActiveOverlay={setActiveOverlay}
+            setActiveOverlay={(id) => {
+              if (typeof id === 'function') {
+                const result = id(activeOverlay);
+                if (result) toggleWindow(result);
+              } else {
+                if (id) toggleWindow(id);
+              }
+            }}
             setActiveTab={setActiveTab}
+            openWindows={openWindows}
           />
 
-          <div className="main-note-area">
-            {activeOverlay === 'filetree' && (
-              <FileTreeOverlay
-                isOpen={true}
-                viewMode={viewMode}
-                setViewMode={setViewMode}
-                showSearch={showSearch}
-                setShowSearch={setShowSearch}
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                filteredTree={filteredTree}
-                loadFile={loadFile}
-                fileName={fileName}
-                handleRenameFile={handleRenameFile}
-                handleDeleteFile={handleDeleteFile}
-                graphFiles={graphFiles}
-                fullContentCache={fullContentCache}
-              />
-            )}
-            {activeOverlay === 'chat' && (
-              <ChatOverlay
-                isOpen={true}
-                handleLinkClick={handleLinkClick}
-                reader={augmentedReader}
-              />
-            )}
-            {activeOverlay === 'pdf' && (
-              <PDFOverlay
-                isOpen={true}
-                setActiveOverlay={setActiveOverlay}
-                reader={augmentedReader}
-              />
-            )}
-            {!activeOverlay && tabs.filter(t => t.type === 'editor' || t.type === 'static').map(tab => (
-              tab.id === activeTab && (
-                <TabPanel
-                  key={tab.id}
-                  tab={tab}
-                  activeTab={activeTab}
-                  handleTabClick={handleTabClick}
-                  handleLinkClick={handleLinkClick}
-                  isEditing={isEditing}
-                  handleToggleEditMode={handleToggleEditMode}
-                  saveStatus={saveStatus}
-                  handleSidebarSave={handleSidebarSave}
-                  fileName={fileName}
-                  content={content}
-                  handleSaveFile={handleSaveFile}
-                  saveHandlerRef={saveHandlerRef}
-                  fileRegistry={fileRegistry}
-                  isAtBottom={isAtBottom}
-                  setIsAtBottom={setIsAtBottom}
-                  reader={augmentedReader}
-                />
-              )
-            ))}
-          </div>
+          <div className={`windows-container ${maximizedWindow ? 'has-maximized' : ''} ${openWindows.includes('editor') ? 'has-editor' : ''} ${openWindows.length > (openWindows.includes('editor') ? 1 : 0) ? 'has-others' : ''}`}>
+            {everOpened.filter(winId => winId === 'editor').map((winId) => {
+              const isMax = maximizedWindow === winId;
+              const isOpen = openWindows.includes(winId);
+              const isHidden = !isOpen || (maximizedWindow && !isMax);
 
-          <div className="side-widgets-area">
-            <div className="mini-graph-container">
-              <GraphView 
-                allFiles={graphFiles} 
-                onSelectFile={(path, name, id) => {
-                  const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md'];
-                  if (githubUrl) {
-                    loadFile(githubUrl, name, id, 'push', true);
-                  }
-                }}
-                activeNodeId={activeTab}
-                fullContentCache={fullContentCache}
-              />
-            </div>
-            <div className="horizontal-tabs-container">
-              {tabs.filter(t => t.type !== 'placeholder').map(tab => (
-                <div 
-                  key={tab.id}
-                  className={`tab-item-horizontal ${(activeTab === tab.id || activeOverlay === tab.id) ? 'active' : ''}`}
-                  onClick={(e) => handleTabClick(tab, e)}
+              const tabTitle = tabs.find(t => t.id === activeTab)?.title || 'Note';
+              const title = `Case Archives - ${tabTitle}`;
+
+              return (
+                <WindowFrame
+                  key={winId}
+                  id={winId}
+                  title={title}
+                  isMaximized={isMax}
+                  isHidden={isHidden}
+                  onToggleMaximize={toggleMaximize}
+                  onClose={closeWindow}
+                  onSave={handleSidebarSave}
+                  saveStatus={saveStatus}
+                  onToggleEdit={handleToggleEditMode}
+                  isEditing={isEditing}
+                  onComment={handleAppendComment}
+                  onNewNote={handleCreateNewNote}
+                  isMobile={false}
                 >
-                  {tab.title}
-                </div>
-              ))}
-            </div>
+                  {activeTabPanel}
+                </WindowFrame>
+              );
+            })}
+
+            {everOpened.some(winId => winId !== 'editor') && (
+              <div className={`secondary-windows ${(maximizedWindow && maximizedWindow !== 'editor') || openWindows.some(id => id !== 'editor') ? '' : 'all-hidden'}`}>
+                {everOpened.filter(winId => winId !== 'editor').map((winId) => {
+                  const isMax = maximizedWindow === winId;
+                  const isOpen = openWindows.includes(winId);
+                  const isHidden = !isOpen || (maximizedWindow && !isMax);
+
+                  let title = '';
+                  let winContent = null;
+
+                  if (winId === 'chat') {
+                    title = 'AI Chat Vault';
+                    winContent = (
+                      <div className="chat-container">
+                        <Chat 
+                          ref={chatRef}
+                          isEmbedded={true} 
+                          onLinkClick={handleLinkClick} 
+                          onLiveCallChange={setIsLiveCallActive}
+                        />
+                      </div>
+                    );
+                  } else if (winId === 'pdf') {
+                    title = 'PDF Reader';
+                    winContent = (
+                      <div className="pdf-container">
+                        <PDFViewer 
+                          onClose={() => closeWindow('pdf')} 
+                          reader={{ 
+                            readChunk: augmentedReader.readChunk, 
+                            stop: augmentedReader.stop, 
+                            isPlaying: augmentedReader.isPlaying, 
+                            currentText: augmentedReader.currentText, 
+                            triggerRead: augmentedReader.triggerRead 
+                          }}
+                          isOpen={true}
+                        />
+                      </div>
+                    );
+                  } else if (winId === 'graph') {
+                    title = 'Graph View';
+                    winContent = (
+                      <GraphView 
+                        allFiles={graphFiles} 
+                        onSelectFile={(path, name, id) => {
+                          const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md'];
+                          if (githubUrl) {
+                            loadFile(githubUrl, name, id, 'push', true);
+                          }
+                        }}
+                        activeNodeId={activeTab}
+                        fullContentCache={fullContentCache}
+                      />
+                    );
+                  }
+
+                  return (
+                    <WindowFrame
+                      key={winId}
+                      id={winId}
+                      title={title}
+                      isMaximized={isMax}
+                      isHidden={isHidden}
+                      onToggleMaximize={toggleMaximize}
+                      onClose={closeWindow}
+                      onLiveCall={winId === 'chat' ? () => chatRef.current?.toggleLiveCall() : null}
+                      isLiveCallActive={winId === 'chat' ? isLiveCallActive : false}
+                      isMobile={false}
+                    >
+                      {winContent}
+                    </WindowFrame>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <FunctionBall
@@ -633,7 +750,9 @@ export default function CaseClient({ serverHydratedData = null }) {
             showFunctionBall={showFunctionBall}
             isAtBottom={isAtBottom}
             activeOverlay={activeOverlay}
-            setActiveOverlay={setActiveOverlay}
+            setActiveOverlay={(id) => {
+              if (id) toggleWindow(id);
+            }}
             handleCreateNewNote={handleCreateNewNote}
             fileName={fileName}
             handleAppendComment={handleAppendComment}
@@ -646,6 +765,7 @@ export default function CaseClient({ serverHydratedData = null }) {
             handleSidebarSave={handleSidebarSave}
             activeTabType={tabs.find(t => t.id === activeTab)?.type}
             activeTabObj={tabs.find(t => t.id === activeTab)}
+            openWindows={openWindows}
           />
         </>
       ) : (
@@ -677,24 +797,25 @@ export default function CaseClient({ serverHydratedData = null }) {
             activeTab={activeTab}
             activeOverlay={activeOverlay}
             handleCreateNewNote={handleCreateNewNote}
-            setActiveOverlay={setActiveOverlay}
+            setActiveOverlay={(id) => {
+              if (typeof id === 'function') {
+                const result = id(activeOverlay);
+                if (!isMobile && result) toggleWindow(result);
+                else setActiveOverlay(result);
+              } else {
+                if (!isMobile && id) toggleWindow(id);
+                else setActiveOverlay(id);
+              }
+            }}
             setActiveTab={setActiveTab}
           />
 
-          <FileTreeOverlay
-            isOpen={activeOverlay === 'filetree'}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-            showSearch={showSearch}
-            setShowSearch={setShowSearch}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            filteredTree={filteredTree}
-            loadFile={loadFile}
-            fileName={fileName}
-            handleRenameFile={handleRenameFile}
-            handleDeleteFile={handleDeleteFile}
+          <GraphOverlay
+            isOpen={activeOverlay === 'graph'}
             graphFiles={graphFiles}
+            activeTab={activeTab}
+            loadFile={loadFile}
+            fileRegistry={fileRegistry}
             fullContentCache={fullContentCache}
           />
 
