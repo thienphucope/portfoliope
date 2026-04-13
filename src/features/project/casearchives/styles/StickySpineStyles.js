@@ -48,6 +48,7 @@ export default function StickySpineStyles() {
           transform: translateX(-50%) scale(1.1);
         }
 
+        .add-note-btn.active,
         .chatvault-btn.active,
         .pdfviewer-btn.active,
         .graph-btn.active {

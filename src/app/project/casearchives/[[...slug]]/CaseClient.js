@@ -69,46 +69,18 @@ const SpritzOverlay = ({ text, isPlaying, isPaused, playbackRate }) => {
 
   useEffect(() => {
     if (!isPlaying || isPaused || playbackRate !== 4.0 || index >= words.length) return;
-
     const word = words[index] || "";
     const baseDuration = 110; 
     const extra = (word.length > 8 ? 40 : 0) + (/[.,!?;]/.test(word) ? 60 : 0);
-    
-    const timer = setTimeout(() => {
-      setIndex(i => i + 1);
-    }, baseDuration + extra);
-
+    const timer = setTimeout(() => { setIndex(i => i + 1); }, baseDuration + extra);
     return () => clearTimeout(timer);
   }, [index, words, isPlaying, isPaused, playbackRate]);
 
   if (playbackRate !== 4.0 || !isPlaying || words.length === 0) return null;
 
   return (
-    <div 
-      className="spritz-overlay"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'var(--colortab, #000)',
-        color: 'var(--colorbutton, #FFFACD)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999,
-        userSelect: 'none'
-      }}
-    >
-      <div 
-        className="spritz-word"
-        style={{
-          fontSize: '6vw',
-          fontWeight: '400',
-          fontFamily: 'monospace',
-          textAlign: 'center',
-          letterSpacing: '-0.02em',
-          textTransform: 'lowercase'
-        }}
-      >
+    <div className="spritz-overlay" style={{ position: 'fixed', inset: 0, background: 'var(--colortab, #000)', color: 'var(--colorbutton, #FFFACD)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, userSelect: 'none' }}>
+      <div className="spritz-word" style={{ fontSize: '6vw', fontWeight: '400', fontFamily: 'monospace', textAlign: 'center', letterSpacing: '-0.02em', textTransform: 'lowercase' }}>
         {words[index] || words[words.length - 1]}
       </div>
     </div>
@@ -118,35 +90,18 @@ const SpritzOverlay = ({ text, isPlaying, isPaused, playbackRate }) => {
 // ─── Music Player Component ──────────────────────────────────────────────────
 const MusicPlayer = ({ isPlaying, isPaused, playbackRate }) => {
   const iframeRef = useRef(null);
-
   useEffect(() => {
     if (playbackRate === 4.0 && isPlaying && !isPaused && iframeRef.current) {
-      // Set volume to 50% after iframe loads
       const timer = setTimeout(() => {
-        iframeRef.current?.contentWindow?.postMessage(JSON.stringify({
-          event: 'command',
-          func: 'setVolume',
-          args: [50]
-        }), '*');
+        iframeRef.current?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [50] }), '*');
       }, 1500);
       return () => clearTimeout(timer);
     }
   }, [isPlaying, isPaused, playbackRate]);
-
   if (playbackRate !== 4.0 || !isPlaying) return null;
-  
   return (
     <div style={{ width: 0, height: 0, overflow: 'hidden', position: 'absolute', pointerEvents: 'none' }}>
-      <iframe 
-        ref={iframeRef}
-        width="560" 
-        height="315" 
-        src={`https://www.youtube.com/embed/c7O91GDWGPU?autoplay=1&loop=1&playlist=c7O91GDWGPU&controls=0&showinfo=0&autohide=1&enablejsapi=1${isPaused ? '&mute=1' : ''}`}
-        title="YouTube music player" 
-        frameBorder="0" 
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-        referrerPolicy="strict-origin-when-cross-origin" 
-      ></iframe>
+      <iframe ref={iframeRef} width="560" height="315" src={`https://www.youtube.com/embed/c7O91GDWGPU?autoplay=1&loop=1&playlist=c7O91GDWGPU&controls=0&showinfo=0&autohide=1&enablejsapi=1${isPaused ? '&mute=1' : ''}`} title="YouTube music player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin"></iframe>
     </div>
   );
 };
@@ -157,69 +112,56 @@ const Chat = dynamic(() => import('@/features/project/casearchives/components/Ch
 
 export default function CaseClient({ serverHydratedData = null }) {
   const reader = useReader();
-  const [pendingReadConfirm, setPendingReadConfirm] = useState(null); // onConfirm function
-
+  const [pendingReadConfirm, setPendingReadConfirm] = useState(null);
   const triggerRead = useCallback((e, onConfirm) => {
     if (reader.isPlaying) return;
     setPendingReadConfirm(() => onConfirm);
-    setTimeout(() => {
-      setPendingReadConfirm(prev => (prev === onConfirm ? null : prev));
-    }, 5000);
+    setTimeout(() => { setPendingReadConfirm(prev => (prev === onConfirm ? null : prev)); }, 5000);
   }, [reader.isPlaying]);
 
-  const augmentedReader = useMemo(() => ({
-    ...reader,
-    triggerRead
-  }), [reader, triggerRead]);
+  const augmentedReader = useMemo(() => ({ ...reader, triggerRead }), [reader, triggerRead]);
 
   const [content,      setContent]      = useState('');
   const [fileName,     setFileName]     = useState('');
   const [contentKey,   setContentKey]   = useState(0);
-
   const [activeOverlay,      setActiveOverlay]      = useState(null); 
   const [openWindows,        setOpenWindows]        = useState(['editor']);
   const [maximizedWindow,    setMaximizedWindow]    = useState(null);
   const [everOpened,         setEverOpened]         = useState(['editor']);
   const [isLiveCallActive,   setIsLiveCallActive]   = useState(false);
+  const [pdfState,           setPdfState]           = useState(null);
+  const handlePdfStateChange = useCallback((state) => {
+    setPdfState(prev => {
+      if (prev?.pageNumber === state.pageNumber && prev?.numPages === state.numPages && prev?.fitMode === state.fitMode) return prev;
+      return state;
+    });
+  }, []);
+  
   const chatRef = useRef(null);
+  const pdfRef = useRef(null);
 
   useEffect(() => {
     setEverOpened(prev => {
-      const next = [...prev];
-      let changed = false;
-      openWindows.forEach(id => {
-        if (!next.includes(id)) {
-          next.push(id);
-          changed = true;
-        }
-      });
+      const next = [...prev]; let changed = false;
+      openWindows.forEach(id => { if (!next.includes(id)) { next.push(id); changed = true; } });
       return changed ? next : prev;
     });
   }, [openWindows]);
 
   const toggleWindow = useCallback((id) => {
     setOpenWindows(prev => {
-      if (prev.includes(id)) {
-        // If it's the last window, don't close it if it's 'editor'
-        if (prev.length === 1 && id === 'editor') return prev;
-        return prev.filter(w => w !== id);
-      }
+      if (prev.includes(id)) { if (prev.length === 1 && id === 'editor') return prev; return prev.filter(w => w !== id); }
       return [...prev, id];
     });
     setMaximizedWindow(null);
   }, []);
 
   const closeWindow = useCallback((id) => {
-    setOpenWindows(prev => {
-      if (prev.length === 1 && id === 'editor') return prev;
-      return prev.filter(w => w !== id);
-    });
+    setOpenWindows(prev => { if (prev.length === 1 && id === 'editor') return prev; return prev.filter(w => w !== id); });
     if (maximizedWindow === id) setMaximizedWindow(null);
   }, [maximizedWindow]);
 
-  const toggleMaximize = useCallback((id) => {
-    setMaximizedWindow(prev => prev === id ? null : id);
-  }, []);
+  const toggleMaximize = useCallback((id) => { setMaximizedWindow(prev => prev === id ? null : id); }, []);
 
   const [showHeader,         setShowHeader]          = useState(true);
   const [showFunctionBall,   setShowFunctionBall]    = useState(true);
@@ -232,50 +174,27 @@ export default function CaseClient({ serverHydratedData = null }) {
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 1024);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
+    checkMobile(); window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const [editPass, setEditPass] = useState(() => {
-    try { return sessionStorage.getItem('vault_edit_pass') || ''; } catch { return ''; }
-  });
-
+  const [editPass, setEditPass] = useState(() => { try { return sessionStorage.getItem('vault_edit_pass') || ''; } catch { return ''; } });
   const appShellRef  = useRef(null);
   const sessionIdRef = useRef(Math.random().toString(36).substring(2, 15));
   const serverGraphRef = useRef(serverHydratedData?.graph || { nodes: [], links: [] });
 
   const applyFileContent = useCallback((repoKey, newContent) => {
-    React.startTransition(() => {
-      setFileName(repoKey);
-      setContent(newContent);
-      setContentKey((k) => k + 1);
-      setIsAtBottom(false);
-    });
+    React.startTransition(() => { setFileName(repoKey); setContent(newContent); setContentKey((k) => k + 1); setIsAtBottom(false); });
   }, []);
 
-  const {
-    passPrompt,    setPassPrompt,
-    namePrompt,    setNamePrompt,
-    commentPrompt, setCommentPrompt,
-    askPassword, askFileName, askComment,
-  } = usePrompts();
-
-  const {
-    fileTree, setFileTree,
-    fileRegistry, serverRawCache,
-    buildRegistry, refreshTree,
-    registerLocalFile, insertFileIntoTree,
-  } = useFileRegistry();
+  const { passPrompt, setPassPrompt, namePrompt, setNamePrompt, commentPrompt, setCommentPrompt, askPassword, askFileName, askComment } = usePrompts();
+  const { fileTree, setFileTree, fileRegistry, serverRawCache, buildRegistry, refreshTree, registerLocalFile, insertFileIntoTree } = useFileRegistry();
 
   const getAllFiles = useCallback((nodes, repoPath = '') => {
     let files = [];
     nodes.forEach((n) => {
-      if (n.kind === 'file') {
-        files.push({ id: repoPath ? `${repoPath}/${n.name}` : n.name, name: n.name, path: n.path });
-      } else if (n.children) {
-        files = files.concat(getAllFiles(n.children, repoPath ? `${repoPath}/${n.name}` : n.name));
-      }
+      if (n.kind === 'file') files.push({ id: repoPath ? `${repoPath}/${n.name}` : n.name, name: n.name, path: n.path });
+      else if (n.children) files = files.concat(getAllFiles(n.children, repoPath ? `${repoPath}/${n.name}` : n.name));
     });
     return files;
   }, []);
@@ -283,170 +202,50 @@ export default function CaseClient({ serverHydratedData = null }) {
   const allFiles = useMemo(() => getAllFiles(fileTree), [fileTree, getAllFiles]);
 
   const syncServerStructures = useCallback(({ tree, registry, graph }) => {
-    if (Array.isArray(tree)) {
-      setFileTree(tree);
-      if (registry && typeof registry === 'object') {
-        fileRegistry.current = registry;
-      } else {
-        buildRegistry(tree);
-      }
-    }
-    if (graph && typeof graph === 'object') {
-      serverGraphRef.current = graph;
-    }
+    if (Array.isArray(tree)) { setFileTree(tree); if (registry && typeof registry === 'object') fileRegistry.current = registry; else buildRegistry(tree); }
+    if (graph && typeof graph === 'object') serverGraphRef.current = graph;
   }, [setFileTree, fileRegistry, buildRegistry]);
 
-  const {
-    fullContentCache,
-    setFullContentCache,
-    initializeFromServer,
-    upsertCacheEntry,
-  } = useContentCache({ serverRawCache });
+  const { fullContentCache, setFullContentCache, initializeFromServer, upsertCacheEntry } = useContentCache({ serverRawCache });
+  const { openFiles, setOpenFiles, activeTab, setActiveTab, fileSha, setFileSha, loadFile: _loadFile } = useFileLoader({ fileRegistry, serverRawCache, upsertCacheEntry, syncServerStructures, applyFileContent, setActiveOverlay });
 
-  const {
-    openFiles, setOpenFiles,
-    activeTab, setActiveTab,
-    fileSha,   setFileSha,
-    loadFile: _loadFile,
-  } = useFileLoader({ 
-    fileRegistry, 
-    serverRawCache, 
-    upsertCacheEntry,
-    syncServerStructures,
-    applyFileContent, 
-    setActiveOverlay 
-  });
-
-  const loadFile = useCallback((...args) => {
-    if (!isMobile) {
-      setOpenWindows(prev => prev.includes('editor') ? prev : [...prev, 'editor']);
-    }
-    return _loadFile(...args);
-  }, [_loadFile, isMobile]);
-
-  const onLockLost = useCallback(() => {
-    setIsEditing(false);
-    alert('Connection lost or file locked by another user. Returning to view mode.');
-  }, []);
-
-  const { acquireLock, releaseLock, startKeepAlive, stopKeepAlive } = useLockManager({
-    sessionIdRef,
-    onLockLost,
-  });
+  const loadFile = useCallback((...args) => { if (!isMobile) setOpenWindows(prev => prev.includes('editor') ? prev : [...prev, 'editor']); return _loadFile(...args); }, [_loadFile, isMobile]);
+  const onLockLost = useCallback(() => { setIsEditing(false); alert('Connection lost or file locked by another user. Returning to view mode.'); }, []);
+  const { acquireLock, releaseLock, startKeepAlive, stopKeepAlive } = useLockManager({ sessionIdRef, onLockLost });
 
   const createAndOpenFile = useCallback((target) => {
-    const withExt    = target.endsWith('.md') ? target : `${target}.md`;
+    const withExt = target.endsWith('.md') ? target : `${target}.md`;
     const serverPath = withExt.includes('/') ? withExt : `notes/${withExt}`;
     const displayName = serverPath.split('/').pop();
-    const title       = displayName.replace('.md', '');
-
-    registerLocalFile(serverPath, displayName, target);
-    insertFileIntoTree(serverPath);
-
+    const title = displayName.replace('.md', '');
+    registerLocalFile(serverPath, displayName, target); insertFileIntoTree(serverPath);
     try { localStorage.removeItem(`vault_v3::${serverPath}`); } catch {}
     const initContent = `# ${title}\n*author: Ope*\n*tag: #content*\n*links:*\n`;
     applyFileContent(serverPath, initContent);
-
-    setOpenFiles((prev) => {
-      if (!prev.find((f) => f.id === serverPath)) {
-        return [...prev, { id: serverPath, path: null, name: displayName, serverPath, fetchedContent: initContent }];
-      }
-      return prev;
-    });
-    setActiveTab(serverPath);
-    setActiveOverlay(null);
+    setOpenFiles((prev) => { if (!prev.find((f) => f.id === serverPath)) return [...prev, { id: serverPath, path: null, name: displayName, serverPath, fetchedContent: initContent }]; return prev; });
+    setActiveTab(serverPath); setActiveOverlay(null);
   }, [applyFileContent, registerLocalFile, insertFileIntoTree, setOpenFiles, setActiveTab]);
 
-  const {
-    saveStatus, saveHandlerRef,
-    handleSaveFile, handleSidebarSave,
-    handleRenameFile: _handleRenameFile,
-    handleDeleteFile: _handleDeleteFile,
-    handleCreateNewNote: _handleCreateNewNote,
-    handleAppendComment,
-  } = useFileMutations({
-    sessionIdRef, fileRegistry, serverRawCache,
-    setFullContentCache,
-    fileSha, setFileSha,
-    editPass, setEditPass,
-    fileName, content,
-    setContent, setOpenFiles, setContentKey,
-    applyFileContent, createAndOpenFile,
-    refreshTree, acquireLock, releaseLock,
-    askPassword, askFileName, askComment,
-  });
+  const { saveStatus, saveHandlerRef, handleSaveFile, handleSidebarSave, handleRenameFile: _handleRenameFile, handleDeleteFile: _handleDeleteFile, handleCreateNewNote: _handleCreateNewNote, handleAppendComment } = useFileMutations({ sessionIdRef, fileRegistry, serverRawCache, setFullContentCache, fileSha, setFileSha, editPass, setEditPass, fileName, content, setContent, setOpenFiles, setContentKey, applyFileContent, createAndOpenFile, refreshTree, acquireLock, releaseLock, askPassword, askFileName, askComment });
 
-  const handleRenameFile = useCallback(
-    (oldPath) => _handleRenameFile(oldPath, fileName, loadFile),
-    [_handleRenameFile, fileName, loadFile]
-  );
-
-  const handleDeleteFile = useCallback(
-    (filePath) => _handleDeleteFile(filePath, fileName, (wasActive) => {
-      if (wasActive) {
-        setActiveTab(null);
-        window.history.replaceState({ repoKey: null }, '', '/project/casearchives');
-      } else {
-        const url = fileRegistry.current[fileName?.toLowerCase()];
-        if (url) loadFile(url, fileName.split('/').pop(), fileName, 'replace');
-      }
-    }),
-    [_handleDeleteFile, fileName, loadFile, fileRegistry, setActiveTab]
-  );
-
-  const handleCreateNewNote = useCallback(
-    () => _handleCreateNewNote(setIsEditing, setActiveTab, startKeepAlive),
-    [_handleCreateNewNote, setActiveTab, startKeepAlive]
-  );
-
-  const { isEditing, setIsEditing, handleToggleEditMode } = useEditorState({
-    fileName, editPass, setEditPass,
-    fileRegistry, serverRawCache,
-    applyFileContent, setFileSha,
-    acquireLock, releaseLock,
-    startKeepAlive, stopKeepAlive,
-    refreshTree, askPassword,
-  });
+  const handleRenameFile = useCallback((oldPath) => _handleRenameFile(oldPath, fileName, loadFile), [_handleRenameFile, fileName, loadFile]);
+  const handleDeleteFile = useCallback((filePath) => _handleDeleteFile(filePath, fileName, (wasActive) => { if (wasActive) { setActiveTab(null); window.history.replaceState({ repoKey: null }, '', '/project/casearchives'); } else { const url = fileRegistry.current[fileName?.toLowerCase()]; if (url) loadFile(url, fileName.split('/').pop(), fileName, 'replace'); } }), [_handleDeleteFile, fileName, loadFile, fileRegistry, setActiveTab]);
+  const handleCreateNewNote = useCallback(() => _handleCreateNewNote(setIsEditing, setActiveTab, startKeepAlive), [_handleCreateNewNote, setActiveTab, startKeepAlive]);
+  const { isEditing, setIsEditing, handleToggleEditMode } = useEditorState({ fileName, editPass, setEditPass, fileRegistry, serverRawCache, applyFileContent, setFileSha, acquireLock, releaseLock, startKeepAlive, stopKeepAlive, refreshTree, askPassword });
 
   const tabs = useMemo(() => {
-    const base = [
-      { id: 'chat',     title: 'AI Chat Vault', type: 'chat' },
-      { id: 'pdf',      title: 'PDF Reader', type: 'pdf' },
-      { id: 'graph',    title: 'Graph View', type: 'static' },
-    ];
-
-    if (fileTree.length === 0) {
-      for (let i = 0; i < 20; i++) base.push({ id: `placeholder-${i}`, title: '...', type: 'placeholder' });
-      return base;
-    }
-
+    const base = [ { id: 'chat', title: 'AI Chat Vault', type: 'chat' }, { id: 'pdf', title: 'PDF Reader', type: 'pdf' }, { id: 'graph', title: 'Graph View', type: 'static' } ];
+    if (fileTree.length === 0) { for (let i = 0; i < 20; i++) base.push({ id: `placeholder-${i}`, title: '...', type: 'placeholder' }); return base; }
     const sorted = [...allFiles].sort((a, b) => a.name.localeCompare(b.name));
     sorted.forEach((f) => base.push({ id: f.id, title: f.name.replace('.md', ''), type: 'editor', fileData: f }));
     return base;
   }, [allFiles, fileTree.length]);
 
   const { scrollToTab } = useScrollBehavior({ appShellRef, tabs, setShowHeader, setShowFunctionBall });
+  useEffect(() => { if (activeTab && !activeOverlay) scrollToTab(activeTab); }, [activeTab, activeOverlay, scrollToTab]);
 
-  useEffect(() => {
-    if (activeTab && !activeOverlay) scrollToTab(activeTab);
-  }, [activeTab, activeOverlay, scrollToTab]);
-
-  const { handleTabClick, handlePopState } = useTabManager({
-    tabs, activeTab, setActiveTab,
-    activeOverlay, setActiveOverlay,
-    isEditing, setIsEditing,
-    fileName, content, editPass,
-    serverRawCache, fileRegistry,
-    applyFileContent,
-    loadFile, handleSaveFile,
-    releaseLock, stopKeepAlive,
-    setShowSearch,
-  });
-
-  useEffect(() => {
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [handlePopState]);
+  const { handleTabClick, handlePopState } = useTabManager({ tabs, activeTab, setActiveTab, activeOverlay, setActiveOverlay, isEditing, setIsEditing, fileName, content, editPass, serverRawCache, fileRegistry, applyFileContent, loadFile, handleSaveFile, releaseLock, stopKeepAlive, setShowSearch });
+  useEffect(() => { window.addEventListener('popstate', handlePopState); return () => window.removeEventListener('popstate', handlePopState); }, [handlePopState]);
 
   useVideoInteraction();
   useBeforeUnload({ serverRawCache });
@@ -454,213 +253,85 @@ export default function CaseClient({ serverHydratedData = null }) {
   useEffect(() => {
     const checkBottom = () => {
       const container = document.querySelector('.acc-panel.open .markdown-container');
-      setIsAtBottom(container
-        ? container.scrollHeight - container.scrollTop <= container.clientHeight + 100
-        : false);
+      setIsAtBottom(container ? container.scrollHeight - container.scrollTop <= container.clientHeight + 100 : false);
     };
-    const t = setTimeout(checkBottom, 400);
-    return () => clearTimeout(t);
+    const t = setTimeout(checkBottom, 400); return () => clearTimeout(t);
   }, [content, activeTab, activeOverlay, tabs.length]);
 
   useEffect(() => {
-    if (window.location.pathname === '/project/casearchives' && !window.history.state) {
-      window.history.replaceState({ isRoot: true }, '', '/project/casearchives');
-    }
-
+    if (window.location.pathname === '/project/casearchives' && !window.history.state) window.history.replaceState({ isRoot: true }, '', '/project/casearchives');
     const initialize = (data) => {
-      const repoPathMap = buildRegistry(data.tree);
-      setFileTree(data.tree);
-      initializeFromServer(data.contentCache || {}, data.rawCache || {});
-
-      const pathParts    = window.location.pathname.split('/').filter(Boolean);
-      const rawDefault   = process.env.NEXT_PUBLIC_DEFAULT_VAULT_FILE || 'chat';
+      const repoPathMap = buildRegistry(data.tree); setFileTree(data.tree); initializeFromServer(data.contentCache || {}, data.rawCache || {});
+      const pathParts = window.location.pathname.split('/').filter(Boolean);
+      const rawDefault = process.env.NEXT_PUBLIC_DEFAULT_VAULT_FILE || 'chat';
       const cleanDefault = rawDefault.replace(/\.md$/, '');
-      const isCaseRoot   = pathParts.length === 2 && pathParts[0] === 'project' && pathParts[1] === 'casearchives';
-
-      let targetSlug = cleanDefault;
-      if (pathParts[0] === 'project' && pathParts[1] === 'casearchives' && pathParts.length > 2) {
-        targetSlug = decodeURIComponent(pathParts.slice(2).join('/'));
-      }
-
-      const cleanTarget  = targetSlug.replace(/\.md$/, '');
-      const forceTab     = isCaseRoot
-        ? null
-        : ((cleanTarget === 'chat' || cleanTarget === 'pdf' || cleanTarget === 'graph') ? cleanTarget : null);
-      const lowerTarget  = cleanTarget.toLowerCase();
-      const actualRepo   = repoPathMap[lowerTarget] || repoPathMap[lowerTarget + '.md'];
-      const githubUrl    = fileRegistry.current[lowerTarget] || fileRegistry.current[lowerTarget + '.md'];
-
+      const isCaseRoot = pathParts.length === 2 && pathParts[0] === 'project' && pathParts[1] === 'casearchives';
+      let targetSlug = cleanDefault; if (pathParts[0] === 'project' && pathParts[1] === 'casearchives' && pathParts.length > 2) targetSlug = decodeURIComponent(pathParts.slice(2).join('/'));
+      const cleanTarget = targetSlug.replace(/\.md$/, '');
+      const forceTab = isCaseRoot ? null : ((cleanTarget === 'chat' || cleanTarget === 'pdf' || cleanTarget === 'graph') ? cleanTarget : null);
+      const lowerTarget = cleanTarget.toLowerCase(); const actualRepo = repoPathMap[lowerTarget] || repoPathMap[lowerTarget + '.md'];
+      const githubUrl = fileRegistry.current[lowerTarget] || fileRegistry.current[lowerTarget + '.md'];
       setTimeout(() => {
         if (forceTab) {
           const defRepo = repoPathMap[cleanDefault.toLowerCase()] || repoPathMap[cleanDefault.toLowerCase() + '.md'];
-          const defUrl  = fileRegistry.current[cleanDefault.toLowerCase()] || fileRegistry.current[cleanDefault.toLowerCase() + '.md'];
-          if (defRepo && defUrl) {
-            loadFile(defUrl, defRepo.split('/').pop(), defRepo, 'replace', isCaseRoot);
-          }
-          if (!isMobile) toggleWindow(forceTab);
-          else setActiveOverlay(forceTab);
-        } else if (actualRepo && githubUrl) {
-          loadFile(githubUrl, actualRepo.split('/').pop(), actualRepo, 'replace', true);
-        } else {
+          const defUrl = fileRegistry.current[cleanDefault.toLowerCase()] || fileRegistry.current[cleanDefault.toLowerCase() + '.md'];
+          if (defRepo && defUrl) loadFile(defUrl, defRepo.split('/').pop(), defRepo, 'replace', isCaseRoot);
+          if (!isMobile) toggleWindow(forceTab); else setActiveOverlay(forceTab);
+        } else if (actualRepo && githubUrl) { loadFile(githubUrl, actualRepo.split('/').pop(), actualRepo, 'replace', true); }
+        else {
           const defRepo = repoPathMap[cleanDefault.toLowerCase()] || repoPathMap[cleanDefault.toLowerCase() + '.md'];
-          const defUrl  = fileRegistry.current[cleanDefault.toLowerCase()] || fileRegistry.current[cleanDefault.toLowerCase() + '.md'];
+          const defUrl = fileRegistry.current[cleanDefault.toLowerCase()] || fileRegistry.current[cleanDefault.toLowerCase() + '.md'];
           if (defRepo && defUrl) loadFile(defUrl, defRepo.split('/').pop(), defRepo, 'replace', true);
         }
       }, 300);
     };
-
-    if (serverHydratedData) {
-      initialize(serverHydratedData);
-    } else {
+    if (serverHydratedData) initialize(serverHydratedData);
+    else {
       (async () => {
         try {
-          const bootRes = await fetch('/api/project/casearchivess', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'bootstrap' }),
-          });
-          const boot = await bootRes.json();
-          if (bootRes.ok && boot?.ok && Array.isArray(boot.tree)) {
-            initialize(boot);
-          } else {
-            setContent(`# API Error\n${boot?.error || 'Unknown'}`);
-          }
-        } catch (e) {
-          console.error('Initialization error:', e);
-          setContent('# Connection Error\nFailed to connect to API.');
-        }
+          const bootRes = await fetch('/api/project/casearchivess', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'bootstrap' }) });
+          const boot = await bootRes.json(); if (bootRes.ok && boot?.ok && Array.isArray(boot.tree)) initialize(boot);
+          else setContent(`# API Error\n${boot?.error || 'Unknown'}`);
+        } catch (e) { console.error('Initialization error:', e); setContent('# Connection Error\nFailed to connect to API.'); }
       })();
     }
   }, []);
 
-  const { handleLinkClick } = useLinkHandler({
-    loadFile,
-    createAndOpenFile,
-    openFiles,
-    tabs,
-    applyFileContent,
-    fileRegistry,
-    setActiveTab,
-    setActiveOverlay,
-  });
+  const { handleLinkClick } = useLinkHandler({ loadFile, createAndOpenFile, openFiles, tabs, applyFileContent, fileRegistry, setActiveTab, setActiveOverlay });
+  const graphFiles = useMemo(() => allFiles.map((f) => ({ ...f, fetchedContent: fullContentCache[f.id]?.raw || openFiles.find((of) => of.id === f.id)?.fetchedContent || '', })), [allFiles, fullContentCache, openFiles]);
 
-  const graphFiles = useMemo(() =>
-    allFiles.map((f) => ({
-      ...f,
-      fetchedContent: fullContentCache[f.id]?.raw || openFiles.find((of) => of.id === f.id)?.fetchedContent || '',
-    })),
-    [allFiles, fullContentCache, openFiles]
-  );
-
-  const activeTabIndex    = tabs.findIndex((t) => t.id === activeTab);
-  const nextTabForActive  = tabs.slice(activeTabIndex + 1).find((t) => t.type === 'editor' || t.type === 'static');
-  const prevTabForActive  = activeTabIndex > 0 
-    ? [...tabs.slice(0, activeTabIndex)].reverse().find((t) => t.type === 'editor' || t.type === 'static')
-    : null;
-
-  const showReadMore      = isAtBottom && !isFooterExpanded && nextTabForActive && !activeOverlay;
+  const activeTabIndex = tabs.findIndex((t) => t.id === activeTab);
+  const nextTabForActive = tabs.slice(activeTabIndex + 1).find((t) => t.type === 'editor' || t.type === 'static');
+  const prevTabForActive = activeTabIndex > 0 ? [...tabs.slice(0, activeTabIndex)].reverse().find((t) => t.type === 'editor' || t.type === 'static') : null;
+  const showReadMore = isAtBottom && !isFooterExpanded && nextTabForActive && !activeOverlay;
 
   const activeTabPanel = useMemo(() => {
-    const activeT = tabs.find(t => t.id === activeTab);
-    if (!activeT) return null;
+    const activeT = tabs.find(t => t.id === activeTab); if (!activeT) return null;
     return (
-      <TabPanel
-        key={activeT.id}
-        tab={activeT}
-        activeTab={activeTab}
-        handleTabClick={handleTabClick}
-        handleLinkClick={handleLinkClick}
-        isEditing={isEditing}
-        handleToggleEditMode={handleToggleEditMode}
-        saveStatus={saveStatus}
-        handleSidebarSave={handleSidebarSave}
-        fileName={fileName}
-        content={content}
-        handleSaveFile={handleSaveFile}
-        saveHandlerRef={saveHandlerRef}
-        fileRegistry={fileRegistry}
-        isAtBottom={isAtBottom}
-        setIsAtBottom={setIsAtBottom}
-        reader={augmentedReader}
-      />
+      <TabPanel key={activeT.id} tab={activeT} activeTab={activeTab} handleTabClick={handleTabClick} handleLinkClick={handleLinkClick} isEditing={isEditing} handleToggleEditMode={handleToggleEditMode} saveStatus={saveStatus} handleSidebarSave={handleSidebarSave} fileName={fileName} content={content} handleSaveFile={handleSaveFile} saveHandlerRef={saveHandlerRef} fileRegistry={fileRegistry} isAtBottom={isAtBottom} setIsAtBottom={setIsAtBottom} reader={augmentedReader} />
     );
   }, [activeTab, tabs, handleTabClick, handleLinkClick, isEditing, handleToggleEditMode, saveStatus, handleSidebarSave, fileName, content, handleSaveFile, saveHandlerRef, fileRegistry, isAtBottom, augmentedReader]);
 
   return (
-    <div
-      className={[
-        'accordion-app',
-        !isMobile ? 'pc-layout' : '',
-        activeTab || activeOverlay      ? 'has-active'      : '',
-        activeOverlay === 'chat'        ? 'chat-active'     : '',
-        activeOverlay === 'pdf'         ? 'pdf-active'      : '',
-        activeOverlay === 'graph'       ? 'graph-active'    : '',
-      ].join(' ')}
-      ref={appShellRef}
-    >
-      <div className="case-background">
-        <img src="/casebg2.png" alt="" />
-      </div>
+    <div className={['accordion-app', !isMobile ? 'pc-layout' : '', activeTab || activeOverlay ? 'has-active' : '', activeOverlay === 'chat' ? 'chat-active' : '', activeOverlay === 'pdf' ? 'pdf-active' : '', activeOverlay === 'graph' ? 'graph-active' : ''].join(' ')} ref={appShellRef}>
+      <div className="case-background"><img src="/casebg2.png" alt="" /></div>
       <div className="video-overlay" />
-
-      <SpritzOverlay 
-        text={reader.currentText} 
-        isPlaying={reader.isPlaying} 
-        isPaused={reader.isPaused} 
-        playbackRate={reader.playbackRate} 
-      />
-
-      <MusicPlayer
-        isPlaying={reader.isPlaying}
-        isPaused={reader.isPaused}
-        playbackRate={reader.playbackRate}
-      />
+      <SpritzOverlay text={reader.currentText} isPlaying={reader.isPlaying} isPaused={reader.isPaused} playbackRate={reader.playbackRate} />
+      <MusicPlayer isPlaying={reader.isPlaying} isPaused={reader.isPaused} playbackRate={reader.playbackRate} />
 
       {!isMobile ? (
         <>
-          <StickySpine
-            showHeader={showHeader}
-            activeTab={activeTab}
-            activeOverlay={activeOverlay}
-            handleCreateNewNote={handleCreateNewNote}
-            setActiveOverlay={(id) => {
-              if (typeof id === 'function') {
-                const result = id(activeOverlay);
-                if (result) toggleWindow(result);
-              } else {
-                if (id) toggleWindow(id);
-              }
-            }}
-            setActiveTab={setActiveTab}
-            openWindows={openWindows}
-          />
-
+          <StickySpine showHeader={showHeader} activeTab={activeTab} activeOverlay={activeOverlay} handleCreateNewNote={handleCreateNewNote} setActiveOverlay={(id) => { if (typeof id === 'function') { const result = id(activeOverlay); if (result) toggleWindow(result); } else { if (id) toggleWindow(id); } }} setActiveTab={setActiveTab} openWindows={openWindows} />
+          
           <div className={`windows-container ${maximizedWindow ? 'has-maximized' : ''} ${openWindows.includes('editor') ? 'has-editor' : ''} ${openWindows.length > (openWindows.includes('editor') ? 1 : 0) ? 'has-others' : ''}`}>
             {everOpened.filter(winId => winId === 'editor').map((winId) => {
               const isMax = maximizedWindow === winId;
               const isOpen = openWindows.includes(winId);
               const isHidden = !isOpen || (maximizedWindow && !isMax);
-
               const tabTitle = tabs.find(t => t.id === activeTab)?.title || 'Note';
-              const title = `Case Archives - ${tabTitle}`;
-
+              
               return (
-                <WindowFrame
-                  key={winId}
-                  id={winId}
-                  title={title}
-                  isMaximized={isMax}
-                  isHidden={isHidden}
-                  onToggleMaximize={toggleMaximize}
-                  onClose={closeWindow}
-                  onSave={handleSidebarSave}
-                  saveStatus={saveStatus}
-                  onToggleEdit={handleToggleEditMode}
-                  isEditing={isEditing}
-                  onComment={handleAppendComment}
-                  onNewNote={handleCreateNewNote}
-                  isMobile={false}
-                >
+                <WindowFrame key={winId} id={winId} title={`Case Archives - ${tabTitle}`} isMaximized={isMax} isHidden={isHidden} onToggleMaximize={toggleMaximize} onClose={closeWindow} onSave={handleSidebarSave} saveStatus={saveStatus} onToggleEdit={handleToggleEditMode} isEditing={isEditing} onComment={handleAppendComment} onNewNote={handleCreateNewNote} isMobile={false}>
                   {activeTabPanel}
                 </WindowFrame>
               );
@@ -672,69 +343,21 @@ export default function CaseClient({ serverHydratedData = null }) {
                   const isMax = maximizedWindow === winId;
                   const isOpen = openWindows.includes(winId);
                   const isHidden = !isOpen || (maximizedWindow && !isMax);
-
-                  let title = '';
-                  let winContent = null;
-
+                  let title = ''; let winContent = null;
+                  
                   if (winId === 'chat') {
                     title = 'AI Chat Vault';
-                    winContent = (
-                      <div className="chat-container">
-                        <Chat 
-                          ref={chatRef}
-                          isEmbedded={true} 
-                          onLinkClick={handleLinkClick} 
-                          onLiveCallChange={setIsLiveCallActive}
-                        />
-                      </div>
-                    );
+                    winContent = <div className="chat-container"><Chat ref={chatRef} isEmbedded={true} onLinkClick={handleLinkClick} onLiveCallChange={setIsLiveCallActive} /></div>;
                   } else if (winId === 'pdf') {
                     title = 'PDF Reader';
-                    winContent = (
-                      <div className="pdf-container">
-                        <PDFViewer 
-                          onClose={() => closeWindow('pdf')} 
-                          reader={{ 
-                            readChunk: augmentedReader.readChunk, 
-                            stop: augmentedReader.stop, 
-                            isPlaying: augmentedReader.isPlaying, 
-                            currentText: augmentedReader.currentText, 
-                            triggerRead: augmentedReader.triggerRead 
-                          }}
-                          isOpen={true}
-                        />
-                      </div>
-                    );
+                    winContent = <div className="pdf-container"><PDFViewer ref={pdfRef} onClose={() => closeWindow('pdf')} reader={augmentedReader} isOpen={true} onStateChange={setPdfState} /></div>;
                   } else if (winId === 'graph') {
                     title = 'Graph View';
-                    winContent = (
-                      <GraphView 
-                        allFiles={graphFiles} 
-                        onSelectFile={(path, name, id) => {
-                          const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md'];
-                          if (githubUrl) {
-                            loadFile(githubUrl, name, id, 'push', true);
-                          }
-                        }}
-                        activeNodeId={activeTab}
-                        fullContentCache={fullContentCache}
-                      />
-                    );
+                    winContent = <GraphView allFiles={graphFiles} onSelectFile={(path, name, id) => { const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md']; if (githubUrl) loadFile(githubUrl, name, id, 'push', true); }} activeNodeId={activeTab} fullContentCache={fullContentCache} />;
                   }
-
+                  
                   return (
-                    <WindowFrame
-                      key={winId}
-                      id={winId}
-                      title={title}
-                      isMaximized={isMax}
-                      isHidden={isHidden}
-                      onToggleMaximize={toggleMaximize}
-                      onClose={closeWindow}
-                      onLiveCall={winId === 'chat' ? () => chatRef.current?.toggleLiveCall() : null}
-                      isLiveCallActive={winId === 'chat' ? isLiveCallActive : false}
-                      isMobile={false}
-                    >
+                    <WindowFrame key={winId} id={winId} title={title} isMaximized={isMax} isHidden={isHidden} onToggleMaximize={toggleMaximize} onClose={closeWindow} onLiveCall={winId === 'chat' ? () => chatRef.current?.toggleLiveCall() : null} isLiveCallActive={winId === 'chat' ? isLiveCallActive : false} pdfState={winId === 'pdf' ? pdfState : null} onPdfPrev={() => pdfRef.current?.prevPage()} onPdfNext={() => pdfRef.current?.nextPage()} onPdfUpload={() => pdfRef.current?.upload()} onPdfToggleFit={() => pdfRef.current?.toggleFit()} onPdfPageJump={(p) => pdfRef.current?.setPage(p)} isMobile={false}>
                       {winContent}
                     </WindowFrame>
                   );
@@ -742,260 +365,32 @@ export default function CaseClient({ serverHydratedData = null }) {
               </div>
             )}
           </div>
-
-          <FunctionBall
-            isFooterExpanded={isFooterExpanded}
-            setIsFooterExpanded={setIsFooterExpanded}
-            showReadMore={showReadMore}
-            showFunctionBall={showFunctionBall}
-            isAtBottom={isAtBottom}
-            activeOverlay={activeOverlay}
-            setActiveOverlay={(id) => {
-              if (id) toggleWindow(id);
-            }}
-            handleCreateNewNote={handleCreateNewNote}
-            fileName={fileName}
-            handleAppendComment={handleAppendComment}
-            handleTabClick={handleTabClick}
-            nextTabForActive={nextTabForActive}
-            prevTabForActive={prevTabForActive}
-            isEditing={isEditing}
-            handleToggleEditMode={handleToggleEditMode}
-            saveStatus={saveStatus}
-            handleSidebarSave={handleSidebarSave}
-            activeTabType={tabs.find(t => t.id === activeTab)?.type}
-            activeTabObj={tabs.find(t => t.id === activeTab)}
-            openWindows={openWindows}
-          />
         </>
       ) : (
         <>
-          <FunctionBall
-            isFooterExpanded={isFooterExpanded}
-            setIsFooterExpanded={setIsFooterExpanded}
-            showReadMore={showReadMore}
-            showFunctionBall={showFunctionBall}
-            isAtBottom={isAtBottom}
-            activeOverlay={activeOverlay}
-            setActiveOverlay={setActiveOverlay}
-            handleCreateNewNote={handleCreateNewNote}
-            fileName={fileName}
-            handleAppendComment={handleAppendComment}
-            handleTabClick={handleTabClick}
-            nextTabForActive={nextTabForActive}
-            prevTabForActive={prevTabForActive}
-            isEditing={isEditing}
-            handleToggleEditMode={handleToggleEditMode}
-            saveStatus={saveStatus}
-            handleSidebarSave={handleSidebarSave}
-            activeTabType={tabs.find(t => t.id === activeTab)?.type}
-            activeTabObj={tabs.find(t => t.id === activeTab)}
-          />
-
-          <StickySpine
-            showHeader={showHeader}
-            activeTab={activeTab}
-            activeOverlay={activeOverlay}
-            handleCreateNewNote={handleCreateNewNote}
-            setActiveOverlay={(id) => {
-              if (typeof id === 'function') {
-                const result = id(activeOverlay);
-                if (!isMobile && result) toggleWindow(result);
-                else setActiveOverlay(result);
-              } else {
-                if (!isMobile && id) toggleWindow(id);
-                else setActiveOverlay(id);
-              }
-            }}
-            setActiveTab={setActiveTab}
-          />
-
-          <GraphOverlay
-            isOpen={activeOverlay === 'graph'}
-            graphFiles={graphFiles}
-            activeTab={activeTab}
-            loadFile={loadFile}
-            fileRegistry={fileRegistry}
-            fullContentCache={fullContentCache}
-          />
-
-          <ChatOverlay
-            isOpen={activeOverlay === 'chat'}
-            handleLinkClick={handleLinkClick}
-            reader={augmentedReader}
-          />
-
-          <PDFOverlay
-            isOpen={activeOverlay === 'pdf'}
-            setActiveOverlay={setActiveOverlay}
-            reader={augmentedReader}
-          />
-
-          {tabs.filter(t => t.type === 'editor' || t.type === 'static').map(tab => (
-            <TabPanel
-              key={tab.id}
-              tab={tab}
-              activeTab={activeTab}
-              handleTabClick={handleTabClick}
-              handleLinkClick={handleLinkClick}
-              isEditing={isEditing}
-              handleToggleEditMode={handleToggleEditMode}
-              saveStatus={saveStatus}
-              handleSidebarSave={handleSidebarSave}
-              fileName={fileName}
-              content={content}
-              handleSaveFile={handleSaveFile}
-              saveHandlerRef={saveHandlerRef}
-              fileRegistry={fileRegistry}
-              isAtBottom={isAtBottom}
-              setIsAtBottom={setIsAtBottom}
-              reader={augmentedReader}
-            />
-          ))}
+          <FunctionBall isFooterExpanded={isFooterExpanded} setIsFooterExpanded={setIsFooterExpanded} showReadMore={showReadMore} showFunctionBall={showFunctionBall} isAtBottom={isAtBottom} activeOverlay={activeOverlay} setActiveOverlay={setActiveOverlay} handleCreateNewNote={handleCreateNewNote} fileName={fileName} handleAppendComment={handleAppendComment} handleTabClick={handleTabClick} nextTabForActive={nextTabForActive} prevTabForActive={prevTabForActive} isEditing={isEditing} handleToggleEditMode={handleToggleEditMode} saveStatus={saveStatus} handleSidebarSave={handleSidebarSave} activeTabType={tabs.find(t => t.id === activeTab)?.type} activeTabObj={tabs.find(t => t.id === activeTab)} />
+          <StickySpine showHeader={showHeader} activeTab={activeTab} activeOverlay={activeOverlay} handleCreateNewNote={handleCreateNewNote} setActiveOverlay={(id) => { if (typeof id === 'function') { const result = id(activeOverlay); if (!isMobile && result) toggleWindow(result); else setActiveOverlay(result); } else { if (!isMobile && id) toggleWindow(id); else setActiveOverlay(id); } }} setActiveTab={setActiveTab} />
+          <GraphOverlay isOpen={activeOverlay === 'graph'} graphFiles={graphFiles} activeTab={activeTab} loadFile={loadFile} fileRegistry={fileRegistry} fullContentCache={fullContentCache} />
+          <ChatOverlay isOpen={activeOverlay === 'chat'} handleLinkClick={handleLinkClick} reader={augmentedReader} />
+          <PDFOverlay isOpen={activeOverlay === 'pdf'} setActiveOverlay={setActiveOverlay} reader={augmentedReader} />
+          {tabs.filter(t => t.type === 'editor' || t.type === 'static').map(tab => ( <TabPanel key={tab.id} tab={tab} activeTab={activeTab} handleTabClick={handleTabClick} handleLinkClick={handleLinkClick} isEditing={isEditing} handleToggleEditMode={handleToggleEditMode} saveStatus={saveStatus} handleSidebarSave={handleSidebarSave} fileName={fileName} content={content} handleSaveFile={handleSaveFile} saveHandlerRef={saveHandlerRef} fileRegistry={fileRegistry} isAtBottom={isAtBottom} setIsAtBottom={setIsAtBottom} reader={augmentedReader} /> ))}
         </>
       )}
 
       {(pendingReadConfirm || reader.isPlaying) && (
-        <div 
-          className="global-reader-bar"
-          onClick={(e) => e.stopPropagation()}
-          style={{
-            position: 'fixed',
-            top: '20px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 10000,
-            background: 'rgba(0,0,0,0.7)',
-            backdropFilter: 'blur(16px)',
-            borderRadius: '40px',
-            padding: '8px 24px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '18px',
-            border: '1px solid var(--colorbutton, #FFFACD)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(255,250,205,0.2)',
-            animation: 'fadeInDown 0.3s ease-out',
-            color: 'white',
-            transition: 'all 0.3s ease'
-          }}
-        >
-          {pendingReadConfirm ? (
-            <div 
-              className="reader-confirm-btn"
-              onClick={() => {
-                pendingReadConfirm();
-                setPendingReadConfirm(null);
-              }}
-              style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-            >
-              <Volume2 size={20} color="var(--colorbutton, #FFFACD)" />
-            </div>
-          ) : (
+        <div className="global-reader-bar" onClick={(e) => e.stopPropagation()} style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 10000, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(16px)', borderRadius: '40px', padding: '8px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '18px', border: '1px solid var(--colorbutton, #FFFACD)', boxShadow: '0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(255,250,205,0.2)', animation: 'fadeInDown 0.3s ease-out', color: 'white', transition: 'all 0.3s ease' }}>
+          {pendingReadConfirm ? ( <div className="reader-confirm-btn" onClick={() => { pendingReadConfirm(); setPendingReadConfirm(null); }} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}><Volume2 size={20} color="var(--colorbutton, #FFFACD)" /></div> ) : (
             <>
-              <div 
-                className="reader-ctrl-btn"
-                onClick={() => reader.isPaused ? reader.resume() : reader.pause()}
-                title={reader.isPaused ? "Resume" : "Pause"}
-                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-              >
-                {reader.isPaused ? (
-                  <Play size={20} fill="var(--colorbutton, #FFFACD)" color="var(--colorbutton, #FFFACD)" />
-                ) : (
-                  <Pause size={20} fill="var(--colorbutton, #FFFACD)" color="var(--colorbutton, #FFFACD)" />
-                )}
-              </div>
-
-              <div 
-                className="reader-ctrl-btn"
-                onClick={() => reader.stop()}
-                title="Stop"
-                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-              >
-                <Square size={18} fill="white" color="white" />
-              </div>
-
-              <div 
-                className="reader-speed-toggle"
-                onClick={() => {
-                  const rates = [1.0, 1.25, 1.5, 2.0];
-                  let next;
-                  if (reader.playbackRate === 4.0) {
-                    next = 1.0;
-                  } else if (reader.playbackRate === 2.0) {
-                    next = reader.isPaused ? 4.0 : 1.0;
-                  } else {
-                    const idx = rates.indexOf(reader.playbackRate);
-                    next = idx === -1 ? 1.0 : rates[(idx + 1) % rates.length];
-                  }
-                  reader.setSpeed(next);
-                }}
-                style={{ 
-                  cursor: 'pointer', 
-                  fontSize: '13px', 
-                  fontWeight: '800', 
-                  color: reader.playbackRate === 4.0 ? '#FF4500' : 'var(--colorbutton, #FFFACD)',
-                  background: reader.playbackRate === 4.0 ? 'rgba(255,69,0,0.2)' : 'rgba(255,250,205,0.1)',
-                  padding: '4px 10px',
-                  borderRadius: '12px',
-                  minWidth: '45px',
-                  textAlign: 'center',
-                  userSelect: 'none',
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                {reader.playbackRate}x
-              </div>
-
-              <div 
-                className="reader-cefr-toggle"
-                onClick={() => {
-                  const levels = ['none', 'a1', 'a2', 'b1', 'b2', 'c1', 'c2'];
-                  const idx = levels.indexOf(reader.cefrLevel);
-                  const next = levels[(idx + 1) % levels.length];
-                  reader.updateCefrLevel(next);
-                }}
-                title="Learning English Level"
-                style={{ 
-                  cursor: 'pointer', 
-                  fontSize: '11px', 
-                  fontWeight: '900', 
-                  color: reader.cefrLevel === 'none' ? 'rgba(255,250,205,0.4)' : '#000',
-                  background: reader.cefrLevel === 'none' ? 'rgba(255,250,205,0.05)' : 'var(--colorbutton, #FFFACD)',
-                  padding: '4px 8px',
-                  borderRadius: '10px',
-                  minWidth: '40px',
-                  textAlign: 'center',
-                  userSelect: 'none',
-                  textTransform: 'uppercase',
-                  border: reader.cefrLevel === 'none' ? '1px solid rgba(255,250,205,0.1)' : 'none'
-                }}
-              >
-                {reader.cefrLevel === 'none' ? 'Off' : reader.cefrLevel}
-              </div>
+              <div className="reader-ctrl-btn" onClick={() => reader.isPaused ? reader.resume() : reader.pause()} title={reader.isPaused ? "Resume" : "Pause"} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>{reader.isPaused ? ( <Play size={20} fill="var(--colorbutton, #FFFACD)" color="var(--colorbutton, #FFFACD)" /> ) : ( <Pause size={20} fill="var(--colorbutton, #FFFACD)" color="var(--colorbutton, #FFFACD)" /> )}</div>
+              <div className="reader-ctrl-btn" onClick={() => reader.stop()} title="Stop" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}><Square size={18} fill="white" color="white" /></div>
+              <div className="reader-speed-toggle" onClick={() => { const rates = [1.0, 1.25, 1.5, 2.0]; let next; if (reader.playbackRate === 4.0) next = 1.0; else if (reader.playbackRate === 2.0) next = reader.isPaused ? 4.0 : 1.0; else { const idx = rates.indexOf(reader.playbackRate); next = idx === -1 ? 1.0 : rates[(idx + 1) % rates.length]; } reader.setSpeed(next); }} style={{ cursor: 'pointer', fontSize: '13px', fontWeight: '800', color: reader.playbackRate === 4.0 ? '#FF4500' : 'var(--colorbutton, #FFFACD)', background: reader.playbackRate === 4.0 ? 'rgba(255,69,0,0.2)' : 'rgba(255,250,205,0.1)', padding: '4px 10px', borderRadius: '12px', minWidth: '45px', textAlign: 'center', userSelect: 'none', transition: 'all 0.3s ease' }}>{reader.playbackRate}x</div>
+              <div className="reader-cefr-toggle" onClick={() => { const levels = ['none', 'a1', 'a2', 'b1', 'b2', 'c1', 'c2']; const idx = levels.indexOf(reader.cefrLevel); const next = levels[(idx + 1) % levels.length]; reader.updateCefrLevel(next); }} title="Learning English Level" style={{ cursor: 'pointer', fontSize: '11px', fontWeight: '900', color: reader.cefrLevel === 'none' ? 'rgba(255,250,205,0.4)' : '#000', background: reader.cefrLevel === 'none' ? 'rgba(255,250,205,0.05)' : 'var(--colorbutton, #FFFACD)', padding: '4px 8px', borderRadius: '10px', minWidth: '40px', textAlign: 'center', userSelect: 'none', textTransform: 'uppercase', border: reader.cefrLevel === 'none' ? '1px solid rgba(255,250,205,0.1)' : 'none' }}>{reader.cefrLevel === 'none' ? 'Off' : reader.cefrLevel}</div>
             </>
           )}
-
-          <style dangerouslySetInnerHTML={{ __html: `
-            .reader-ctrl-btn { opacity: 0.8; transition: all 0.2s; }
-            .reader-ctrl-btn:hover { opacity: 1; transform: scale(1.1); }
-            .reader-speed-toggle:hover { background: rgba(255,250,205,0.2); }
-            .reader-cefr-toggle { transition: all 0.2s; }
-            .reader-cefr-toggle:hover { transform: scale(1.05); filter: brightness(1.1); }
-            @keyframes fadeInDown {
-              from { opacity: 0; transform: translate(-50%, -20px); }
-              to { opacity: 1; transform: translate(-50%, 0); }
-            }
-          `}} />
+          <style dangerouslySetInnerHTML={{ __html: ` .reader-ctrl-btn { opacity: 0.8; transition: all 0.2s; } .reader-ctrl-btn:hover { opacity: 1; transform: scale(1.1); } .reader-speed-toggle:hover { background: rgba(255,250,205,0.2); } .reader-cefr-toggle { transition: all 0.2s; } .reader-cefr-toggle:hover { transform: scale(1.05); filter: brightness(1.1); } @keyframes fadeInDown { from { opacity: 0; transform: translate(-50%, -20px); } to { opacity: 1; transform: translate(-50%, 0); } } `}} />
         </div>
       )}
-
-      <PromptOverlays
-        passPrompt={passPrompt}       setPassPrompt={setPassPrompt}
-        namePrompt={namePrompt}       setNamePrompt={setNamePrompt}
-        commentPrompt={commentPrompt} setCommentPrompt={setCommentPrompt}
-      />
-
+      <PromptOverlays passPrompt={passPrompt} setPassPrompt={setPassPrompt} namePrompt={namePrompt} setNamePrompt={setNamePrompt} commentPrompt={commentPrompt} setCommentPrompt={setCommentPrompt} />
       <VaultStyles />
     </div>
   );

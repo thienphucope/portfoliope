@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { Maximize2, Minimize2, X, Zap, Save, Pencil, Eye, MessageSquare, Plus, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Maximize2, Minimize2, X, Zap, Save, Pencil, Eye, MessageSquare, Plus, Loader2, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight, Upload } from 'lucide-react';
 
 /**
  * WindowFrame component that provides a title bar, borders, and window controls
@@ -20,6 +20,12 @@ export default function WindowFrame({
   isEditing = false,
   onComment,
   onNewNote,
+  pdfState = null,
+  onPdfPrev,
+  onPdfNext,
+  onPdfUpload,
+  onPdfToggleFit,
+  onPdfPageJump,
   children,
   isMobile,
   isHidden = false
@@ -31,6 +37,40 @@ export default function WindowFrame({
       <div className="window-title-bar">
         <div className="window-title-text">{title}</div>
         <div className="window-controls">
+          {/* PDF Specific Controls */}
+          {id === 'pdf' && pdfState && (
+            <>
+              <button className="window-control-btn" onClick={onPdfUpload} title="Upload PDF">
+                <Upload size={16} />
+              </button>
+              <div className="control-separator" />
+              <button className="window-control-btn" onClick={onPdfPrev} disabled={pdfState.pageNumber <= 1}>
+                <ChevronLeft size={16} />
+              </button>
+              <div className="pdf-page-indicator">
+                <input 
+                  type="text" 
+                  className="pdf-title-input" 
+                  value={pdfState.pageNumber} 
+                  onChange={(e) => {
+                    const p = parseInt(e.target.value);
+                    if (!isNaN(p)) onPdfPageJump(p);
+                  }}
+                  onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
+                />
+                <span>/ {pdfState.numPages || 0}</span>
+              </div>
+              <button className="window-control-btn" onClick={onPdfNext} disabled={pdfState.pageNumber >= pdfState.numPages}>
+                <ChevronRight size={16} />
+              </button>
+              <div className="control-separator" />
+              <button className="window-control-btn" onClick={onPdfToggleFit} title={pdfState.fitMode === 'width' ? "Fit Height" : "Fit Width"}>
+                {pdfState.fitMode === 'width' ? <Maximize2 size={14} /> : <Minimize2 size={14} />}
+              </button>
+              <div className="control-separator" />
+            </>
+          )}
+
           {/* Editor Specific Controls */}
           {id === 'editor' && (
             <>
@@ -166,9 +206,35 @@ export default function WindowFrame({
           border-radius: 4px;
         }
 
-        .window-control-btn:hover {
+        .window-control-btn:hover:not(:disabled) {
           opacity: 1;
           background: rgba(255, 250, 205, 0.1);
+        }
+
+        .window-control-btn:disabled {
+          opacity: 0.1;
+          cursor: default;
+        }
+
+        .pdf-page-indicator {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 11px;
+          font-weight: 700;
+          color: var(--colorbutton);
+          opacity: 0.7;
+        }
+
+        .pdf-title-input {
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          color: inherit;
+          width: 24px;
+          text-align: center;
+          font-size: 11px;
+          border-radius: 2px;
+          outline: none;
         }
 
         .window-control-btn.active-mode {
