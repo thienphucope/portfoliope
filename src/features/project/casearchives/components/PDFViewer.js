@@ -218,4 +218,6 @@ const PDFViewer = forwardRef(({ onClose, reader, isOpen, onStateChange }, ref) =
   );
 });
 
+PDFViewer.displayName = 'PDFViewer';
+
 export default PDFViewer;

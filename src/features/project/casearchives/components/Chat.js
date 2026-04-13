@@ -345,4 +345,6 @@ const Chat = forwardRef(({ isEmbedded = false, onLinkClick, onLiveCallChange }, 
   );
 });
 
+Chat.displayName = 'Chat';
+
 export default Chat;
