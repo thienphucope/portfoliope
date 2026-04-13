@@ -2,8 +2,8 @@
 import Hero from './Hero';
 import SnowEffect from './SnowEffect';
 import AudioVisualProvider from '@/components/audio/AudioVisualProvider';
-import useFingerprints from '@/features/home/hooks/useFingerprints';
-import useMomentumScroll from '@/features/home/hooks/useMomentumScroll';
+import useFingerprints from '@/features/project/home/hooks/useFingerprints';
+import useMomentumScroll from '@/features/project/home/hooks/useMomentumScroll';
 
 export default function AboutClient() {
   const fingerprints = useFingerprints();

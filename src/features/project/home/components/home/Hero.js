@@ -3,8 +3,8 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { Footprints } from 'lucide-react';
 import Link from 'next/link';
 
-import useSpotlight from '@/features/home/hooks/useSpotlight';
-import useCustomCursor from '@/features/home/hooks/useCustomCursor';
+import useSpotlight from '@/features/project/home/hooks/useSpotlight';
+import useCustomCursor from '@/features/project/home/hooks/useCustomCursor';
 
 export default function Hero() {
   const [displayText, setDisplayText] = useState("");
@@ -150,10 +150,7 @@ export default function Hero() {
         }
 
         .polaroid-container:hover {
-          background: transparent;
-          border-color: transparent;
-          box-shadow: none;
-          transform: scale(1.02) rotate(-1deg);
+          transform: rotate(-2deg);
         }
 
         .image-wrapper {
@@ -214,7 +211,7 @@ export default function Hero() {
             >
               <div className="image-wrapper">
                 <img
-                  src="/ope.png"
+                  src="/blackcat.jpg"
                   alt="Ope"
                   style={{
                     filter: 'brightness(0.7) contrast(1.1) saturate(0.8)'
@@ -227,17 +224,6 @@ export default function Hero() {
 
           {/* Right side: Text Intro */}
           <div className="intro-text-content font-fredericka p-8 lg:p-12 lg:pl-10 max-w-2xl relative">
-            {/* Magnifier in top right of the text content */}
-            <div 
-              className="absolute top-0 right-0 rotate-[-30deg] opacity-60 p-4 cursor-pointer z-50 transition-all duration-300 hover:opacity-100 hover:drop-shadow-[0_0_20px_rgba(194,163,138,0.8)] group/magnifier"
-              onClick={() => setCursorType('magnifier')}
-            >
-              <img 
-                src="/magnifier.webp" 
-                alt="Magnifier" 
-                className="w-25 h-25 md:w-32 md:h-32 lg:w-48 lg:h-48 object-contain transition-transform duration-300 group-hover/magnifier:scale-110"
-              />
-            </div>
             <h2
               className="text-3xl md:text-5xl lg:text-7xl xl:text-7xl text-[var(--colorone)] font-bold mb-3 hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default text-center lg:text-left whitespace-pre-wrap"
               onMouseEnter={() => scrambleText(originalTitlePadded, replacementTitlePadded, setDisplayTitle)}

@@ -38,8 +38,8 @@ export default function AudioVisualProvider({ children }) {
         }
         if (!playerRef.current && musicPlayerDivRef.current) {
           playerRef.current = new window.YT.Player(musicPlayerDivRef.current, {
-            height: '0', width: '0', videoId: 'aiKlW8XCABQ',
-            playerVars: { autoplay: 1, loop: 1, playlist: 'JEUf8nTl5aU', controls: 0, showinfo: 0, modestbranding: 1 },
+            height: '0', width: '0', videoId: '4ZzvLbANqD0',
+            playerVars: { autoplay: 1, loop: 1, playlist: '4ZzvLbANqD0', controls: 0, showinfo: 0, modestbranding: 1 },
             events: {
               onReady: (e) => { e.target.setVolume(50); e.target.playVideo(); },
               onStateChange: (e) => {
@@ -119,7 +119,7 @@ export default function AudioVisualProvider({ children }) {
         <div className="video-overlay"></div>
       </div>
 
-      <div className={`w-full relative z-10 transition-opacity duration-[2000ms] ease-in-out ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`w-full relative z-[101] transition-opacity duration-[2000ms] ease-in-out ${mounted ? 'opacity-100' : 'opacity-0'}`}>
         
         <div style={{ display: 'none' }}>
           <div ref={musicPlayerDivRef}></div>

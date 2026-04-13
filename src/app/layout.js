@@ -2,9 +2,9 @@ import "@fontsource-variable/roboto";
 import "@fontsource-variable/roboto-mono";
 import "@fontsource/zen-kaku-gothic-new";
 import "./globals.css";
-import Chat from '../features/case/components/Chat';
+import Chat from '../features/project/casearchives/components/Chat';
 import { Analytics } from '@vercel/analytics/react';
-import { CursorProvider } from '../features/home/context/CursorContext';
+import { CursorProvider } from '../features/project/home/context/CursorContext';
 
 export const metadata = {
   title: "Ope Watson",
@@ -15,7 +15,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/ope.png" />
+        <link rel="icon" href="/blackcat.jpg" />
       </head>
       <body>
         <CursorProvider>

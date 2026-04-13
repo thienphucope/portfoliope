@@ -91,7 +91,7 @@ export function useFileLoader({
         if (activate) {
           setActiveTab(repoKey);
           const cleanPath = repoKey.replace(/\.md$/, '');
-          const newUrl    = `/case/${cleanPath}`;
+          const newUrl    = `/project/casearchives/${cleanPath}`;
           if (window.location.pathname !== newUrl) {
             if (historyMode === 'replace') {
               window.history.replaceState({ repoKey }, '', newUrl);

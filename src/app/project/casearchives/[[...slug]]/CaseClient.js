@@ -1,35 +1,35 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import BlockEditor from '../../../features/case/components/BlockEditor';
-import VaultStyles from '../../../features/case/styles/VaultStyles';
-import StickySpine from '../../../features/case/components/StickySpine';
-import FunctionBall from '../../../features/case/components/FunctionBall';
-import PromptOverlays from '../../../features/case/components/PromptOverlays';
-import TabPanel from '../../../features/case/components/TabPanel';
-import FileTreeOverlay from '../../../features/case/components/FileTreeOverlay';
-import ChatOverlay from '../../../features/case/components/ChatOverlay';
-import PDFOverlay from '../../../features/case/components/PDFOverlay';
+import BlockEditor from '@/features/project/casearchives/components/BlockEditor';
+import VaultStyles from '@/features/project/casearchives/styles/VaultStyles';
+import StickySpine from '@/features/project/casearchives/components/StickySpine';
+import FunctionBall from '@/features/project/casearchives/components/FunctionBall';
+import PromptOverlays from '@/features/project/casearchives/components/PromptOverlays';
+import TabPanel from '@/features/project/casearchives/components/TabPanel';
+import FileTreeOverlay from '@/features/project/casearchives/components/FileTreeOverlay';
+import ChatOverlay from '@/features/project/casearchives/components/ChatOverlay';
+import PDFOverlay from '@/features/project/casearchives/components/PDFOverlay';
 import dynamic from 'next/dynamic';
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
-import { useFileRegistry }     from '@/features/case/hooks/useFileRegistry';
-import { useFileLoader }       from '@/features/case/hooks/useFileLoader';
-import { useFileMutations }    from '@/features/case/hooks/useFileMutations';
-import { useLockManager }      from '@/features/case/hooks/useLockManager';
-import { useEditorState }      from '@/features/case/hooks/useEditorState';
-import { useTabManager }       from '@/features/case/hooks/useTabManager';
-import { useScrollBehavior }   from '@/features/case/hooks/useScrollBehavior';
-import { useContentCache }     from '@/features/case/hooks/useContentCache';
-import { useVideoInteraction } from '@/features/case/hooks/useVideoInteraction';
-import { useBeforeUnload }     from '@/features/case/hooks/useBeforeUnload';
-import { usePrompts }          from '@/features/case/hooks/usePrompts';
-import { useLinkHandler }      from '@/features/case/hooks/useLinkHandler';
+import { useFileRegistry }     from '@/features/project/casearchives/hooks/useFileRegistry';
+import { useFileLoader }       from '@/features/project/casearchives/hooks/useFileLoader';
+import { useFileMutations }    from '@/features/project/casearchives/hooks/useFileMutations';
+import { useLockManager }      from '@/features/project/casearchives/hooks/useLockManager';
+import { useEditorState }      from '@/features/project/casearchives/hooks/useEditorState';
+import { useTabManager }       from '@/features/project/casearchives/hooks/useTabManager';
+import { useScrollBehavior }   from '@/features/project/casearchives/hooks/useScrollBehavior';
+import { useContentCache }     from '@/features/project/casearchives/hooks/useContentCache';
+import { useVideoInteraction } from '@/features/project/casearchives/hooks/useVideoInteraction';
+import { useBeforeUnload }     from '@/features/project/casearchives/hooks/useBeforeUnload';
+import { usePrompts }          from '@/features/project/casearchives/hooks/usePrompts';
+import { useLinkHandler }      from '@/features/project/casearchives/hooks/useLinkHandler';
 
-import { useReader } from '@/features/case/hooks/useReader';
+import { useReader } from '@/features/project/casearchives/hooks/useReader';
 import { Volume2, VolumeX, Play, Pause, Square, Zap } from 'lucide-react';
 
-const GraphView = dynamic(() => import('../../../features/case/components/GraphView'), { ssr: false });
+const GraphView = dynamic(() => import('@/features/project/casearchives/components/GraphView'), { ssr: false });
 
 // ─── Spritz Overlay Component ────────────────────────────────────────────────
 const SpritzOverlay = ({ text, isPlaying, isPaused, playbackRate }) => {
@@ -300,7 +300,7 @@ export default function CaseClient({ serverHydratedData = null }) {
     (filePath) => _handleDeleteFile(filePath, fileName, (wasActive) => {
       if (wasActive) {
         setActiveTab(null);
-        window.history.replaceState({ repoKey: null }, '', '/case');
+        window.history.replaceState({ repoKey: null }, '', '/project/casearchives');
       } else {
         const url = fileRegistry.current[fileName?.toLowerCase()];
         if (url) loadFile(url, fileName.split('/').pop(), fileName, 'replace');
@@ -378,8 +378,8 @@ export default function CaseClient({ serverHydratedData = null }) {
   }, [content, activeTab, activeOverlay, tabs.length]);
 
   useEffect(() => {
-    if (window.location.pathname === '/case' && !window.history.state) {
-      window.history.replaceState({ isRoot: true }, '', '/case');
+    if (window.location.pathname === '/project/casearchives' && !window.history.state) {
+      window.history.replaceState({ isRoot: true }, '', '/project/casearchives');
     }
 
     const initialize = (data) => {
@@ -390,11 +390,11 @@ export default function CaseClient({ serverHydratedData = null }) {
       const pathParts    = window.location.pathname.split('/').filter(Boolean);
       const rawDefault   = process.env.NEXT_PUBLIC_DEFAULT_VAULT_FILE || 'chat';
       const cleanDefault = rawDefault.replace(/\.md$/, '');
-      const isCaseRoot   = pathParts.length === 1 && pathParts[0] === 'case';
+      const isCaseRoot   = pathParts.length === 2 && pathParts[0] === 'project' && pathParts[1] === 'casearchives';
 
       let targetSlug = cleanDefault;
-      if (pathParts[0] === 'case' && pathParts.length > 1) {
-        targetSlug = decodeURIComponent(pathParts.slice(1).join('/'));
+      if (pathParts[0] === 'project' && pathParts[1] === 'casearchives' && pathParts.length > 2) {
+        targetSlug = decodeURIComponent(pathParts.slice(2).join('/'));
       }
 
       const cleanTarget  = targetSlug.replace(/\.md$/, '');
@@ -426,7 +426,7 @@ export default function CaseClient({ serverHydratedData = null }) {
     } else {
       (async () => {
         try {
-          const bootRes = await fetch('/api/cases', {
+          const bootRes = await fetch('/api/project/casearchivess', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'bootstrap' }),

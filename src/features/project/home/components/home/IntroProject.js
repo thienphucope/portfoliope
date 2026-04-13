@@ -8,7 +8,7 @@ export default function IntroProject({ content }) {
   if (!content) return null;
 
   return (
-    <section className="relative z-50 bg-[#121212] py-10 px-6 md:px-20 border-t border-[var(--colorone)]/20" style={{ fontFamily: 'var(--md-font)' }}>
+    <section className="relative z-10 bg-transparent py-10 px-6 md:px-20" style={{ fontFamily: 'var(--md-font)' }}>
       <div className="max-w-4xl mx-auto">
         <article className="prose prose-invert prose-lg md:prose-xl max-w-none 
           prose-headings:font-fredericka prose-headings:text-[var(--colorone)]

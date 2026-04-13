@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import HomeClient from '@/features/home/components/home/HomeClient';
-import IntroProject from '@/features/home/components/home/IntroProject';
+import ProjectClient from '@/features/project/home/components/home/ProjectClient';
+import IntroProject from '@/features/project/home/components/home/IntroProject';
 
 export default async function HomePage() {
   const introPath = path.join(process.cwd(), 'content', 'This Project.md');
@@ -16,10 +16,10 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <HomeClient />
+      <ProjectClient />
 
       {/* IntroProject independent section */}
-      <div className="relative z-[70]">
+      <div className="relative z-[10]">
         <IntroProject content={introContent} />
       </div>
     </div>

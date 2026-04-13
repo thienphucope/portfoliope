@@ -1,7 +1,7 @@
 "use client";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import useMomentumScroll from '@/features/home/hooks/useMomentumScroll';
+import useMomentumScroll from '@/features/project/home/hooks/useMomentumScroll';
 import AudioVisualProvider from '@/components/audio/AudioVisualProvider';
 
 /**

@@ -202,7 +202,7 @@ export function useFileMutations({
 
         if (currentFileName === oldPath) {
           const cleanPath = newPath.replace(/\.md$/, '');
-          window.history.replaceState({ repoKey: newPath }, '', `/case/${cleanPath}`);
+          window.history.replaceState({ repoKey: newPath }, '', `/project/casearchives/${cleanPath}`);
           const newUrl = fileRegistry.current[newPath.toLowerCase()];
           if (newUrl) loadFile(newUrl, newPath.split('/').pop(), newPath, 'replace');
         } else {

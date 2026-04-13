@@ -1,58 +1,48 @@
-# The [Case Archives](https://www.opewatson.org/case) Project
-
 The **Case Archives** project is an evolving experiment in how knowledge can be explored, not just consumed. It reimagines digital documentation as a living map — where ideas are connected, navigated, and discovered rather than simply read.
-
-## Our Mission
-The mission of this project is to transform fragmented information into a structured, explorable knowledge network. Instead of presenting static content, we aim to guide users through meaningful connections — helping them understand not only *what* something is, but *how it relates* to everything else.
-
-## The Vision
-We envision a system where knowledge is no longer confined to linear pages or rigid hierarchies. Instead, it exists as a dynamic graph:
-
-- Concepts are nodes  
-- Relationships are pathways  
-- Exploration becomes a journey  
-
-In this world, users are not just readers — they are explorers, navigating through domains, uncovering hidden connections, and gradually building a deeper understanding of complex systems.
 
 ## Our Approach
 
-- **Graph-First Knowledge**  
-  Information is structured as interconnected concepts rather than isolated documents. Every node exists within a broader context.
+- **Zettelkasten Markdown**  
+  Atomic, interconnected notes that grow organically. A decentralized knowledge base where every idea finds its context through deep linking.
 
-- **Guided Navigation**  
-  The system prioritizes meaningful paths — suggesting what to learn next, what is required, and what insights can be unlocked.
+- **Dynamic Knowledge Graph**  
+  Visualize your entire thought process. Navigate a living web of connections to uncover hidden patterns and architectural insights.
 
-- **Community Refinement**  
-  Users contribute by refining connections, voting on relevance, and identifying missing links. The system evolves through collective intelligence, balanced with curated structure.
+- **Contextual AI Chat**  
+  A built-in AI assistant that understands your workspace. Brainstorm, summarize, and query your data with a context-aware companion.
 
-- **Adaptive Intelligence**  
-  By combining curated knowledge, user feedback, and interaction signals, the platform continuously improves how information is presented and connected.
+- **Integrated PDF Workspace**  
+  Seamlessly bridge research and writing. View and analyze documents alongside your notes in a unified high-performance environment.
 
-- **Immersive Experience**  
-  The interface is designed as a space for exploration — where discovery feels natural, and every interaction reveals something new.
+- **Full Modern AI Workspace**  
+  The synergy of traditional Zettelkasten philosophy and modern AI power — a complete ecosystem for deep work and research.
 
 ## The System
 
 At its core, Case Archives operates on a simple but powerful loop:
 
-> Seed → Explore → Refine → Evolve
+> Write → Connect → Chat → Evolve
 
-- **Seed:** Initial concepts and connections are created as a foundation  
-- **Explore:** Users navigate and interact with the knowledge map  
-- **Refine:** Feedback and contributions improve accuracy and structure  
-- **Evolve:** The system adapts, becoming more intelligent over time  
+- **Write:** Create atomic Markdown notes using the Zettelkasten method.
+- **Connect:** Build a dynamic graph of relationships between ideas.
+- **Chat:** Leverage AI to synthesize and explore your knowledge base.
+- **Evolve:** Your workspace becomes more intelligent as your vault grows.
 
 ## Why It Matters
 
-Most platforms answer questions.  
-Case Archives focuses on something deeper:
+Most platforms store data.  
+Case Archives focuses on building a "Second Brain":
 
-> **Helping you discover what you didn’t know you needed to learn.**
+> **Turning fragmented information into an actionable AI workspace.**
 
-By shifting from search to exploration, we aim to uncover the hidden structure of knowledge — and make learning feel like solving a case.
+By combining structural linking with intelligent orchestration, we aim to transform how you think, research, and create.
+
+
+## Our Mission
+The mission of this project is to transform fragmented information into a structured, explorable knowledge network. Instead of presenting static content, we provide a full-stack AI workspace where concepts are nodes, relationships are pathways, and exploration becomes a journey.
 
 ---
 
-#### Visit now: [Case Archives](https://www.opewatson.org/case)
+#### Visit now: [Case Archives](https://opewatson.com/project/casearchives)
 
 *Dedicated to building a living map of knowledge and the art of discovery.*

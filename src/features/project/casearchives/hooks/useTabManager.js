@@ -43,7 +43,7 @@ export function useTabManager({
         // If an overlay is open, close it first
         if (activeOverlay) setActiveOverlay(null);
 
-        // Clicking the already-open tab should close it and return to /case.
+        // Clicking the already-open tab should close it and return to /project/casearchives.
         // Apply the same unsaved-changes guard as when switching tabs.
         if (isEditing && fileName) {
           const raw = content;
@@ -69,7 +69,7 @@ export function useTabManager({
         setActiveOverlay(null);
         lastProcessedKey.current = null;
         // Gắn label isRoot để nhận diện trang chủ kho lưu trữ
-        window.history.pushState({ isRoot: true }, '', '/case');
+        window.history.pushState({ isRoot: true }, '', '/project/casearchives');
         return;
       }
 
@@ -103,7 +103,7 @@ export function useTabManager({
       if (tab.type === 'static') {
         applyFileContent(tab.id, tab.content);
         const cleanPath = tab.id.replace('system::', '');
-        window.history.pushState({ repoKey: tab.id }, '', `/case/${cleanPath}`);
+        window.history.pushState({ repoKey: tab.id }, '', `/project/casearchives/${cleanPath}`);
       } else if (tab.type === 'editor') {
         const openedF  = tabs.find((t) => t.id === tab.id);
 

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import PrivacyContent from '@/features/home/components/home/PrivacyClient';
+import PrivacyContent from '@/features/project/home/components/home/PrivacyClient';
 
 export default async function PrivacyPage() {
   const filePath = path.join(process.cwd(), 'content', 'Privacy.md');

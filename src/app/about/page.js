@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import AboutClient from '@/features/home/components/home/AboutClient';
+import AboutClient from '@/features/project/home/components/home/AboutClient';
 import Footer from '@/components/common/Footer';
 
 export default async function AboutPage() {

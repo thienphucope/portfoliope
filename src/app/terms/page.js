@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import TermsContent from '@/features/home/components/home/TermsClient';
+import TermsContent from '@/features/project/home/components/home/TermsClient';
 
 export default async function TermsPage() {
   const filePath = path.join(process.cwd(), 'content', 'Terms.md');
