@@ -97,7 +97,7 @@ export default function WindowFrame({
             <div className="window-title-content" ref={searchRef}>
               {isSearchOpen ? (
                 <div className="window-search-active">
-                  <Search size={14} className="search-icon-inside" />
+                  <Search size={14} color="var(--colorbutton)" className="search-icon-inside" />
                   <input 
                     autoFocus
                     type="text" 
@@ -142,7 +142,7 @@ export default function WindowFrame({
                   }}
                 >
                   <span className="window-title-text">{subject}</span>
-                  <Search size={12} className="title-search-hint" />
+                  <Search size={12} color="var(--colorbutton)" className="title-search-hint" />
                 </div>
               )}
             </div>
@@ -368,8 +368,8 @@ export default function WindowFrame({
         }
 
         .title-search-hint {
-          color: var(--colorbutton);
-          opacity: 0.3;
+          stroke: var(--colorbutton);
+          opacity: 0.5;
         }
 
         .window-search-active {
@@ -386,7 +386,7 @@ export default function WindowFrame({
         }
 
         .search-icon-inside {
-          color: var(--colorbutton);
+          stroke: var(--colorbutton);
           opacity: 0.5;
         }
 
