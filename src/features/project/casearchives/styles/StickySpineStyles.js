@@ -66,7 +66,7 @@ export default function StickySpineStyles() {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          font-family: var(--font-display);
+          font-family: 'Fredericka the Great', cursive;
           font-size: 2.8rem;
           color: var(--colortext-spine);
           mix-blend-mode: destination-out;

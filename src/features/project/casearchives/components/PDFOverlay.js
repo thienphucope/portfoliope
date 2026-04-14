@@ -8,6 +8,10 @@ export default function PDFOverlay({
   isOpen,
   setActiveOverlay,
   reader,
+  onStateChange,
+  initialFile,
+  initialPage,
+  initialFitMode
 }) {
   const { stop, isPlaying, readChunk, currentText, triggerRead } = reader;
 
@@ -24,6 +28,10 @@ export default function PDFOverlay({
               onClose={() => setActiveOverlay(null)} 
               reader={{ readChunk, stop, isPlaying, currentText, triggerRead }}
               isOpen={isOpen}
+              onStateChange={onStateChange}
+              initialFile={initialFile}
+              initialPage={initialPage}
+              initialFitMode={initialFitMode}
             />
           </div>
         </div>

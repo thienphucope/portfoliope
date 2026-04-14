@@ -156,7 +156,7 @@ export default function WindowFrame({
           display: flex;
           flex-direction: column;
           background: var(--colortab);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          border: 1px solid var(--colorborder);
           border-radius: 8px;
           overflow: hidden;
           height: 100%;
@@ -187,7 +187,7 @@ export default function WindowFrame({
           display: flex;
           align-items: center;
           justify-content: space-between;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          border-bottom: 1px solid var(--colorborder);
           user-select: none;
         }
 

@@ -129,10 +129,12 @@ export default function CaseClient({ serverHydratedData = null }) {
   const [maximizedWindow,    setMaximizedWindow]    = useState(null);
   const [everOpened,         setEverOpened]         = useState(['editor']);
   const [isLiveCallActive,   setIsLiveCallActive]   = useState(false);
+  const lastPdfStateRef = useRef({ pageNumber: 1, file: null, fitMode: 'width' });
   const [pdfState,           setPdfState]           = useState(null);
   const handlePdfStateChange = useCallback((state) => {
+    lastPdfStateRef.current = { ...lastPdfStateRef.current, ...state };
     setPdfState(prev => {
-      if (prev?.pageNumber === state.pageNumber && prev?.numPages === state.numPages && prev?.fitMode === state.fitMode) return prev;
+      if (prev?.pageNumber === state.pageNumber && prev?.numPages === state.numPages && prev?.fitMode === state.fitMode && prev?.file === state.file) return prev;
       return state;
     });
   }, []);
@@ -350,8 +352,9 @@ export default function CaseClient({ serverHydratedData = null }) {
                     winContent = <div className="chat-container"><Chat ref={chatRef} isEmbedded={true} onLinkClick={handleLinkClick} onLiveCallChange={setIsLiveCallActive} /></div>;
                   } else if (winId === 'pdf') {
                     title = 'PDF Reader';
-                    winContent = <div className="pdf-container"><PDFViewer ref={pdfRef} onClose={() => closeWindow('pdf')} reader={augmentedReader} isOpen={true} onStateChange={setPdfState} /></div>;
-                  } else if (winId === 'graph') {
+                    winContent = <div className="pdf-container"><PDFViewer ref={pdfRef} onClose={() => closeWindow('pdf')} reader={augmentedReader} isOpen={true} onStateChange={handlePdfStateChange} initialFile={lastPdfStateRef.current.file} initialPage={lastPdfStateRef.current.pageNumber} initialFitMode={lastPdfStateRef.current.fitMode} /></div>;
+                  }
+ else if (winId === 'graph') {
                     title = 'Graph View';
                     winContent = <GraphView allFiles={graphFiles} onSelectFile={(path, name, id) => { const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md']; if (githubUrl) loadFile(githubUrl, name, id, 'push', true); }} activeNodeId={activeTab} fullContentCache={fullContentCache} />;
                   }
@@ -372,7 +375,7 @@ export default function CaseClient({ serverHydratedData = null }) {
           <StickySpine showHeader={showHeader} activeTab={activeTab} activeOverlay={activeOverlay} handleCreateNewNote={handleCreateNewNote} setActiveOverlay={(id) => { if (typeof id === 'function') { const result = id(activeOverlay); if (!isMobile && result) toggleWindow(result); else setActiveOverlay(result); } else { if (!isMobile && id) toggleWindow(id); else setActiveOverlay(id); } }} setActiveTab={setActiveTab} />
           <GraphOverlay isOpen={activeOverlay === 'graph'} graphFiles={graphFiles} activeTab={activeTab} loadFile={loadFile} fileRegistry={fileRegistry} fullContentCache={fullContentCache} />
           <ChatOverlay isOpen={activeOverlay === 'chat'} handleLinkClick={handleLinkClick} reader={augmentedReader} />
-          <PDFOverlay isOpen={activeOverlay === 'pdf'} setActiveOverlay={setActiveOverlay} reader={augmentedReader} />
+          <PDFOverlay isOpen={activeOverlay === 'pdf'} setActiveOverlay={setActiveOverlay} reader={augmentedReader} onStateChange={handlePdfStateChange} initialFile={lastPdfStateRef.current.file} initialPage={lastPdfStateRef.current.pageNumber} initialFitMode={lastPdfStateRef.current.fitMode} />
           {tabs.filter(t => t.type === 'editor' || t.type === 'static').map(tab => ( <TabPanel key={tab.id} tab={tab} activeTab={activeTab} handleTabClick={handleTabClick} handleLinkClick={handleLinkClick} isEditing={isEditing} handleToggleEditMode={handleToggleEditMode} saveStatus={saveStatus} handleSidebarSave={handleSidebarSave} fileName={fileName} content={content} handleSaveFile={handleSaveFile} saveHandlerRef={saveHandlerRef} fileRegistry={fileRegistry} isAtBottom={isAtBottom} setIsAtBottom={setIsAtBottom} reader={augmentedReader} /> ))}
         </>
       )}

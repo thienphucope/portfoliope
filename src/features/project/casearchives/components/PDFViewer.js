@@ -64,37 +64,44 @@ const LazyPage = ({ pageNumber, width, height, fitMode, scale, pageAspectRatio, 
   );
 };
 
-const PDFViewer = forwardRef(({ onClose, reader, isOpen, onStateChange }, ref) => {
-  const [file, setFile] = useState(null);
+const PDFViewer = forwardRef(({ onClose, reader, isOpen, onStateChange, initialFile, initialPage, initialFitMode }, ref) => {
+  const [file, setFile] = useState(initialFile || null);
   const [numPages, setNumPages] = useState(null);
-  const [pageNumber, setPageNumber] = useState(1);
+  const [pageNumber, setPageNumber] = useState(initialPage || 1);
   const [containerWidth, setContainerWidth] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);
   const [currentBlockText, setCurrentBlockText] = useState("");
   const [pageAspectRatio, setPageAspectRatio] = useState(1.414);
-  const [fitMode, setFitMode] = useState('width');
+  const [fitMode, setFitMode] = useState(initialFitMode || 'width');
   const [bodyEl, setBodyEl] = useState(null);
 
   const { readChunk, stop, isPlaying, currentText, triggerRead } = reader || {};
   const textContentRef = useRef({}); 
-  const pageNumberRef = useRef(1);
+  const pageNumberRef = useRef(initialPage || 1);
   const isAutoReadingRef = useRef(false);
   const isJumpingRef = useRef(false);
+  const isResizingRef = useRef(false);
+  const resizeTimeoutRef = useRef(null);
   const fileInputRef = useRef(null);
   const bodyRef = useRef(null);
 
   const memoizedFile = useMemo(() => file, [file]);
 
   useEffect(() => {
-    if (onStateChange) onStateChange({ pageNumber, numPages, fitMode });
-  }, [pageNumber, numPages, fitMode]);
+    // Only emit state change when not in the middle of a jump or resize
+    if (onStateChange && !isResizingRef.current && !isJumpingRef.current) {
+      onStateChange({ pageNumber, numPages, fitMode, file });
+    }
+  }, [pageNumber, numPages, fitMode, file, onStateChange]);
 
   const goToPage = useCallback((num, behavior = 'smooth') => {
-    const target = bodyEl?.querySelector(`[data-page-number="${num}"]`);
-    if (target && bodyEl) {
+    if (!bodyEl) return;
+    const target = bodyEl.querySelector(`[data-page-number="${num}"]`);
+    if (target) {
       isJumpingRef.current = true;
       bodyEl.scrollTo({ top: target.offsetTop, behavior });
-      setTimeout(() => { isJumpingRef.current = false; }, behavior === 'auto' ? 100 : 800);
+      // Clear the jumping flag after the animation/scroll finishes
+      setTimeout(() => { isJumpingRef.current = false; }, behavior === 'auto' ? 50 : 800);
     }
   }, [bodyEl]);
 
@@ -110,42 +117,97 @@ const PDFViewer = forwardRef(({ onClose, reader, isOpen, onStateChange }, ref) =
     if (node) { bodyRef.current = node; setBodyEl(node); setContainerWidth(node.clientWidth); setContainerHeight(node.clientHeight); }
   }, []);
 
+  // Handle Resize more robustly
   useEffect(() => {
     if (!bodyEl) return;
     const observer = new ResizeObserver((entries) => {
       for (let entry of entries) {
         if (entry.contentRect.width > 0) {
+          // Immediately lock scroll-based page updates
+          isResizingRef.current = true;
+          if (resizeTimeoutRef.current) clearTimeout(resizeTimeoutRef.current);
+
           setContainerWidth(entry.contentRect.width);
           setContainerHeight(entry.contentRect.height);
+          
+          // Debounce the re-scroll to ensure layout has settled
+          resizeTimeoutRef.current = setTimeout(() => {
+            if (pageNumberRef.current) {
+              goToPage(pageNumberRef.current, 'auto');
+            }
+            // Brief extra delay to let scroll events settle
+            setTimeout(() => {
+              isResizingRef.current = false;
+              // Sync state back after resize settled
+              if (onStateChange) onStateChange({ pageNumber: pageNumberRef.current, numPages, fitMode, file });
+            }, 100);
+          }, 150);
         }
       }
     });
     observer.observe(bodyEl);
-    return () => observer.disconnect();
-  }, [bodyEl]);
+    return () => {
+      observer.disconnect();
+      if (resizeTimeoutRef.current) clearTimeout(resizeTimeoutRef.current);
+    };
+  }, [bodyEl, goToPage, numPages, fitMode, file, onStateChange]);
 
+  // Use IntersectionObserver to track page number - MUCH more stable than math during resize
   useEffect(() => {
     if (!bodyEl || !numPages) return;
-    const handleScroll = () => {
-      if (isJumpingRef.current || isAutoReadingRef.current) return;
-      const pageH = fitMode === 'height' ? containerHeight : (containerWidth * pageAspectRatio);
-      const newPage = Math.max(1, Math.min(numPages, Math.round(bodyEl.scrollTop / (pageH + 10)) + 1));
-      if (newPage !== pageNumberRef.current) {
-        setPageNumber(newPage);
-        pageNumberRef.current = newPage;
+
+    const io = new IntersectionObserver((entries) => {
+      // Ignore visibility changes while we are programmatically scrolling or resizing
+      if (isResizingRef.current || isJumpingRef.current) return;
+
+      let topPage = null;
+      let minTop = Infinity;
+
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const rect = entry.target.getBoundingClientRect();
+          const containerRect = bodyEl.getBoundingClientRect();
+          const relativeTop = Math.abs(rect.top - containerRect.top);
+          
+          // The page closest to the top of the container is our current page
+          if (relativeTop < minTop) {
+            minTop = relativeTop;
+            topPage = parseInt(entry.target.getAttribute('data-page-number'));
+          }
+        }
+      });
+
+      if (topPage && topPage !== pageNumberRef.current) {
+        setPageNumber(topPage);
+        pageNumberRef.current = topPage;
       }
-    };
-    bodyEl.addEventListener('scroll', handleScroll, { passive: true });
-    return () => bodyEl.removeEventListener('scroll', handleScroll);
-  }, [bodyEl, numPages, fitMode, containerWidth, containerHeight, pageAspectRatio]);
+    }, {
+      root: bodyEl,
+      threshold: [0, 0.1, 0.5],
+      rootMargin: '-10% 0% -10% 0%' // Focus on middle 80% of view
+    });
+
+    const pages = bodyEl.querySelectorAll('.pdf-page-wrapper');
+    pages.forEach(p => io.observe(p));
+
+    return () => io.disconnect();
+  }, [bodyEl, numPages, containerWidth, containerHeight]); // Re-observe when containers or page count changes
 
   const onDocumentLoadSuccess = async (pdf) => {
-    setNumPages(pdf.numPages); setPageNumber(1); pageNumberRef.current = 1; textContentRef.current = {};
+    setNumPages(pdf.numPages); 
+    textContentRef.current = {};
     try {
       const firstPage = await pdf.getPage(1);
       const viewport = firstPage.getViewport({ scale: 1 });
       setPageAspectRatio(viewport.height / viewport.width);
     } catch (err) {}
+
+    if (pageNumberRef.current > 1) {
+      setTimeout(() => goToPage(pageNumberRef.current, 'auto'), 300);
+    } else {
+      setPageNumber(1); 
+      pageNumberRef.current = 1;
+    }
   };
 
   const onPageLoadSuccess = async (page, pNum) => {

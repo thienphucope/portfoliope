@@ -82,7 +82,8 @@ export default function TabPanelStyles() {
         }
 
         /* If there's no editor, but multiple others, they can split evenly or stack.
-           Based on requirement, secondary windows stack vertically. */
+           Based on requirement, secondary windows stack vertically when editor exists, 
+           but stack horizontally when editor is absent for better balance. */
         .secondary-windows {
           flex: 1;
           display: flex;
@@ -91,6 +92,10 @@ export default function TabPanelStyles() {
           height: 100%;
           min-width: 0;
           transition: all 0.3s ease;
+        }
+
+        .windows-container:not(.has-editor) .secondary-windows {
+          flex-direction: row;
         }
 
         .secondary-windows.all-hidden {
