@@ -30,6 +30,13 @@ export default function WindowFrame({
   isMobile,
   isHidden = false
 }) {
+  const [localPageInput, setLocalPageInput] = React.useState('');
+
+  // Sync local input with global state when not focused
+  React.useEffect(() => {
+    if (pdfState) setLocalPageInput(pdfState.pageNumber.toString());
+  }, [pdfState?.pageNumber]);
+
   if (isMobile) return <>{children}</>;
 
   return (
@@ -51,12 +58,20 @@ export default function WindowFrame({
                 <input 
                   type="text" 
                   className="pdf-title-input" 
-                  value={pdfState.pageNumber} 
-                  onChange={(e) => {
-                    const p = parseInt(e.target.value);
+                  value={localPageInput} 
+                  onChange={(e) => setLocalPageInput(e.target.value)}
+                  onBlur={() => {
+                    const p = parseInt(localPageInput);
                     if (!isNaN(p)) onPdfPageJump(p);
+                    else setLocalPageInput(pdfState.pageNumber.toString());
                   }}
-                  onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const p = parseInt(localPageInput);
+                      if (!isNaN(p)) onPdfPageJump(p);
+                      e.target.blur();
+                    }
+                  }}
                 />
                 <span>/ {pdfState.numPages || 0}</span>
               </div>

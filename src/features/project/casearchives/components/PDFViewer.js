@@ -2,13 +2,12 @@ import React, { useState, useCallback, useRef, useEffect, forwardRef, useImperat
 import { Document, Page, pdfjs } from 'react-pdf';
 import { FileText } from 'lucide-react';
 
-// Cấu hình Worker ổn định cho Next.js
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 
-const LazyPage = ({ pageNumber, width, height, fitMode, scale, pageAspectRatio, onPageLoadSuccess, rootRef }) => {
+const LazyPage = ({ pageNumber, width, height, fitMode, scale, pageAspectRatio, onPageLoadSuccess, rootRef, highlightText }) => {
   const [isVisible, setIsVisible] = useState(false);
   const containerRef = useRef(null);
 
@@ -21,6 +20,23 @@ const LazyPage = ({ pageNumber, width, height, fitMode, scale, pageAspectRatio, 
     if (containerRef.current) observer.observe(containerRef.current);
     return () => observer.disconnect();
   }, [rootRef]);
+
+  const applyHighlight = useCallback(() => {
+    if (!containerRef.current || !highlightText) return;
+    const prev = containerRef.current.querySelectorAll('.pdf-text-highlight');
+    prev.forEach(el => el.classList.remove('pdf-text-highlight'));
+
+    const spans = containerRef.current.querySelectorAll('.react-pdf__Page__textContent span');
+    const cleanCurrent = highlightText.toLowerCase().trim();
+    for (const span of spans) {
+      const txt = span.textContent.trim().toLowerCase();
+      if (txt.length > 2 && cleanCurrent.includes(txt)) span.classList.add('pdf-text-highlight');
+    }
+  }, [highlightText]);
+
+  useEffect(() => {
+    if (isVisible) applyHighlight();
+  }, [isVisible, applyHighlight]);
 
   const calculatedHeight = fitMode === 'height' ? height : (width * pageAspectRatio);
 
@@ -37,6 +53,7 @@ const LazyPage = ({ pageNumber, width, height, fitMode, scale, pageAspectRatio, 
           pageNumber={pageNumber} width={fitMode === 'width' ? width : undefined} height={fitMode === 'height' ? height : undefined}
           scale={scale} devicePixelRatio={2}
           onLoadSuccess={(page) => onPageLoadSuccess(page, pageNumber)}
+          onRenderTextLayerSuccess={applyHighlight}
           renderTextLayer renderAnnotationLayer
           loading={<div className="pdf-page-loading" style={{ height: calculatedHeight }}><div className="pdf-loading-spinner" /><span>Page {pageNumber}</span></div>}
         />
@@ -66,12 +83,11 @@ const PDFViewer = forwardRef(({ onClose, reader, isOpen, onStateChange }, ref) =
   const fileInputRef = useRef(null);
   const bodyRef = useRef(null);
 
-  // Memoize file object to prevent detached buffer issues
   const memoizedFile = useMemo(() => file, [file]);
 
   useEffect(() => {
     if (onStateChange) onStateChange({ pageNumber, numPages, fitMode });
-  }, [pageNumber, numPages, fitMode]); // Giảm dependency để tránh vòng lặp
+  }, [pageNumber, numPages, fitMode]);
 
   const goToPage = useCallback((num, behavior = 'smooth') => {
     const target = bodyEl?.querySelector(`[data-page-number="${num}"]`);
@@ -124,10 +140,7 @@ const PDFViewer = forwardRef(({ onClose, reader, isOpen, onStateChange }, ref) =
   }, [bodyEl, numPages, fitMode, containerWidth, containerHeight, pageAspectRatio]);
 
   const onDocumentLoadSuccess = async (pdf) => {
-    setNumPages(pdf.numPages);
-    setPageNumber(1);
-    pageNumberRef.current = 1;
-    textContentRef.current = {};
+    setNumPages(pdf.numPages); setPageNumber(1); pageNumberRef.current = 1; textContentRef.current = {};
     try {
       const firstPage = await pdf.getPage(1);
       const viewport = firstPage.getViewport({ scale: 1 });
@@ -142,15 +155,10 @@ const PDFViewer = forwardRef(({ onClose, reader, isOpen, onStateChange }, ref) =
 
   const startReadingFrom = useCallback(async (startIndex, pNum) => {
     isAutoReadingRef.current = true;
-    let currentP = pNum;
-    let currentIndex = startIndex;
+    let currentP = pNum; let currentIndex = startIndex;
     while (isAutoReadingRef.current && currentP <= (numPages || 0)) {
       setPageNumber(currentP); goToPage(currentP);
-      let attempts = 0; 
-      while (!textContentRef.current[currentP] && attempts < 50) { 
-        await new Promise(r => setTimeout(r, 200)); attempts++; 
-        if (!isAutoReadingRef.current) return;
-      }
+      let attempts = 0; while (!textContentRef.current[currentP] && attempts < 50) { await new Promise(r => setTimeout(r, 200)); attempts++; if (!isAutoReadingRef.current) return; }
       const lines = textContentRef.current[currentP] || [];
       let acc = "";
       for (let i = currentIndex; i < lines.length; i++) {
@@ -173,10 +181,10 @@ const PDFViewer = forwardRef(({ onClose, reader, isOpen, onStateChange }, ref) =
 
   const handleFileChange = (e) => {
     const f = e.target.files[0];
-    if (f && f.type === 'application/pdf') {
-      stop?.(); setFile(f); setPageNumber(1); setNumPages(null);
-    }
+    if (f && f.type === 'application/pdf') { stop?.(); setFile(f); setPageNumber(1); setNumPages(null); }
   };
+
+  const activeHighlight = currentBlockText || currentText;
 
   return (
     <div className="pdf-viewer-overlay">
@@ -195,7 +203,7 @@ const PDFViewer = forwardRef(({ onClose, reader, isOpen, onStateChange }, ref) =
         ) : (
           <Document file={memoizedFile} onLoadSuccess={onDocumentLoadSuccess} loading={<div className="pdf-loading">Opening...</div>} className={`pdf-document fit-${fitMode}`}>
             {Array.from(new Array(numPages || 0), (_, i) => (
-              <LazyPage key={i} pageNumber={i + 1} width={containerWidth} height={containerHeight} fitMode={fitMode} scale={1} pageAspectRatio={pageAspectRatio} onPageLoadSuccess={onPageLoadSuccess} rootRef={bodyRef} />
+              <LazyPage key={i} pageNumber={i + 1} width={containerWidth} height={containerHeight} fitMode={fitMode} scale={1} pageAspectRatio={pageAspectRatio} onPageLoadSuccess={onPageLoadSuccess} rootRef={bodyRef} highlightText={activeHighlight} />
             ))}
           </Document>
         )}
@@ -204,8 +212,6 @@ const PDFViewer = forwardRef(({ onClose, reader, isOpen, onStateChange }, ref) =
       <style dangerouslySetInnerHTML={{ __html: `
         .pdf-viewer-overlay { display: flex; flex-direction: column; position: absolute; inset: 0; height: 100%; width: 100%; color: white; background: transparent; overflow: hidden; z-index: 5; }
         .pdf-body { flex: 1; overflow-y: auto; background: #000; position: relative; -webkit-overflow-scrolling: touch; }
-        .pdf-body::-webkit-scrollbar { width: 6px; }
-        .pdf-body::-webkit-scrollbar-thumb { background: var(--colorbutton); border-radius: 10px; }
         .pdf-document { display: flex; flex-direction: column; align-items: center; width: 100%; }
         .pdf-empty-container { display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; }
         .pdf-upload-empty { width: 100%; max-width: 500px; padding: 60px 30px; border: 2px dashed #222; border-radius: 16px; text-align: center; cursor: pointer; background: rgba(255, 250, 205, 0.02); }
@@ -219,5 +225,4 @@ const PDFViewer = forwardRef(({ onClose, reader, isOpen, onStateChange }, ref) =
 });
 
 PDFViewer.displayName = 'PDFViewer';
-
 export default PDFViewer;

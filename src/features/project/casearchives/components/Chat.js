@@ -237,16 +237,16 @@ const Chat = forwardRef(({ isEmbedded = false, onLinkClick, onLiveCallChange }, 
 
   return (
     <div className={`${isEmbedded ? 'relative h-full w-full' : 'fixed inset-0 z-50'} bg-transparent overflow-hidden`} style={{ fontFamily: "'Crimson Text', serif" }}>
-      <div className="w-full h-full flex flex-row overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth hide-scrollbar relative">
+      <div className="w-full h-full flex flex-row overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth relative">
       {isLiveCall && (
         <div ref={liveUIRef} className="w-full shrink-0 md:w-1/2 h-full flex flex-col items-center justify-between p-5 md:p-10 border-l bg-transparent relative snap-center order-2" style={{ borderColor: 'var(--colorborder)' }}>
-            <div className="flex-1 w-full flex flex-col justify-end pb-8 overflow-y-auto custom-scrollbar" onClick={(e) => e.stopPropagation()}>
+            <div className="flex-1 w-full flex flex-col justify-end pb-8 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                 <textarea
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                   placeholder="Listening, or type your prompt..."
-                  className="bg-transparent text-center text-white/90 text-2xl font-bold border-none focus:ring-0 outline-none w-full resize-none placeholder-white/20 custom-scrollbar"
+                  className="bg-transparent text-center text-white/90 text-2xl font-bold border-none focus:ring-0 outline-none w-full resize-none placeholder-white/20"
                   style={{ fontFamily: 'md-font' }}
                   rows={4}
                 />
@@ -271,7 +271,7 @@ const Chat = forwardRef(({ isEmbedded = false, onLinkClick, onLiveCallChange }, 
                   {isProcessing ? <div className="text-black/60 text-sm font-bold tracking-wider">INTERRUPT</div> : <MicrophoneIcon className="w-12 h-12 text-black/50" />}
                 </div>
             </div>
-            <div className="flex-1 w-full pt-8 flex flex-col items-center justify-start overflow-y-auto custom-scrollbar" onClick={(e) => e.stopPropagation()}>
+            <div className="flex-1 w-full pt-8 flex flex-col items-center justify-start overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="text-white/50 text-sm max-w-[260px] font-sans leading-relaxed text-center min-h-[6rem] flex items-center justify-center" style={{ fontFamily: 'md-font' }}>
                 <div className="flex flex-col items-center justify-center" style={{ opacity: tipVisible ? 1 : 0, transform: tipVisible ? 'translateY(0)' : 'translateY(-10px)', transition: 'all 0.5s ease-in-out' }}>
                   <span className="text-[10px] uppercase tracking-widest text-white/30 mb-2 font-bold block">Tip {tipIndex + 1} of {tipsList.length}</span>
@@ -283,7 +283,7 @@ const Chat = forwardRef(({ isEmbedded = false, onLinkClick, onLiveCallChange }, 
       )}
 
       <div className={`w-full shrink-0 ${isLiveCall ? 'md:w-1/2' : 'w-full'} h-full flex flex-col bg-transparent relative snap-center order-1`}>
-          <div ref={historyRef} className="flex-1 overflow-y-auto p-5 custom-scrollbar chat-history">
+          <div ref={historyRef} className="flex-1 overflow-y-auto p-5 chat-history">
             <div className="max-w-[1000px] mx-auto w-full space-y-5">
             {convo.map((msg, i) => {
               const isMsgStreaming = (i === convo.length - 1 && isStreaming);
@@ -329,10 +329,6 @@ const Chat = forwardRef(({ isEmbedded = false, onLinkClick, onLiveCallChange }, 
       </div>
 
       <style jsx>{`
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .animate-pulse { animation: pulse 1s infinite; }
         .markdown-content :global(p:last-child) { margin-bottom: 0; }
