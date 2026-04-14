@@ -117,5 +117,5 @@ export function useGraphData({ allFiles = [], searchTerm, fullContentCache = {} 
     };
   }, [graphData, searchTerm]);
 
-  return { graphData, filteredData };
+  return { graphData, filteredData, nodes: graphData.nodes, links: graphData.links };
 }

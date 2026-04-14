@@ -32,6 +32,18 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
   }, [dimensions, activeNodeId, graphData.nodes]);
 
   useEffect(() => {
+    if (graphRef.current && zoomToNodeId && graphData.nodes.length > 0) {
+      const node = graphData.nodes.find(n => n.id.toLowerCase() === zoomToNodeId.toLowerCase());
+      if (node && node.x !== undefined) {
+        const zoomLevel = node.type === 'tag' ? 1.2 : 3.0;
+        graphRef.current.centerAt(node.x, node.y, 800);
+        graphRef.current.zoom(zoomLevel, 800);
+        if (onZoomComplete) onZoomComplete();
+      }
+    }
+  }, [zoomToNodeId, graphData.nodes, onZoomComplete]);
+
+  useEffect(() => {
     if (!containerRef.current) return;
     const observer = new ResizeObserver((entries) => {
       for (let entry of entries) {
@@ -93,13 +105,10 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
           cooldownTicks={100}
           onEngineStop={() => {
             if (!graphRef.current) return;
-            if (zoomToNodeId) {
-              const node = graphData.nodes.find(n => n.id.toLowerCase() === zoomToNodeId.toLowerCase());
-              if (node && node.x !== undefined) { graphRef.current.centerAt(node.x, node.y, 800); graphRef.current.zoom(4, 800); onZoomComplete(); }
-            } else if (needsZoom && activeNodeId) {
+            if (needsZoom && activeNodeId) {
               const node = graphData.nodes.find(n => n.id.toLowerCase() === activeNodeId.toLowerCase());
               if (node && node.x !== undefined) { graphRef.current.centerAt(node.x, node.y, 800); graphRef.current.zoom(2, 800); setNeedsZoom(false); }
-            } else if (!activeNodeId && !searchTerm && needsZoom) {
+            } else if (!activeNodeId && !searchTerm && !zoomToNodeId && needsZoom) {
               graphRef.current.zoomToFit(400, 100);
               setNeedsZoom(false);
             }

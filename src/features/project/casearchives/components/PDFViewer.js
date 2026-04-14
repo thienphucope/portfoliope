@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect, forwardRef, useImperativeHandle, useMemo } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { FileText } from 'lucide-react';
+import { Upload } from 'lucide-react';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
@@ -261,7 +261,9 @@ const PDFViewer = forwardRef(({ onClose, reader, isOpen, onStateChange, initialF
         if (idx !== -1) triggerRead ? triggerRead(e, () => startReadingFrom(idx, pNum)) : startReadingFrom(idx, pNum);
       }} style={{ cursor: file ? 'text' : 'default' }}>
         {!memoizedFile ? (
-          <div className="pdf-empty-container"><div onClick={() => fileInputRef.current.click()} className="pdf-upload-empty"><FileText size={44} color="#666" style={{ marginBottom: '14px' }} /><h3 className="pdf-empty-title">Click to select a PDF file</h3><p className="pdf-empty-subtitle">Double-click a line to start Sonia reading.</p></div></div>
+          <div className="pdf-empty-container" onClick={() => fileInputRef.current.click()} style={{ cursor: 'pointer' }}>
+            <Upload size={64} color="var(--colorbutton, #FFFACD)" style={{ opacity: 0.15 }} />
+          </div>
         ) : (
           <Document file={memoizedFile} onLoadSuccess={onDocumentLoadSuccess} loading={<div className="pdf-loading">Opening...</div>} className={`pdf-document fit-${fitMode}`}>
             {Array.from(new Array(numPages || 0), (_, i) => (

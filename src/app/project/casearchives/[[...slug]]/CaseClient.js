@@ -28,8 +28,52 @@ import { useLinkHandler }      from '@/features/project/casearchives/hooks/useLi
 
 import { useReader } from '@/features/project/casearchives/hooks/useReader';
 import { Volume2, VolumeX, Play, Pause, Square, Zap } from 'lucide-react';
+import { useGraphData } from '@/features/project/casearchives/hooks/useGraphData';
 
 const GraphView = dynamic(() => import('@/features/project/casearchives/components/GraphView'), { ssr: false });
+
+// ─── Graph Window Wrapper ───────────────────────────────────────────────────
+const GraphWindowWrapper = ({ 
+  winId, title, isMaximized, isHidden, toggleMaximize, closeWindow, 
+  winContent, isLiveCallActive, chatRef, pdfState, pdfRef, 
+  allFiles, fileRegistry, loadFile, graphFiles, fullContentCache, setZoomToNodeId
+}) => {
+  const { nodes: graphNodes } = useGraphData({ allFiles: graphFiles, fullContentCache });
+  
+  const handleSelect = (f) => {
+    if (f.type === 'tag') {
+      setZoomToNodeId(f.id);
+    } else {
+      const githubUrl = fileRegistry.current[f.id.toLowerCase()] || fileRegistry.current[f.id.toLowerCase() + '.md'];
+      if (githubUrl) loadFile(githubUrl, f.name, f.id, 'push', true);
+      setZoomToNodeId(f.id);
+    }
+  };
+
+  return (
+    <WindowFrame 
+      id={winId} 
+      title={title} 
+      isMaximized={isMaximized} 
+      isHidden={isHidden} 
+      onToggleMaximize={toggleMaximize} 
+      onClose={closeWindow} 
+      onLiveCall={winId === 'chat' ? () => chatRef.current?.toggleLiveCall() : null} 
+      isLiveCallActive={winId === 'chat' ? isLiveCallActive : false} 
+      pdfState={winId === 'pdf' ? pdfState : null} 
+      onPdfPrev={() => pdfRef.current?.prevPage()} 
+      onPdfNext={() => pdfRef.current?.nextPage()} 
+      onPdfUpload={() => pdfRef.current?.upload()} 
+      onPdfToggleFit={() => pdfRef.current?.toggleFit()} 
+      onPdfPageJump={(p) => pdfRef.current?.setPage(p)} 
+      isMobile={false}
+      allFiles={winId === 'graph' ? graphNodes : (winId === 'editor' ? allFiles : [])}
+      onSelectFile={handleSelect}
+    >
+      {winContent}
+    </WindowFrame>
+  );
+};
 
 // ─── Mobile Graph Overlay ─────────────────────────────────────────────────────
 const GraphOverlay = ({ isOpen, graphFiles, activeTab, loadFile, fileRegistry, fullContentCache }) => {
@@ -173,6 +217,7 @@ export default function CaseClient({ serverHydratedData = null }) {
   const [showSearch,         setShowSearch]          = useState(false);
   const [viewMode,           setViewMode]            = useState('graph'); 
   const [isMobile,           setIsMobile]            = useState(false);
+  const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 1024);
@@ -333,7 +378,29 @@ export default function CaseClient({ serverHydratedData = null }) {
               const tabTitle = tabs.find(t => t.id === activeTab)?.title || 'Note';
               
               return (
-                <WindowFrame key={winId} id={winId} title={`Case Archives - ${tabTitle}`} isMaximized={isMax} isHidden={isHidden} onToggleMaximize={toggleMaximize} onClose={closeWindow} onSave={handleSidebarSave} saveStatus={saveStatus} onToggleEdit={handleToggleEditMode} isEditing={isEditing} onComment={handleAppendComment} onNewNote={handleCreateNewNote} isMobile={false}>
+                <WindowFrame 
+                  key={winId} 
+                  id={winId} 
+                  title={`Case Archives - ${tabTitle}`} 
+                  isMaximized={isMax} 
+                  isHidden={isHidden} 
+                  onToggleMaximize={toggleMaximize} 
+                  onClose={closeWindow} 
+                  onSave={handleSidebarSave} 
+                  saveStatus={saveStatus} 
+                  onToggleEdit={handleToggleEditMode} 
+                  isEditing={isEditing} 
+                  onComment={handleAppendComment} 
+                  onNewNote={handleCreateNewNote} 
+                  isMobile={false}
+                  allFiles={allFiles}
+                  onSelectFile={(f) => {
+                    const githubUrl = fileRegistry.current[f.id.toLowerCase()] || fileRegistry.current[f.id.toLowerCase() + '.md'];
+                    if (githubUrl) {
+                      loadFile(githubUrl, f.name, f.id, 'push', true);
+                    }
+                  }}
+                >
                   {activeTabPanel}
                 </WindowFrame>
               );
@@ -354,15 +421,54 @@ export default function CaseClient({ serverHydratedData = null }) {
                     title = 'PDF Reader';
                     winContent = <div className="pdf-container"><PDFViewer ref={pdfRef} onClose={() => closeWindow('pdf')} reader={augmentedReader} isOpen={true} onStateChange={handlePdfStateChange} initialFile={lastPdfStateRef.current.file} initialPage={lastPdfStateRef.current.pageNumber} initialFitMode={lastPdfStateRef.current.fitMode} /></div>;
                   }
- else if (winId === 'graph') {
-                    title = 'Graph View';
-                    winContent = <GraphView allFiles={graphFiles} onSelectFile={(path, name, id) => { const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md']; if (githubUrl) loadFile(githubUrl, name, id, 'push', true); }} activeNodeId={activeTab} fullContentCache={fullContentCache} />;
+                  else if (winId === 'graph') {
+                    // Try to find the primary tag of the active tab
+                    const activeFile = graphFiles.find(f => f.id === activeTab);
+                    let displayTag = 'Graph View';
+                    if (activeFile && activeFile.fetchedContent) {
+                      const tagMatch = activeFile.fetchedContent.match(/tag:\s*#?([^\n\r,]+)/i);
+                      if (tagMatch && tagMatch[1]) {
+                        displayTag = `#${tagMatch[1].trim()}`;
+                      }
+                    }
+                    title = displayTag;
+                    winContent = <GraphView 
+                      allFiles={graphFiles} 
+                      onSelectFile={(path, name, id) => { 
+                        const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md']; 
+                        if (githubUrl) loadFile(githubUrl, name, id, 'push', true); 
+                      }} 
+                      activeNodeId={activeTab} 
+                      fullContentCache={fullContentCache} 
+                      zoomToNodeId={zoomToNodeId}
+                      onZoomComplete={() => setZoomToNodeId(null)}
+                    />;
                   }
                   
+                  // For Graph search, we need nodes from useGraphData
+                  const isGraphWin = winId === 'graph';
+                  
                   return (
-                    <WindowFrame key={winId} id={winId} title={title} isMaximized={isMax} isHidden={isHidden} onToggleMaximize={toggleMaximize} onClose={closeWindow} onLiveCall={winId === 'chat' ? () => chatRef.current?.toggleLiveCall() : null} isLiveCallActive={winId === 'chat' ? isLiveCallActive : false} pdfState={winId === 'pdf' ? pdfState : null} onPdfPrev={() => pdfRef.current?.prevPage()} onPdfNext={() => pdfRef.current?.nextPage()} onPdfUpload={() => pdfRef.current?.upload()} onPdfToggleFit={() => pdfRef.current?.toggleFit()} onPdfPageJump={(p) => pdfRef.current?.setPage(p)} isMobile={false}>
-                      {winContent}
-                    </WindowFrame>
+                    <GraphWindowWrapper 
+                      key={winId}
+                      winId={winId}
+                      title={title}
+                      isMaximized={isMax}
+                      isHidden={isHidden}
+                      toggleMaximize={toggleMaximize}
+                      closeWindow={closeWindow}
+                      winContent={winContent}
+                      isLiveCallActive={isLiveCallActive}
+                      chatRef={chatRef}
+                      pdfState={pdfState}
+                      pdfRef={pdfRef}
+                      allFiles={allFiles}
+                      fileRegistry={fileRegistry}
+                      loadFile={loadFile}
+                      graphFiles={graphFiles}
+                      fullContentCache={fullContentCache}
+                      setZoomToNodeId={setZoomToNodeId}
+                    />
                   );
                 })}
               </div>
