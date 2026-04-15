@@ -88,8 +88,8 @@ const PDFViewer = forwardRef(({ onClose, reader, isOpen, onStateChange, initialF
   const memoizedFile = useMemo(() => file, [file]);
 
   useEffect(() => {
-    // Only emit state change when not in the middle of a jump or resize
-    if (onStateChange && !isResizingRef.current && !isJumpingRef.current) {
+    // Sync state changes back to parent
+    if (onStateChange && !isResizingRef.current) {
       onStateChange({ pageNumber, numPages, fitMode, file });
     }
   }, [pageNumber, numPages, fitMode, file, onStateChange]);
@@ -106,11 +106,11 @@ const PDFViewer = forwardRef(({ onClose, reader, isOpen, onStateChange, initialF
   }, [bodyEl]);
 
   useImperativeHandle(ref, () => ({
-    prevPage: () => { if (pageNumber > 1) { const p = pageNumber - 1; setPageNumber(p); goToPage(p); } },
-    nextPage: () => { if (pageNumber < numPages) { const p = pageNumber + 1; setPageNumber(p); goToPage(p); } },
+    prevPage: () => { if (pageNumber > 1) { const p = pageNumber - 1; setPageNumber(p); pageNumberRef.current = p; goToPage(p); } },
+    nextPage: () => { if (pageNumber < numPages) { const p = pageNumber + 1; setPageNumber(p); pageNumberRef.current = p; goToPage(p); } },
     upload: () => fileInputRef.current?.click(),
     toggleFit: () => setFitMode(prev => prev === 'width' ? 'height' : 'width'),
-    setPage: (p) => { if (p >= 1 && p <= numPages) { setPageNumber(p); goToPage(p); } }
+    setPage: (p) => { if (p >= 1 && p <= numPages) { setPageNumber(p); pageNumberRef.current = p; goToPage(p); } }
   }));
 
   const onBodyRef = useCallback((node) => {
@@ -152,46 +152,44 @@ const PDFViewer = forwardRef(({ onClose, reader, isOpen, onStateChange, initialF
     };
   }, [bodyEl, goToPage, numPages, fitMode, file, onStateChange]);
 
-  // Use IntersectionObserver to track page number - MUCH more stable than math during resize
+  // Use scroll listener to track page number - more predictable for "middle of page" logic
   useEffect(() => {
     if (!bodyEl || !numPages) return;
 
-    const io = new IntersectionObserver((entries) => {
-      // Ignore visibility changes while we are programmatically scrolling or resizing
+    const handleScroll = () => {
       if (isResizingRef.current || isJumpingRef.current) return;
 
-      let topPage = null;
-      let minTop = Infinity;
+      const scrollTop = bodyEl.scrollTop;
+      const pages = bodyEl.querySelectorAll('.pdf-page-wrapper');
+      let detectedPage = 1;
 
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const rect = entry.target.getBoundingClientRect();
-          const containerRect = bodyEl.getBoundingClientRect();
-          const relativeTop = Math.abs(rect.top - containerRect.top);
-          
-          // The page closest to the top of the container is our current page
-          if (relativeTop < minTop) {
-            minTop = relativeTop;
-            topPage = parseInt(entry.target.getAttribute('data-page-number'));
-          }
+      for (let i = 0; i < pages.length; i++) {
+        const pageEl = pages[i];
+        const pageTop = pageEl.offsetTop;
+        const pageHeight = pageEl.offsetHeight;
+        const pageMiddle = pageTop + (pageHeight / 2);
+
+        // If the top of the container has passed the middle of the current page, 
+        // we consider ourselves to be on the next page.
+        if (scrollTop >= pageMiddle) {
+          detectedPage = i + 2; // i is 0-indexed, so current is i+1, next is i+2
+        } else {
+          break; // Found the current page
         }
-      });
-
-      if (topPage && topPage !== pageNumberRef.current) {
-        setPageNumber(topPage);
-        pageNumberRef.current = topPage;
       }
-    }, {
-      root: bodyEl,
-      threshold: [0, 0.1, 0.5],
-      rootMargin: '-10% 0% -10% 0%' // Focus on middle 80% of view
-    });
 
-    const pages = bodyEl.querySelectorAll('.pdf-page-wrapper');
-    pages.forEach(p => io.observe(p));
+      // Clamp to valid range
+      detectedPage = Math.max(1, Math.min(detectedPage, numPages));
 
-    return () => io.disconnect();
-  }, [bodyEl, numPages, containerWidth, containerHeight]); // Re-observe when containers or page count changes
+      if (detectedPage !== pageNumberRef.current) {
+        setPageNumber(detectedPage);
+        pageNumberRef.current = detectedPage;
+      }
+    };
+
+    bodyEl.addEventListener('scroll', handleScroll, { passive: true });
+    return () => bodyEl.removeEventListener('scroll', handleScroll);
+  }, [bodyEl, numPages]);
 
   const onDocumentLoadSuccess = async (pdf) => {
     setNumPages(pdf.numPages); 
