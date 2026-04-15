@@ -283,7 +283,7 @@ const Chat = forwardRef(({ isEmbedded = false, onLinkClick, onLiveCallChange }, 
       )}
 
       <div className={`w-full shrink-0 ${isLiveCall ? 'md:w-1/2' : 'w-full'} h-full flex flex-col bg-transparent relative snap-center order-1`}>
-          <div ref={historyRef} className="flex-1 overflow-y-auto p-5 chat-history">
+          <div ref={historyRef} className="flex-1 overflow-y-auto p-[10px] chat-history">
             <div className="max-w-[1000px] mx-auto w-full space-y-5">
             {convo.map((msg, i) => {
               const isMsgStreaming = (i === convo.length - 1 && isStreaming);
@@ -319,7 +319,7 @@ const Chat = forwardRef(({ isEmbedded = false, onLinkClick, onLiveCallChange }, 
             </div>
           </div>
           {!isLiveCall && (
-              <div className="max-w-[1000px] w-full mx-auto px-5 py-2 flex justify-start items-center opacity-30">
+              <div className="max-w-[1000px] w-full mx-auto px-[10px] py-2 flex justify-start items-center opacity-30">
                 <button onClick={startListening} className={`${isListening && !isLiveCall ? 'text-red-500 animate-pulse' : 'text-white/40'}`} title="Hold to Dictate">
                   <MicrophoneIcon className="w-4 h-4" />
                 </button>

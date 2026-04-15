@@ -211,7 +211,7 @@ export default function TabPanelStyles() {
 
         .window-frame .markdown-container {
           max-width: 100%;
-          padding: 20px;
+          padding: 10px;
         }
 
         .window-content > div {
