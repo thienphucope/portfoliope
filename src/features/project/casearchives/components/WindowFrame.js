@@ -265,7 +265,7 @@ export default function WindowFrame({
           display: flex;
           flex-direction: column;
           background: var(--colortab);
-          border: 1px solid var(--colorborder);
+          border: 2px solid var(--colorborder);
           border-radius: 8px;
           overflow: hidden;
           height: 100%;
@@ -291,13 +291,13 @@ export default function WindowFrame({
 
         .window-title-bar {
           position: relative;
-          height: 36px;
+          height: 38px;
           padding: 0 12px;
-          background: rgba(255, 250, 205, 0.05);
+          background: rgba(255, 250, 205, 0.08);
           display: flex;
           align-items: center;
           justify-content: space-between;
-          border-bottom: 1px solid var(--colorborder);
+          border-bottom: 2px solid var(--colorborder);
           user-select: none;
         }
 
@@ -305,7 +305,7 @@ export default function WindowFrame({
           font-family: 'Prata', serif;
           font-size: 0.8rem;
           color: var(--colorbutton);
-          opacity: 0.4;
+          opacity: 1;
           white-space: nowrap;
           flex-shrink: 0;
           min-width: 100px;
@@ -316,7 +316,7 @@ export default function WindowFrame({
           font-family: 'Prata', serif;
           font-size: 0.85rem;
           color: var(--colorbutton);
-          opacity: 0.7;
+          opacity: 1;
           white-space: nowrap;
           flex-shrink: 0;
           z-index: 1;
@@ -339,13 +339,13 @@ export default function WindowFrame({
           justify-content: center;
           gap: 8px;
           padding: 2px 12px;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.06);
+          border: 1px solid rgba(255, 255, 255, 0.2);
           border-radius: 6px;
           transition: all 0.2s;
           width: 100%;
           max-width: 600px;
-          height: 26px;
+          height: 28px;
         }
 
         .window-title-box.clickable {
@@ -353,15 +353,15 @@ export default function WindowFrame({
         }
 
         .window-title-box.clickable:hover {
-          background: rgba(255, 255, 255, 0.08);
-          border-color: rgba(255, 250, 205, 0.3);
+          background: rgba(255, 255, 255, 0.12);
+          border-color: rgba(255, 250, 205, 0.5);
         }
 
         .window-title-text {
           font-family: 'Prata', serif;
           font-size: 0.85rem;
           color: var(--colorbutton);
-          opacity: 0.7;
+          opacity: 1;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -369,7 +369,7 @@ export default function WindowFrame({
 
         .title-search-hint {
           stroke: var(--colorbutton);
-          opacity: 0.5;
+          opacity: 1;
         }
 
         .window-search-active {
@@ -379,15 +379,15 @@ export default function WindowFrame({
           align-items: center;
           gap: 8px;
           background: var(--colortab);
-          border: 1px solid rgba(255, 250, 205, 0.4);
+          border: 1px solid rgba(255, 250, 205, 0.6);
           border-radius: 6px;
           padding: 2px 10px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.4);
         }
 
         .search-icon-inside {
           stroke: var(--colorbutton);
-          opacity: 0.5;
+          opacity: 1;
         }
 
         .window-inline-search {
@@ -403,7 +403,7 @@ export default function WindowFrame({
 
         .window-inline-search::placeholder {
           color: var(--colorbutton);
-          opacity: 0.3;
+          opacity: 0.5;
         }
 
         .search-results-dropdown {
@@ -412,7 +412,7 @@ export default function WindowFrame({
           left: -1px;
           right: -1px;
           background: var(--colortab);
-          border: 1px solid var(--colorborder);
+          border: 2px solid var(--colorborder);
           border-radius: 8px;
           z-index: 2000;
           box-shadow: 0 10px 30px rgba(0,0,0,0.6);
@@ -433,7 +433,7 @@ export default function WindowFrame({
           border: none;
           color: var(--colorbutton);
           cursor: pointer;
-          opacity: 0.5;
+          opacity: 1;
           transition: all 0.2s;
           display: flex;
           align-items: center;
@@ -443,12 +443,11 @@ export default function WindowFrame({
         }
 
         .window-control-btn:hover:not(:disabled) {
-          opacity: 1;
-          background: rgba(255, 250, 205, 0.1);
+          background: rgba(255, 250, 205, 0.15);
         }
 
         .window-control-btn:disabled {
-          opacity: 0.1;
+          opacity: 0.2;
           cursor: default;
         }
 
@@ -459,12 +458,12 @@ export default function WindowFrame({
           font-size: 11px;
           font-weight: 700;
           color: var(--colorbutton);
-          opacity: 0.7;
+          opacity: 1;
         }
 
         .pdf-title-input {
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.2);
           color: inherit;
           width: 24px;
           text-align: center;
@@ -474,15 +473,14 @@ export default function WindowFrame({
         }
 
         .window-control-btn.active-mode {
-          opacity: 1;
           color: #fff;
-          background: rgba(255, 250, 205, 0.2);
+          background: rgba(255, 250, 205, 0.3);
         }
 
         .control-separator {
-          width: 1px;
-          height: 16px;
-          background: rgba(255, 255, 255, 0.1);
+          width: 2px;
+          height: 18px;
+          background: var(--colorborder);
           margin: 0 4px;
         }
 
