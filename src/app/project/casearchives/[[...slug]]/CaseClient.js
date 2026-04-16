@@ -169,9 +169,9 @@ export default function CaseClient({ serverHydratedData = null }) {
   const [fileName,     setFileName]     = useState('');
   const [contentKey,   setContentKey]   = useState(0);
   const [activeOverlay,      setActiveOverlay]      = useState(null); 
-  const [openWindows,        setOpenWindows]        = useState(['editor']);
+  const [openWindows,        setOpenWindows]        = useState(['editor', 'graph']);
   const [maximizedWindow,    setMaximizedWindow]    = useState(null);
-  const [everOpened,         setEverOpened]         = useState(['editor']);
+  const [everOpened,         setEverOpened]         = useState(['editor', 'graph']);
   const [isLiveCallActive,   setIsLiveCallActive]   = useState(false);
   const lastPdfStateRef = useRef({ pageNumber: 1, file: null, fitMode: 'width' });
   const [pdfState,           setPdfState]           = useState(null);
@@ -196,14 +196,14 @@ export default function CaseClient({ serverHydratedData = null }) {
 
   const toggleWindow = useCallback((id) => {
     setOpenWindows(prev => {
-      if (prev.includes(id)) { if (prev.length === 1 && id === 'editor') return prev; return prev.filter(w => w !== id); }
+      if (prev.includes(id)) { return prev.filter(w => w !== id); }
       return [...prev, id];
     });
     setMaximizedWindow(null);
   }, []);
 
   const closeWindow = useCallback((id) => {
-    setOpenWindows(prev => { if (prev.length === 1 && id === 'editor') return prev; return prev.filter(w => w !== id); });
+    setOpenWindows(prev => { return prev.filter(w => w !== id); });
     if (maximizedWindow === id) setMaximizedWindow(null);
   }, [maximizedWindow]);
 
