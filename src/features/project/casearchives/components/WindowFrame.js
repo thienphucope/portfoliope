@@ -266,7 +266,7 @@ export default function WindowFrame({
           flex-direction: column;
           background: var(--colortab);
           border: 2px solid var(--colorborder);
-          border-radius: 8px;
+          border-radius: 0;
           overflow: hidden;
           height: 100%;
           width: 100%;
@@ -280,13 +280,13 @@ export default function WindowFrame({
 
         .window-frame.maximized {
           position: fixed;
-          top: 10px;
-          left: 94px; /* Offset for StickySpine */
-          right: 10px;
-          bottom: 10px;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
           z-index: 1000;
-          width: calc(100vw - 104px);
-          height: calc(100vh - 20px);
+          width: 100vw;
+          height: 100vh;
         }
 
         .window-title-bar {
@@ -341,7 +341,7 @@ export default function WindowFrame({
           padding: 2px 12px;
           background: rgba(255, 255, 255, 0.06);
           border: 1px solid rgba(255, 255, 255, 0.2);
-          border-radius: 6px;
+          border-radius: 0;
           transition: all 0.2s;
           width: 100%;
           max-width: 600px;
@@ -380,7 +380,7 @@ export default function WindowFrame({
           gap: 8px;
           background: var(--colortab);
           border: 1px solid rgba(255, 250, 205, 0.6);
-          border-radius: 6px;
+          border-radius: 0;
           padding: 2px 10px;
           box-shadow: 0 4px 12px rgba(0,0,0,0.4);
         }

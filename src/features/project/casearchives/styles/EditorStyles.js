@@ -11,7 +11,7 @@ export default function EditorStyles() {
           display: block;
           width: 100%;
           outline: none;
-          border-radius: 4px;
+          border-radius: 0;
           padding: 2px 4px;
           margin: 0; 
           transition: background .12s;
@@ -52,7 +52,7 @@ export default function EditorStyles() {
           width: 100%;
           background: transparent;
           border: 1px solid rgba(255,250,205,0.25);
-          border-radius: 4px;
+          border-radius: 0;
           outline: none;
           z-index: 5;
           box-sizing: border-box;
@@ -64,7 +64,7 @@ export default function EditorStyles() {
         .block-reading-highlight {
           background-color: var(--colorlink) !important;
           color: var(--background) !important;
-          border-radius: 4px;
+          border-radius: 0;
           transition: background-color 0.3s ease, color 0.3s ease;
           box-shadow: 0 0 12px var(--colorlink);
           padding: 4px 8px;
@@ -122,7 +122,7 @@ export default function EditorStyles() {
         .rte-h6 { font-size: 0.9em; font-weight: 900; color: #fff; font-style: italic; letter-spacing: -0.02em; white-space: pre-wrap; }
         .rte-ul, .rte-ol { padding-left: 1.8em; text-indent: -1.8em; margin-bottom: 0.3em; }
         .rte-blockquote { border-left: 3px solid var(--accent); padding-left: 1.25em; margin-left: 0; font-style: italic; opacity: 0.8; }
-        .rte-codefence { font-family: monospace; font-size: 0.85em; opacity: 0.55; background: rgba(255,255,255,0.03); border-radius: 3px; }
+        .rte-codefence { font-family: monospace; font-size: 0.85em; opacity: 0.55; background: rgba(255,255,255,0.03); border-radius: 0; }
         .rte-hr { border: none; border-bottom: 1px solid var(--border); margin: 0.4em 0; }
 
         .code-raw-editor {
@@ -133,7 +133,7 @@ export default function EditorStyles() {
           line-height: 1.5;
           background: var(--code-bg);
           border: 1px solid rgba(255,250,205,0.2);
-          border-radius: 4px;
+          border-radius: 0;
           padding: 15px; /* Match pre padding */
           color: var(--colortext-markdown);
           caret-color: var(--accent);
@@ -161,7 +161,7 @@ export default function EditorStyles() {
           position: fixed;
           background: #1e1e1e;
           border: 1px solid var(--border);
-          border-radius: 8px;
+          border-radius: 0;
           box-shadow: 0 10px 30px rgba(0,0,0,0.5);
           z-index: 1000;
           min-width: 200px;
@@ -176,14 +176,14 @@ export default function EditorStyles() {
         }
         .slash-menu::-webkit-scrollbar-thumb {
           background: var(--accent);
-          border-radius: 10px;
+          border-radius: 0;
         }
         .slash-item {
           display: flex;
           align-items: center;
           gap: 10px;
           padding: 8px 12px;
-          border-radius: 6px;
+          border-radius: 0;
           cursor: pointer;
           font-family: 'Inter', sans-serif;
           font-size: 13px;
@@ -201,7 +201,7 @@ export default function EditorStyles() {
           align-items: center;
           justify-content: center;
           background: rgba(255,255,255,0.05);
-          border-radius: 4px;
+          border-radius: 0;
           font-size: 11px;
           font-weight: 700;
           color: var(--accent);

@@ -57,41 +57,85 @@ export default function TabPanelStyles() {
         }
 
         .pc-layout .sticky-spine {
-          flex: 0 0 84.375px;
+          flex: 0 0 0px;
           height: 100vh;
         }
 
         .windows-container {
           flex: 1;
           display: flex;
-          gap: 10px;
-          padding: 10px;
+          padding: 0;
           height: 100vh;
           background: rgba(0, 0, 0, 0.2);
-          transition: all 0.3s ease;
+          transition: background 0.3s ease; /* Remove 'all' to avoid lag during drag */
           overflow: hidden;
+          position: relative;
         }
 
-        .windows-container.has-editor.has-others .window-frame[data-id="editor"] {
-          flex: 1.5;
+        .windows-container.dragging {
+          user-select: none;
         }
 
-        .windows-container.has-editor:not(.has-others) .window-frame[data-id="editor"],
-        .windows-container.has-editor:has(.secondary-windows.all-hidden) .window-frame[data-id="editor"] {
-          flex: 1;
+        .window-frame-wrapper {
+          min-width: 0;
+          min-height: 0;
+          display: flex;
+          flex-direction: column;
         }
 
-        /* If there's no editor, but multiple others, they can split evenly or stack.
-           Based on requirement, secondary windows stack vertically when editor exists, 
-           but stack horizontally when editor is absent for better balance. */
         .secondary-windows {
           flex: 1;
           display: flex;
           flex-direction: column;
-          gap: 10px;
           height: 100%;
           min-width: 0;
-          transition: all 0.3s ease;
+          transition: flex 0.3s ease;
+        }
+
+        /* Resizers */
+        .resizer-v {
+          width: 8px;
+          margin: 0 -4px;
+          cursor: col-resize;
+          z-index: 100;
+          flex-shrink: 0;
+          transition: background 0.2s;
+          position: relative;
+        }
+        .resizer-v:hover, .resizer-v.active {
+          background: rgba(255, 250, 205, 0.3);
+        }
+
+        .resizer-h {
+          height: 8px;
+          margin: -4px 0;
+          cursor: row-resize;
+          z-index: 100;
+          flex-shrink: 0;
+          transition: background 0.2s;
+          position: relative;
+        }
+        .resizer-h:hover, .resizer-h.active {
+          background: rgba(255, 250, 205, 0.3);
+        }
+
+        .resizer-junction {
+          position: absolute;
+          width: 12px;
+          height: 12px;
+          margin-left: -6px;
+          margin-top: -6px;
+          background: var(--colorbutton);
+          border-radius: 0;
+          z-index: 110;
+          cursor: move;
+          opacity: 0;
+          transition: opacity 0.2s, transform 0.2s;
+          box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        .resizer-junction:hover, .resizer-junction.active {
+          opacity: 1;
+          transform: scale(1.2);
         }
 
         .windows-container:not(.has-editor) .secondary-windows {

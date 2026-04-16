@@ -4,17 +4,35 @@ export default function StickySpineStyles() {
   return (
     <style jsx global>{`
         .sticky-spine {
-          position: sticky;
+          position: fixed;
           left: 0;
-          z-index: 50;
-          flex-basis: 84.375px;
-          min-width: 84.375px;
-          flex-grow: 0;
-          flex-shrink: 0;
+          top: 0;
+          bottom: 0;
+          z-index: 2000;
+          width: 84.375px;
           background-color: var(--colorone);
           border-right: 2px solid var(--colorborder);
           cursor: default;
           isolation: isolate;
+          transform: translateX(-80px); /* Hide most of it */
+          transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s;
+          opacity: 0.3;
+        }
+
+        .sticky-spine:hover {
+          transform: translateX(0);
+          opacity: 1;
+        }
+
+        /* Create a larger hover trigger area */
+        .sticky-spine::after {
+          content: "";
+          position: absolute;
+          top: 0;
+          right: -20px;
+          bottom: 0;
+          width: 40px;
+          pointer-events: auto;
         }
 
         .spine-content {

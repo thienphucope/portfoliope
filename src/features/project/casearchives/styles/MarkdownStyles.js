@@ -72,25 +72,25 @@ export default function MarkdownStyles() {
 
         .table-container { width:100%; overflow-x:auto; margin:1.5em 0; display:block; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,.03) transparent; }
         .table-container::-webkit-scrollbar { height:1px; }
-        .table-container::-webkit-scrollbar-thumb { background:rgba(255,255,255,.03); border-radius:10px; }
+        .table-container::-webkit-scrollbar-thumb { background:rgba(255,255,255,.03); border-radius:0; }
         table { width:100%; border-collapse:collapse; }
         th, td { padding:10px 14px; border:none; text-align:left; white-space:nowrap; }
         thead { border-bottom:1px solid var(--border); }
         th { color:#fff; font-weight:700; }
 
         .math-block { margin:1.5em 0; overflow-x:auto; display:block; width:100%; }
-        .code-block { background:transparent; border-radius:0; margin:1.5em 0; border:1px solid white; overflow:visible; position:relative; border-top-right-radius:8px; }
+        .code-block { background:transparent; border-radius:0; margin:1.5em 0; border:1px solid white; overflow:visible; position:relative; border-top-right-radius:0; }
         .code-header { display:none; }
         .code-lang, .code-lang-label { font-size:11px; color:#888; text-transform:uppercase; }
         .code-lang-label { position:absolute; top:-18px; right:8px; background:transparent; padding:0; z-index:1; }
         pre { margin:0; padding:15px; overflow-x:auto; background:transparent; }
-        .mermaid { background:rgba(255,255,255,.02); padding:20px; border-radius:8px; margin:1.5em 0; display:flex; justify-content:center; }
+        .mermaid { background:rgba(255,255,255,.02); padding:20px; border-radius:0; margin:1.5em 0; display:flex; justify-content:center; }
         blockquote { border-left:3px solid var(--accent); padding-left:1.25em; margin:1.5em 0; font-style:italic; opacity:.8; }
         blockquote blockquote { border-left-color:rgba(255,255,255,.2); margin-left:1em; }
-        .img-circle { border-radius:50%; aspect-ratio:1/1; object-fit:cover; max-width:200px; display:block; margin:2em auto; }
-        img { width: 100%; height: auto; border-radius: 8px; margin: 1.5em 0; }
+        .img-circle { border-radius:0; aspect-ratio:1/1; object-fit:cover; max-width:200px; display:block; margin:2em auto; }
+        img { width: 100%; height: auto; border-radius: 0; margin: 1.5em 0; }
         .video-container { position:relative; padding-bottom:56.25%; height:0; margin:1.5em 0; }
-        .video-container iframe { position:absolute; top:0; left:0; width:100%; height:100%; border-radius:8px; pointer-events: none; }
+        .video-container iframe { position:absolute; top:0; left:0; width:100%; height:100%; border-radius:0; pointer-events: none; }
         .video-container.interactable iframe { pointer-events: auto; }
     `}</style>
   );
