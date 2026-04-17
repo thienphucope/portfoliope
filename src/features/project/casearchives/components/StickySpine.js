@@ -5,11 +5,11 @@ import { Network, ArrowLeft, FileText, BookOpen } from 'lucide-react';
  * Sticky navigation spine component for the case vault interface.
  */
 
-export default function StickySpine({ 
-  showHeader, 
-  activeTab, 
-  activeOverlay, 
-  handleCreateNewNote, 
+export default function StickySpine({
+  showHeader,
+  activeTab,
+  activeOverlay,
+  handleCreateNewNote,
   setActiveOverlay,
   setActiveTab,
   openWindows = []
@@ -17,8 +17,11 @@ export default function StickySpine({
   const isWinOpen = (id) => openWindows.includes(id) || activeOverlay === id;
 
   return (
-    <div className={`acc-panel sticky-spine ${(!showHeader || activeTab || activeOverlay) ? 'header-hidden' : ''}`}>
-      <div className="acc-ope-container" style={{ width: '100%', flex: '1' }}>
+    <>
+    <div
+      className={`acc-panel sticky-spine ${(!showHeader || activeTab || activeOverlay) ? 'header-hidden' : ''}`}
+    >
+      <div className="acc-ope-container">
         <div className="spine-content">
           <div 
             className={`add-note-btn ${isWinOpen('editor') ? 'active' : ''}`} 
@@ -62,14 +65,9 @@ export default function StickySpine({
             <Network size={25} strokeWidth={2} />
           </div>
           
-          <div className="acc-ope" onClick={() => window.location.href = '/about'}>
-            <div className="ope-txt-archive">Case Archives</div>
-            <div className="ope-txt">Ope Watson</div>
-          </div>
-
-          <button 
-            className="mobile-exit-btn" 
-            onClick={(e) => { e.stopPropagation(); window.location.href = '/about'; }} 
+          <button
+            className="mobile-exit-btn"
+            onClick={(e) => { e.stopPropagation(); window.location.href = '/about'; }}
             title="Exit Case"
           >
             <ArrowLeft size={24} strokeWidth={2.5} />
@@ -77,5 +75,6 @@ export default function StickySpine({
         </div>
       </div>
     </div>
+    </>
   );
 }

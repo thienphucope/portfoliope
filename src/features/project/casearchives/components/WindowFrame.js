@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { Maximize2, Minimize2, X, Zap, Save, Pencil, Eye, MessageSquare, Plus, Loader2, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight, Upload, Search } from 'lucide-react';
+import { Maximize2, Minimize2, X, Zap, Save, Pencil, Eye, MessageSquare, Plus, Loader2, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight, Upload, Search, Pin, PinOff } from 'lucide-react';
 
 /**
  * WindowFrame component that provides a title bar, borders, and window controls
@@ -30,7 +30,9 @@ export default function WindowFrame({
   onSelectFile,
   children,
   isMobile,
-  isHidden = false
+  isHidden = false,
+  isPinned = false,
+  onTogglePin,
 }) {
   const [localPageInput, setLocalPageInput] = React.useState('');
   const [isSearchOpen, setIsSearchOpen] = React.useState(false);
@@ -240,8 +242,17 @@ export default function WindowFrame({
               <Zap size={16} fill={isLiveCallActive ? "#ff4d4d" : "currentColor"} color={isLiveCallActive ? "#ff4d4d" : "currentColor"} className={isLiveCallActive ? 'animate-pulse' : ''} />
             </button>
           )}
-          <button 
-            className="window-control-btn" 
+          {onTogglePin && (
+            <button
+              className={`window-control-btn pin-btn ${isPinned ? 'pinned' : ''}`}
+              onClick={() => onTogglePin(id)}
+              title={isPinned ? "Unpin window" : "Pin window"}
+            >
+              {isPinned ? <Pin size={15} fill="currentColor" /> : <PinOff size={15} />}
+            </button>
+          )}
+          <button
+            className="window-control-btn"
             onClick={() => onToggleMaximize(id)}
             title={isMaximized ? "Minimize" : "Maximize"}
           >
@@ -486,6 +497,10 @@ export default function WindowFrame({
 
         .window-control-btn.close-btn:hover {
           color: #ff4d4d;
+        }
+
+        .window-control-btn.pin-btn.pinned {
+          color: var(--colorone, #ba9170);
         }
 
         .animate-spin {

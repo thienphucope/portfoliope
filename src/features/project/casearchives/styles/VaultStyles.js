@@ -9,6 +9,7 @@ import MarkdownStyles from './MarkdownStyles';
 import PromptStyles from './PromptStyles';
 import MobileStyles from './MobileStyles';
 import FunctionBallStyles from './FunctionBallStyles';
+import GalleryStyles from './GalleryStyles';
 
 /**
  * Aggregator component for the case vault UI styles.
@@ -27,6 +28,7 @@ export default function VaultStyles() {
       <PromptStyles />
       <MobileStyles />
       <FunctionBallStyles />
+      <GalleryStyles />
     </>
   );
 }

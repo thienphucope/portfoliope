@@ -23,6 +23,10 @@ export default function TabPanelStyles() {
           flex-shrink: 0;
         }
 
+        .acc-panel.sticky-spine {
+          border-right: none;
+        }
+
         /* Ẩn title các thanh tab khi hover vào content */
         .accordion-app:has(.acc-content:hover) .acc-panel:not(.sticky-spine) {
           border-right-color: var(--colortab) !important;
@@ -51,6 +55,8 @@ export default function TabPanelStyles() {
         .accordion-app.pc-layout {
           display: flex;
           flex-direction: row;
+          align-items: center;
+          justify-content: center;
           width: 100vw;
           height: 100vh;
           overflow: hidden;
@@ -62,14 +68,19 @@ export default function TabPanelStyles() {
         }
 
         .windows-container {
-          flex: 1;
           display: flex;
           padding: 0;
-          height: 100vh;
+          width: 80vw;
+          height: 80vh;
+          margin: auto;
           background: rgba(0, 0, 0, 0.2);
-          transition: background 0.3s ease; /* Remove 'all' to avoid lag during drag */
+          transition: background 0.3s ease;
           overflow: hidden;
           position: relative;
+        }
+
+        .windows-container.no-windows {
+          display: none;
         }
 
         .windows-container.dragging {

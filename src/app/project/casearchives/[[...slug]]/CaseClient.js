@@ -10,6 +10,7 @@ import TabPanel from '@/features/project/casearchives/components/TabPanel';
 import ChatOverlay from '@/features/project/casearchives/components/ChatOverlay';
 import PDFOverlay from '@/features/project/casearchives/components/PDFOverlay';
 import WindowFrame from '@/features/project/casearchives/components/WindowFrame';
+import NoteGallery from '@/features/project/casearchives/components/NoteGallery';
 import dynamic from 'next/dynamic';
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
@@ -34,10 +35,11 @@ import { useGraphData } from '@/features/project/casearchives/hooks/useGraphData
 const GraphView = dynamic(() => import('@/features/project/casearchives/components/GraphView'), { ssr: false });
 
 // ─── Graph Window Wrapper ───────────────────────────────────────────────────
-const GraphWindowWrapper = ({ 
-  winId, title, isMaximized, isHidden, toggleMaximize, closeWindow, 
-  winContent, isLiveCallActive, chatRef, pdfState, pdfRef, 
-  allFiles, fileRegistry, loadFile, graphFiles, fullContentCache, setZoomToNodeId
+const GraphWindowWrapper = ({
+  winId, title, isMaximized, isHidden, toggleMaximize, closeWindow,
+  winContent, isLiveCallActive, chatRef, pdfState, pdfRef,
+  allFiles, fileRegistry, loadFile, graphFiles, fullContentCache, setZoomToNodeId,
+  isPinned, onTogglePin
 }) => {
   const { nodes: graphNodes } = useGraphData({ allFiles: graphFiles, fullContentCache });
   
@@ -68,6 +70,8 @@ const GraphWindowWrapper = ({
       onPdfToggleFit={() => pdfRef.current?.toggleFit()} 
       onPdfPageJump={(p) => pdfRef.current?.setPage(p)} 
       isMobile={false}
+      isPinned={isPinned}
+      onTogglePin={onTogglePin}
       allFiles={winId === 'graph' ? graphNodes : (winId === 'editor' ? allFiles : [])}
       onSelectFile={handleSelect}
     >
@@ -170,9 +174,10 @@ export default function CaseClient({ serverHydratedData = null }) {
   const [fileName,     setFileName]     = useState('');
   const [contentKey,   setContentKey]   = useState(0);
   const [activeOverlay,      setActiveOverlay]      = useState(null); 
-  const [openWindows,        setOpenWindows]        = useState(['editor']);
+  const [openWindows,        setOpenWindows]        = useState([]);
   const [maximizedWindow,    setMaximizedWindow]    = useState(null);
-  const [everOpened,         setEverOpened]         = useState(['editor']);
+  const [everOpened,         setEverOpened]         = useState([]);
+  const [pinnedWindows,      setPinnedWindows]      = useState([]);
   const [isLiveCallActive,   setIsLiveCallActive]   = useState(false);
   const lastPdfStateRef = useRef({ pageNumber: 1, file: null, fitMode: 'width' });
   const [pdfState,           setPdfState]           = useState(null);
@@ -209,6 +214,7 @@ export default function CaseClient({ serverHydratedData = null }) {
   }, [maximizedWindow]);
 
   const toggleMaximize = useCallback((id) => { setMaximizedWindow(prev => prev === id ? null : id); }, []);
+  const togglePin = useCallback((id) => { setPinnedWindows(prev => prev.includes(id) ? prev.filter(w => w !== id) : [...prev, id]); }, []);
 
   const [showHeader,         setShowHeader]          = useState(true);
   const [showFunctionBall,   setShowFunctionBall]    = useState(true);
@@ -325,8 +331,8 @@ export default function CaseClient({ serverHydratedData = null }) {
           const defUrl = fileRegistry.current[cleanDefault.toLowerCase()] || fileRegistry.current[cleanDefault.toLowerCase() + '.md'];
           if (defRepo && defUrl) loadFile(defUrl, defRepo.split('/').pop(), defRepo, 'replace', isCaseRoot);
           if (!isMobile) toggleWindow(forceTab); else setActiveOverlay(forceTab);
-        } else if (actualRepo && githubUrl) { loadFile(githubUrl, actualRepo.split('/').pop(), actualRepo, 'replace', true); }
-        else {
+        } else if (actualRepo && githubUrl && !isCaseRoot) { loadFile(githubUrl, actualRepo.split('/').pop(), actualRepo, 'replace', true); }
+        else if (!isCaseRoot) {
           const defRepo = repoPathMap[cleanDefault.toLowerCase()] || repoPathMap[cleanDefault.toLowerCase() + '.md'];
           const defUrl = fileRegistry.current[cleanDefault.toLowerCase()] || fileRegistry.current[cleanDefault.toLowerCase() + '.md'];
           if (defRepo && defUrl) loadFile(defUrl, defRepo.split('/').pop(), defRepo, 'replace', true);
@@ -378,7 +384,17 @@ export default function CaseClient({ serverHydratedData = null }) {
         <>
           <StickySpine showHeader={showHeader} activeTab={activeTab} activeOverlay={activeOverlay} handleCreateNewNote={handleCreateNewNote} setActiveOverlay={(id) => { if (typeof id === 'function') { const result = id(activeOverlay); if (result) toggleWindow(result); } else { if (id) toggleWindow(id); } }} setActiveTab={setActiveTab} openWindows={openWindows} />
           
-          <div className={`windows-container ${maximizedWindow ? 'has-maximized' : ''} ${openWindows.includes('editor') ? 'has-editor' : ''} ${openWindows.length > (openWindows.includes('editor') ? 1 : 0) ? 'has-others' : ''} ${resizer.isDragging ? 'dragging' : ''}`}>
+          <div style={{ display: openWindows.length === 0 ? 'block' : 'none', position: 'absolute', inset: 0, zIndex: 5 }}>
+            <NoteGallery
+              graphFiles={graphFiles}
+              onSelectFile={(path, name, id) => {
+                const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md'];
+                if (githubUrl) loadFile(githubUrl, name, id, 'push', true);
+              }}
+            />
+          </div>
+
+          <div className={`windows-container ${maximizedWindow ? 'has-maximized' : ''} ${openWindows.includes('editor') ? 'has-editor' : ''} ${openWindows.length > (openWindows.includes('editor') ? 1 : 0) ? 'has-others' : ''} ${resizer.isDragging ? 'dragging' : ''} ${openWindows.length === 0 ? 'no-windows' : ''}`}>
             
             {/* EDITOR WINDOW */}
             {everOpened.filter(winId => winId === 'editor').map((winId) => {
@@ -391,20 +407,22 @@ export default function CaseClient({ serverHydratedData = null }) {
               
               return (
                 <div key={winId} className="window-frame-wrapper" style={isMax ? {} : { flex: hasEditor && visibleSecondary.length > 0 ? resizer.editorWidth : 1 }}>
-                  <WindowFrame 
-                    id={winId} 
-                    title={`Case Archives - ${tabTitle}`} 
-                    isMaximized={isMax} 
-                    isHidden={false} 
-                    onToggleMaximize={toggleMaximize} 
-                    onClose={closeWindow} 
-                    onSave={handleSidebarSave} 
-                    saveStatus={saveStatus} 
-                    onToggleEdit={handleToggleEditMode} 
-                    isEditing={isEditing} 
-                    onComment={handleAppendComment} 
-                    onNewNote={handleCreateNewNote} 
+                  <WindowFrame
+                    id={winId}
+                    title={`Case Archives - ${tabTitle}`}
+                    isMaximized={isMax}
+                    isHidden={false}
+                    onToggleMaximize={toggleMaximize}
+                    onClose={closeWindow}
+                    onSave={handleSidebarSave}
+                    saveStatus={saveStatus}
+                    onToggleEdit={handleToggleEditMode}
+                    isEditing={isEditing}
+                    onComment={handleAppendComment}
+                    onNewNote={handleCreateNewNote}
                     isMobile={false}
+                    isPinned={pinnedWindows.includes(winId)}
+                    onTogglePin={togglePin}
                     allFiles={allFiles}
                     onSelectFile={(f) => {
                       const githubUrl = fileRegistry.current[f.id.toLowerCase()] || fileRegistry.current[f.id.toLowerCase() + '.md'];
@@ -489,7 +507,7 @@ export default function CaseClient({ serverHydratedData = null }) {
                   return (
                     <React.Fragment key={winId}>
                       <div className="window-frame-wrapper" style={{ flex: resizer.secondaryWeights[winId] }}>
-                        <GraphWindowWrapper 
+                        <GraphWindowWrapper
                           winId={winId}
                           title={title}
                           isMaximized={false}
@@ -507,6 +525,8 @@ export default function CaseClient({ serverHydratedData = null }) {
                           graphFiles={graphFiles}
                           fullContentCache={fullContentCache}
                           setZoomToNodeId={setZoomToNodeId}
+                          isPinned={pinnedWindows.includes(winId)}
+                          onTogglePin={togglePin}
                         />
                       </div>
                       
@@ -547,7 +567,7 @@ export default function CaseClient({ serverHydratedData = null }) {
                     }
 
                     return (
-                      <GraphWindowWrapper 
+                      <GraphWindowWrapper
                         winId={winId}
                         title={title}
                         isMaximized={true}
@@ -565,6 +585,8 @@ export default function CaseClient({ serverHydratedData = null }) {
                         graphFiles={graphFiles}
                         fullContentCache={fullContentCache}
                         setZoomToNodeId={setZoomToNodeId}
+                        isPinned={pinnedWindows.includes(winId)}
+                        onTogglePin={togglePin}
                       />
                     );
                  })()}
