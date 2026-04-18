@@ -7,8 +7,9 @@ export default function GalleryStyles() {
         position: absolute;
         inset: 0;
         z-index: 5;
+        overflow-x: hidden;
         overflow-y: auto;
-        padding: 80px 40px;
+        padding: 70px 40px 40px;
         pointer-events: auto;
         -webkit-overflow-scrolling: touch;
         background: linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)), url('/map.jpg') top center / cover no-repeat local;
@@ -41,11 +42,11 @@ export default function GalleryStyles() {
         display: block;
         font-family: 'Fredericka the Great', cursive;
         font-weight: 900;
-        font-size: 6rem;
+        font-size: clamp(1.8rem, 8vw, 6rem);
         color: var(--colorone, #ba9170);
         text-align: center;
-        margin-bottom: 80px;
-        letter-spacing: 1.5rem;
+        margin-bottom: clamp(16px, 3vw, 40px);
+        letter-spacing: clamp(0.2rem, 1.5vw, 1.5rem);
         opacity: 0.9;
         text-shadow: 0 0 20px rgba(186, 145, 112, 0.6), 0 0 60px rgba(186, 145, 112, 0.3), 0 0 120px rgba(186, 145, 112, 0.15);
         text-decoration: none;
@@ -57,14 +58,6 @@ export default function GalleryStyles() {
 
       .gallery-main-title:hover {
         opacity: 0.7;
-      }
-
-      @media (max-width: 1024px) {
-        .gallery-main-title {
-          font-size: 3.5rem;
-          letter-spacing: 0.8rem;
-          margin-bottom: 40px;
-        }
       }
 
       .note-gallery {
@@ -104,7 +97,12 @@ export default function GalleryStyles() {
           grid-column: span 1;
         }
         .note-gallery-container {
-          padding: 60px 16px;
+          padding: 56px 16px 32px;
+        }
+        .gallery-crime-tape,
+        .gallery-personal-tape {
+          margin-left: -16px;
+          margin-right: -16px;
         }
       }
 
@@ -137,6 +135,13 @@ export default function GalleryStyles() {
       .gallery-item:hover .gallery-quote-rendered :global(p),
       .gallery-item:hover.markdown-content p {
         color: rgba(255, 255, 255, 0.85);
+        font-family: 'Prata', serif;
+      }
+
+      .gallery-item:hover ul,
+      .gallery-item:hover ol,
+      .gallery-item:hover li {
+        font-family: 'Prata', serif;
       }
 
       .gallery-title-wrap {
@@ -240,7 +245,7 @@ export default function GalleryStyles() {
         overflow: hidden;
         text-align: left;
         color: rgba(0, 0, 0, 0.8);
-        font-size: 1.2rem;
+        font-size: clamp(1rem, 1.8vw, 1.6rem);
         font-family: 'Fredericka the Great', cursive;
       }
 
@@ -263,6 +268,7 @@ export default function GalleryStyles() {
         border-radius: 2px !important;
         color: rgba(0, 0, 0, 0.85) !important;
         font-family: 'Fredericka the Great', cursive !important;
+        font-size: clamp(1rem, 1.8vw, 1.6rem);
         font-style: italic;
         box-shadow: 2px 3px 8px rgba(0,0,0,0.25);
         text-align: left !important;
@@ -293,7 +299,7 @@ export default function GalleryStyles() {
       .gallery-item ol {
         color: rgba(0, 0, 0, 0.8);
         font-family: 'Fredericka the Great', cursive;
-        font-size: 1.2rem;
+        font-size: clamp(1rem, 1.8vw, 1.6rem);
         padding-left: 1.2em;
         margin: 0.4em 0;
       }
@@ -368,7 +374,7 @@ export default function GalleryStyles() {
 
       .gallery-item-col-right::before {
         content: '';
-        height: var(--top-lines, 0px);
+        height: var(--top-lines, 64px);
         flex-shrink: 0;
         background-image: repeating-linear-gradient(
           to bottom,
@@ -381,7 +387,8 @@ export default function GalleryStyles() {
         );
       }
 
-      .gallery-item:hover .gallery-item-col-right::before {
+      .gallery-item:hover .gallery-item-col-right::before,
+      .gallery-item:hover .gallery-item-col-right::after {
         background-image: repeating-linear-gradient(
           to bottom,
           transparent 0px,
@@ -395,8 +402,8 @@ export default function GalleryStyles() {
 
       .gallery-item-col-right::after {
         content: '';
-        flex: 1;
-        min-height: 20px;
+        height: var(--bottom-lines, 64px);
+        flex-shrink: 0;
         background-image: repeating-linear-gradient(
           to bottom,
           transparent 0px,
@@ -407,19 +414,6 @@ export default function GalleryStyles() {
           transparent 32px
         );
       }
-
-      .gallery-item:hover .gallery-item-col-right::after {
-        background-image: repeating-linear-gradient(
-          to bottom,
-          transparent 0px,
-          transparent 6px,
-          rgba(255, 255, 255, 0.85) 6px,
-          rgba(255, 255, 255, 0.85) 26px,
-          transparent 26px,
-          transparent 32px
-        );
-      }
-
 
       .gallery-item-image {
         width: 100%;
@@ -436,35 +430,115 @@ export default function GalleryStyles() {
         margin: 8px 0;
       }
 
-      /* ── Pin button ── */
-      .gallery-pin-btn {
+      /* ── Pin indicator (static, config-driven) ── */
+      .gallery-pin-indicator {
         position: absolute;
         top: 8px;
         right: 8px;
-        background: transparent;
-        border: none;
-        cursor: pointer;
-        padding: 4px;
-        opacity: 0;
-        transition: opacity 0.2s, color 0.2s;
-        color: rgba(0, 0, 0, 0.5);
+        color: var(--colorone, #ba9170);
+        opacity: 0.7;
         z-index: 3;
         display: flex;
         align-items: center;
-        justify-content: center;
+        pointer-events: none;
       }
 
-      .gallery-item:hover .gallery-pin-btn {
-        opacity: 1;
+      /* ── Header slot ── */
+      .gallery-header-slot {
+        grid-column: 1 / -1;
+        overflow: hidden;
       }
 
-      .gallery-pin-btn-active {
-        opacity: 0.8 !important;
-        color: var(--colorone, #ba9170) !important;
+      .gallery-nav-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: clamp(6px, 1.5vh, 14px) clamp(16px, 3vw, 40px);
       }
 
-      .gallery-item:hover .gallery-pin-btn:hover {
-        color: var(--colorone, #ba9170);
+      .gallery-nav-disk {
+        width: clamp(28px, 4vw, 48px);
+        height: clamp(28px, 4vw, 48px);
+        border: 2px solid var(--colorone);
+        border-radius: 50%;
+        background: url('/blackcat.jpg') center / cover;
+        animation: rotate 10s linear infinite;
+        flex-shrink: 0;
+      }
+
+      .gallery-nav-links {
+        display: flex;
+        align-items: center;
+        gap: clamp(0.6rem, 2vw, 2rem);
+        font-family: var(--font-display);
+        flex-wrap: nowrap;
+      }
+
+      .gallery-nav-links a {
+        font-size: clamp(0.75rem, 2vw, 1.4rem);
+        font-weight: bold;
+        color: var(--colorone);
+        text-decoration: none;
+        transition: color 0.2s;
+        white-space: nowrap;
+      }
+
+      .gallery-nav-links a:hover {
+        color: white;
+      }
+
+      /* ── Personal space tape ── */
+      .gallery-personal-tape {
+        grid-column: 1 / -1;
+        overflow: hidden;
+        margin: -30px -40px 8px;
+      }
+
+      .gallery-personal-tape-inner {
+        background: var(--colorone, #ba9170);
+        color: #000;
+        font-family: 'Arial Black', 'Impact', sans-serif;
+        font-weight: 900;
+        font-size: clamp(0.9rem, 2.5vw, 2rem);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 0.6em 0;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        position: relative;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.5), 0 -4px 16px rgba(0,0,0,0.3);
+      }
+
+      .gallery-personal-tape-main {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--colorone, #ba9170);
+        padding: 0 1.5em;
+        z-index: 1;
+        white-space: nowrap;
+      }
+
+      /* ── Crime scene tape ── */
+      .gallery-crime-tape {
+        grid-column: 1 / -1;
+        overflow: hidden;
+        margin: 8px -40px;
+      }
+
+      .gallery-crime-tape-inner {
+        background: var(--colorone, #ba9170);
+        color: #000;
+        font-family: 'Arial Black', 'Impact', sans-serif;
+        font-weight: 900;
+        font-size: clamp(0.9rem, 2.5vw, 2rem);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 0.6em 0;
+        white-space: nowrap;
+        display: flex;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.5), 0 -4px 16px rgba(0,0,0,0.3);
       }
 
       /* ── Pinned item ── */
@@ -501,6 +575,12 @@ export default function GalleryStyles() {
         .gallery-pinned-col-right {
           flex: unset;
           width: 100%;
+        }
+        .gallery-intro-rendered :global(p),
+        .gallery-item ul,
+        .gallery-item ol,
+        .gallery-quote-rendered :global(blockquote) {
+          font-size: clamp(1.1rem, 4.5vw, 1.6rem);
         }
       }
     `}</style>

@@ -19,7 +19,7 @@ export default function StickySpine({
   return (
     <>
     <div
-      className={`acc-panel sticky-spine ${(!showHeader || activeTab || activeOverlay) ? 'header-hidden' : ''}`}
+      className={`acc-panel sticky-spine ${(!showHeader || activeTab || activeOverlay || openWindows.length > 0) ? 'header-hidden' : ''}`}
     >
       <div className="acc-ope-container">
         <div className="spine-content">

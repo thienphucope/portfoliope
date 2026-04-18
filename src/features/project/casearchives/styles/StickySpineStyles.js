@@ -99,6 +99,10 @@ export default function StickySpineStyles() {
         .mobile-exit-btn {
           display: none;
         }
+
+        body.case-header-hidden header {
+          display: none;
+        }
     `}</style>
   );
 }

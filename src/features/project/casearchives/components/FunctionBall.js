@@ -34,7 +34,7 @@ export default function FunctionBall({
   const canEdit = !activeOverlay && activeTabType === 'editor';
   const canComment = !activeOverlay && (activeTabType === 'editor' || activeTabType === 'static');
 
-  const isHidden = !showFunctionBall && !isAtBottom && !isFooterExpanded;
+  const isHidden = (!!activeOverlay) || (!showFunctionBall && !isAtBottom && !isFooterExpanded);
 
   const isWinActive = (id) => openWindows.includes(id) || activeOverlay === id;
 

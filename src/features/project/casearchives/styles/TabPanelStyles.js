@@ -77,6 +77,7 @@ export default function TabPanelStyles() {
           transition: background 0.3s ease;
           overflow: hidden;
           position: relative;
+          z-index: 10;
         }
 
         .windows-container.no-windows {

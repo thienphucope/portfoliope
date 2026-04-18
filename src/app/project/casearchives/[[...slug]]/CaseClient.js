@@ -318,6 +318,11 @@ export default function CaseClient({ serverHydratedData = null }) {
   useBeforeUnload({ serverRawCache });
 
   useEffect(() => {
+    document.body.classList.add('case-header-hidden');
+    return () => document.body.classList.remove('case-header-hidden');
+  }, []);
+
+  useEffect(() => {
     const checkBottom = () => {
       const container = document.querySelector('.acc-panel.open .markdown-container');
       setIsAtBottom(container ? container.scrollHeight - container.scrollTop <= container.clientHeight + 100 : false);
@@ -380,6 +385,17 @@ export default function CaseClient({ serverHydratedData = null }) {
   }, [activeTab, tabs, handleTabClick, handleLinkClick, isEditing, handleToggleEditMode, saveStatus, handleSidebarSave, fileName, content, handleSaveFile, saveHandlerRef, fileRegistry, isAtBottom, augmentedReader]);
 
   const resizer = useWindowResizer();
+
+  const galleryHeaderSlot = useMemo(() => (
+    <div className="gallery-nav-bar">
+      <div className="gallery-nav-disk" />
+      <nav className="gallery-nav-links">
+        <a href="/project">project</a>
+        <a href="/about">about</a>
+        <a href="/privacy">privacy</a>
+      </nav>
+    </div>
+  ), []);
   const visibleSecondary = useMemo(() => 
     ['chat', 'pdf', 'graph'].filter(id => openWindows.includes(id) && maximizedWindow !== id),
     [openWindows, maximizedWindow]
@@ -418,13 +434,14 @@ export default function CaseClient({ serverHydratedData = null }) {
             }
           }} setActiveTab={setActiveTab} openWindows={openWindows} />
           
-          <div style={{ display: openWindows.length === 0 ? 'block' : 'none', position: 'absolute', inset: 0, zIndex: 5 }}>
+          <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', opacity: openWindows.length > 0 ? 0.15 : 1, pointerEvents: openWindows.length > 0 ? 'none' : 'auto', transition: 'opacity 0.3s ease' }}>
             <NoteGallery
               graphFiles={graphFiles}
               onSelectFile={(path, name, id) => {
                 const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md'];
                 if (githubUrl) loadFile(githubUrl, name, id, 'push', true);
               }}
+              headerSlot={galleryHeaderSlot}
             />
           </div>
 
@@ -638,6 +655,7 @@ export default function CaseClient({ serverHydratedData = null }) {
                 const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md'];
                 if (githubUrl) loadFile(githubUrl, name, id, 'push', true);
               }}
+              headerSlot={galleryHeaderSlot}
             />
           )}
           <GraphOverlay isOpen={activeOverlay === 'graph'} graphFiles={graphFiles} activeTab={activeTab} loadFile={loadFile} fileRegistry={fileRegistry} fullContentCache={fullContentCache} />
