@@ -1,11 +1,8 @@
 import { useMemo } from 'react';
 
-/**
- * Hook for processing file list and content into graph nodes and links.
- * Uses fullContentCache for raw markdown content to find links.
- * Used by GraphView and backlink resolution.
- */
-export function useGraphData({ allFiles = [], searchTerm, fullContentCache = {} }) {
+const EMPTY_CACHE = {};
+
+export function useGraphData({ allFiles = [], searchTerm, fullContentCache = EMPTY_CACHE }) {
   const graphData = useMemo(() => {
     const nodes = [];
     const links = [];

@@ -4,16 +4,18 @@ import ForceGraph2D from 'react-force-graph-2d';
 import { forceX, forceY } from 'd3-force';
 import { useGraphData } from '../hooks/useGraphData';
 
-export default function GraphView({ allFiles, onSelectFile, searchTerm = '', activeNodeId = '', zoomToNodeId, onZoomComplete, fullContentCache = {} }) {
+export default function GraphView({ allFiles, onSelectFile, searchTerm = '', activeNodeId = '', zoomToNodeId, onZoomComplete }) {
   const containerRef = useRef(null);
   const graphRef = useRef(null);
+  const onZoomCompleteRef = useRef(onZoomComplete);
+  onZoomCompleteRef.current = onZoomComplete;
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [needsZoom, setNeedsZoom] = useState(true);
   const [hoveredNodeId, setHoveredNodeId] = useState(null);
   const [highlightNodes, setHighlightNodes] = useState(new Set());
   const [highlightLinks, setHighlightLinks] = useState(new Set());
 
-  const { graphData } = useGraphData({ allFiles, searchTerm, fullContentCache });
+  const { graphData } = useGraphData({ allFiles, searchTerm });
 
   const matchingNodeIds = useMemo(() => {
     if (!searchTerm || !graphData.nodes) return new Set();
@@ -38,10 +40,10 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
         const zoomLevel = node.type === 'tag' ? 1.2 : 3.0;
         graphRef.current.centerAt(node.x, node.y, 800);
         graphRef.current.zoom(zoomLevel, 800);
-        if (onZoomComplete) onZoomComplete();
+        if (onZoomCompleteRef.current) onZoomCompleteRef.current();
       }
     }
-  }, [zoomToNodeId, graphData.nodes, onZoomComplete]);
+  }, [zoomToNodeId, graphData.nodes]);
 
   useEffect(() => {
     if (!containerRef.current) return;

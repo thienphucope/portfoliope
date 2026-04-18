@@ -82,7 +82,7 @@ const GraphWindowWrapper = ({
 };
 
 // ─── Mobile Graph Overlay ─────────────────────────────────────────────────────
-const GraphOverlay = ({ isOpen, graphFiles, activeTab, loadFile, fileRegistry, fullContentCache }) => {
+const GraphOverlay = ({ isOpen, graphFiles, activeTab, loadFile, fileRegistry }) => {
   if (!isOpen) return null;
   return (
     <div className={`acc-panel open tab-graph`} data-tab-id="graph">
@@ -97,7 +97,6 @@ const GraphOverlay = ({ isOpen, graphFiles, activeTab, loadFile, fileRegistry, f
               }
             }}
             activeNodeId={activeTab}
-            fullContentCache={fullContentCache}
           />
         </div>
       </div>
@@ -402,7 +401,9 @@ export default function CaseClient({ serverHydratedData = null }) {
   }, []);
 
   const { handleLinkClick } = useLinkHandler({ loadFile, createAndOpenFile, openFiles, tabs, applyFileContent, fileRegistry, setActiveTab, setActiveOverlay });
-  const graphFiles = useMemo(() => allFiles.map((f) => ({ ...f, fetchedContent: fullContentCache[f.id]?.raw || openFiles.find((of) => of.id === f.id)?.fetchedContent || '', })), [allFiles, fullContentCache, openFiles]);
+  const contentCacheRef = useRef(fullContentCache);
+  contentCacheRef.current = fullContentCache; // sync during render, no effect needed
+  const graphFiles = useMemo(() => allFiles.map((f) => ({ ...f, fetchedContent: contentCacheRef.current[f.id]?.raw || '' })), [allFiles]);
 
   const activeTabIndex = tabs.findIndex((t) => t.id === activeTab);
   const nextTabForActive = tabs.slice(activeTabIndex + 1).find((t) => t.type === 'editor' || t.type === 'static');
@@ -578,14 +579,13 @@ export default function CaseClient({ serverHydratedData = null }) {
                       }
                     }
                     title = displayTag;
-                    winContent = <GraphView 
-                      allFiles={graphFiles} 
-                      onSelectFile={(path, name, id) => { 
-                        const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md']; 
-                        if (githubUrl) loadFile(githubUrl, name, id, 'push', true); 
-                      }} 
-                      activeNodeId={activeTab} 
-                      fullContentCache={fullContentCache} 
+                    winContent = <GraphView
+                      allFiles={graphFiles}
+                      onSelectFile={(path, name, id) => {
+                        const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md'];
+                        if (githubUrl) loadFile(githubUrl, name, id, 'push', true);
+                      }}
+                      activeNodeId={activeTab}
                       zoomToNodeId={zoomToNodeId}
                       onZoomComplete={() => setZoomToNodeId(null)}
                     />;
@@ -650,7 +650,7 @@ export default function CaseClient({ serverHydratedData = null }) {
                         if (tagMatch && tagMatch[1]) displayTag = `#${tagMatch[1].trim()}`;
                       }
                       title = displayTag;
-                      winContent = <GraphView allFiles={graphFiles} onSelectFile={(path, name, id) => { const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md']; if (githubUrl) loadFile(githubUrl, name, id, 'push', true); }} activeNodeId={activeTab} fullContentCache={fullContentCache} zoomToNodeId={zoomToNodeId} onZoomComplete={() => setZoomToNodeId(null)} />;
+                      winContent = <GraphView allFiles={graphFiles} onSelectFile={(path, name, id) => { const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md']; if (githubUrl) loadFile(githubUrl, name, id, 'push', true); }} activeNodeId={activeTab} zoomToNodeId={zoomToNodeId} onZoomComplete={() => setZoomToNodeId(null)} />;
                     }
 
                     return (
@@ -694,7 +694,7 @@ export default function CaseClient({ serverHydratedData = null }) {
               headerSlot={galleryHeaderSlot}
             />
           )}
-          <GraphOverlay isOpen={activeOverlay === 'graph'} graphFiles={graphFiles} activeTab={activeTab} loadFile={loadFile} fileRegistry={fileRegistry} fullContentCache={fullContentCache} />
+          <GraphOverlay isOpen={activeOverlay === 'graph'} graphFiles={graphFiles} activeTab={activeTab} loadFile={loadFile} fileRegistry={fileRegistry} />
           <ChatOverlay isOpen={activeOverlay === 'chat'} handleLinkClick={handleLinkClick} reader={augmentedReader} />
           <PDFOverlay isOpen={activeOverlay === 'pdf'} setActiveOverlay={setActiveOverlay} reader={augmentedReader} onStateChange={handlePdfStateChange} initialFile={lastPdfStateRef.current.file} initialPage={lastPdfStateRef.current.pageNumber} initialFitMode={lastPdfStateRef.current.fitMode} />
           {tabs.filter(t => t.type === 'editor' || t.type === 'static').map(tab => ( <TabPanel key={tab.id} tab={tab} activeTab={activeTab} handleTabClick={handleTabClick} handleLinkClick={handleLinkClick} isEditing={isEditing} handleToggleEditMode={handleToggleEditMode} saveStatus={saveStatus} handleSidebarSave={handleSidebarSave} fileName={fileName} content={content} handleSaveFile={handleSaveFile} saveHandlerRef={saveHandlerRef} fileRegistry={fileRegistry} isAtBottom={isAtBottom} setIsAtBottom={setIsAtBottom} reader={augmentedReader} /> ))}
