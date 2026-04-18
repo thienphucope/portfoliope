@@ -210,13 +210,8 @@ export default function CaseClient({ serverHydratedData = null }) {
   }, []);
 
   const closeWindow = useCallback((id) => {
-    setOpenWindows(prev => { return prev.filter(w => w !== id); });
-    if (maximizedWindow === id) setMaximizedWindow(null);
-    if (id === 'editor') {
-      setActiveTab(null);
-      window.history.pushState({ isRoot: true }, '', '/project/casearchives');
-    }
-  }, [maximizedWindow]);
+    window.history.back();
+  }, []);
 
   const toggleMaximize = useCallback((id) => { setMaximizedWindow(prev => prev === id ? null : id); }, []);
   const togglePin = useCallback((id) => { setPinnedWindows(prev => prev.includes(id) ? prev.filter(w => w !== id) : [...prev, id]); }, []);
@@ -304,7 +299,20 @@ export default function CaseClient({ serverHydratedData = null }) {
   useEffect(() => { if (activeTab && !activeOverlay) scrollToTab(activeTab); }, [activeTab, activeOverlay, scrollToTab]);
 
   const { handleTabClick, handlePopState } = useTabManager({ tabs, activeTab, setActiveTab, activeOverlay, setActiveOverlay, isEditing, setIsEditing, fileName, content, editPass, serverRawCache, fileRegistry, applyFileContent, loadFile, handleSaveFile, releaseLock, stopKeepAlive, setShowSearch });
-  useEffect(() => { window.addEventListener('popstate', handlePopState); return () => window.removeEventListener('popstate', handlePopState); }, [handlePopState]);
+  useEffect(() => {
+    const onPop = (e) => {
+      const isRoot = window.location.pathname === '/project/casearchives';
+      if (isRoot) {
+        setOpenWindows([]);
+        setActiveTab(null);
+        setActiveOverlay(null);
+      } else {
+        handlePopState(e);
+      }
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [handlePopState]);
 
   useVideoInteraction();
   useBeforeUnload({ serverRawCache });

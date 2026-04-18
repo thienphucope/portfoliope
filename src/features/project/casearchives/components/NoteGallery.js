@@ -68,7 +68,7 @@ const NoteGallery = ({ graphFiles, onSelectFile }) => {
       // Extract block title: strictly use filename without extension to match BlockEditor
       const displayTitle = file.name.split('/').pop().replace(/\.md$/, '');
 
-      const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([A-Za-z0-9_-]{11})/;
+      const ytRegex = /(?:youtube\.com\/(?:[^\/\n]+\/[^\n]+\/|(?:v|e(?:mbed)?)\/|[^\n]*?[?&]v=)|youtu\.be\/)([A-Za-z0-9_-]{11})/;
 
       // 1. Extract first text block with >= 10 words (skip lines with video embeds)
       const isSkippedLine = t =>
