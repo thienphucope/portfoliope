@@ -1,6 +1,9 @@
 "use client";
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, createContext, useContext } from 'react';
 import Header from '@/components/common/Header';
+
+export const AudioVisualContext = createContext(null);
+export const useAudioVisual = () => useContext(AudioVisualContext);
 
 export default function AudioVisualProvider({ children }) {
   const [isPlaying, setIsPlaying] = useState(true);
@@ -104,7 +107,10 @@ export default function AudioVisualProvider({ children }) {
     setAnimationClass('fly-in'); setAnimationKey(k => k + 1);
   };
 
+  const contextValue = { isPlaying, videoTitle, togglePlayPause, handleDiskMouseEnter, handleDiskMouseLeave, animationKey, animationClass };
+
   return (
+    <AudioVisualContext.Provider value={contextValue}>
     <>
       <style jsx global>{`
         .video-background { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; z-index: 0; pointer-events: none; overflow: hidden; background: black; }
@@ -138,5 +144,6 @@ export default function AudioVisualProvider({ children }) {
         {children}
       </div>
     </>
+    </AudioVisualContext.Provider>
   );
 }

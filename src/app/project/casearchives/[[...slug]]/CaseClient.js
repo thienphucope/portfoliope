@@ -12,7 +12,7 @@ import PDFOverlay from '@/features/project/casearchives/components/PDFOverlay';
 import WindowFrame from '@/features/project/casearchives/components/WindowFrame';
 import NoteGallery from '@/features/project/casearchives/components/NoteGallery';
 import dynamic from 'next/dynamic';
-import AudioVisualProvider from '@/components/audio/AudioVisualProvider';
+import AudioVisualProvider, { useAudioVisual } from '@/components/audio/AudioVisualProvider';
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
 import { useFileRegistry }     from '@/features/project/casearchives/hooks/useFileRegistry';
@@ -152,6 +152,18 @@ const MusicPlayer = ({ isPlaying, isPaused, playbackRate }) => {
   return (
     <div style={{ width: 0, height: 0, overflow: 'hidden', position: 'absolute', pointerEvents: 'none' }}>
       <iframe ref={iframeRef} width="560" height="315" src={`https://www.youtube.com/embed/c7O91GDWGPU?autoplay=1&loop=1&playlist=c7O91GDWGPU&controls=0&showinfo=0&autohide=1&enablejsapi=1${isPaused ? '&mute=1' : ''}`} title="YouTube music player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin"></iframe>
+    </div>
+  );
+};
+
+const GalleryDisk = () => {
+  const av = useAudioVisual();
+  if (!av) return <div className="gallery-nav-disk" />;
+  const { isPlaying, videoTitle, togglePlayPause, handleDiskMouseEnter, handleDiskMouseLeave, animationKey, animationClass } = av;
+  return (
+    <div className="relative cursor-pointer" onClick={togglePlayPause} onMouseEnter={handleDiskMouseEnter} onMouseLeave={handleDiskMouseLeave}>
+      <div className={`gallery-nav-disk${!isPlaying ? ' paused' : ''}`} />
+      {videoTitle && <span key={animationKey} className={`title-fly-out ${animationClass}`} style={{ fontFamily: 'var(--font-display)' }}>{videoTitle}</span>}
     </div>
   );
 };
@@ -386,16 +398,16 @@ export default function CaseClient({ serverHydratedData = null }) {
 
   const resizer = useWindowResizer();
 
-  const galleryHeaderSlot = useMemo(() => (
+  const galleryHeaderSlot = (
     <div className="gallery-nav-bar">
-      <div className="gallery-nav-disk" />
+      <GalleryDisk />
       <nav className="gallery-nav-links">
         <a href="/project">project</a>
         <a href="/about">about</a>
         <a href="/privacy">privacy</a>
       </nav>
     </div>
-  ), []);
+  );
   const visibleSecondary = useMemo(() => 
     ['chat', 'pdf', 'graph'].filter(id => openWindows.includes(id) && maximizedWindow !== id),
     [openWindows, maximizedWindow]

@@ -16,6 +16,8 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         <link rel="icon" href="/blackcat.jpg" />
+        {/* Thêm dòng này để cố định domain chuẩn không có www */}
+        <link rel="canonical" href="https://opewatson.com" />
       </head>
       <body>
         <CursorProvider>

@@ -97,12 +97,19 @@ export default function GalleryStyles() {
           grid-column: span 1;
         }
         .note-gallery-container {
-          padding: 56px 16px 32px;
+          padding: 28px 16px 32px;
         }
         .gallery-crime-tape,
         .gallery-personal-tape {
           margin-left: -16px;
           margin-right: -16px;
+        }
+        .gallery-item {
+          padding: 4px 6px;
+        }
+        .gallery-item-col-right::before,
+        .gallery-item-col-right::after {
+          display: none;
         }
       }
 
@@ -111,9 +118,10 @@ export default function GalleryStyles() {
       }
 
       .gallery-item {
-        background: url('/paper.jpg') center/cover;
+        background: #f0ebe1;
+        background-image: linear-gradient(145deg, rgba(255,255,255,0.72) 0%, rgba(255,255,255,0.18) 40%, rgba(200,185,165,0.12) 100%);
         border: none;
-        padding: 12px 24px;
+        padding: 6px 12px;
         border-radius: 0;
         cursor: pointer;
         transition: all 0.3s ease;
@@ -123,32 +131,34 @@ export default function GalleryStyles() {
         overflow: hidden;
       }
 
-      .gallery-item:hover {
-        background: url('/paper.jpg') center/cover, rgba(0, 0, 0, 0.85);
-        background-blend-mode: multiply;
-        position: relative;
-        z-index: 101;
-      }
+      @media (min-width: 1024px) {
+        .gallery-item:hover {
+          background: #18120d;
+          background-image: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, transparent 60%);
+          position: relative;
+          z-index: 101;
+        }
 
-      .gallery-item:hover .gallery-intro-rendered :global(p),
-      .gallery-item:hover .gallery-quote-rendered :global(blockquote),
-      .gallery-item:hover .gallery-quote-rendered :global(p),
-      .gallery-item:hover.markdown-content p {
-        color: rgba(255, 255, 255, 0.85);
-        font-family: 'Prata', serif;
-      }
+        .gallery-item:hover .gallery-intro-rendered :global(p),
+        .gallery-item:hover .gallery-quote-rendered :global(blockquote),
+        .gallery-item:hover .gallery-quote-rendered :global(p),
+        .gallery-item:hover.markdown-content p {
+          color: rgba(255, 255, 255, 0.85);
+          font-family: 'Prata', serif;
+        }
 
-      .gallery-item:hover ul,
-      .gallery-item:hover ol,
-      .gallery-item:hover li {
-        font-family: 'Prata', serif;
+        .gallery-item:hover ul,
+        .gallery-item:hover ol,
+        .gallery-item:hover li {
+          font-family: 'Prata', serif;
+        }
       }
 
       .gallery-title-wrap {
         width: 100%;
         overflow: visible;
         text-align: center;
-        margin: 0 0 12px 0;
+        margin: 0;
         padding: 6px 0;
         border: none;
         position: relative;
@@ -180,37 +190,39 @@ export default function GalleryStyles() {
         transition: color 0.3s;
       }
 
-      /* Reset cả border lẫn underline khi hover, để variant tự override */
-      .gallery-item:hover .gallery-title-wrap::before {
-        border-color: transparent;
-      }
+      @media (min-width: 1024px) {
+        /* Reset cả border lẫn underline khi hover, để variant tự override */
+        .gallery-item:hover .gallery-title-wrap::before {
+          border-color: transparent;
+        }
 
-      .gallery-item:hover .gallery-title-wrap .gallery-item-title {
-        text-decoration: none;
-      }
+        .gallery-item:hover .gallery-title-wrap .gallery-item-title {
+          text-decoration: none;
+        }
 
-      /* Hover: invert — colorone bg + đen text (tương phản với nền đen item) */
-      .gallery-item:hover .gallery-hover-invert {
-        background: var(--colorone, #ba9170);
-      }
+        /* Hover: invert — colorone bg + đen text (tương phản với nền đen item) */
+        .gallery-item:hover .gallery-hover-invert {
+          background: var(--colorone, #ba9170);
+        }
 
-      .gallery-item:hover .gallery-hover-invert .gallery-item-title {
-        color: #000 !important;
-        text-decoration-color: #000;
-      }
+        .gallery-item:hover .gallery-hover-invert .gallery-item-title {
+          color: #000 !important;
+          text-decoration-color: #000;
+        }
 
-      .gallery-item:hover .gallery-hover-invert::before {
-        border-color: transparent;
-      }
+        .gallery-item:hover .gallery-hover-invert::before {
+          border-color: transparent;
+        }
 
-      /* Hover: border — colorone border + colorone text trên nền đen */
-      .gallery-item:hover .gallery-hover-border::before {
-        border-color: var(--colorone, #ba9170);
-      }
+        /* Hover: border — colorone border + colorone text trên nền đen */
+        .gallery-item:hover .gallery-hover-border::before {
+          border-color: var(--colorone, #ba9170);
+        }
 
-      .gallery-item:hover .gallery-hover-border .gallery-item-title {
-        color: var(--colorone, #ba9170) !important;
-        text-decoration-color: var(--colorone, #ba9170);
+        .gallery-item:hover .gallery-hover-border .gallery-item-title {
+          color: var(--colorone, #ba9170) !important;
+          text-decoration-color: var(--colorone, #ba9170);
+        }
       }
 
       .gallery-polaroid {
@@ -224,8 +236,10 @@ export default function GalleryStyles() {
         transition: transform 0.2s;
       }
 
-      .gallery-item:hover .gallery-polaroid {
-        transform: rotate(0deg);
+      @media (min-width: 1024px) {
+        .gallery-item:hover .gallery-polaroid {
+          transform: rotate(0deg);
+        }
       }
 
       .gallery-polaroid-img {
@@ -257,10 +271,12 @@ export default function GalleryStyles() {
         transition: transform 0.2s;
       }
 
-      .gallery-item:hover .gallery-quote-rendered,
-      .gallery-item:hover .gallery-quote-rendered :global(blockquote) {
-        transform: rotate(0deg);
-        transition: transform 0.2s;
+      @media (min-width: 1024px) {
+        .gallery-item:hover .gallery-quote-rendered,
+        .gallery-item:hover .gallery-quote-rendered :global(blockquote) {
+          transform: rotate(0deg);
+          transition: transform 0.2s;
+        }
       }
 
       .gallery-quote-rendered :global(blockquote) {
@@ -311,10 +327,12 @@ export default function GalleryStyles() {
         color: rgba(0, 0, 0, 0.8);
       }
 
-      .gallery-item:hover ul,
-      .gallery-item:hover ol,
-      .gallery-item:hover li {
-        color: rgba(255, 255, 255, 0.85);
+      @media (min-width: 1024px) {
+        .gallery-item:hover ul,
+        .gallery-item:hover ol,
+        .gallery-item:hover li {
+          color: rgba(255, 255, 255, 0.85);
+        }
       }
 
       .gallery-item .gallery-quote-rendered :global(blockquote),
@@ -369,6 +387,7 @@ export default function GalleryStyles() {
         display: block;
         border-radius: 4px;
         object-fit: cover;
+        margin-top: 6px;
       }
 
       .gallery-item-col-left img {
@@ -414,17 +433,19 @@ export default function GalleryStyles() {
         );
       }
 
-      .gallery-item:hover .gallery-item-col-right::before,
-      .gallery-item:hover .gallery-item-col-right::after {
-        background-image: repeating-linear-gradient(
-          to bottom,
-          transparent 0px,
-          transparent 6px,
-          rgba(255, 255, 255, 0.85) 6px,
-          rgba(255, 255, 255, 0.85) 26px,
-          transparent 26px,
-          transparent 32px
-        );
+      @media (min-width: 1024px) {
+        .gallery-item:hover .gallery-item-col-right::before,
+        .gallery-item:hover .gallery-item-col-right::after {
+          background-image: repeating-linear-gradient(
+            to bottom,
+            transparent 0px,
+            transparent 6px,
+            rgba(255, 255, 255, 0.85) 6px,
+            rgba(255, 255, 255, 0.85) 26px,
+            transparent 26px,
+            transparent 32px
+          );
+        }
       }
 
       .gallery-item-col-right::after {
@@ -446,7 +467,7 @@ export default function GalleryStyles() {
 
       .gallery-item-image {
         width: 100%;
-        margin: 0;
+        margin: 6px 0 0 0;
         display: block;
       }
 
@@ -487,7 +508,8 @@ export default function GalleryStyles() {
       /* ── Header slot ── */
       .gallery-header-slot {
         grid-column: 1 / -1;
-        overflow: hidden;
+        position: relative;
+        z-index: 2;
       }
 
       .gallery-nav-bar {
@@ -505,6 +527,14 @@ export default function GalleryStyles() {
         background: url('/blackcat.jpg') center / cover;
         animation: rotate 10s linear infinite;
         flex-shrink: 0;
+        cursor: pointer;
+        pointer-events: auto;
+      }
+
+      .gallery-nav-disk:hover,
+      .gallery-nav-disk.paused {
+        animation-play-state: paused;
+        opacity: 0.8;
       }
 
       .gallery-nav-links {

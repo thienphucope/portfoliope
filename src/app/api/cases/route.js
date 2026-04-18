@@ -93,11 +93,6 @@ export async function POST(request) {
       raw: updatedSnapshot.rawCache[finalPath] || '',
       html: updatedSnapshot.htmlCache[finalPath] || null,
       sha: updatedSnapshot.shaCache[finalPath] || null,
-      fromCache: true,
-      tree: updatedSnapshot.tree,
-      registry: updatedSnapshot.registry,
-      graph: updatedSnapshot.graph,
-      hydratedAt: updatedSnapshot.hydratedAt,
     });
   }
 

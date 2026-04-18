@@ -46,14 +46,6 @@ export function useFileLoader({
           const data = await apiRes.json();
 
           if (data.ok) {
-            if (syncServerStructures) {
-              syncServerStructures({
-                tree: data.tree,
-                registry: data.registry,
-                graph: data.graph,
-                hydratedAt: data.hydratedAt,
-              });
-            }
             newContent = data.raw || '';
             if (data.sha) setFileSha(data.sha);
             upsertCacheEntry(repoKey, newContent, data.html ?? null, Date.now());

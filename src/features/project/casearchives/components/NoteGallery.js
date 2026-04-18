@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useRef } from 'react';
+import React, { useMemo, useEffect, useRef, useState } from 'react';
 import { Pin } from 'lucide-react';
 import { ensureLibsLoaded, postProcess } from '../utils/markdown';
 
@@ -62,6 +62,28 @@ const FitTitle = ({ text, borderPx, normalVariant, hoverVariant }) => {
   return (
     <div ref={wrapRef} className={`gallery-title-wrap gallery-title-${normalVariant} gallery-hover-${hoverVariant}`} style={{ '--border-px': `${borderPx}px` }}>
       <span ref={spanRef} className="gallery-item-title">{text}</span>
+    </div>
+  );
+};
+
+const LazyGalleryItem = ({ className, onClick, style, children }) => {
+  const [loaded, setLoaded] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setLoaded(true); io.disconnect(); } },
+      { rootMargin: '500px 0px' }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  return (
+    <div ref={ref} className={className} onClick={onClick} style={{ ...style, ...(!loaded ? { minHeight: 180 } : {}) }}>
+      {loaded && children}
     </div>
   );
 };
@@ -194,7 +216,7 @@ const NoteGallery = ({ graphFiles, onSelectFile, headerSlot }) => {
 
   const renderRegularContent = (note) => {
     const media = note.image
-      ? <div className="gallery-item-image" style={{ margin: 0 }}><img src={note.image} alt={note.displayTitle} style={{ width: '100%' }} /></div>
+      ? <div className="gallery-item-image"><img src={note.image} alt={note.displayTitle} style={{ width: '100%' }} /></div>
       : note.video
       ? <img src={`https://img.youtube.com/vi/${note.video}/mqdefault.jpg`} alt={note.displayTitle} className="gallery-video-thumbnail" />
       : null;
@@ -285,14 +307,14 @@ const NoteGallery = ({ graphFiles, onSelectFile, headerSlot }) => {
 
         {/* Regular notes */}
         {unpinnedNotes.map(note => (
-          <div
+          <LazyGalleryItem
             key={note.id}
             className={`gallery-item markdown-content ${(note.video || note.image) && note.introText ? 'gallery-item-two-col' : ''}`}
             onClick={() => onSelectFile(note.path, note.name, note.id)}
           >
             <FitTitle text={note.displayTitle} borderPx={Math.max(5, 12 - Math.floor(note.displayTitle.length / 2))} normalVariant={note.titleNormal} hoverVariant={note.titleHover} />
             {renderRegularContent(note)}
-          </div>
+          </LazyGalleryItem>
         ))}
       </div>
     </div>
