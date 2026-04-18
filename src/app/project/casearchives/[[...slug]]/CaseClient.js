@@ -213,17 +213,37 @@ export default function CaseClient({ serverHydratedData = null }) {
     });
   }, [openWindows]);
 
-  const toggleWindow = useCallback((id) => {
-    setOpenWindows(prev => {
-      if (prev.includes(id)) { return prev.filter(w => w !== id); }
-      return [...prev, id];
-    });
+  const closeEditorWindow = useCallback(() => {
+    setOpenWindows(prev => prev.filter(w => w !== 'editor'));
     setMaximizedWindow(null);
+    setActiveTab(null);
+    window.history.replaceState({}, '', '/project/casearchives');
   }, []);
 
+  const closeAllWindows = useCallback(() => {
+    const hadEditor = openWindows.includes('editor');
+    setOpenWindows([]);
+    setMaximizedWindow(null);
+    if (hadEditor) {
+      setActiveTab(null);
+      window.history.replaceState({}, '', '/project/casearchives');
+    }
+  }, [openWindows]);
+
+  const toggleWindow = useCallback((id) => {
+    if (id === 'editor' && openWindows.includes('editor')) {
+      closeEditorWindow();
+      return;
+    }
+    setOpenWindows(prev => prev.includes(id) ? prev.filter(w => w !== id) : [...prev, id]);
+    setMaximizedWindow(null);
+  }, [openWindows, closeEditorWindow]);
+
   const closeWindow = useCallback((id) => {
-    window.history.back();
-  }, []);
+    if (id === 'editor') { closeEditorWindow(); return; }
+    setOpenWindows(prev => prev.filter(w => w !== id));
+    setMaximizedWindow(null);
+  }, [closeEditorWindow]);
 
   const toggleMaximize = useCallback((id) => { setMaximizedWindow(prev => prev === id ? null : id); }, []);
   const togglePin = useCallback((id) => { setPinnedWindows(prev => prev.includes(id) ? prev.filter(w => w !== id) : [...prev, id]); }, []);
@@ -457,6 +477,10 @@ export default function CaseClient({ serverHydratedData = null }) {
             />
           </div>
 
+          {openWindows.length > 0 && !maximizedWindow && (
+            <div onClick={closeAllWindows} style={{ position: 'absolute', inset: 0, zIndex: 9 }} />
+          )}
+
           <div className={`windows-container ${maximizedWindow ? 'has-maximized' : ''} ${openWindows.includes('editor') ? 'has-editor' : ''} ${openWindows.length > (openWindows.includes('editor') ? 1 : 0) ? 'has-others' : ''} ${resizer.isDragging ? 'dragging' : ''} ${openWindows.length === 0 ? 'no-windows' : ''}`}>
             
             {/* EDITOR WINDOW */}
@@ -536,7 +560,7 @@ export default function CaseClient({ serverHydratedData = null }) {
               <div className="secondary-windows" style={{ flex: hasEditor ? (100 - resizer.editorWidth) : 1 }}>
                 {visibleSecondary.map((winId, idx) => {
                   let title = ''; let winContent = null;
-                  
+
                   if (winId === 'chat') {
                     title = 'AI Chat Vault';
                     winContent = <div className="chat-container"><Chat ref={chatRef} isEmbedded={true} onLinkClick={handleLinkClick} onLiveCallChange={setIsLiveCallActive} /></div>;

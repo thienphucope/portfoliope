@@ -158,7 +158,7 @@ export default function GalleryStyles() {
         width: 100%;
         overflow: visible;
         text-align: center;
-        margin: 0;
+        margin: 6px 0;
         padding: 6px 0;
         border: none;
         position: relative;
@@ -179,7 +179,7 @@ export default function GalleryStyles() {
 
       .gallery-item-title {
         font-family: 'Fredericka the Great', cursive !important;
-        font-weight: 400 !important;
+        font-weight: 700 !important;
         font-size: 1.8rem;
         color: #000 !important;
         line-height: 1.2 !important;

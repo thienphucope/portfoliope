@@ -71,7 +71,7 @@ export default function TabPanelStyles() {
           display: flex;
           padding: 0;
           width: 80vw;
-          height: 80vh;
+          height: 97vh;
           margin: auto;
           background: rgba(0, 0, 0, 0.2);
           transition: background 0.3s ease;
@@ -164,6 +164,10 @@ export default function TabPanelStyles() {
         .secondary-windows .window-frame {
           flex: 1;
           min-height: 0;
+        }
+
+        .hidden-window {
+          display: none !important;
         }
 
         .windows-container.has-maximized {

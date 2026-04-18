@@ -47,9 +47,18 @@ const Chat = forwardRef(({ isEmbedded = false, onLinkClick, onLiveCallChange }, 
   const [isOpen, setIsOpen] = useState(isEmbedded ? true : false);
   const [inputValue, setInputValue] = useState('');
   const [isSending, setIsSending] = useState(false);
-  const [convo, setConvo] = useState([
-    { role: 'assistant', content: "*Ask me anything about this case or contribute by create + a note* \n\n*I can play YouTube video if you want a BGM.* *I can tell Ope's secrets* \n ## 🤡 Pins\n #### 📌 [[The Boy Who Murdered Love]]\n #### 📌 [[Beautiful]] ⬅️ *click to noclip*\n " }
-  ]);
+  const CONVO_KEY = 'vault_chat_convo';
+  const defaultMessage = { role: 'assistant', content: "*Ask me anything about this case or contribute by create + a note* \n\n*I can play YouTube video if you want a BGM.* *I can tell Ope's secrets* \n ## 🤡 Pins\n #### 📌 [[The Boy Who Murdered Love]]\n #### 📌 [[Beautiful]] ⬅️ *click to noclip*\n " };
+  const [convo, setConvo] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem(CONVO_KEY);
+      return saved ? JSON.parse(saved) : [defaultMessage];
+    } catch { return [defaultMessage]; }
+  });
+
+  useEffect(() => {
+    try { sessionStorage.setItem(CONVO_KEY, JSON.stringify(convo)); } catch {}
+  }, [convo]);
 
   const [ragReady, setRagReady] = useState(false);
   const [libsReady, setLibsReady] = useState(false);
