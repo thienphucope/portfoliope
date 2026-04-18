@@ -12,6 +12,7 @@ import PDFOverlay from '@/features/project/casearchives/components/PDFOverlay';
 import WindowFrame from '@/features/project/casearchives/components/WindowFrame';
 import NoteGallery from '@/features/project/casearchives/components/NoteGallery';
 import dynamic from 'next/dynamic';
+import AudioVisualProvider from '@/components/audio/AudioVisualProvider';
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
 import { useFileRegistry }     from '@/features/project/casearchives/hooks/useFileRegistry';
@@ -378,6 +379,7 @@ export default function CaseClient({ serverHydratedData = null }) {
   const hasEditor = openWindows.includes('editor') && maximizedWindow !== 'editor';
 
   return (
+    <AudioVisualProvider>
     <div className={['accordion-app', !isMobile ? 'pc-layout' : '', activeTab || activeOverlay ? 'has-active' : '', activeOverlay === 'chat' ? 'chat-active' : '', activeOverlay === 'pdf' ? 'pdf-active' : '', activeOverlay === 'graph' ? 'graph-active' : ''].join(' ')} ref={appShellRef}>
       <div className="case-background"><img src="/casebg2.png" alt="" /></div>
       <div className="video-overlay" />
@@ -633,5 +635,6 @@ export default function CaseClient({ serverHydratedData = null }) {
       <PromptOverlays passPrompt={passPrompt} setPassPrompt={setPassPrompt} namePrompt={namePrompt} setNamePrompt={setNamePrompt} commentPrompt={commentPrompt} setCommentPrompt={setCommentPrompt} />
       <VaultStyles />
     </div>
+    </AudioVisualProvider>
   );
 }

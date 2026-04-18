@@ -141,6 +141,7 @@ const NoteGallery = ({ graphFiles, onSelectFile }) => {
   if (notePreviews.length === 0) return null;
 
   return (
+    <>
     <div className="note-gallery-container">
       <svg width="0" height="0" style={{ position: 'absolute', overflow: 'hidden' }}>
         <defs>
@@ -211,7 +212,9 @@ const NoteGallery = ({ graphFiles, onSelectFile }) => {
         ))}
       </div>
     </div>
+    </>
   );
 };
+
 
 export default NoteGallery;

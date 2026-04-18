@@ -6,7 +6,7 @@ export default function StickySpineStyles() {
         .sticky-spine {
           position: fixed;
           left: 0;
-          top: 0;
+          top: 70px;
           bottom: 0;
           z-index: 2000;
           width: 64px;
