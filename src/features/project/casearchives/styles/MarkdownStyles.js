@@ -88,7 +88,7 @@ export default function MarkdownStyles() {
         blockquote { border-left:3px solid var(--accent); padding-left:1.25em; margin:1.5em 0; font-style:italic; opacity:.8; }
         blockquote blockquote { border-left-color:rgba(255,255,255,.2); margin-left:1em; }
         .img-circle { border-radius:0; aspect-ratio:1/1; object-fit:cover; max-width:200px; display:block; margin:2em auto; }
-        img { width: 100%; height: auto; border-radius: 0; margin: 1.5em 0; }
+        img { width: 100%; height: auto; border-radius: 0; margin: 0; }
         .video-container { position:relative; padding-bottom:56.25%; height:0; margin:1.5em 0; }
         .video-container iframe { position:absolute; top:0; left:0; width:100%; height:100%; border-radius:0; pointer-events: none; }
         .video-container.interactable iframe { pointer-events: auto; }

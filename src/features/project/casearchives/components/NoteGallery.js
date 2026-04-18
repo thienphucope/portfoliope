@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect, useRef } from 'react';
 import { ensureLibsLoaded, postProcess } from '../utils/markdown';
 
-const FitTitle = ({ text, borderPx }) => {
+const FitTitle = ({ text, borderPx, normalVariant, hoverVariant }) => {
   const wrapRef = useRef(null);
   const spanRef = useRef(null);
 
@@ -28,7 +28,7 @@ const FitTitle = ({ text, borderPx }) => {
   }, [text]);
 
   return (
-    <div ref={wrapRef} className="gallery-title-wrap" style={{ borderWidth: `${borderPx}px` }}>
+    <div ref={wrapRef} className={`gallery-title-wrap gallery-title-${normalVariant} gallery-hover-${hoverVariant}`} style={{ '--border-px': `${borderPx}px` }}>
       <span ref={spanRef} className="gallery-item-title">{text}</span>
     </div>
   );
@@ -68,76 +68,140 @@ const NoteGallery = ({ graphFiles, onSelectFile }) => {
       // Extract block title: strictly use filename without extension to match BlockEditor
       const displayTitle = file.name.split('/').pop().replace(/\.md$/, '');
 
-      // 1. Extract first block of regular text
+      const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([A-Za-z0-9_-]{11})/;
+
+      // 1. Extract first text block with >= 10 words (skip lines with video embeds)
+      const isSkippedLine = t =>
+        !t || t.startsWith('#') || t.startsWith('>') || t.startsWith('![') ||
+        t.startsWith('|') || ytRegex.test(t) || /^[*_].+:[*_]?/.test(t);
+
       let introText = '';
-      const introLines = [];
-      for (const l of lines) {
-        const t = l.trim();
-        if (t && 
-            !t.startsWith('#') && 
-            !t.startsWith('>') && 
-            !t.startsWith('![') && 
-            !/^[*_].+:[*_]?/.test(t)) {
-          introLines.push(t);
-          if (introLines.length >= 3) break; // Limit intro block to 3 lines
-        } else if (introLines.length > 0) {
-          break; // Stop at first break after finding text
+      let i = 0;
+      while (i < lines.length) {
+        while (i < lines.length && isSkippedLine(lines[i].trim())) i++;
+        const blockLines = [];
+        while (i < lines.length && !isSkippedLine(lines[i].trim())) {
+          blockLines.push(lines[i].trim());
+          i++;
+          if (blockLines.length >= 3) break;
+        }
+        if (blockLines.length > 0) {
+          const candidate = blockLines.join('\n\n');
+          if (candidate.split(/\s+/).filter(Boolean).length >= 10) {
+            introText = candidate;
+            break;
+          }
         }
       }
-      introText = introLines.join('\n\n');
-      if (introText.split(/\s+/).filter(Boolean).length < 10) introText = '';
 
       // 2. Extract first video
-      const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([A-Za-z0-9_-]{11})/;
       const videoMatch = content.match(ytRegex);
       const video = videoMatch ? videoMatch[1] : null;
 
-      // 3. Extract first quote
+      // 3. Extract first image (skip images on lines containing YouTube links)
+      const imageRegex = /!\[.*?\]\((.*?)\)/g;
+      let image = null;
+      let imgMatch;
+      while ((imgMatch = imageRegex.exec(content)) !== null) {
+        const lineStart = content.lastIndexOf('\n', imgMatch.index) + 1;
+        const lineEnd = content.indexOf('\n', imgMatch.index);
+        const line = content.slice(lineStart, lineEnd === -1 ? undefined : lineEnd);
+        if (!ytRegex.test(line)) {
+          image = imgMatch[1];
+          break;
+        }
+      }
+
+      // 4. Extract first quote
       const rawQuote = lines.find(l => l.trim().startsWith('>'))?.trim();
       const quote = rawQuote ? (() => {
         const words = rawQuote.split(/\s+/);
         return words.length > 30 ? words.slice(0, 30).join(' ') + '...' : rawQuote;
       })() : null;
 
-      return { 
-        ...file, 
-        displayTitle, 
+      const idHash = String(file.id || file.name).split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+      const titleNormal = ['plain', 'border'][idHash % 2];
+      const titleHover = ['invert', 'border'][(idHash >> 2) % 2];
+      const topLinesHeight = ((idHash >> 4) % 5) * 32;
+
+      return {
+        ...file,
+        displayTitle,
         introText,
         video,
-        quote
+        image,
+        quote,
+        titleNormal,
+        titleHover,
+        topLinesHeight
       };
-    }).filter(note => note.displayTitle || note.introText || note.video || note.quote);
+    }).filter(note => note.displayTitle || note.introText || note.video || note.image || note.quote);
   }, [graphFiles]);
 
   if (notePreviews.length === 0) return null;
 
   return (
     <div className="note-gallery-container">
+      <svg width="0" height="0" style={{ position: 'absolute', overflow: 'hidden' }}>
+        <defs>
+          <filter id="rough-border" x="-8%" y="-8%" width="116%" height="116%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.055" numOctaves="4" seed="7" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+        </defs>
+      </svg>
       <a href="/project" className="gallery-main-title">CASE ARCHIVES</a>
       <div className="note-gallery">
         {notePreviews.map(note => (
-          <div 
-            key={note.id} 
-            className="gallery-item markdown-content" 
+          <div
+            key={note.id}
+            className={`gallery-item markdown-content ${note.video && note.introText ? 'gallery-item-two-col' : ''}`}
             onClick={() => onSelectFile(note.path, note.name, note.id)}
           >
-            <FitTitle text={note.displayTitle} borderPx={Math.max(2, 12 - Math.floor(note.displayTitle.length / 2))} />
-            
-            {note.video ? (
-              <div className="gallery-polaroid">
-                <img
-                  src={`https://img.youtube.com/vi/${note.video}/mqdefault.jpg`}
-                  alt={note.displayTitle}
-                  className="gallery-polaroid-img"
-                />
-              </div>
-            ) : (
-              /* Otherwise show intro text and quote */
+            <FitTitle text={note.displayTitle} borderPx={Math.max(5, 12 - Math.floor(note.displayTitle.length / 2))} normalVariant={note.titleNormal} hoverVariant={note.titleHover} />
+
+            {note.video && note.introText ? (
               <>
+                <div className="gallery-item-row" style={{ '--top-lines': `${note.topLinesHeight}px` }}>
+                  <div className="gallery-item-col gallery-item-col-left">
+                    <img
+                      src={`https://img.youtube.com/vi/${note.video}/mqdefault.jpg`}
+                      alt={note.displayTitle}
+                      className="gallery-video-thumbnail"
+                      style={{ width: '100%', display: 'block', borderRadius: '4px' }}
+                    />
+                  </div>
+                  <div className="gallery-item-col gallery-item-col-right">
+                    <MarkdownPreview raw={note.introText} className="gallery-intro-rendered" />
+                  </div>
+                </div>
+                {note.image && (
+                  <div className="gallery-item-image">
+                    <img src={note.image} alt={note.displayTitle} />
+                  </div>
+                )}
+                {note.quote && (
+                  <MarkdownPreview raw={note.quote} className="gallery-quote-rendered" />
+                )}
+              </>
+            ) : (
+              <>
+                {note.video && (
+                  <img
+                    src={`https://img.youtube.com/vi/${note.video}/mqdefault.jpg`}
+                    alt={note.displayTitle}
+                    className="gallery-video-thumbnail"
+                    style={{ width: '100%', display: 'block', borderRadius: '4px' }}
+                  />
+                )}
                 {note.introText && (
                   <MarkdownPreview raw={note.introText} className="gallery-intro-rendered" />
                 )}
-
+                {note.image && (
+                  <div className="gallery-item-image">
+                    <img src={note.image} alt={note.displayTitle} />
+                  </div>
+                )}
                 {note.quote && (
                   <MarkdownPreview raw={note.quote} className="gallery-quote-rendered" />
                 )}
