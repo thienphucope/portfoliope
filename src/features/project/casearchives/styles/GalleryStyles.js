@@ -245,7 +245,7 @@ export default function GalleryStyles() {
         overflow: hidden;
         text-align: left;
         color: rgba(0, 0, 0, 0.8);
-        font-size: clamp(1rem, 1.8vw, 1.6rem);
+        font-size: clamp(0.65rem, 3.5vw, 1.6rem);
         font-family: 'Fredericka the Great', cursive;
       }
 
@@ -257,8 +257,10 @@ export default function GalleryStyles() {
         transition: transform 0.2s;
       }
 
-      .gallery-item:hover .gallery-quote-rendered {
+      .gallery-item:hover .gallery-quote-rendered,
+      .gallery-item:hover .gallery-quote-rendered :global(blockquote) {
         transform: rotate(0deg);
+        transition: transform 0.2s;
       }
 
       .gallery-quote-rendered :global(blockquote) {
@@ -268,10 +270,11 @@ export default function GalleryStyles() {
         border-radius: 2px !important;
         color: rgba(0, 0, 0, 0.85) !important;
         font-family: 'Fredericka the Great', cursive !important;
-        font-size: clamp(1rem, 1.8vw, 1.6rem);
+        font-size: clamp(0.65rem, 3.5vw, 1.6rem);
         font-style: italic;
         box-shadow: 2px 3px 8px rgba(0,0,0,0.25);
         text-align: left !important;
+        transition: transform 0.2s;
       }
 
       .gallery-item:nth-child(4n+1) .gallery-quote-rendered :global(blockquote) {
@@ -299,7 +302,7 @@ export default function GalleryStyles() {
       .gallery-item ol {
         color: rgba(0, 0, 0, 0.8);
         font-family: 'Fredericka the Great', cursive;
-        font-size: clamp(1rem, 1.8vw, 1.6rem);
+        font-size: clamp(0.65rem, 3.5vw, 1.6rem);
         padding-left: 1.2em;
         margin: 0.4em 0;
       }
@@ -354,15 +357,30 @@ export default function GalleryStyles() {
 
       .gallery-item-col-left {
         flex: 1.2;
-        display: flex;
+        min-width: 0;
+        overflow: hidden;
+        width: 0; /* force flex to control width, not content */
+      }
+
+      .gallery-video-thumbnail {
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 4px;
+        object-fit: cover;
+      }
+
+      .gallery-item-col-left img {
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        display: block;
       }
 
       .gallery-item-col-left .gallery-video-thumbnail {
-        width: 100%;
-        flex: 1;
-        min-height: 0;
-        object-fit: cover;
         border-radius: 4px;
+        object-fit: cover;
       }
 
       .gallery-item-col-right {
@@ -370,12 +388,21 @@ export default function GalleryStyles() {
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
+        min-width: 0;
+      }
+
+      /* Text in narrow column: scale relative to column width, not full viewport */
+      .gallery-item-col-right .gallery-intro-rendered :global(p) {
+        font-size: clamp(0.55rem, 2.2vw, 1.1rem);
+        -webkit-line-clamp: 6;
       }
 
       .gallery-item-col-right::before {
         content: '';
-        height: var(--top-lines, 64px);
-        flex-shrink: 0;
+        flex-grow: var(--top-lines, 64);
+        flex-shrink: 1;
+        flex-basis: 0;
+        min-height: 0;
         background-image: repeating-linear-gradient(
           to bottom,
           transparent 0px,
@@ -402,8 +429,10 @@ export default function GalleryStyles() {
 
       .gallery-item-col-right::after {
         content: '';
-        height: var(--bottom-lines, 64px);
-        flex-shrink: 0;
+        flex-grow: var(--bottom-lines, 64);
+        flex-shrink: 1;
+        flex-basis: 0;
+        min-height: 0;
         background-image: repeating-linear-gradient(
           to bottom,
           transparent 0px,
@@ -427,7 +456,19 @@ export default function GalleryStyles() {
         display: block;
         border-radius: 4px;
         box-shadow: 2px 3px 8px rgba(0, 0, 0, 0.25);
-        margin: 8px 0;
+      }
+
+      .gallery-item .video-container {
+        padding-bottom: 0 !important;
+        height: auto !important;
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+      }
+      .gallery-item .video-container iframe {
+        position: static !important;
+        width: 100% !important;
+        height: 100% !important;
+        display: block;
       }
 
       /* ── Pin indicator (static, config-driven) ── */
@@ -575,12 +616,6 @@ export default function GalleryStyles() {
         .gallery-pinned-col-right {
           flex: unset;
           width: 100%;
-        }
-        .gallery-intro-rendered :global(p),
-        .gallery-item ul,
-        .gallery-item ol,
-        .gallery-quote-rendered :global(blockquote) {
-          font-size: clamp(1.1rem, 4.5vw, 1.6rem);
         }
       }
     `}</style>

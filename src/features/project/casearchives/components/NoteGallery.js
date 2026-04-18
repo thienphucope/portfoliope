@@ -196,7 +196,7 @@ const NoteGallery = ({ graphFiles, onSelectFile, headerSlot }) => {
     const media = note.image
       ? <div className="gallery-item-image" style={{ margin: 0 }}><img src={note.image} alt={note.displayTitle} style={{ width: '100%' }} /></div>
       : note.video
-      ? <img src={`https://img.youtube.com/vi/${note.video}/mqdefault.jpg`} alt={note.displayTitle} className="gallery-video-thumbnail" style={{ width: '100%', display: 'block', borderRadius: '4px' }} />
+      ? <img src={`https://img.youtube.com/vi/${note.video}/mqdefault.jpg`} alt={note.displayTitle} className="gallery-video-thumbnail" />
       : null;
 
     const isTwoCol = !!media && !!note.introText;
@@ -204,15 +204,15 @@ const NoteGallery = ({ graphFiles, onSelectFile, headerSlot }) => {
     if (isTwoCol) {
       return (
         <>
-          <div className="gallery-item-row" style={{ '--top-lines': `${note.topLinesHeight}px`, '--bottom-lines': `${note.bottomLinesHeight}px` }}>
-            <div className="gallery-item-col gallery-item-col-left" style={{ flex: `0 0 ${note.leftPct}%` }}>
+          <div className="gallery-item-row" style={{ '--top-lines': note.topLinesHeight, '--bottom-lines': note.bottomLinesHeight }}>
+            <div className="gallery-item-col gallery-item-col-left" style={{ flex: note.leftPct }}>
               {media}
             </div>
-            <div className="gallery-item-col gallery-item-col-right" style={{ flex: `0 0 ${100 - note.leftPct}%` }}>
+            <div className="gallery-item-col gallery-item-col-right" style={{ flex: 100 - note.leftPct }}>
               <MarkdownPreview raw={note.introText} className="gallery-intro-rendered" />
             </div>
           </div>
-          {note.image && note.video && <img src={`https://img.youtube.com/vi/${note.video}/mqdefault.jpg`} alt={note.displayTitle} className="gallery-video-thumbnail" style={{ width: '100%', display: 'block', borderRadius: '4px' }} />}
+          {note.image && note.video && <img src={`https://img.youtube.com/vi/${note.video}/mqdefault.jpg`} alt={note.displayTitle} className="gallery-video-thumbnail" />}
           {note.quote && <MarkdownPreview raw={note.quote} className="gallery-quote-rendered" />}
         </>
       );
@@ -220,7 +220,7 @@ const NoteGallery = ({ graphFiles, onSelectFile, headerSlot }) => {
 
     return (
       <>
-        {note.video && <img src={`https://img.youtube.com/vi/${note.video}/mqdefault.jpg`} alt={note.displayTitle} className="gallery-video-thumbnail" style={{ width: '100%', display: 'block', borderRadius: '4px' }} />}
+        {note.video && <img src={`https://img.youtube.com/vi/${note.video}/mqdefault.jpg`} alt={note.displayTitle} className="gallery-video-thumbnail" />}
         {note.introText && <MarkdownPreview raw={note.introText} className="gallery-intro-rendered" />}
         {note.image && <div className="gallery-item-image"><img src={note.image} alt={note.displayTitle} /></div>}
         {note.quote && <MarkdownPreview raw={note.quote} className="gallery-quote-rendered" />}
