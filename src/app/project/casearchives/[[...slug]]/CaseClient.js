@@ -211,6 +211,10 @@ export default function CaseClient({ serverHydratedData = null }) {
   const closeWindow = useCallback((id) => {
     setOpenWindows(prev => { return prev.filter(w => w !== id); });
     if (maximizedWindow === id) setMaximizedWindow(null);
+    if (id === 'editor') {
+      setActiveTab(null);
+      window.history.pushState({ isRoot: true }, '', '/project/casearchives');
+    }
   }, [maximizedWindow]);
 
   const toggleMaximize = useCallback((id) => { setMaximizedWindow(prev => prev === id ? null : id); }, []);
@@ -597,7 +601,15 @@ export default function CaseClient({ serverHydratedData = null }) {
       ) : (
         <>
           <FunctionBall isFooterExpanded={isFooterExpanded} setIsFooterExpanded={setIsFooterExpanded} showReadMore={showReadMore} showFunctionBall={showFunctionBall} isAtBottom={isAtBottom} activeOverlay={activeOverlay} setActiveOverlay={setActiveOverlay} handleCreateNewNote={handleCreateNewNote} fileName={fileName} handleAppendComment={handleAppendComment} handleTabClick={handleTabClick} nextTabForActive={nextTabForActive} prevTabForActive={prevTabForActive} isEditing={isEditing} handleToggleEditMode={handleToggleEditMode} saveStatus={saveStatus} handleSidebarSave={handleSidebarSave} activeTabType={tabs.find(t => t.id === activeTab)?.type} activeTabObj={tabs.find(t => t.id === activeTab)} />
-          <StickySpine showHeader={showHeader} activeTab={activeTab} activeOverlay={activeOverlay} handleCreateNewNote={handleCreateNewNote} setActiveOverlay={(id) => { if (typeof id === 'function') { const result = id(activeOverlay); if (!isMobile && result) toggleWindow(result); else setActiveOverlay(result); } else { if (!isMobile && id) toggleWindow(id); else setActiveOverlay(id); } }} setActiveTab={setActiveTab} />
+          {!activeTab && !activeOverlay && (
+            <NoteGallery
+              graphFiles={graphFiles}
+              onSelectFile={(path, name, id) => {
+                const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md'];
+                if (githubUrl) loadFile(githubUrl, name, id, 'push', true);
+              }}
+            />
+          )}
           <GraphOverlay isOpen={activeOverlay === 'graph'} graphFiles={graphFiles} activeTab={activeTab} loadFile={loadFile} fileRegistry={fileRegistry} fullContentCache={fullContentCache} />
           <ChatOverlay isOpen={activeOverlay === 'chat'} handleLinkClick={handleLinkClick} reader={augmentedReader} />
           <PDFOverlay isOpen={activeOverlay === 'pdf'} setActiveOverlay={setActiveOverlay} reader={augmentedReader} onStateChange={handlePdfStateChange} initialFile={lastPdfStateRef.current.file} initialPage={lastPdfStateRef.current.pageNumber} initialFitMode={lastPdfStateRef.current.fitMode} />

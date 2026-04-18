@@ -79,6 +79,10 @@ export default function GalleryStyles() {
         align-items: start;
       }
 
+      .gallery-item-two-col {
+        grid-column: span 2;
+      }
+
       @media (max-width: 1600px) {
         .note-gallery {
           grid-template-columns: repeat(3, 1fr);
@@ -91,8 +95,17 @@ export default function GalleryStyles() {
         }
       }
 
-      .gallery-item-two-col {
-        grid-column: span 2;
+      @media (max-width: 1023px) {
+        .note-gallery {
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+        .gallery-item-two-col {
+          grid-column: span 1;
+        }
+        .note-gallery-container {
+          padding: 60px 16px;
+        }
       }
 
       .gallery-item * {
