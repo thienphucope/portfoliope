@@ -38,10 +38,10 @@ export default function AudioVisualProvider({ children }) {
         }
         if (!playerRef.current && musicPlayerDivRef.current) {
           playerRef.current = new window.YT.Player(musicPlayerDivRef.current, {
-            height: '0', width: '0', videoId: '4ZzvLbANqD0',
-            playerVars: { autoplay: 1, loop: 1, playlist: '4ZzvLbANqD0', controls: 0, showinfo: 0, modestbranding: 1 },
+            height: '0', width: '0', videoId: 'QUDwL_0UsPY',
+            playerVars: { autoplay: 1, loop: 1, playlist: 'QUDwL_0UsPY', controls: 0, showinfo: 0, modestbranding: 1 },
             events: {
-              onReady: (e) => { e.target.setVolume(50); e.target.playVideo(); },
+              onReady: (e) => { e.target.setVolume(30); e.target.playVideo(); },
               onStateChange: (e) => {
                 if (e.data === window.YT.PlayerState.PLAYING) {
                   setIsPlaying(true);
