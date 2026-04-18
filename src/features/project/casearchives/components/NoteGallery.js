@@ -1,4 +1,5 @@
 import React, { useMemo, useEffect, useRef } from 'react';
+import { Pin } from 'lucide-react';
 import { ensureLibsLoaded, postProcess } from '../utils/markdown';
 
 const FitTitle = ({ text, borderPx, normalVariant, hoverVariant }) => {
@@ -60,6 +61,11 @@ const MarkdownPreview = ({ raw, className }) => {
  * Extracts titles, video embeds, and quotes from note content for a visual overview.
  */
 const NoteGallery = ({ graphFiles, onSelectFile }) => {
+  const pinnedIds = useMemo(() => {
+    const raw = process.env.NEXT_PUBLIC_PINNED_NOTES || '';
+    return raw.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+  }, []);
+
   const notePreviews = useMemo(() => {
     return graphFiles.map(file => {
       const content = file.fetchedContent || '';
@@ -138,7 +144,44 @@ const NoteGallery = ({ graphFiles, onSelectFile }) => {
     }).filter(note => note.displayTitle || note.introText || note.video || note.image || note.quote);
   }, [graphFiles]);
 
+  const pinnedNotes = useMemo(() => notePreviews.filter(n => pinnedIds.includes(n.id)), [notePreviews, pinnedIds]);
+  const unpinnedNotes = useMemo(() => notePreviews.filter(n => !pinnedIds.includes(n.id)), [notePreviews, pinnedIds]);
+
   if (notePreviews.length === 0) return null;
+
+  const renderPinBtn = (note, isPinned) => (
+    <button
+      className={`gallery-pin-btn${isPinned ? ' gallery-pin-btn-active' : ''}`}
+      onClick={(e) => togglePin(note.id, e)}
+      title={isPinned ? 'Unpin' : 'Pin to top'}
+    >
+      <Pin size={13} />
+    </button>
+  );
+
+  const renderRegularContent = (note) => (
+    note.video && note.introText ? (
+      <>
+        <div className="gallery-item-row" style={{ '--top-lines': `${note.topLinesHeight}px` }}>
+          <div className="gallery-item-col gallery-item-col-left">
+            <img src={`https://img.youtube.com/vi/${note.video}/mqdefault.jpg`} alt={note.displayTitle} className="gallery-video-thumbnail" style={{ width: '100%', display: 'block', borderRadius: '4px' }} />
+          </div>
+          <div className="gallery-item-col gallery-item-col-right">
+            <MarkdownPreview raw={note.introText} className="gallery-intro-rendered" />
+          </div>
+        </div>
+        {note.image && <div className="gallery-item-image"><img src={note.image} alt={note.displayTitle} /></div>}
+        {note.quote && <MarkdownPreview raw={note.quote} className="gallery-quote-rendered" />}
+      </>
+    ) : (
+      <>
+        {note.video && <img src={`https://img.youtube.com/vi/${note.video}/mqdefault.jpg`} alt={note.displayTitle} className="gallery-video-thumbnail" style={{ width: '100%', display: 'block', borderRadius: '4px' }} />}
+        {note.introText && <MarkdownPreview raw={note.introText} className="gallery-intro-rendered" />}
+        {note.image && <div className="gallery-item-image"><img src={note.image} alt={note.displayTitle} /></div>}
+        {note.quote && <MarkdownPreview raw={note.quote} className="gallery-quote-rendered" />}
+      </>
+    )
+  );
 
   return (
     <>
@@ -153,61 +196,38 @@ const NoteGallery = ({ graphFiles, onSelectFile }) => {
       </svg>
       <a href="/project" className="gallery-main-title">CASE ARCHIVES</a>
       <div className="note-gallery">
-        {notePreviews.map(note => (
+        {/* Pinned notes — span all columns */}
+        {pinnedNotes.map(note => (
+          <div
+            key={note.id}
+            className="gallery-item gallery-item-pinned markdown-content"
+            onClick={() => onSelectFile(note.path, note.name, note.id)}
+          >
+            {renderPinBtn(note, true)}
+            <FitTitle text={note.displayTitle} borderPx={Math.max(5, 12 - Math.floor(note.displayTitle.length / 2))} normalVariant={note.titleNormal} hoverVariant={note.titleHover} />
+            <div className="gallery-pinned-body">
+              <div className="gallery-pinned-col-left">
+                {note.video && <img src={`https://img.youtube.com/vi/${note.video}/mqdefault.jpg`} alt={note.displayTitle} className="gallery-video-thumbnail" style={{ width: '100%', display: 'block', borderRadius: '4px' }} />}
+                {note.image && <div className="gallery-item-image"><img src={note.image} alt={note.displayTitle} /></div>}
+              </div>
+              <div className="gallery-pinned-col-right">
+                {note.introText && <MarkdownPreview raw={note.introText} className="gallery-intro-rendered gallery-intro-pinned" />}
+                {note.quote && <MarkdownPreview raw={note.quote} className="gallery-quote-rendered" />}
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {/* Regular notes */}
+        {unpinnedNotes.map(note => (
           <div
             key={note.id}
             className={`gallery-item markdown-content ${note.video && note.introText ? 'gallery-item-two-col' : ''}`}
             onClick={() => onSelectFile(note.path, note.name, note.id)}
           >
+            {renderPinBtn(note, false)}
             <FitTitle text={note.displayTitle} borderPx={Math.max(5, 12 - Math.floor(note.displayTitle.length / 2))} normalVariant={note.titleNormal} hoverVariant={note.titleHover} />
-
-            {note.video && note.introText ? (
-              <>
-                <div className="gallery-item-row" style={{ '--top-lines': `${note.topLinesHeight}px` }}>
-                  <div className="gallery-item-col gallery-item-col-left">
-                    <img
-                      src={`https://img.youtube.com/vi/${note.video}/mqdefault.jpg`}
-                      alt={note.displayTitle}
-                      className="gallery-video-thumbnail"
-                      style={{ width: '100%', display: 'block', borderRadius: '4px' }}
-                    />
-                  </div>
-                  <div className="gallery-item-col gallery-item-col-right">
-                    <MarkdownPreview raw={note.introText} className="gallery-intro-rendered" />
-                  </div>
-                </div>
-                {note.image && (
-                  <div className="gallery-item-image">
-                    <img src={note.image} alt={note.displayTitle} />
-                  </div>
-                )}
-                {note.quote && (
-                  <MarkdownPreview raw={note.quote} className="gallery-quote-rendered" />
-                )}
-              </>
-            ) : (
-              <>
-                {note.video && (
-                  <img
-                    src={`https://img.youtube.com/vi/${note.video}/mqdefault.jpg`}
-                    alt={note.displayTitle}
-                    className="gallery-video-thumbnail"
-                    style={{ width: '100%', display: 'block', borderRadius: '4px' }}
-                  />
-                )}
-                {note.introText && (
-                  <MarkdownPreview raw={note.introText} className="gallery-intro-rendered" />
-                )}
-                {note.image && (
-                  <div className="gallery-item-image">
-                    <img src={note.image} alt={note.displayTitle} />
-                  </div>
-                )}
-                {note.quote && (
-                  <MarkdownPreview raw={note.quote} className="gallery-quote-rendered" />
-                )}
-              </>
-            )}
+            {renderRegularContent(note)}
           </div>
         ))}
       </div>

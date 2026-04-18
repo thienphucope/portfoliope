@@ -435,6 +435,74 @@ export default function GalleryStyles() {
         box-shadow: 2px 3px 8px rgba(0, 0, 0, 0.25);
         margin: 8px 0;
       }
+
+      /* ── Pin button ── */
+      .gallery-pin-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        opacity: 0;
+        transition: opacity 0.2s, color 0.2s;
+        color: rgba(0, 0, 0, 0.5);
+        z-index: 3;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .gallery-item:hover .gallery-pin-btn {
+        opacity: 1;
+      }
+
+      .gallery-pin-btn-active {
+        opacity: 0.8 !important;
+        color: var(--colorone, #ba9170) !important;
+      }
+
+      .gallery-item:hover .gallery-pin-btn:hover {
+        color: var(--colorone, #ba9170);
+      }
+
+      /* ── Pinned item ── */
+      .gallery-item-pinned {
+        grid-column: 1 / -1;
+      }
+
+      .gallery-pinned-body {
+        display: flex;
+        gap: 24px;
+        width: 100%;
+        align-items: flex-start;
+      }
+
+      .gallery-pinned-col-left {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .gallery-pinned-col-right {
+        flex: 2;
+        min-width: 0;
+      }
+
+      .gallery-intro-pinned :global(p) {
+        -webkit-line-clamp: 6 !important;
+      }
+
+      @media (max-width: 1023px) {
+        .gallery-pinned-body {
+          flex-direction: column;
+        }
+        .gallery-pinned-col-left,
+        .gallery-pinned-col-right {
+          flex: unset;
+          width: 100%;
+        }
+      }
     `}</style>
   );
 }

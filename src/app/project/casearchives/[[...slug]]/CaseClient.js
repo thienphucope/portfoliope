@@ -396,7 +396,27 @@ export default function CaseClient({ serverHydratedData = null }) {
 
       {!isMobile ? (
         <>
-          <StickySpine showHeader={showHeader} activeTab={activeTab} activeOverlay={activeOverlay} handleCreateNewNote={handleCreateNewNote} setActiveOverlay={(id) => { if (typeof id === 'function') { const result = id(activeOverlay); if (result) toggleWindow(result); } else { if (id) toggleWindow(id); } }} setActiveTab={setActiveTab} openWindows={openWindows} />
+          <StickySpine showHeader={showHeader} activeTab={activeTab} activeOverlay={activeOverlay} handleCreateNewNote={handleCreateNewNote} setActiveOverlay={(id) => {
+            if (typeof id === 'function') {
+              const result = id(activeOverlay);
+              if (!result) return;
+              if (result === 'editor') {
+                if (openWindows.includes('editor')) {
+                  window.history.back();
+                } else {
+                  const rawDefault = process.env.NEXT_PUBLIC_DEFAULT_VAULT_FILE || '';
+                  const cleanDefault = rawDefault.replace(/\.md$/, '').toLowerCase();
+                  const defaultFile = allFiles.find(f => f.name.replace('.md', '').toLowerCase() === cleanDefault);
+                  if (defaultFile) loadFile(defaultFile.path, defaultFile.name, defaultFile.id, 'push', true);
+                  else toggleWindow('editor');
+                }
+              } else {
+                toggleWindow(result);
+              }
+            } else {
+              if (id) toggleWindow(id);
+            }
+          }} setActiveTab={setActiveTab} openWindows={openWindows} />
           
           <div style={{ display: openWindows.length === 0 ? 'block' : 'none', position: 'absolute', inset: 0, zIndex: 5 }}>
             <NoteGallery
