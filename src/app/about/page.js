@@ -4,7 +4,7 @@ import AboutClient from '@/features/project/home/components/home/AboutClient';
 import Footer from '@/components/common/Footer';
 
 export default async function AboutPage() {
-  const aboutPath = path.join(process.cwd(), 'src', 'content', 'about.md');
+  const aboutPath = path.join(process.cwd(), 'public', 'content', 'about.md');
   let aboutContent = "";
   try {
     if (fs.existsSync(aboutPath)) {

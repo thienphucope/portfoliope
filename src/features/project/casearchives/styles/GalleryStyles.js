@@ -76,7 +76,7 @@ export default function GalleryStyles() {
         grid-column: span 2;
       }
 
-      @media (max-width: 1600px) {
+      @media (max-width: 1200px) {
         .note-gallery {
           grid-template-columns: repeat(3, 1fr);
         }

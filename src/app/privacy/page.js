@@ -3,7 +3,7 @@ import path from 'path';
 import PrivacyContent from '@/features/project/home/components/home/PrivacyClient';
 
 export default async function PrivacyPage() {
-  const filePath = path.join(process.cwd(), 'content', 'Privacy.md');
+  const filePath = path.join(process.cwd(), 'public', 'content', 'Privacy.md');
   let content = "";
   try {
     if (fs.existsSync(filePath)) {

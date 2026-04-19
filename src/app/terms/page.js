@@ -3,7 +3,7 @@ import path from 'path';
 import TermsContent from '@/features/project/home/components/home/TermsClient';
 
 export default async function TermsPage() {
-  const filePath = path.join(process.cwd(), 'content', 'Terms.md');
+  const filePath = path.join(process.cwd(), 'public', 'content', 'Terms.md');
   let content = "";
   try {
     if (fs.existsSync(filePath)) {

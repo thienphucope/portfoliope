@@ -21,7 +21,7 @@ export default async function sitemap() {
   }));
 
   // 2. Lấy danh sách các case từ thư mục content (local)
-  const contentDir = path.join(process.cwd(), 'content');
+  const contentDir = path.join(process.cwd(), 'public', 'content');
   let localCases = [];
   try {
     const filenames = fs.readdirSync(contentDir)

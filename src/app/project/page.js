@@ -3,7 +3,7 @@ import path from 'path';
 import ProjectClient from '@/features/project/home/components/home/ProjectClient';
 
 export default async function HomePage() {
-  const introPath = path.join(process.cwd(), 'content', 'This Project.md');
+  const introPath = path.join(process.cwd(), 'public', 'content', 'This Project.md');
   let introContent = "";
   try {
     if (fs.existsSync(introPath)) {
