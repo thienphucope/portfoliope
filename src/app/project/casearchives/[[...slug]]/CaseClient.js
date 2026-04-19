@@ -10,9 +10,7 @@ import TabPanel from '@/features/project/casearchives/components/TabPanel';
 import ChatOverlay from '@/features/project/casearchives/components/ChatOverlay';
 import PDFOverlay from '@/features/project/casearchives/components/PDFOverlay';
 import WindowFrame from '@/features/project/casearchives/components/WindowFrame';
-import NoteGallery from '@/features/project/casearchives/components/NoteGallery';
 import dynamic from 'next/dynamic';
-import AudioVisualProvider, { useAudioVisual } from '@/components/audio/AudioVisualProvider';
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
 import { useFileRegistry }     from '@/features/project/casearchives/hooks/useFileRegistry';
@@ -132,37 +130,6 @@ const SpritzOverlay = ({ text, isPlaying, isPaused, playbackRate }) => {
       <div className="spritz-word" style={{ fontSize: '6vw', fontWeight: '400', fontFamily: 'monospace', textAlign: 'center', letterSpacing: '-0.02em', textTransform: 'lowercase' }}>
         {words[index] || words[words.length - 1]}
       </div>
-    </div>
-  );
-};
-
-// ─── Music Player Component ──────────────────────────────────────────────────
-const MusicPlayer = ({ isPlaying, isPaused, playbackRate }) => {
-  const iframeRef = useRef(null);
-  useEffect(() => {
-    if (playbackRate === 4.0 && isPlaying && !isPaused && iframeRef.current) {
-      const timer = setTimeout(() => {
-        iframeRef.current?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [50] }), '*');
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [isPlaying, isPaused, playbackRate]);
-  if (playbackRate !== 4.0 || !isPlaying) return null;
-  return (
-    <div style={{ width: 0, height: 0, overflow: 'hidden', position: 'absolute', pointerEvents: 'none' }}>
-      <iframe ref={iframeRef} width="560" height="315" src={`https://www.youtube.com/embed/c7O91GDWGPU?autoplay=1&loop=1&playlist=c7O91GDWGPU&controls=0&showinfo=0&autohide=1&enablejsapi=1${isPaused ? '&mute=1' : ''}`} title="YouTube music player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin"></iframe>
-    </div>
-  );
-};
-
-const GalleryDisk = () => {
-  const av = useAudioVisual();
-  if (!av) return <div className="gallery-nav-disk" />;
-  const { isPlaying, videoTitle, togglePlayPause, handleDiskMouseEnter, handleDiskMouseLeave, animationKey, animationClass } = av;
-  return (
-    <div className="relative cursor-pointer" onClick={togglePlayPause} onMouseEnter={handleDiskMouseEnter} onMouseLeave={handleDiskMouseLeave}>
-      <div className={`gallery-nav-disk${!isPlaying ? ' paused' : ''}`} />
-      {videoTitle && <span key={animationKey} className={`title-fly-out ${animationClass}`} style={{ fontFamily: 'var(--font-display)' }}>{videoTitle}</span>}
     </div>
   );
 };
@@ -419,29 +386,17 @@ export default function CaseClient({ serverHydratedData = null }) {
 
   const resizer = useWindowResizer();
 
-  const galleryHeaderSlot = (
-    <div className="gallery-nav-bar">
-      <GalleryDisk />
-      <nav className="gallery-nav-links">
-        <a href="/project">project</a>
-        <a href="/about">about</a>
-        <a href="/privacy">privacy</a>
-      </nav>
-    </div>
-  );
-  const visibleSecondary = useMemo(() => 
+  const visibleSecondary = useMemo(() =>
     ['chat', 'pdf', 'graph'].filter(id => openWindows.includes(id) && maximizedWindow !== id),
     [openWindows, maximizedWindow]
   );
   const hasEditor = openWindows.includes('editor') && maximizedWindow !== 'editor';
 
   return (
-    <AudioVisualProvider>
     <div className={['accordion-app', !isMobile ? 'pc-layout' : '', activeTab || activeOverlay ? 'has-active' : '', activeOverlay === 'chat' ? 'chat-active' : '', activeOverlay === 'pdf' ? 'pdf-active' : '', activeOverlay === 'graph' ? 'graph-active' : ''].join(' ')} ref={appShellRef}>
       <div className="case-background"><img src="/casebg2.png" alt="" /></div>
       <div className="video-overlay" />
       <SpritzOverlay text={reader.currentText} isPlaying={reader.isPlaying} isPaused={reader.isPaused} playbackRate={reader.playbackRate} />
-      <MusicPlayer isPlaying={reader.isPlaying} isPaused={reader.isPaused} playbackRate={reader.playbackRate} />
 
       {!isMobile ? (
         <>
@@ -467,16 +422,6 @@ export default function CaseClient({ serverHydratedData = null }) {
             }
           }} setActiveTab={setActiveTab} openWindows={openWindows} />
           
-          <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', opacity: openWindows.length > 0 ? 0.15 : 1, pointerEvents: openWindows.length > 0 ? 'none' : 'auto', transition: 'opacity 0.3s ease' }}>
-            <NoteGallery
-              graphFiles={graphFiles}
-              onSelectFile={(path, name, id) => {
-                const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md'];
-                if (githubUrl) loadFile(githubUrl, name, id, 'push', true);
-              }}
-              headerSlot={galleryHeaderSlot}
-            />
-          </div>
 
           {openWindows.length > 0 && !maximizedWindow && (
             <div onClick={closeAllWindows} style={{ position: 'absolute', inset: 0, zIndex: 9 }} />
@@ -684,16 +629,6 @@ export default function CaseClient({ serverHydratedData = null }) {
       ) : (
         <>
           <FunctionBall isFooterExpanded={isFooterExpanded} setIsFooterExpanded={setIsFooterExpanded} showReadMore={showReadMore} showFunctionBall={showFunctionBall} isAtBottom={isAtBottom} activeOverlay={activeOverlay} setActiveOverlay={setActiveOverlay} handleCreateNewNote={handleCreateNewNote} fileName={fileName} handleAppendComment={handleAppendComment} handleTabClick={handleTabClick} nextTabForActive={nextTabForActive} prevTabForActive={prevTabForActive} isEditing={isEditing} handleToggleEditMode={handleToggleEditMode} saveStatus={saveStatus} handleSidebarSave={handleSidebarSave} activeTabType={tabs.find(t => t.id === activeTab)?.type} activeTabObj={tabs.find(t => t.id === activeTab)} />
-          {!activeTab && !activeOverlay && (
-            <NoteGallery
-              graphFiles={graphFiles}
-              onSelectFile={(path, name, id) => {
-                const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md'];
-                if (githubUrl) loadFile(githubUrl, name, id, 'push', true);
-              }}
-              headerSlot={galleryHeaderSlot}
-            />
-          )}
           <GraphOverlay isOpen={activeOverlay === 'graph'} graphFiles={graphFiles} activeTab={activeTab} loadFile={loadFile} fileRegistry={fileRegistry} />
           <ChatOverlay isOpen={activeOverlay === 'chat'} handleLinkClick={handleLinkClick} reader={augmentedReader} />
           <PDFOverlay isOpen={activeOverlay === 'pdf'} setActiveOverlay={setActiveOverlay} reader={augmentedReader} onStateChange={handlePdfStateChange} initialFile={lastPdfStateRef.current.file} initialPage={lastPdfStateRef.current.pageNumber} initialFitMode={lastPdfStateRef.current.fitMode} />
@@ -717,6 +652,5 @@ export default function CaseClient({ serverHydratedData = null }) {
       <PromptOverlays passPrompt={passPrompt} setPassPrompt={setPassPrompt} namePrompt={namePrompt} setNamePrompt={setNamePrompt} commentPrompt={commentPrompt} setCommentPrompt={setCommentPrompt} />
       <VaultStyles />
     </div>
-    </AudioVisualProvider>
   );
 }
