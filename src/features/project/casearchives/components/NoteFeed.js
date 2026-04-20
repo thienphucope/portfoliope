@@ -123,14 +123,33 @@ export default function NoteFeed({
         alignItems: 'center'
       }}>
         {displayedFiles.map((file, idx) => (
-          <NoteFeedItem 
-            key={`${file.id}-${idx}`}
-            file={file}
-            content={file.content}
-            onLinkClick={onLinkClick}
-            fileRegistry={fileRegistry}
-            reader={reader}
-          />
+          <React.Fragment key={`${file.id}-${idx}`}>
+            <NoteFeedItem
+              file={file}
+              content={file.content}
+              onLinkClick={onLinkClick}
+              fileRegistry={fileRegistry}
+              reader={reader}
+            />
+            <a
+              href="mailto:thienphucmain1052004@gmail.com"
+              style={{
+                color: '#000',
+                background: 'var(--colorbutton, #FFFACD)',
+                textDecoration: 'none',
+                fontSize: '14px',
+                fontStyle: 'italic',
+                fontWeight: '500',
+                padding: '8px 16px',
+                textAlign: 'center',
+                display: 'inline-block',
+                marginBottom: '4rem',
+                borderRadius: '16px'
+              }}
+            >
+              wanna discuss?
+            </a>
+          </React.Fragment>
         ))}
         {loading && <div className="feed-loading" style={{ color: 'var(--accent)', padding: '20px', fontFamily: 'monospace' }}>Loading archives...</div>}
       </div>
