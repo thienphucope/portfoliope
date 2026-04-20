@@ -1,6 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import BlockEditor from './BlockEditor';
 
+const DISCUSSION_PHRASES = [
+  'wanna discuss about this?',
+  'same interest?',
+  'lets talk about it',
+  'thoughts?',
+  'connect?'
+];
+
 const NoteFeedItem = ({ file, content, onLinkClick, fileRegistry, reader }) => {
   return (
     <div className="note-feed-item" style={{
@@ -143,11 +151,11 @@ export default function NoteFeed({
                 padding: '8px 16px',
                 textAlign: 'center',
                 display: 'inline-block',
-                marginBottom: '4rem',
+                marginBottom: '10rem',
                 borderRadius: '16px'
               }}
             >
-              wanna discuss?
+              {DISCUSSION_PHRASES[Math.floor(Math.random() * DISCUSSION_PHRASES.length)]}
             </a>
           </React.Fragment>
         ))}
