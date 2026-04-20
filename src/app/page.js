@@ -11,7 +11,7 @@ export default function RootPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.push('/project/casearchives');
+      router.push('/me/');
     }, 2000);
 
     return () => clearTimeout(timer);

@@ -1,33 +1,20 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Text, Image, useTexture } from '@react-three/drei';
+import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 import { SIZES, STICKY_PALETTES } from './constants';
 import StickyContent from './parts/StickyContent';
 import PolaroidContent from './parts/PolaroidContent';
 import NewspaperContent from './parts/NewspaperContent';
 
-export default function ThreeItem({ item, layout, scaleFactor }) {
+/**
+ * Base component for all 3D items on the board.
+ * Handles positioning, physics-based curling geometry, and the nail.
+ */
+function BaseThreeItem({ item, layout, scaleFactor, size }) {
   const { x, y, rotation, z } = layout;
   
-  // Load texture for polaroids to get aspect ratio
-  const polaroidTexture = item.type === 'polaroid' ? useTexture(item.imageUrl || '/placeholder.jpg') : null;
-
-  const size = useMemo(() => {
-    if (item.type === 'polaroid' && polaroidTexture?.image) {
-      const imgW = polaroidTexture.image.width;
-      const imgH = polaroidTexture.image.height;
-      const aspect = imgW / imgH;
-      
-      const targetW = 0.9; // Fixed width
-      const photoH = targetW / aspect;
-      const padding = 0.1; // Uniform padding for all sides
-      return [targetW + padding, photoH + padding];
-    }
-    return SIZES[item.type] || [0.87, 0.87];
-  }, [item.type, polaroidTexture]);
-
   // Centering offsets for 2500x1700 resolution
   const pos = [
     (x - 1250) * scaleFactor,
@@ -136,4 +123,43 @@ export default function ThreeItem({ item, layout, scaleFactor }) {
       </group>
     </group>
   );
+}
+
+/**
+ * Specialized component for Polaroid items to handle texture loading and dynamic sizing.
+ */
+function PolaroidItem(props) {
+  const { item } = props;
+  const polaroidTexture = useTexture(item.imageUrl || '/placeholder.jpg');
+
+  const size = useMemo(() => {
+    if (polaroidTexture?.image) {
+      const imgW = polaroidTexture.image.width;
+      const imgH = polaroidTexture.image.height;
+      const aspect = imgW / imgH;
+      
+      const targetW = 0.9; // Fixed width
+      const photoH = targetW / aspect;
+      const padding = 0.1; // Uniform padding for all sides
+      return [targetW + padding, photoH + padding];
+    }
+    return SIZES.polaroid;
+  }, [polaroidTexture]);
+
+  return <BaseThreeItem {...props} size={size} />;
+}
+
+/**
+ * Main dispatcher component for ThreeItems.
+ * Resolves the conditional hook issue by splitting into sub-components.
+ */
+export default function ThreeItem(props) {
+  const { item } = props;
+
+  if (item.type === 'polaroid') {
+    return <PolaroidItem {...props} />;
+  }
+
+  const size = SIZES[item.type] || [0.87, 0.87];
+  return <BaseThreeItem {...props} size={size} />;
 }
