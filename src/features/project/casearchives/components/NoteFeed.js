@@ -110,7 +110,7 @@ export default function NoteFeed({
         overflowY: 'auto',
         overflowX: 'hidden',
         zIndex: 5,
-        padding: '40px 16px 60px 16px',
+        padding: '16px 16px 60px 16px',
         backgroundColor: '#161616',
         height: '100dvh',
         width: '100vw'

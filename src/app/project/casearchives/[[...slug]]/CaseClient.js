@@ -662,6 +662,40 @@ export default function CaseClient({ serverHydratedData = null }) {
         </>
       )}
 
+      {!isMobile && (
+        <a
+          href="mailto:thienphucmain1052004@gmail.com"
+          style={{
+            position: 'fixed',
+            right: '20px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 1000,
+            color: 'var(--colorbutton, #FFFACD)',
+            textDecoration: 'none',
+            fontSize: '14px',
+            fontStyle: 'italic',
+            fontWeight: '500',
+            padding: '8px 12px',
+            background: 'transparent',
+            transition: 'all 0.3s ease',
+            cursor: 'pointer'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.color = '#000';
+            e.target.style.background = 'var(--colorbutton, #FFFACD)';
+            e.target.style.borderRadius = '16px';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.color = 'var(--colorbutton, #FFFACD)';
+            e.target.style.background = 'transparent';
+            e.target.style.borderRadius = '0px';
+          }}
+        >
+          wanna discuss?
+        </a>
+      )}
+
       {(pendingReadConfirm || reader.isPlaying) && (
         <div className="global-reader-bar" onClick={(e) => e.stopPropagation()} style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 10000, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(16px)', borderRadius: '40px', padding: '8px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '18px', border: '1px solid var(--colorbutton, #FFFACD)', boxShadow: '0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(255,250,205,0.2)', animation: 'fadeInDown 0.3s ease-out', color: 'white', transition: 'all 0.3s ease' }}>
           {pendingReadConfirm ? ( <div className="reader-confirm-btn" onClick={() => { pendingReadConfirm(); setPendingReadConfirm(null); }} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}><Volume2 size={20} color="var(--colorbutton, #FFFACD)" /></div> ) : (
