@@ -11,6 +11,7 @@ import ChatOverlay from '@/features/project/casearchives/components/ChatOverlay'
 import PDFOverlay from '@/features/project/casearchives/components/PDFOverlay';
 import WindowFrame from '@/features/project/casearchives/components/WindowFrame';
 import dynamic from 'next/dynamic';
+import NoteFeed from '@/features/project/casearchives/components/NoteFeed';
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
 import { useFileRegistry }     from '@/features/project/casearchives/hooks/useFileRegistry';
@@ -393,7 +394,7 @@ export default function CaseClient({ serverHydratedData = null }) {
   const hasEditor = openWindows.includes('editor') && maximizedWindow !== 'editor';
 
   return (
-    <div className={['accordion-app', !isMobile ? 'pc-layout' : '', activeTab || activeOverlay ? 'has-active' : '', activeOverlay === 'chat' ? 'chat-active' : '', activeOverlay === 'pdf' ? 'pdf-active' : '', activeOverlay === 'graph' ? 'graph-active' : ''].join(' ')} ref={appShellRef}>
+    <div className={['accordion-app', !isMobile ? 'pc-layout' : '', activeTab || activeOverlay ? 'has-active' : '', activeOverlay === 'chat' ? 'chat-active' : '', activeOverlay === 'pdf' ? 'pdf-active' : '', activeOverlay === 'graph' ? 'graph-active' : '', !isMobile && openWindows.length === 0 ? 'feed-active' : ''].join(' ')} ref={appShellRef}>
       <div className="case-background"><img src="/casebg2.png" alt="" /></div>
       <div className="video-overlay" />
       <SpritzOverlay text={reader.currentText} isPlaying={reader.isPlaying} isPaused={reader.isPaused} playbackRate={reader.playbackRate} />
@@ -422,127 +423,198 @@ export default function CaseClient({ serverHydratedData = null }) {
             }
           }} setActiveTab={setActiveTab} openWindows={openWindows} />
           
+          {openWindows.length === 0 && (
+            <NoteFeed 
+              allFiles={allFiles} 
+              fileRegistry={fileRegistry.current} 
+              fullContentCache={fullContentCache} 
+              onLinkClick={handleLinkClick}
+              reader={augmentedReader}
+              upsertCacheEntry={upsertCacheEntry}
+            />
+          )}
 
           {openWindows.length > 0 && !maximizedWindow && (
             <div onClick={closeAllWindows} style={{ position: 'absolute', inset: 0, zIndex: 9 }} />
           )}
 
-          <div className={`windows-container ${maximizedWindow ? 'has-maximized' : ''} ${openWindows.includes('editor') ? 'has-editor' : ''} ${openWindows.length > (openWindows.includes('editor') ? 1 : 0) ? 'has-others' : ''} ${resizer.isDragging ? 'dragging' : ''} ${openWindows.length === 0 ? 'no-windows' : ''}`}>
-            
-            {/* EDITOR WINDOW */}
-            {everOpened.filter(winId => winId === 'editor').map((winId) => {
-              const isMax = maximizedWindow === winId;
-              const isOpen = openWindows.includes(winId);
-              const isHidden = !isOpen || (maximizedWindow && !isMax);
-              if (isHidden && !isMax) return null;
+          {openWindows.length > 0 && (
+            <div className={`windows-container ${maximizedWindow ? 'has-maximized' : ''} ${openWindows.includes('editor') ? 'has-editor' : ''} ${openWindows.length > (openWindows.includes('editor') ? 1 : 0) ? 'has-others' : ''} ${resizer.isDragging ? 'dragging' : ''}`}>
               
-              const tabTitle = tabs.find(t => t.id === activeTab)?.title || 'Note';
-              
-              return (
-                <div key={winId} className="window-frame-wrapper" style={isMax ? {} : { flex: hasEditor && visibleSecondary.length > 0 ? resizer.editorWidth : 1 }}>
-                  <WindowFrame
-                    id={winId}
-                    title={`Case Archives - ${tabTitle}`}
-                    isMaximized={isMax}
-                    isHidden={false}
-                    onToggleMaximize={toggleMaximize}
-                    onClose={closeWindow}
-                    onSave={handleSidebarSave}
-                    saveStatus={saveStatus}
-                    onToggleEdit={handleToggleEditMode}
-                    isEditing={isEditing}
-                    onComment={handleAppendComment}
-                    onNewNote={handleCreateNewNote}
-                    isMobile={false}
-                    isPinned={pinnedWindows.includes(winId)}
-                    onTogglePin={togglePin}
-                    allFiles={allFiles}
-                    onSelectFile={(f) => {
-                      const githubUrl = fileRegistry.current[f.id.toLowerCase()] || fileRegistry.current[f.id.toLowerCase() + '.md'];
-                      if (githubUrl) {
-                        loadFile(githubUrl, f.name, f.id, 'push', true);
-                      }
-                    }}
-                  >
-                    {activeTabPanel}
-                  </WindowFrame>
+              {/* EDITOR WINDOW */}
+              {everOpened.filter(winId => winId === 'editor').map((winId) => {
+                const isMax = maximizedWindow === winId;
+                const isOpen = openWindows.includes(winId);
+                const isHidden = !isOpen || (maximizedWindow && !isMax);
+                if (isHidden && !isMax) return null;
+                
+                const tabTitle = tabs.find(t => t.id === activeTab)?.title || 'Note';
+                
+                return (
+                  <div key={winId} className="window-frame-wrapper" style={isMax ? {} : { flex: hasEditor && visibleSecondary.length > 0 ? resizer.editorWidth : 1 }}>
+                    <WindowFrame
+                      id={winId}
+                      title={`Case Archives - ${tabTitle}`}
+                      isMaximized={isMax}
+                      isHidden={false}
+                      onToggleMaximize={toggleMaximize}
+                      onClose={closeWindow}
+                      onSave={handleSidebarSave}
+                      saveStatus={saveStatus}
+                      onToggleEdit={handleToggleEditMode}
+                      isEditing={isEditing}
+                      onComment={handleAppendComment}
+                      onNewNote={handleCreateNewNote}
+                      isMobile={false}
+                      isPinned={pinnedWindows.includes(winId)}
+                      onTogglePin={togglePin}
+                      allFiles={allFiles}
+                      onSelectFile={(f) => {
+                        const githubUrl = fileRegistry.current[f.id.toLowerCase()] || fileRegistry.current[f.id.toLowerCase() + '.md'];
+                        if (githubUrl) {
+                          loadFile(githubUrl, f.name, f.id, 'push', true);
+                        }
+                      }}
+                    >
+                      {activeTabPanel}
+                    </WindowFrame>
+                  </div>
+                );
+              })}
+
+              {/* MAIN VERTICAL RESIZER */}
+              {hasEditor && visibleSecondary.length > 0 && (
+                <div 
+                  className={`resizer-v ${resizer.isDragging === 'main' ? 'active' : ''}`}
+                  onMouseDown={(e) => resizer.onMouseDown(e, 'main')}
+                >
+                  {/* JUNCTION POINTS */}
+                  {visibleSecondary.length > 1 && visibleSecondary.map((winId, idx) => {
+                    if (idx === visibleSecondary.length - 1) return null;
+                    const nextId = visibleSecondary[idx + 1];
+                    
+                    // Approximate junction position based on weights
+                    const totalWeight = visibleSecondary.reduce((acc, id) => acc + resizer.secondaryWeights[id], 0);
+                    const weightsBefore = visibleSecondary.slice(0, idx + 1).reduce((acc, id) => acc + resizer.secondaryWeights[id], 0);
+                    const topPercent = (weightsBefore / totalWeight) * 100;
+                    
+                    return (
+                      <div 
+                        key={`junction-${winId}-${nextId}`}
+                        className={`resizer-junction ${resizer.isDragging === `junction-${winId}-${nextId}` ? 'active' : ''}`}
+                        style={{ top: `${topPercent}%`, left: '50%' }}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          resizer.onMouseDown(e, `junction-${winId}-${nextId}`);
+                        }}
+                      />
+                    );
+                  })}
                 </div>
-              );
-            })}
+              )}
 
-            {/* MAIN VERTICAL RESIZER */}
-            {hasEditor && visibleSecondary.length > 0 && (
-              <div 
-                className={`resizer-v ${resizer.isDragging === 'main' ? 'active' : ''}`}
-                onMouseDown={(e) => resizer.onMouseDown(e, 'main')}
-              >
-                {/* JUNCTION POINTS */}
-                {visibleSecondary.length > 1 && visibleSecondary.map((winId, idx) => {
-                  if (idx === visibleSecondary.length - 1) return null;
-                  const nextId = visibleSecondary[idx + 1];
-                  
-                  // Approximate junction position based on weights
-                  const totalWeight = visibleSecondary.reduce((acc, id) => acc + resizer.secondaryWeights[id], 0);
-                  const weightsBefore = visibleSecondary.slice(0, idx + 1).reduce((acc, id) => acc + resizer.secondaryWeights[id], 0);
-                  const topPercent = (weightsBefore / totalWeight) * 100;
-                  
-                  return (
-                    <div 
-                      key={`junction-${winId}-${nextId}`}
-                      className={`resizer-junction ${resizer.isDragging === `junction-${winId}-${nextId}` ? 'active' : ''}`}
-                      style={{ top: `${topPercent}%`, left: '50%' }}
-                      onMouseDown={(e) => {
-                        e.stopPropagation();
-                        resizer.onMouseDown(e, `junction-${winId}-${nextId}`);
-                      }}
-                    />
-                  );
-                })}
-              </div>
-            )}
+              {/* SECONDARY WINDOWS COLUMN */}
+              {visibleSecondary.length > 0 && !maximizedWindow && (
+                <div className="secondary-windows" style={{ flex: hasEditor ? (100 - resizer.editorWidth) : 1 }}>
+                  {visibleSecondary.map((winId, idx) => {
+                    let title = ''; let winContent = null;
 
-            {/* SECONDARY WINDOWS COLUMN */}
-            {visibleSecondary.length > 0 && !maximizedWindow && (
-              <div className="secondary-windows" style={{ flex: hasEditor ? (100 - resizer.editorWidth) : 1 }}>
-                {visibleSecondary.map((winId, idx) => {
-                  let title = ''; let winContent = null;
-
-                  if (winId === 'chat') {
-                    title = 'AI Chat Vault';
-                    winContent = <div className="chat-container"><Chat ref={chatRef} isEmbedded={true} onLinkClick={handleLinkClick} onLiveCallChange={setIsLiveCallActive} /></div>;
-                  } else if (winId === 'pdf') {
-                    title = 'PDF Reader';
-                    winContent = <div className="pdf-container"><PDFViewer ref={pdfRef} onClose={() => closeWindow('pdf')} reader={augmentedReader} isOpen={true} onStateChange={handlePdfStateChange} initialFile={lastPdfStateRef.current.file} initialPage={lastPdfStateRef.current.pageNumber} initialFitMode={lastPdfStateRef.current.fitMode} /></div>;
-                  }
-                  else if (winId === 'graph') {
-                    const activeFile = graphFiles.find(f => f.id === activeTab);
-                    let displayTag = 'Graph View';
-                    if (activeFile && activeFile.fetchedContent) {
-                      const tagMatch = activeFile.fetchedContent.match(/tag:\s*#?([^\n\r,]+)/i);
-                      if (tagMatch && tagMatch[1]) {
-                        displayTag = `#${tagMatch[1].trim()}`;
-                      }
+                    if (winId === 'chat') {
+                      title = 'AI Chat Vault';
+                      winContent = <div className="chat-container"><Chat ref={chatRef} isEmbedded={true} onLinkClick={handleLinkClick} onLiveCallChange={setIsLiveCallActive} /></div>;
+                    } else if (winId === 'pdf') {
+                      title = 'PDF Reader';
+                      winContent = <div className="pdf-container"><PDFViewer ref={pdfRef} onClose={() => closeWindow('pdf')} reader={augmentedReader} isOpen={true} onStateChange={handlePdfStateChange} initialFile={lastPdfStateRef.current.file} initialPage={lastPdfStateRef.current.pageNumber} initialFitMode={lastPdfStateRef.current.fitMode} /></div>;
                     }
-                    title = displayTag;
-                    winContent = <GraphView
-                      allFiles={graphFiles}
-                      onSelectFile={(path, name, id) => {
-                        const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md'];
-                        if (githubUrl) loadFile(githubUrl, name, id, 'push', true);
-                      }}
-                      activeNodeId={activeTab}
-                      zoomToNodeId={zoomToNodeId}
-                      onZoomComplete={() => setZoomToNodeId(null)}
-                    />;
-                  }
-                  
-                  return (
-                    <React.Fragment key={winId}>
-                      <div className="window-frame-wrapper" style={{ flex: resizer.secondaryWeights[winId] }}>
+                    else if (winId === 'graph') {
+                      const activeFile = graphFiles.find(f => f.id === activeTab);
+                      let displayTag = 'Graph View';
+                      if (activeFile && activeFile.fetchedContent) {
+                        const tagMatch = activeFile.fetchedContent.match(/tag:\s*#?([^\n\r,]+)/i);
+                        if (tagMatch && tagMatch[1]) {
+                          displayTag = `#${tagMatch[1].trim()}`;
+                        }
+                      }
+                      title = displayTag;
+                      winContent = <GraphView
+                        allFiles={graphFiles}
+                        onSelectFile={(path, name, id) => {
+                          const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md'];
+                          if (githubUrl) loadFile(githubUrl, name, id, 'push', true);
+                        }}
+                        activeNodeId={activeTab}
+                        zoomToNodeId={zoomToNodeId}
+                        onZoomComplete={() => setZoomToNodeId(null)}
+                      />;
+                    }
+                    
+                    return (
+                      <React.Fragment key={winId}>
+                        <div className="window-frame-wrapper" style={{ flex: resizer.secondaryWeights[winId] }}>
+                          <GraphWindowWrapper
+                            winId={winId}
+                            title={title}
+                            isMaximized={false}
+                            isHidden={false}
+                            toggleMaximize={toggleMaximize}
+                            closeWindow={closeWindow}
+                            winContent={winContent}
+                            isLiveCallActive={isLiveCallActive}
+                            chatRef={chatRef}
+                            pdfState={pdfState}
+                            pdfRef={pdfRef}
+                            allFiles={allFiles}
+                            fileRegistry={fileRegistry}
+                            loadFile={loadFile}
+                            graphFiles={graphFiles}
+                            fullContentCache={fullContentCache}
+                            setZoomToNodeId={setZoomToNodeId}
+                            isPinned={pinnedWindows.includes(winId)}
+                            onTogglePin={togglePin}
+                          />
+                        </div>
+                        
+                        {/* HORIZONTAL RESIZER */}
+                        {idx < visibleSecondary.length - 1 && (
+                          <div 
+                            className={`resizer-h ${resizer.isDragging === `${winId}-${visibleSecondary[idx+1]}` ? 'active' : ''}`}
+                            onMouseDown={(e) => resizer.onMouseDown(e, `${winId}-${visibleSecondary[idx+1]}`)}
+                          />
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Handle Maximized Secondary Window */}
+              {maximizedWindow && maximizedWindow !== 'editor' && (
+                <div className="secondary-windows has-maximized">
+                  {(() => {
+                      const winId = maximizedWindow;
+                      let title = ''; let winContent = null;
+                      if (winId === 'chat') {
+                        title = 'AI Chat Vault';
+                        winContent = <div className="chat-container"><Chat ref={chatRef} isEmbedded={true} onLinkClick={handleLinkClick} onLiveCallChange={setIsLiveCallActive} /></div>;
+                      } else if (winId === 'pdf') {
+                        title = 'PDF Reader';
+                        winContent = <div className="pdf-container"><PDFViewer ref={pdfRef} onClose={() => closeWindow('pdf')} reader={augmentedReader} isOpen={true} onStateChange={handlePdfStateChange} initialFile={lastPdfStateRef.current.file} initialPage={lastPdfStateRef.current.pageNumber} initialFitMode={lastPdfStateRef.current.fitMode} /></div>;
+                      } else if (winId === 'graph') {
+                        const activeFile = graphFiles.find(f => f.id === activeTab);
+                        let displayTag = 'Graph View';
+                        if (activeFile && activeFile.fetchedContent) {
+                          const tagMatch = activeFile.fetchedContent.match(/tag:\s*#?([^\n\r,]+)/i);
+                          if (tagMatch && tagMatch[1]) displayTag = `#${tagMatch[1].trim()}`;
+                        }
+                        title = displayTag;
+                        winContent = <GraphView allFiles={graphFiles} onSelectFile={(path, name, id) => { const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md']; if (githubUrl) loadFile(githubUrl, name, id, 'push', true); }} activeNodeId={activeTab} zoomToNodeId={zoomToNodeId} onZoomComplete={() => setZoomToNodeId(null)} />;
+                      }
+
+                      return (
                         <GraphWindowWrapper
                           winId={winId}
                           title={title}
-                          isMaximized={false}
+                          isMaximized={true}
                           isHidden={false}
                           toggleMaximize={toggleMaximize}
                           closeWindow={closeWindow}
@@ -560,79 +632,33 @@ export default function CaseClient({ serverHydratedData = null }) {
                           isPinned={pinnedWindows.includes(winId)}
                           onTogglePin={togglePin}
                         />
-                      </div>
-                      
-                      {/* HORIZONTAL RESIZER */}
-                      {idx < visibleSecondary.length - 1 && (
-                        <div 
-                          className={`resizer-h ${resizer.isDragging === `${winId}-${visibleSecondary[idx+1]}` ? 'active' : ''}`}
-                          onMouseDown={(e) => resizer.onMouseDown(e, `${winId}-${visibleSecondary[idx+1]}`)}
-                        />
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Handle Maximized Secondary Window */}
-            {maximizedWindow && maximizedWindow !== 'editor' && (
-              <div className="secondary-windows has-maximized">
-                 {(() => {
-                    const winId = maximizedWindow;
-                    let title = ''; let winContent = null;
-                    if (winId === 'chat') {
-                      title = 'AI Chat Vault';
-                      winContent = <div className="chat-container"><Chat ref={chatRef} isEmbedded={true} onLinkClick={handleLinkClick} onLiveCallChange={setIsLiveCallActive} /></div>;
-                    } else if (winId === 'pdf') {
-                      title = 'PDF Reader';
-                      winContent = <div className="pdf-container"><PDFViewer ref={pdfRef} onClose={() => closeWindow('pdf')} reader={augmentedReader} isOpen={true} onStateChange={handlePdfStateChange} initialFile={lastPdfStateRef.current.file} initialPage={lastPdfStateRef.current.pageNumber} initialFitMode={lastPdfStateRef.current.fitMode} /></div>;
-                    } else if (winId === 'graph') {
-                      const activeFile = graphFiles.find(f => f.id === activeTab);
-                      let displayTag = 'Graph View';
-                      if (activeFile && activeFile.fetchedContent) {
-                        const tagMatch = activeFile.fetchedContent.match(/tag:\s*#?([^\n\r,]+)/i);
-                        if (tagMatch && tagMatch[1]) displayTag = `#${tagMatch[1].trim()}`;
-                      }
-                      title = displayTag;
-                      winContent = <GraphView allFiles={graphFiles} onSelectFile={(path, name, id) => { const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md']; if (githubUrl) loadFile(githubUrl, name, id, 'push', true); }} activeNodeId={activeTab} zoomToNodeId={zoomToNodeId} onZoomComplete={() => setZoomToNodeId(null)} />;
-                    }
-
-                    return (
-                      <GraphWindowWrapper
-                        winId={winId}
-                        title={title}
-                        isMaximized={true}
-                        isHidden={false}
-                        toggleMaximize={toggleMaximize}
-                        closeWindow={closeWindow}
-                        winContent={winContent}
-                        isLiveCallActive={isLiveCallActive}
-                        chatRef={chatRef}
-                        pdfState={pdfState}
-                        pdfRef={pdfRef}
-                        allFiles={allFiles}
-                        fileRegistry={fileRegistry}
-                        loadFile={loadFile}
-                        graphFiles={graphFiles}
-                        fullContentCache={fullContentCache}
-                        setZoomToNodeId={setZoomToNodeId}
-                        isPinned={pinnedWindows.includes(winId)}
-                        onTogglePin={togglePin}
-                      />
-                    );
-                 })()}
-              </div>
-            )}
-          </div>
+                      );
+                  })()}
+                </div>
+              )}
+            </div>
+          )}
         </>
       ) : (
         <>
-          <FunctionBall isFooterExpanded={isFooterExpanded} setIsFooterExpanded={setIsFooterExpanded} showReadMore={showReadMore} showFunctionBall={showFunctionBall} isAtBottom={isAtBottom} activeOverlay={activeOverlay} setActiveOverlay={setActiveOverlay} handleCreateNewNote={handleCreateNewNote} fileName={fileName} handleAppendComment={handleAppendComment} handleTabClick={handleTabClick} nextTabForActive={nextTabForActive} prevTabForActive={prevTabForActive} isEditing={isEditing} handleToggleEditMode={handleToggleEditMode} saveStatus={saveStatus} handleSidebarSave={handleSidebarSave} activeTabType={tabs.find(t => t.id === activeTab)?.type} activeTabObj={tabs.find(t => t.id === activeTab)} />
-          <GraphOverlay isOpen={activeOverlay === 'graph'} graphFiles={graphFiles} activeTab={activeTab} loadFile={loadFile} fileRegistry={fileRegistry} />
-          <ChatOverlay isOpen={activeOverlay === 'chat'} handleLinkClick={handleLinkClick} reader={augmentedReader} />
-          <PDFOverlay isOpen={activeOverlay === 'pdf'} setActiveOverlay={setActiveOverlay} reader={augmentedReader} onStateChange={handlePdfStateChange} initialFile={lastPdfStateRef.current.file} initialPage={lastPdfStateRef.current.pageNumber} initialFitMode={lastPdfStateRef.current.fitMode} />
-          {tabs.filter(t => t.type === 'editor' || t.type === 'static').map(tab => ( <TabPanel key={tab.id} tab={tab} activeTab={activeTab} handleTabClick={handleTabClick} handleLinkClick={handleLinkClick} isEditing={isEditing} handleToggleEditMode={handleToggleEditMode} saveStatus={saveStatus} handleSidebarSave={handleSidebarSave} fileName={fileName} content={content} handleSaveFile={handleSaveFile} saveHandlerRef={saveHandlerRef} fileRegistry={fileRegistry} isAtBottom={isAtBottom} setIsAtBottom={setIsAtBottom} reader={augmentedReader} /> ))}
+          {!activeTab && !activeOverlay ? (
+            <NoteFeed
+              allFiles={allFiles}
+              fileRegistry={fileRegistry.current}
+              fullContentCache={fullContentCache}
+              onLinkClick={handleLinkClick}
+              reader={augmentedReader}
+              upsertCacheEntry={upsertCacheEntry}
+            />
+          ) : (
+            <>
+              <FunctionBall isFooterExpanded={isFooterExpanded} setIsFooterExpanded={setIsFooterExpanded} showReadMore={showReadMore} showFunctionBall={showFunctionBall} isAtBottom={isAtBottom} activeOverlay={activeOverlay} setActiveOverlay={setActiveOverlay} handleCreateNewNote={handleCreateNewNote} fileName={fileName} handleAppendComment={handleAppendComment} handleTabClick={handleTabClick} nextTabForActive={nextTabForActive} prevTabForActive={prevTabForActive} isEditing={isEditing} handleToggleEditMode={handleToggleEditMode} saveStatus={saveStatus} handleSidebarSave={handleSidebarSave} activeTabType={tabs.find(t => t.id === activeTab)?.type} activeTabObj={tabs.find(t => t.id === activeTab)} />
+              <GraphOverlay isOpen={activeOverlay === 'graph'} graphFiles={graphFiles} activeTab={activeTab} loadFile={loadFile} fileRegistry={fileRegistry} />
+              <ChatOverlay isOpen={activeOverlay === 'chat'} handleLinkClick={handleLinkClick} reader={augmentedReader} />
+              <PDFOverlay isOpen={activeOverlay === 'pdf'} setActiveOverlay={setActiveOverlay} reader={augmentedReader} onStateChange={handlePdfStateChange} initialFile={lastPdfStateRef.current.file} initialPage={lastPdfStateRef.current.pageNumber} initialFitMode={lastPdfStateRef.current.fitMode} />
+              {tabs.filter(t => t.type === 'editor' || t.type === 'static').map(tab => ( <TabPanel key={tab.id} tab={tab} activeTab={activeTab} handleTabClick={handleTabClick} handleLinkClick={handleLinkClick} isEditing={isEditing} handleToggleEditMode={handleToggleEditMode} saveStatus={saveStatus} handleSidebarSave={handleSidebarSave} fileName={fileName} content={content} handleSaveFile={handleSaveFile} saveHandlerRef={saveHandlerRef} fileRegistry={fileRegistry} isAtBottom={isAtBottom} setIsAtBottom={setIsAtBottom} reader={augmentedReader} /> ))}
+            </>
+          )}
         </>
       )}
 

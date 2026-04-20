@@ -6,12 +6,13 @@ export default function StickySpineStyles() {
         .sticky-spine {
           position: fixed;
           left: 0;
-          top: 70px;
-          bottom: 0;
+          top: 50%;
+          transform: translateY(-50%);
           z-index: 2000;
           width: 64px;
           background: transparent;
           cursor: default;
+          height: auto;
         }
 
         .acc-ope-container::before {
