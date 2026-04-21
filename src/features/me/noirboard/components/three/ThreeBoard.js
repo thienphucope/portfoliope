@@ -1,18 +1,19 @@
 'use client';
 
-import { Suspense, useMemo, useState, useEffect, useRef } from 'react';
-import { Canvas, useThree, useFrame } from '@react-three/fiber';
+import { Suspense, useMemo, useState, useEffect, useRef, useCallback } from 'react';
+import { Canvas, useThree } from '@react-three/fiber';
 import {
   OrbitControls,
   PerspectiveCamera,
   useTexture,
   Preload,
-  TransformControls,
 } from '@react-three/drei';
-import { useControls, button, folder, Leva } from 'leva';
+import { useControls, Leva } from 'leva';
 import * as THREE from 'three';
 import ThreeItem from './ThreeItem';
 import ThreeConnections from './ThreeConnections';
+import ThreeEditor from './ThreeEditor';
+import MinecraftControls from './parts/MinecraftControls';
 import Lighting from './parts/Lighting';
 import { useItems } from '../../hooks/useItems';
 import { getItemLayout } from '../../utils/seedLayout';
@@ -20,21 +21,6 @@ import { getItemLayout } from '../../utils/seedLayout';
 const CANVAS_W = 2500;
 const CANVAS_H = 1700;
 const SCALE_FACTOR = 0.01;
-
-function Room() {
-  return (
-    <group>
-      <mesh position={[0, 0, -10]}>
-        <planeGeometry args={[400, 400]} />
-        <meshStandardMaterial color="#050505" roughness={1} />
-      </mesh>
-      <mesh position={[0, -60, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[400, 400]} />
-        <meshStandardMaterial color="#020202" roughness={1} />
-      </mesh>
-    </group>
-  );
-}
 
 function BoardBackground() {
   const texture = useTexture('/mapimage.png');
@@ -47,19 +33,25 @@ function BoardBackground() {
   );
 }
 
-function Scene({ items, onUpdateItem, selectedId, setSelectedId, povConfig }) {
+function Scene({ items, onUpdateItem, selectedId, setSelectedId, povConfig, editMode, lightingConfig }) {
   const orbitRef = useRef();
   const { camera } = useThree();
-  const initialPovApplied = useRef(false);
+  const initialApplied = useRef(false);
 
+  // FORCE POV on startup and on config changes
   useEffect(() => {
-    if (povConfig && orbitRef.current && !initialPovApplied.current) {
-      camera.position.set(povConfig.position[0], povConfig.position[1], povConfig.position[2]);
-      orbitRef.current.target.set(povConfig.target[0], povConfig.target[1], povConfig.target[2]);
-      orbitRef.current.update();
-      initialPovApplied.current = true;
+    if (povConfig && !initialApplied.current) {
+      console.log('Force Applying POV:', povConfig);
+      camera.position.set(...povConfig.position);
+      if (editMode && orbitRef.current) {
+        orbitRef.current.target.set(...povConfig.target);
+        orbitRef.current.update();
+      } else {
+        camera.lookAt(...povConfig.target);
+      }
+      initialApplied.current = true;
     }
-  }, [povConfig, camera]);
+  }, [povConfig, camera, editMode]);
 
   const layouts = useMemo(() => {
     return items.reduce((acc, item, i) => {
@@ -69,17 +61,15 @@ function Scene({ items, onUpdateItem, selectedId, setSelectedId, povConfig }) {
         x: item.x !== undefined ? item.x : defaultLayout.x,
         y: item.y !== undefined ? item.y : defaultLayout.y,
         z: item.z !== undefined ? item.z : defaultLayout.z,
+        rotation: item.rotation !== undefined ? item.rotation : defaultLayout.rotation,
       };
       return acc;
     }, {});
   }, [items]);
 
-  const selectedItem = items.find(it => it.id === selectedId);
-
   return (
     <>
-      <Lighting />
-      <Room />
+      <Lighting editMode={editMode} config={lightingConfig} />
       <Suspense fallback={null}>
         <BoardBackground />
         {items.map(item => (
@@ -89,37 +79,25 @@ function Scene({ items, onUpdateItem, selectedId, setSelectedId, povConfig }) {
             layout={layouts[item.id]} 
             scaleFactor={SCALE_FACTOR}
             isSelected={selectedId === item.id}
-            onSelect={() => setSelectedId(item.id)}
+            onSelect={() => {
+              if (editMode) setSelectedId(item.id);
+            }}
           />
         ))}
       </Suspense>
 
-      {selectedId && selectedItem && (
-        <TransformControls 
-          position={[
-            (selectedItem.x - 1250) * SCALE_FACTOR,
-            -(selectedItem.y - 850) * SCALE_FACTOR,
-            selectedItem.z * 0.005 + 0.1
-          ]}
-          mode="translate"
-          onMouseDown={() => { if(orbitRef.current) orbitRef.current.enabled = false }}
-          onMouseUp={() => { if(orbitRef.current) orbitRef.current.enabled = true }}
-          onObjectChange={(e) => {
-            const target = e.target.object;
-            const newX = target.position.x / SCALE_FACTOR + 1250;
-            const newY = -target.position.y / SCALE_FACTOR + 850;
-            onUpdateItem(selectedId, { x: newX, y: newY });
-          }}
+      {editMode ? (
+        <OrbitControls
+          ref={orbitRef}
+          makeDefault
+          enableRotate={true}
+          enableDamping={true}
+          screenSpacePanning={true}
+          target={povConfig?.target || [0, 0, 0]}
         />
+      ) : (
+        <MinecraftControls enabled={!editMode} />
       )}
-
-      <OrbitControls
-        ref={orbitRef}
-        makeDefault
-        enableRotate={true}
-        enableDamping={true}
-        screenSpacePanning={true}
-      />
     </>
   );
 }
@@ -128,108 +106,67 @@ export default function ThreeBoard() {
   const { items: initialItems, config: initialConfig, loading } = useItems();
   const [localItems, setLocalItems] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
-  
-  // REAL-TIME POV SYNC: This ref is updated 60 times a second by CameraSync component
-  const livePovRef = useRef({ position: [0, 0, 15], target: [0, 0, 0] });
   const [boardConfig, setBoardConfig] = useState(null);
+  const [editMode, setEditMode] = useState(false);
+  
+  const livePovRef = useRef({ position: [0, 0, 15], target: [0, 0, 0] });
+
+  const [history, setHistory] = useState([]);
+  const [historyPointer, setHistoryPointer] = useState(-1);
+
+  const saveHistory = useCallback((items) => {
+    const newHistory = history.slice(0, historyPointer + 1);
+    newHistory.push(JSON.stringify(items));
+    if (newHistory.length > 50) newHistory.shift();
+    setHistory(newHistory);
+    setHistoryPointer(newHistory.length - 1);
+  }, [history, historyPointer]);
+
+  const undo = useCallback(() => {
+    if (historyPointer > 0) {
+      const prev = JSON.parse(history[historyPointer - 1]);
+      setLocalItems(prev);
+      setHistoryPointer(historyPointer - 1);
+    }
+  }, [history, historyPointer]);
+
+  const redo = useCallback(() => {
+    if (historyPointer < history.length - 1) {
+      const next = JSON.parse(history[historyPointer + 1]);
+      setLocalItems(next);
+      setHistoryPointer(historyPointer + 1);
+    }
+  }, [history, historyPointer]);
+
+  // Atmosphere controls
+  const [{ ambientIntensity, useFog }] = useControls(() => ({
+    'Atmosphere': {
+      value: { 
+        ambientIntensity: initialConfig?.atmosphere?.ambientIntensity ?? 0.1, 
+        useFog: initialConfig?.atmosphere?.useFog ?? false 
+      },
+      collapsed: true,
+      hidden: !editMode
+    }
+  }), [initialConfig, editMode]);
 
   useEffect(() => {
     if (!loading) {
-      setLocalItems(initialItems.map(it => ({
-        ...it,
-        x: it.x || 1250,
-        y: it.y || 850,
-        z: it.z || 10,
-        scale: it.scale || 1.0,
-        rotation: it.rotation || 0
-      })));
-      if (initialConfig?.pov) {
-        setBoardConfig(initialConfig);
-        livePovRef.current = initialConfig.pov;
-      }
+      setLocalItems(initialItems);
+      setBoardConfig(initialConfig);
+      if (initialConfig?.pov) livePovRef.current = initialConfig.pov;
+      setHistory([JSON.stringify(initialItems)]);
+      setHistoryPointer(0);
     }
   }, [loading, initialItems, initialConfig]);
 
-  const selectedItem = localItems.find(it => it.id === selectedId);
-
-  // Leva Controls
-  const [, set] = useControls(() => ({
-    'Actions': folder({
-      'Save Item Positions': button(() => handleSaveItems()),
-      'Save Board POV': button(() => handleSavePov()),
-      'Copy Current POV JSON': button(() => {
-        const json = JSON.stringify({ pov: livePovRef.current }, null, 2);
-        navigator.clipboard.writeText(json);
-        alert('POV JSON Copied to Clipboard!');
-      }),
-      'Import Items JSON': button(() => {
-        const input = prompt('Paste your items JSON array here:');
-        if (input) {
-          try {
-            const parsed = JSON.parse(input);
-            if (Array.isArray(parsed)) {
-              setLocalItems(prev => prev.map(item => {
-                const config = parsed.find(c => c.name === item.imageUrl?.split('/').pop());
-                return config ? { ...item, ...config } : item;
-              }));
-            }
-          } catch (e) { alert('Invalid JSON'); }
-        }
-      }),
-    }),
-    'Live POV Stats': folder({
-      'Cam Pos': { value: [0, 0, 15], editable: false },
-      'Target Pos': { value: [0, 0, 0], editable: false },
-    }),
-    'Selected Item': folder({
-      'Title': { value: selectedItem?.title || '', editable: false },
-      'X': {
-        value: selectedItem ? Math.round(selectedItem.x) : 0,
-        onChange: (v) => { if (selectedId) handleUpdateItem(selectedId, { x: v }) },
-        transient: false
-      },
-      'Y': {
-        value: selectedItem ? Math.round(selectedItem.y) : 0,
-        onChange: (v) => { if (selectedId) handleUpdateItem(selectedId, { y: v }) },
-        transient: false
-      },
-      'Z': {
-        value: selectedItem ? Math.round(selectedItem.z) : 0,
-        onChange: (v) => { if (selectedId) handleUpdateItem(selectedId, { z: v }) },
-        transient: false
-      },
-      'Scale': {
-        value: selectedItem?.scale || 1.0,
-        min: 0.1, max: 10, step: 0.1,
-        onChange: (v) => { if (selectedId) handleUpdateItem(selectedId, { scale: v }) },
-        transient: false
-      },
-      'Rotation': {
-        value: selectedItem?.rotation || 0,
-        min: -180, max: 180, step: 1,
-        onChange: (v) => { if (selectedId) handleUpdateItem(selectedId, { rotation: v }) },
-        transient: false
-      }
-    }, { render: () => !!selectedId })
-  }), [selectedId, localItems]);
-
-  // Sync Leva for selected item
-  useEffect(() => {
-    if (selectedItem) {
-      set({
-        'Title': selectedItem.title,
-        'X': Math.round(selectedItem.x),
-        'Y': Math.round(selectedItem.y),
-        'Z': Math.round(selectedItem.z),
-        'Scale': selectedItem.scale,
-        'Rotation': Math.round(selectedItem.rotation || 0)
-      });
-    }
-  }, [selectedId, selectedItem, set]);
-
-  const handleUpdateItem = (id, updates) => {
-    setLocalItems(prev => prev.map(it => it.id === id ? { ...it, ...updates } : it));
-  };
+  const handleUpdateItem = useCallback((id, updates, commitHistory = false) => {
+    setLocalItems(prev => {
+      const next = prev.map(it => it.id === id ? { ...it, ...updates } : it);
+      if (commitHistory) saveHistory(next);
+      return next;
+    });
+  }, [saveHistory]);
 
   const handleSaveItems = async () => {
     const itemsToSave = localItems.map(it => ({
@@ -249,98 +186,119 @@ export default function ThreeBoard() {
         body: JSON.stringify({ type: 'items', items: itemsToSave }),
       });
       const result = await response.json();
-      if (result.success) alert('Items saved successfully!');
-      else alert('Save failed: ' + result.error);
-    } catch (e) {
-      alert('Error saving items.');
-    }
+      if (result.success) alert('Items saved!');
+    } catch (e) { alert('Save error'); }
   };
 
   const handleSavePov = async () => {
-    const payload = { type: 'pov', config: { pov: livePovRef.current } };
-    console.log('Saving POV:', payload);
+    const povToSave = {
+      position: [...livePovRef.current.position],
+      target: [...livePovRef.current.target]
+    };
+    
     try {
       const response = await fetch('/api/noir/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ 
+          type: 'config', 
+          config: { 
+            pov: povToSave,
+            atmosphere: { ambientIntensity, useFog }
+          } 
+        }),
       });
       const result = await response.json();
-      if (result.success) alert('Board POV saved successfully!');
-      else alert('Save failed: ' + result.error);
-    } catch (e) {
-      alert('Error saving POV.');
-    }
+      if (result.success) {
+        alert('Board POV saved successfully!');
+        setBoardConfig(prev => ({ ...prev, pov: povToSave }));
+      }
+    } catch (e) { alert('Save error'); }
   };
 
-  const defaultPos = boardConfig?.pov?.position || [0, 0, 15];
+  // Ensure camera starts at saved position before children render
+  const defaultPos = initialConfig?.pov?.position || [0, 0, 15];
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 1, background: '#000' }}>
-      <Leva theme={{
-        colors: {
-          accent1: '#d4920f',
-          accent2: '#a37010',
-          accent3: '#1a0f00',
-        }
-      }} />
+      {!editMode && (
+        <div style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 1000, color: 'rgba(255,255,255,0.5)', fontSize: '10px', pointerEvents: 'none' }}>
+          CLICK TO MOVE (WASD + SPACE/SHIFT) • ESC TO UNLOCK
+        </div>
+      )}
+
+      <div style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 1000, display: 'flex', gap: '10px' }}>
+        {editMode && (
+          <>
+            <button onClick={undo} disabled={historyPointer <= 0} style={{ background: '#222', color: '#fff', border: '1px solid #444', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', opacity: historyPointer <= 0 ? 0.5 : 1 }}>UNDO</button>
+            <button onClick={redo} disabled={historyPointer >= history.length - 1} style={{ background: '#222', color: '#fff', border: '1px solid #444', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', opacity: historyPointer >= history.length - 1 ? 0.5 : 1 }}>REDO</button>
+          </>
+        )}
+      </div>
+
+      <button 
+        onClick={() => {
+          setEditMode(!editMode);
+          if (editMode) setSelectedId(null);
+        }}
+        style={{
+          position: 'absolute',
+          bottom: '20px',
+          right: '20px',
+          zIndex: 1000,
+          background: editMode ? '#d4920f' : 'transparent',
+          color: '#fff',
+          border: '1px solid rgba(255,255,255,0.3)',
+          padding: '5px 12px',
+          fontSize: '11px',
+          borderRadius: '20px',
+          cursor: 'pointer',
+          fontWeight: 'bold',
+          transition: 'all 0.2s ease'
+        }}
+      >
+        {editMode ? 'EXIT' : 'EDIT'}
+      </button>
+
+      <Leva 
+        hidden={!editMode}
+        theme={{ colors: { accent1: '#d4920f' } }} 
+      />
+
       <Canvas 
         shadows={{ type: THREE.PCFSoftShadowMap }}
         dpr={[1, 3]} 
         gl={{ antialias: true, alpha: true, precision: 'highp', toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 0.65 }}
-        onPointerMissed={() => setSelectedId(null)}
+        onPointerMissed={() => editMode && setSelectedId(null)}
       >
+        {/* Pass initialConfig specifically for startup position */}
         <PerspectiveCamera makeDefault position={defaultPos} fov={40} />
-        <CameraSync setLeva={set} povRef={livePovRef} />
+        
         {!loading && (
-          <Scene 
-            items={localItems} 
-            onUpdateItem={handleUpdateItem} 
-            selectedId={selectedId} 
-            setSelectedId={setSelectedId}
-            povConfig={boardConfig?.pov}
-          />
+          <>
+            <Scene 
+              items={localItems} 
+              onUpdateItem={handleUpdateItem} 
+              selectedId={selectedId} 
+              setSelectedId={setSelectedId}
+              povConfig={boardConfig?.pov}
+              editMode={editMode}
+              lightingConfig={{ ambientIntensity, useFog }}
+            />
+            <ThreeEditor 
+              editMode={editMode}
+              items={localItems}
+              onUpdateItem={handleUpdateItem}
+              selectedId={selectedId}
+              setSelectedId={setSelectedId}
+              povRef={livePovRef}
+              onSaveItems={handleSaveItems}
+              onSavePov={handleSavePov}
+            />
+          </>
         )}
         <Preload all />
       </Canvas>
     </div>
   );
-}
-
-/**
- * Robustly syncs Three.js state to Leva and a local Ref for instant saving.
- */
-function CameraSync({ setLeva, povRef }) {
-  const { camera, controls } = useThree();
-  const lastUpdate = useRef(0);
-
-  useFrame((state) => {
-    if (!controls) return;
-
-    // 1. Update the mutable POV Ref (Always exact, no throttling here for accuracy)
-    povRef.current = {
-      position: [camera.position.x, camera.position.y, camera.position.z],
-      target: [controls.target.x, controls.target.y, controls.target.z]
-    };
-
-    // 2. Throttle Leva UI updates to avoid lag
-    const now = state.clock.getElapsedTime();
-    if (now - lastUpdate.current < 0.1) return; // 10 FPS for UI is enough
-    lastUpdate.current = now;
-
-    setLeva({
-      'Cam Pos': [
-        parseFloat(camera.position.x.toFixed(2)),
-        parseFloat(camera.position.y.toFixed(2)),
-        parseFloat(camera.position.z.toFixed(2))
-      ],
-      'Target Pos': [
-        parseFloat(controls.target.x.toFixed(2)),
-        parseFloat(controls.target.y.toFixed(2)),
-        parseFloat(controls.target.z.toFixed(2))
-      ]
-    });
-  });
-
-  return null;
 }

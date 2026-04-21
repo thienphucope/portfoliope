@@ -5,38 +5,41 @@ import { useThree } from '@react-three/fiber';
 import { useHelper, Environment, ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
 
-export default function Lighting() {
+export default function Lighting({ editMode = false, config = {} }) {
   const lampRef = useRef();
   const windowRef = useRef();
   const rimLeftRef = useRef();
   const rimRightRef = useRef();
   const { scene } = useThree();
   
-  useHelper(lampRef, THREE.SpotLightHelper, 'gold');
-  useHelper(windowRef, THREE.SpotLightHelper, 'cyan');
-  useHelper(rimLeftRef, THREE.SpotLightHelper, 'white');
-  useHelper(rimRightRef, THREE.SpotLightHelper, 'blue');
+  // Helpers only show if editMode is true
+  useHelper(editMode && lampRef, THREE.SpotLightHelper, 'gold');
+  useHelper(editMode && windowRef, THREE.SpotLightHelper, 'cyan');
+  useHelper(editMode && rimLeftRef, THREE.SpotLightHelper, 'white');
+  useHelper(editMode && rimRightRef, THREE.SpotLightHelper, 'blue');
 
   useEffect(() => {
-    if (lampRef.current && lampRef.current.shadow) {
+    if (editMode && lampRef.current && lampRef.current.shadow) {
       const helper = new THREE.CameraHelper(lampRef.current.shadow.camera);
       scene.add(helper);
       return () => scene.remove(helper);
     }
-  }, [scene]);
+  }, [scene, editMode]);
 
   return (
     <>
       <color attach="background" args={['#000000']} />
-      <ambientLight intensity={0.1} color="#ffffff" />
+      <ambientLight intensity={config.ambientIntensity ?? 0.1} color="#ffffff" />
+      
+      {config.useFog && <fog attach="fog" args={['#000', 10, 30]} />}
 
       {/* Dominant Left Lamp */}
       <spotLight 
         ref={lampRef}
-        position={[-10, 5, 5]} 
+        position={config.lampPos || [-10, 5, 5]} 
         angle={0.8}
         penumbra={1}
-        intensity={1000} 
+        intensity={config.lampIntensity ?? 1000} 
         decay={2}
         color="#ecc798" 
         castShadow 
@@ -47,19 +50,19 @@ export default function Lighting() {
         <orthographicCamera attach="shadow-camera" args={[-15, 15, 15, -15, 0.1, 50]} />
       </spotLight>
 
-      {/* Ambient Right Window (Subtle Fill) */}
+      {/* Ambient Right Window */}
       <spotLight 
         ref={windowRef}
-        position={[20, 0, 5]} 
+        position={config.windowPos || [20, 0, 5]} 
         angle={0.6}
         penumbra={1}
-        intensity={1000} 
+        intensity={config.windowIntensity ?? 1000} 
         decay={2}
         color="#80a0ff" 
         castShadow={false}
       />
 
-      {/* RIM LIGHT (Back Light) - Positioned behind/beside items to catch the curl */}
+      {/* RIM LIGHTS */}
       <spotLight 
         ref={rimLeftRef}
         position={[0, 0, -10]} 

@@ -1,0 +1,82 @@
+{
+  "items": [
+    {
+      "name": "amechrist.png",
+      "title": "Ame Christ",
+      "scale": 2,
+      "rotation": 0,
+      "x": 1149,
+      "y": 911,
+      "z": 30
+    },
+    {
+      "name": "amelia.webp",
+      "title": "Amelia",
+      "scale": 1,
+      "rotation": 0,
+      "x": 1510,
+      "y": 589,
+      "z": 1
+    },
+    {
+      "name": "channels4_profile.jpg",
+      "title": "Profile",
+      "scale": 1,
+      "rotation": 0,
+      "x": 860,
+      "y": 888,
+      "z": 1
+    },
+    {
+      "name": "holmesdead.avif",
+      "title": "Holmes",
+      "scale": 2,
+      "rotation": 0,
+      "x": 837,
+      "y": 684,
+      "z": 4
+    },
+    {
+      "name": "news.png",
+      "title": "News",
+      "scale": 5,
+      "rotation": 0,
+      "x": 1203,
+      "y": 671,
+      "z": 1
+    },
+    {
+      "name": "smallope.jpg",
+      "title": "Small Ope",
+      "scale": 1,
+      "rotation": 0,
+      "x": 971,
+      "y": 878,
+      "z": 50
+    },
+    {
+      "name": "thinkingwatson.webp",
+      "title": "Thinking Watson",
+      "scale": 1,
+      "rotation": 0,
+      "x": 1515,
+      "y": 700,
+      "z": 1
+    }
+  ],
+  "config": {
+    "pov": {
+      "position": [
+        -0.21553133204897057,
+        3.4443874543033326,
+        7.345392896620718
+      ],
+      "target": [
+        -0.5443400396363227,
+        1.3314103892095017,
+        -0.10071714714720911
+      ]
+    },
+    "atmosphere": {}
+  }
+}

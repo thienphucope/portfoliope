@@ -5,32 +5,31 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   try {
     const displayDir = join(process.cwd(), 'public', 'display');
-    const itemsPath = join(process.cwd(), 'src', 'features', 'me', 'noirboard', 'utils', 'items.json');
-    const configPath = join(process.cwd(), 'src', 'features', 'me', 'noirboard', 'utils', 'boardConfig.json');
+    const dataPath = join(process.cwd(), 'src', 'features', 'me', 'noirboard', 'utils', 'boardData.json');
     
+    // 1. Scan directory for images
     const files = await readdir(displayDir);
     const imageFiles = files.filter(f => /\.(png|jpe?g|webp|avif)$/i.test(f));
     
-    let savedItems = [];
+    // 2. Read single data file
+    let boardData = { items: [], config: {} };
     try {
-      const itemsContent = await readFile(itemsPath, 'utf8');
-      savedItems = JSON.parse(itemsContent);
-    } catch (e) {}
-
-    let config = { pov: { position: [0, 0, 15], target: [0, 0, 0] } };
-    try {
-      const configContent = await readFile(configPath, 'utf8');
-      config = JSON.parse(configContent);
-    } catch (e) {}
+      const content = await readFile(dataPath, 'utf8');
+      boardData = JSON.parse(content);
+    } catch (e) {
+      console.warn('Could not read boardData.json, using defaults');
+    }
     
+    // 3. Merge images with saved data
     const mergedItems = imageFiles.map((fileName, i) => {
-      const saved = savedItems.find(it => it.name === fileName);
+      const saved = boardData.items?.find(it => it.name === fileName);
       return {
         id: `po-display-${fileName}`,
         type: 'polaroid',
         imageUrl: `/display/${fileName}`,
         title: saved?.title || fileName.split('.')[0],
         scale: saved?.scale ?? 1.0,
+        rotation: saved?.rotation ?? 0,
         x: saved?.x ?? 1250,
         y: saved?.y ?? 850,
         z: saved?.z ?? (i + 1)
@@ -39,7 +38,7 @@ export async function GET() {
     
     return NextResponse.json({ 
       items: mergedItems, 
-      config: config,
+      config: boardData.config || {},
       connections: [] 
     });
   } catch (error) {

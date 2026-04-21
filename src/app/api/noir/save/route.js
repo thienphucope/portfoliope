@@ -1,41 +1,35 @@
-import { writeFile } from 'fs/promises';
+import { readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
-    const body = await request.json();
-    const { items, config, type } = body;
+    const { type, items, config } = await request.json();
+    const dataPath = join(process.cwd(), 'src', 'features', 'me', 'noirboard', 'utils', 'boardData.json');
     
-    console.log(`API save request type: ${type}`);
+    // 1. Read existing data
+    let currentData = { items: [], config: {} };
+    try {
+      const content = await readFile(dataPath, 'utf8');
+      currentData = JSON.parse(content);
+    } catch (e) {}
 
-    if (type === 'items' && items) {
-      const itemsPath = join(process.cwd(), 'src', 'features', 'me', 'noirboard', 'utils', 'items.json');
-      await writeFile(itemsPath, JSON.stringify(items, null, 2), 'utf8');
-      console.log('Successfully wrote items.json');
-      return NextResponse.json({ success: true, message: 'Items saved' });
+    // 2. Patch data based on type
+    if (type === 'items') {
+      currentData.items = items;
+    } else if (type === 'pov' || type === 'config') {
+      currentData.config = { ...currentData.config, ...config };
+    } else {
+      // Full save fallback
+      if (items) currentData.items = items;
+      if (config) currentData.config = { ...currentData.config, ...config };
     }
 
-    if (type === 'pov' && config && config.pov) {
-      const configPath = join(process.cwd(), 'src', 'features', 'me', 'noirboard', 'utils', 'boardConfig.json');
-      await writeFile(configPath, JSON.stringify(config, null, 2), 'utf8');
-      console.log('Successfully wrote boardConfig.json');
-      return NextResponse.json({ success: true, message: 'POV saved' });
-    }
+    // 3. Write back
+    await writeFile(dataPath, JSON.stringify(currentData, null, 2), 'utf8');
     
-    // Fallback for old style full save
-    if (items) {
-      const itemsPath = join(process.cwd(), 'src', 'features', 'me', 'noirboard', 'utils', 'items.json');
-      await writeFile(itemsPath, JSON.stringify(items, null, 2), 'utf8');
-    }
-    if (config && config.pov) {
-      const configPath = join(process.cwd(), 'src', 'features', 'me', 'noirboard', 'utils', 'boardConfig.json');
-      await writeFile(configPath, JSON.stringify(config, null, 2), 'utf8');
-    }
-
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Save error details:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
