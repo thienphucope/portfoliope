@@ -12,13 +12,13 @@ export default function RootPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       router.push('/me');
-    }, 2000);
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [router]);
 
   return (
-    <div className="fixed inset-0 bg-black flex flex-col justify-center items-center z-[100]">
+    <div className="fixed inset-0 bg-[var(--colorone)] flex flex-col justify-center items-center z-[100]">
       {fingerprints}
       <ChevronDown className="text-white w-8 h-8 animate-bounce mb-0" />
       <Link href="/project/casearchives" passHref>
