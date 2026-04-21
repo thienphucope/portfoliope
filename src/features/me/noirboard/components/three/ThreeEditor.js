@@ -1,26 +1,39 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
 import { TransformControls } from '@react-three/drei';
 import { useControls, button, folder } from 'leva';
 
 const SCALE_FACTOR = 0.01;
 
-export default function ThreeEditor({ 
-  editMode, 
-  items, 
-  onUpdateItem, 
-  selectedId, 
-  setSelectedId, 
-  povRef, 
-  onSaveItems, 
-  onSavePov 
+export default function ThreeEditor({
+  editMode,
+  items,
+  onUpdateItem,
+  selectedId,
+  setSelectedId,
+  povRef,
+  onSaveItems,
+  onSavePov
 }) {
-  const { camera, controls } = useThree();
+  const { camera, controls, scene } = useThree();
   const lastUpdate = useRef(0);
+  const isSetting = useRef(false);
 
   const selectedItem = items.find(it => it.id === selectedId);
+
+  // Find the actual 3D object in the scene to attach TransformControls
+  const selectedObject = useMemo(() => {
+    if (!selectedId) return null;
+    let found = null;
+    scene.traverse(obj => {
+      if (obj.userData?.itemId === selectedId) {
+        found = obj;
+      }
+    });
+    return found;
+  }, [scene, selectedId]);
 
   const [, set] = useControls(() => ({
     'Editor': folder({
@@ -40,55 +53,77 @@ export default function ThreeEditor({
       'Title': { value: selectedItem?.title || '', editable: false },
       'X': {
         value: selectedItem ? Math.round(selectedItem.x) : 0,
-        onChange: (v) => { if (selectedId && editMode) onUpdateItem(selectedId, { x: v }) },
+        onChange: (v) => { 
+          if (!isSetting.current && selectedId && editMode) {
+            onUpdateItem(selectedId, { x: v });
+          }
+        },
         onEditEnd: () => { if (selectedId && editMode) onUpdateItem(selectedId, {}, true) },
         transient: false
       },
       'Y': {
         value: selectedItem ? Math.round(selectedItem.y) : 0,
-        onChange: (v) => { if (selectedId && editMode) onUpdateItem(selectedId, { y: v }) },
+        onChange: (v) => { 
+          if (!isSetting.current && selectedId && editMode) {
+            onUpdateItem(selectedId, { y: v });
+          }
+        },
         onEditEnd: () => { if (selectedId && editMode) onUpdateItem(selectedId, {}, true) },
         transient: false
       },
       'Z': {
         value: selectedItem ? Math.round(selectedItem.z) : 0,
-        onChange: (v) => { if (selectedId && editMode) onUpdateItem(selectedId, { z: v }) },
+        onChange: (v) => { 
+          if (!isSetting.current && selectedId && editMode) {
+            onUpdateItem(selectedId, { z: v });
+          }
+        },
         onEditEnd: () => { if (selectedId && editMode) onUpdateItem(selectedId, {}, true) },
         transient: false
       },
       'Scale': {
         value: selectedItem?.scale || 1.0,
         min: 0.1, max: 10, step: 0.1,
-        onChange: (v) => { if (selectedId && editMode) onUpdateItem(selectedId, { scale: v }) },
+        onChange: (v) => { 
+          if (!isSetting.current && selectedId && editMode) {
+            onUpdateItem(selectedId, { scale: v });
+          }
+        },
         onEditEnd: () => { if (selectedId && editMode) onUpdateItem(selectedId, {}, true) },
         transient: false
       },
       'Rotation': {
         value: selectedItem?.rotation || 0,
         min: -180, max: 180, step: 1,
-        onChange: (v) => { if (selectedId && editMode) onUpdateItem(selectedId, { rotation: v }) },
+        onChange: (v) => { 
+          if (!isSetting.current && selectedId && editMode) {
+            onUpdateItem(selectedId, { rotation: v });
+          }
+        },
         onEditEnd: () => { if (selectedId && editMode) onUpdateItem(selectedId, {}, true) },
         transient: false
       }
     }, { render: () => !!selectedId && editMode })
-  }), [selectedId, editMode]); // Dependencies simplified to avoid re-creation loops
+  }), [selectedId, editMode]);
 
-  // Sync Leva for selection
+  // Sync Leva when selection changes
   useEffect(() => {
     if (selectedItem && editMode) {
+      isSetting.current = true;
       set({
         'Title': selectedItem.title,
         'X': Math.round(selectedItem.x),
-        'Y': Math.round(selectedId === selectedItem.id ? selectedItem.y : 0), // Simple check to trigger update
         'Y': Math.round(selectedItem.y),
         'Z': Math.round(selectedItem.z),
         'Scale': selectedItem.scale,
         'Rotation': Math.round(selectedItem.rotation || 0)
       });
+      // Small timeout to ensure Leva internal state is updated before allowing onChange again
+      setTimeout(() => { isSetting.current = false; }, 10);
     }
   }, [selectedId, selectedItem, set, editMode]);
 
-  // Live Sync POV to Leva
+  // Sync Camera POV to Leva and Ref
   useFrame((state) => {
     if (!controls) return;
 
@@ -121,13 +156,9 @@ export default function ThreeEditor({
 
   return (
     <>
-      {selectedId && selectedItem && (
+      {selectedId && selectedItem && selectedObject && (
         <TransformControls 
-          position={[
-            (selectedItem.x - 1250) * SCALE_FACTOR,
-            -(selectedItem.y - 850) * SCALE_FACTOR,
-            selectedItem.z * 0.005 + 0.1
-          ]}
+          object={selectedObject}
           mode="translate"
           onMouseDown={() => { if(controls) controls.enabled = false }}
           onMouseUp={() => { 
@@ -135,10 +166,11 @@ export default function ThreeEditor({
             onUpdateItem(selectedId, {}, true); // Commit history on drag end
           }}
           onObjectChange={(e) => {
+            if (isSetting.current) return;
             const target = e.target.object;
             const newX = target.position.x / SCALE_FACTOR + 1250;
             const newY = -target.position.y / SCALE_FACTOR + 850;
-            onUpdateItem(selectedId, { x: newX, y: newY }, false); // Real-time update, no history commit yet
+            onUpdateItem(selectedId, { x: newX, y: newY }, false); 
           }}
         />
       )}

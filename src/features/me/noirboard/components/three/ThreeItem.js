@@ -99,6 +99,8 @@ function BaseThreeItem({ item, layout, scaleFactor, size, isSelected, isHovered,
         e.stopPropagation();
         if (isHovered) {
           router.push('/project/casearchives');
+        } else if (onSelect) {
+          onSelect();
         }
       }}
     >
@@ -130,7 +132,7 @@ function BaseThreeItem({ item, layout, scaleFactor, size, isSelected, isHovered,
 
       {/* Selection Highlight */}
       {isSelected && (
-        <mesh position={[0, 0, -0.01]}>
+        <mesh position={[0, 0, -0.005]}>
           <planeGeometry args={[size[0] + 0.1, size[1] + 0.1]} />
           <meshBasicMaterial color="#00ff00" transparent opacity={0.3} />
         </mesh>
