@@ -9,9 +9,9 @@ const DISCUSSION_PHRASES = [
   'connect?'
 ];
 
-const NoteFeedItem = ({ file, content, onLinkClick, fileRegistry, reader }) => {
+const NoteFeedItem = React.forwardRef(({ file, content, onLinkClick, fileRegistry, reader }, ref) => {
   return (
-    <div className="note-feed-item" style={{
+    <div ref={ref} className="note-feed-item" style={{
       marginBottom: '8rem',
       width: '100%',
       maxWidth: '550px',
@@ -30,20 +30,25 @@ const NoteFeedItem = ({ file, content, onLinkClick, fileRegistry, reader }) => {
       />
     </div>
   );
-};
+});
 
-export default function NoteFeed({ 
-  allFiles, 
-  fileRegistry, 
-  fullContentCache, 
-  onLinkClick, 
+NoteFeedItem.displayName = 'NoteFeedItem';
+
+export default function NoteFeed({
+  allFiles,
+  fileRegistry,
+  fullContentCache,
+  onLinkClick,
   reader,
   upsertCacheEntry
 }) {
   const [displayedFiles, setDisplayedFiles] = useState([]);
   const [remainingFiles, setRemainingFiles] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [currentFileIndex, setCurrentFileIndex] = useState(0);
+  const [showBookmark, setShowBookmark] = useState(false);
   const scrollRef = useRef(null);
+  const fileRefs = useRef({});
 
   // Initialize remaining files and shuffle them
   useEffect(() => {
@@ -92,13 +97,55 @@ export default function NoteFeed({
     }
   }, [remainingFiles, displayedFiles, loadMore]);
 
+  const allFilesInOrder = useMemo(() => [...displayedFiles, ...remainingFiles], [displayedFiles, remainingFiles]);
+
+  const pendingScrollTarget = useRef(null);
+
+  // After each load, check if pending scroll target is now available
+  useEffect(() => {
+    const targetId = pendingScrollTarget.current;
+    if (!targetId) return;
+    const ref = fileRefs.current[targetId];
+    if (ref && scrollRef.current) {
+      // Found - scroll to it
+      pendingScrollTarget.current = null;
+      setTimeout(() => {
+        const r = fileRefs.current[targetId];
+        if (r && scrollRef.current) {
+          const rect = r.getBoundingClientRect();
+          scrollRef.current.scrollBy({ top: rect.top - 16, behavior: 'smooth' });
+        }
+      }, 50);
+    } else if (!loading) {
+      // Not loaded yet - keep loading
+      loadMore();
+    }
+  }, [displayedFiles, loading, loadMore]);
+
   const onScroll = useCallback((e) => {
     const element = e.target;
     const { scrollTop, scrollHeight, clientHeight } = element;
     if (scrollHeight - scrollTop <= clientHeight + 1000) {
       loadMore();
     }
-  }, [loadMore]);
+
+    // Show bookmark once user scrolls past intro
+    if (scrollTop > clientHeight * 0.8) {
+      setShowBookmark(true);
+    }
+
+    // Track current file: last note whose top is above viewport top
+    let found = 0;
+    for (let i = 0; i < displayedFiles.length; i++) {
+      const ref = fileRefs.current[displayedFiles[i].id];
+      if (ref) {
+        const top = ref.getBoundingClientRect().top;
+        if (top <= 80) found = i;
+        else break;
+      }
+    }
+    setCurrentFileIndex(found);
+  }, [loadMore, displayedFiles]);
 
   useEffect(() => {
     const container = scrollRef.current;
@@ -124,6 +171,62 @@ export default function NoteFeed({
         width: '100vw'
       }}
     >
+      {showBookmark && displayedFiles.length > 0 && (() => {
+        const startIdx = Math.max(0, currentFileIndex - 2);
+        const visibleFiles = allFilesInOrder.slice(startIdx, currentFileIndex + 3);
+        const posInSlice = currentFileIndex - startIdx;
+        return (
+          <div className="bookmark-wheel" style={{
+            position: 'fixed',
+            left: 'calc((100vw - 550px) / 4)',
+            top: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 50,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '10px',
+            pointerEvents: 'none',
+            alignItems: 'flex-start'
+          }}>
+            {visibleFiles.map((file, idx) => {
+              const isCurrentFile = idx === posInSlice;
+              const isLoaded = !!fileRefs.current[file.id];
+              return (
+                <div
+                  key={file.id}
+                  onClick={() => {
+                    if (!scrollRef.current) return;
+                    if (isLoaded) {
+                      const ref = fileRefs.current[file.id];
+                      const rect = ref.getBoundingClientRect();
+                      scrollRef.current.scrollBy({ top: rect.top - 16, behavior: 'smooth' });
+                    } else {
+                      pendingScrollTarget.current = file.id;
+                      loadMore();
+                    }
+                  }}
+                  style={{
+                    fontSize: '11px',
+                    padding: '4px 0',
+                    whiteSpace: 'nowrap',
+                    fontWeight: isCurrentFile ? '600' : '400',
+                    color: 'var(--colorone)',
+                    transition: 'all 0.3s ease',
+                    cursor: isLoaded ? 'pointer' : 'default',
+                    textAlign: 'center',
+                    pointerEvents: 'auto',
+                    opacity: isCurrentFile ? 1 : 0.5
+                  }}
+                  title={file.id}
+                >
+                  {file.id.split('/').pop().replace(/\.md$/, '')}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
+
       <div className="note-feed-content" style={{
         maxWidth: '100%',
         display: 'flex',
@@ -165,6 +268,9 @@ export default function NoteFeed({
         {displayedFiles.map((file, idx) => (
           <React.Fragment key={`${file.id}-${idx}`}>
             <NoteFeedItem
+              ref={(el) => {
+                if (el) fileRefs.current[file.id] = el;
+              }}
               file={file}
               content={file.content}
               onLinkClick={onLinkClick}
@@ -200,6 +306,14 @@ export default function NoteFeed({
         }
         .note-feed-container::-webkit-scrollbar {
           display: none;
+        }
+        .bookmark-wheel {
+          display: flex;
+        }
+        @media (max-width: 768px) {
+          .bookmark-wheel {
+            display: none !important;
+          }
         }
         .intro-card {
           transform: translateY(0) scale(1);
