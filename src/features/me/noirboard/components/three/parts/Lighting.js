@@ -28,7 +28,7 @@ export default function Lighting() {
   return (
     <>
       <color attach="background" args={['#000000']} />
-      <ambientLight intensity={0.06} color="#ffffff" />
+      <ambientLight intensity={0.1} color="#ffffff" />
 
       {/* Dominant Left Lamp */}
       <spotLight 
@@ -36,9 +36,9 @@ export default function Lighting() {
         position={[-10, 5, 5]} 
         angle={0.8}
         penumbra={1}
-        intensity={3200} 
+        intensity={1000} 
         decay={2}
-        color="#ffcc88" 
+        color="#ecc798" 
         castShadow 
         shadow-mapSize={[2048, 2048]}
         shadow-bias={-0.0001}
@@ -53,7 +53,7 @@ export default function Lighting() {
         position={[20, 0, 5]} 
         angle={0.6}
         penumbra={1}
-        intensity={4500} 
+        intensity={1000} 
         decay={2}
         color="#80a0ff" 
         castShadow={false}

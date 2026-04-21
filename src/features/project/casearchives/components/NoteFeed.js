@@ -130,6 +130,38 @@ export default function NoteFeed({
         flexDirection: 'column',
         alignItems: 'center'
       }}>
+        <div style={{
+          height: '100dvh',
+          width: '100%',
+          maxWidth: '550px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <div
+            onClick={() => {
+              scrollRef.current?.scrollBy({ top: window.innerHeight, behavior: 'smooth' });
+            }}
+            className="intro-card"
+            style={{
+              backgroundColor: 'var(--colorone)',
+              borderRadius: '999px',
+              padding: '2rem 2.5rem',
+              cursor: 'pointer',
+              textAlign: 'center',
+              width: '100%',
+              transition: 'all 0.3s ease'
+            }}>
+            <h1 className="intro-title" style={{
+              fontSize: '3rem',
+              fontWeight: '700',
+              color: '#000',
+              margin: 0,
+              lineHeight: '1.2'
+            }}>Understand me?</h1>
+          </div>
+        </div>
         {displayedFiles.map((file, idx) => (
           <React.Fragment key={`${file.id}-${idx}`}>
             <NoteFeedItem
@@ -168,6 +200,22 @@ export default function NoteFeed({
         }
         .note-feed-container::-webkit-scrollbar {
           display: none;
+        }
+        .intro-card {
+          transform: translateY(0) scale(1);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .intro-card:hover {
+          transform: translateY(-0.5rem) scale(1.02);
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+        }
+        .intro-title {
+          white-space: nowrap;
+        }
+        @media (max-width: 480px) {
+          .intro-title {
+            font-size: 1.75rem !important;
+          }
         }
       `}</style>
     </div>

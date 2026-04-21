@@ -45,6 +45,7 @@
     "edge-tts-node": "^1.5.7",
     "gsap": "^3.13.0",
     "howler": "^2.2.4",
+    "leva": "^0.10.1",
     "lucide-react": "^0.555.0",
     "marked": "^16.4.1",
     "msedge-tts": "^2.0.4",

@@ -12,7 +12,7 @@ import NewspaperContent from './parts/NewspaperContent';
  * Base component for all 3D items on the board.
  * Handles positioning, physics-based curling geometry, and the nail.
  */
-function BaseThreeItem({ item, layout, scaleFactor, size }) {
+function BaseThreeItem({ item, layout, scaleFactor, size, isSelected, onSelect }) {
   const { x, y, rotation, z } = layout;
   
   // Centering offsets for 2500x1700 resolution
@@ -89,7 +89,22 @@ function BaseThreeItem({ item, layout, scaleFactor, size }) {
     : (item.type === 'newspaper' ? '#ede4c8' : '#f2ece0');
 
   return (
-    <group position={pos} rotation={[physics.tiltX, physics.tiltY, THREE.MathUtils.degToRad(-rotation)]}>
+    <group 
+      position={pos} 
+      rotation={[physics.tiltX, physics.tiltY, THREE.MathUtils.degToRad(-rotation)]}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect && onSelect();
+      }}
+    >
+      {/* Selection Highlight */}
+      {isSelected && (
+        <mesh position={[0, 0, -0.01]}>
+          <planeGeometry args={[size[0] + 0.1, size[1] + 0.1]} />
+          <meshBasicMaterial color="#00ff00" transparent opacity={0.3} />
+        </mesh>
+      )}
+
       {/* Paper Body: Matched to Board Background properties */}
       <mesh castShadow receiveShadow geometry={geometry}>
         <meshStandardMaterial 
@@ -129,24 +144,25 @@ function BaseThreeItem({ item, layout, scaleFactor, size }) {
  * Specialized component for Polaroid items to handle texture loading and dynamic sizing.
  */
 function PolaroidItem(props) {
-  const { item } = props;
+  const { item, isSelected, onSelect } = props;
   const polaroidTexture = useTexture(item.imageUrl || '/placeholder.jpg');
 
   const size = useMemo(() => {
+    const s = item.scale || 1.0;
     if (polaroidTexture?.image) {
       const imgW = polaroidTexture.image.width;
       const imgH = polaroidTexture.image.height;
       const aspect = imgW / imgH;
       
-      const targetW = 0.9; // Fixed width
+      const targetW = 0.9 * s; // Fixed width scaled
       const photoH = targetW / aspect;
-      const padding = 0.1; // Uniform padding for all sides
+      const padding = 0.1 * s; // Scale padding
       return [targetW + padding, photoH + padding];
     }
-    return SIZES.polaroid;
-  }, [polaroidTexture]);
+    return [SIZES.polaroid[0] * s, SIZES.polaroid[1] * s];
+  }, [polaroidTexture, item.scale]);
 
-  return <BaseThreeItem {...props} size={size} />;
+  return <BaseThreeItem {...props} size={size} isSelected={isSelected} onSelect={onSelect} />;
 }
 
 /**
@@ -154,12 +170,14 @@ function PolaroidItem(props) {
  * Resolves the conditional hook issue by splitting into sub-components.
  */
 export default function ThreeItem(props) {
-  const { item } = props;
+  const { item, isSelected, onSelect } = props;
 
   if (item.type === 'polaroid') {
     return <PolaroidItem {...props} />;
   }
 
-  const size = SIZES[item.type] || [0.87, 0.87];
-  return <BaseThreeItem {...props} size={size} />;
+  const baseSize = SIZES[item.type] || [0.87, 0.87];
+  const s = item.scale || 1.0;
+  const size = [baseSize[0] * s, baseSize[1] * s];
+  return <BaseThreeItem {...props} size={size} isSelected={isSelected} onSelect={onSelect} />;
 }
