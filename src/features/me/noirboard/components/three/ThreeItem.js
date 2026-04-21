@@ -107,8 +107,8 @@ function BaseThreeItem({ item, layout, scaleFactor, size, isSelected, onSelect }
 
       {/* Paper Body: Matched to Board Background properties */}
       <mesh castShadow receiveShadow geometry={geometry}>
-        <meshStandardMaterial 
-          color={bgColor} 
+        <meshStandardMaterial
+          color={bgColor}
           roughness={1}
           metalness={0}
           side={THREE.DoubleSide}

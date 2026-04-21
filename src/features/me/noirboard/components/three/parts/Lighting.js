@@ -63,7 +63,7 @@ export default function Lighting({ editMode = false, config = {} }) {
       />
 
       {/* RIM LIGHTS */}
-      <spotLight 
+      {/* <spotLight 
         ref={rimLeftRef}
         position={[0, 0, -10]} 
         angle={0.9}
@@ -73,7 +73,7 @@ export default function Lighting({ editMode = false, config = {} }) {
         color="#ffffff" 
         castShadow={false}
         target-position={[0, 0, 0]}
-      />
+      /> */}
 
       <spotLight 
         ref={rimRightRef}

@@ -7,9 +7,10 @@ import * as THREE from 'three';
 
 export default function MinecraftControls({ enabled }) {
   const { camera } = useThree();
-  const maxSpeed = 0.25;
-  const acceleration = 1.2;
-  const friction = 0.82;
+  const maxSpeed = 0.15;
+  const verticalSpeed = 0.25;
+  const acceleration = 2.8;
+  const friction = 0.65;
   const [keys, setKeys] = useState({});
 
   const velocity = useRef(new THREE.Vector3());
@@ -23,6 +24,7 @@ export default function MinecraftControls({ enabled }) {
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
+
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
@@ -53,8 +55,8 @@ export default function MinecraftControls({ enabled }) {
     }
 
     // Vertical movement with acceleration/friction
-    if (keys['Space']) desiredVelocity.current.y = Math.min(desiredVelocity.current.y + acceleration * delta, maxSpeed);
-    else if (keys['ShiftLeft']) desiredVelocity.current.y = Math.max(desiredVelocity.current.y - acceleration * delta, -maxSpeed);
+    if (keys['Space']) desiredVelocity.current.y = Math.min(desiredVelocity.current.y + acceleration * delta, verticalSpeed);
+    else if (keys['ShiftLeft']) desiredVelocity.current.y = Math.max(desiredVelocity.current.y - acceleration * delta, -verticalSpeed);
     else desiredVelocity.current.y *= friction;
 
     // Smooth acceleration/deceleration

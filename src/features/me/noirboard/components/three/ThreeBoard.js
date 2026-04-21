@@ -14,6 +14,7 @@ import ThreeItem from './ThreeItem';
 import ThreeConnections from './ThreeConnections';
 import ThreeEditor from './ThreeEditor';
 import MinecraftControls from './parts/MinecraftControls';
+import MobileControls from './parts/MobileControls';
 import Lighting from './parts/Lighting';
 import { useItems } from '../../hooks/useItems';
 import { getItemLayout } from '../../utils/seedLayout';
@@ -96,7 +97,10 @@ function Scene({ items, onUpdateItem, selectedId, setSelectedId, povConfig, edit
           target={povConfig?.target || [0, 0, 0]}
         />
       ) : (
-        <MinecraftControls enabled={!editMode} />
+        <>
+          <MinecraftControls enabled={!editMode} />
+          <MobileControls enabled={!editMode} />
+        </>
       )}
     </>
   );
@@ -108,8 +112,16 @@ export default function ThreeBoard() {
   const [selectedId, setSelectedId] = useState(null);
   const [boardConfig, setBoardConfig] = useState(null);
   const [editMode, setEditMode] = useState(false);
-  
+  const [isMobile, setIsMobile] = useState(false);
+
   const livePovRef = useRef({ position: [0, 0, 15], target: [0, 0, 0] });
+
+  useEffect(() => {
+    setIsMobile(window.innerWidth <= 768);
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const [history, setHistory] = useState([]);
   const [historyPointer, setHistoryPointer] = useState(-1);
@@ -221,10 +233,36 @@ export default function ThreeBoard() {
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 1, background: '#000' }}>
-      {!editMode && (
-        <div style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 1000, color: 'rgba(255,255,255,0.5)', fontSize: '10px', pointerEvents: 'none' }}>
-          CLICK TO MOVE (WASD + SPACE/SHIFT) • ESC TO UNLOCK
+      {!editMode && !isMobile && (
+        <div style={{ position: 'absolute', bottom: '20px', left: '20px', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '6px', pointerEvents: 'none' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 22px)', gap: '3px' }}>
+            <div style={{ gridColumn: '2', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.3)', padding: '4px', textAlign: 'center', color: '#fff', fontSize: '9px', fontWeight: 'bold', borderRadius: '3px' }}>W</div>
+            <div style={{ gridColumn: '1 / 2', gridRow: '2', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.3)', padding: '4px', textAlign: 'center', color: '#fff', fontSize: '9px', fontWeight: 'bold', borderRadius: '3px' }}>A</div>
+            <div style={{ gridColumn: '2 / 3', gridRow: '2', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.3)', padding: '4px', textAlign: 'center', color: '#fff', fontSize: '9px', fontWeight: 'bold', borderRadius: '3px' }}>S</div>
+            <div style={{ gridColumn: '3 / 4', gridRow: '2', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.3)', padding: '4px', textAlign: 'center', color: '#fff', fontSize: '9px', fontWeight: 'bold', borderRadius: '3px' }}>D</div>
+          </div>
+          <div style={{ display: 'flex', gap: '3px', fontSize: '8px' }}>
+            <div style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.3)', padding: '4px 6px', textAlign: 'center', color: '#fff', fontWeight: 'bold', borderRadius: '3px' }}>⇧</div>
+            <div style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.3)', padding: '4px 6px', textAlign: 'center', color: '#fff', fontWeight: 'bold', borderRadius: '3px' }}>⎵</div>
+          </div>
         </div>
+      )}
+
+      {!editMode && isMobile && (
+        <>
+          <div style={{ position: 'fixed', bottom: '30px', left: '30px', zIndex: 999, pointerEvents: 'none' }}>
+            <div style={{ width: '80px', height: '80px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.05)' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.1)', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
+            </div>
+            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '10px', marginTop: '8px', textAlign: 'center' }}>MOVE</div>
+          </div>
+          <div style={{ position: 'fixed', bottom: '30px', right: '30px', zIndex: 999, pointerEvents: 'none' }}>
+            <div style={{ width: '80px', height: '80px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.05)' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.1)', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
+            </div>
+            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '10px', marginTop: '8px', textAlign: 'center' }}>LOOK</div>
+          </div>
+        </>
       )}
 
       <div style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 1000, display: 'flex', gap: '10px' }}>
