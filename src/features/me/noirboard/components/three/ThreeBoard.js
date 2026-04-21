@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useMemo, useState, useEffect, useRef, useCallback } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
+import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import {
   OrbitControls,
   PerspectiveCamera,
@@ -34,25 +34,53 @@ function BoardBackground() {
   );
 }
 
-function Scene({ items, onUpdateItem, selectedId, setSelectedId, povConfig, editMode, lightingConfig }) {
+function Scene({ items, onUpdateItem, selectedId, setSelectedId, editMode, isMobile, lightingConfig }) {
   const orbitRef = useRef();
-  const { camera } = useThree();
-  const initialApplied = useRef(false);
+  const { camera, raycaster, mouse, scene, gl } = useThree();
+  const [hoveredId, setHoveredId] = useState(null);
 
-  // FORCE POV on startup and on config changes
+  const mousePos = useRef({ x: 0, y: 0 });
+
   useEffect(() => {
-    if (povConfig && !initialApplied.current) {
-      console.log('Force Applying POV:', povConfig);
-      camera.position.set(...povConfig.position);
-      if (editMode && orbitRef.current) {
-        orbitRef.current.target.set(...povConfig.target);
-        orbitRef.current.update();
-      } else {
-        camera.lookAt(...povConfig.target);
-      }
-      initialApplied.current = true;
+    const handleMouseMove = (e) => {
+      if (editMode || isMobile) return;
+
+      // Normalize to -1 to 1 range
+      mousePos.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mousePos.current.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [editMode, isMobile]);
+
+  // Raycasting mỗi frame cho kết quả ổn định
+  useFrame(() => {
+    if (editMode || isMobile) {
+      setHoveredId(null);
+      return;
     }
-  }, [povConfig, camera, editMode]);
+
+    raycaster.setFromCamera(mousePos.current, camera);
+    const intersects = raycaster.intersectObjects(scene.children, true);
+
+    let found = false;
+    if (intersects.length > 0) {
+      for (let i = 0; i < intersects.length; i++) {
+        let hitObj = intersects[i].object;
+        while (hitObj && !hitObj.userData?.itemId) {
+          hitObj = hitObj.parent;
+        }
+        if (hitObj?.userData?.itemId) {
+          setHoveredId(hitObj.userData.itemId);
+          found = true;
+          break;
+        }
+      }
+    }
+    if (!found) setHoveredId(null);
+  });
+
 
   const layouts = useMemo(() => {
     return items.reduce((acc, item, i) => {
@@ -74,12 +102,13 @@ function Scene({ items, onUpdateItem, selectedId, setSelectedId, povConfig, edit
       <Suspense fallback={null}>
         <BoardBackground />
         {items.map(item => (
-          <ThreeItem 
-            key={item.id} 
-            item={item} 
-            layout={layouts[item.id]} 
+          <ThreeItem
+            key={item.id}
+            item={item}
+            layout={layouts[item.id]}
             scaleFactor={SCALE_FACTOR}
             isSelected={selectedId === item.id}
+            isHovered={hoveredId === item.id}
             onSelect={() => {
               if (editMode) setSelectedId(item.id);
             }}
@@ -87,19 +116,20 @@ function Scene({ items, onUpdateItem, selectedId, setSelectedId, povConfig, edit
         ))}
       </Suspense>
 
-      {editMode ? (
+      {editMode && (
         <OrbitControls
           ref={orbitRef}
           makeDefault
           enableRotate={true}
           enableDamping={true}
           screenSpacePanning={true}
-          target={povConfig?.target || [0, 0, 0]}
+          target={[0, 0, 0]}
         />
-      ) : (
+      )}
+      {!editMode && (
         <>
-          <MinecraftControls enabled={!editMode} />
-          <MobileControls enabled={!editMode} />
+          <MinecraftControls enabled={true} />
+          <MobileControls enabled={true} />
         </>
       )}
     </>
@@ -113,8 +143,8 @@ export default function ThreeBoard() {
   const [boardConfig, setBoardConfig] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const canvasRef = useRef(null);
 
-  const livePovRef = useRef({ position: [0, 0, 15], target: [0, 0, 0] });
 
   useEffect(() => {
     setIsMobile(window.innerWidth <= 768);
@@ -122,6 +152,7 @@ export default function ThreeBoard() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
 
   const [history, setHistory] = useState([]);
   const [historyPointer, setHistoryPointer] = useState(-1);
@@ -163,14 +194,13 @@ export default function ThreeBoard() {
   }), [initialConfig, editMode]);
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && initialItems.length > 0) {
       setLocalItems(initialItems);
       setBoardConfig(initialConfig);
-      if (initialConfig?.pov) livePovRef.current = initialConfig.pov;
       setHistory([JSON.stringify(initialItems)]);
       setHistoryPointer(0);
     }
-  }, [loading, initialItems, initialConfig]);
+  }, [loading]);
 
   const handleUpdateItem = useCallback((id, updates, commitHistory = false) => {
     setLocalItems(prev => {
@@ -202,49 +232,22 @@ export default function ThreeBoard() {
     } catch (e) { alert('Save error'); }
   };
 
-  const handleSavePov = async () => {
-    const povToSave = {
-      position: [...livePovRef.current.position],
-      target: [...livePovRef.current.target]
-    };
-    
-    try {
-      const response = await fetch('/api/noir/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          type: 'config', 
-          config: { 
-            pov: povToSave,
-            atmosphere: { ambientIntensity, useFog }
-          } 
-        }),
-      });
-      const result = await response.json();
-      if (result.success) {
-        alert('Board POV saved successfully!');
-        setBoardConfig(prev => ({ ...prev, pov: povToSave }));
-      }
-    } catch (e) { alert('Save error'); }
-  };
 
-  // Ensure camera starts at saved position before children render
-  const defaultPos = initialConfig?.pov?.position || [0, 0, 15];
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 1, background: '#000' }}>
       {!editMode && !isMobile && (
         <div style={{ position: 'absolute', bottom: '20px', left: '20px', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '6px', pointerEvents: 'none' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 22px)', gap: '3px' }}>
-            <div style={{ gridColumn: '2', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.3)', padding: '4px', textAlign: 'center', color: '#fff', fontSize: '9px', fontWeight: 'bold', borderRadius: '3px' }}>W</div>
-            <div style={{ gridColumn: '1 / 2', gridRow: '2', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.3)', padding: '4px', textAlign: 'center', color: '#fff', fontSize: '9px', fontWeight: 'bold', borderRadius: '3px' }}>A</div>
-            <div style={{ gridColumn: '2 / 3', gridRow: '2', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.3)', padding: '4px', textAlign: 'center', color: '#fff', fontSize: '9px', fontWeight: 'bold', borderRadius: '3px' }}>S</div>
-            <div style={{ gridColumn: '3 / 4', gridRow: '2', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.3)', padding: '4px', textAlign: 'center', color: '#fff', fontSize: '9px', fontWeight: 'bold', borderRadius: '3px' }}>D</div>
-          </div>
-          <div style={{ display: 'flex', gap: '3px', fontSize: '8px' }}>
-            <div style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.3)', padding: '4px 6px', textAlign: 'center', color: '#fff', fontWeight: 'bold', borderRadius: '3px' }}>⇧</div>
-            <div style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.3)', padding: '4px 6px', textAlign: 'center', color: '#fff', fontWeight: 'bold', borderRadius: '3px' }}>⎵</div>
-          </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 22px)', gap: '3px' }}>
+              <div style={{ gridColumn: '2', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.3)', padding: '4px', textAlign: 'center', color: '#fff', fontSize: '9px', fontWeight: 'bold', borderRadius: '3px' }}>W</div>
+              <div style={{ gridColumn: '1 / 2', gridRow: '2', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.3)', padding: '4px', textAlign: 'center', color: '#fff', fontSize: '9px', fontWeight: 'bold', borderRadius: '3px' }}>A</div>
+              <div style={{ gridColumn: '2 / 3', gridRow: '2', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.3)', padding: '4px', textAlign: 'center', color: '#fff', fontSize: '9px', fontWeight: 'bold', borderRadius: '3px' }}>S</div>
+              <div style={{ gridColumn: '3 / 4', gridRow: '2', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.3)', padding: '4px', textAlign: 'center', color: '#fff', fontSize: '9px', fontWeight: 'bold', borderRadius: '3px' }}>D</div>
+            </div>
+            <div style={{ display: 'flex', gap: '3px', fontSize: '8px' }}>
+              <div style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.3)', padding: '4px 6px', textAlign: 'center', color: '#fff', fontWeight: 'bold', borderRadius: '3px' }}>⇧</div>
+              <div style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.3)', padding: '4px 6px', textAlign: 'center', color: '#fff', fontWeight: 'bold', borderRadius: '3px' }}>⎵</div>
+            </div>
         </div>
       )}
 
@@ -265,14 +268,12 @@ export default function ThreeBoard() {
         </>
       )}
 
-      <div style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 1000, display: 'flex', gap: '10px' }}>
-        {editMode && (
-          <>
-            <button onClick={undo} disabled={historyPointer <= 0} style={{ background: '#222', color: '#fff', border: '1px solid #444', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', opacity: historyPointer <= 0 ? 0.5 : 1 }}>UNDO</button>
-            <button onClick={redo} disabled={historyPointer >= history.length - 1} style={{ background: '#222', color: '#fff', border: '1px solid #444', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', opacity: historyPointer >= history.length - 1 ? 0.5 : 1 }}>REDO</button>
-          </>
-        )}
-      </div>
+      {editMode && (
+        <div style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 1000, display: 'flex', gap: '8px' }}>
+          <button onClick={undo} disabled={historyPointer <= 0} style={{ background: '#222', color: '#fff', border: '1px solid #444', padding: '6px 10px', borderRadius: '3px', cursor: 'pointer', fontSize: '10px', opacity: historyPointer <= 0 ? 0.5 : 1 }}>↶</button>
+          <button onClick={redo} disabled={historyPointer >= history.length - 1} style={{ background: '#222', color: '#fff', border: '1px solid #444', padding: '6px 10px', borderRadius: '3px', cursor: 'pointer', fontSize: '10px', opacity: historyPointer >= history.length - 1 ? 0.5 : 1 }}>↷</button>
+        </div>
+      )}
 
       <button 
         onClick={() => {
@@ -303,36 +304,36 @@ export default function ThreeBoard() {
         theme={{ colors: { accent1: '#d4920f' } }} 
       />
 
-      <Canvas 
+      <Canvas
+        ref={canvasRef}
         shadows={{ type: THREE.PCFSoftShadowMap }}
-        dpr={[1, 3]} 
+        dpr={[1, 3]}
         gl={{ antialias: true, alpha: true, precision: 'highp', toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 0.65 }}
         onPointerMissed={() => editMode && setSelectedId(null)}
       >
         {/* Pass initialConfig specifically for startup position */}
-        <PerspectiveCamera makeDefault position={defaultPos} fov={40} />
+        <PerspectiveCamera makeDefault position={[0, 0, 15]} fov={40} />
         
         {!loading && (
           <>
-            <Scene 
-              items={localItems} 
-              onUpdateItem={handleUpdateItem} 
-              selectedId={selectedId} 
-              setSelectedId={setSelectedId}
-              povConfig={boardConfig?.pov}
-              editMode={editMode}
-              lightingConfig={{ ambientIntensity, useFog }}
-            />
-            <ThreeEditor 
-              editMode={editMode}
+            <Scene
               items={localItems}
               onUpdateItem={handleUpdateItem}
               selectedId={selectedId}
               setSelectedId={setSelectedId}
-              povRef={livePovRef}
-              onSaveItems={handleSaveItems}
-              onSavePov={handleSavePov}
+              editMode={editMode}
+              isMobile={isMobile}
+              lightingConfig={{ ambientIntensity, useFog }}
             />
+            {editMode && (
+              <ThreeEditor
+                editMode={editMode}
+                items={localItems}
+                onUpdateItem={handleUpdateItem}
+                selectedId={selectedId}
+                setSelectedId={setSelectedId}
+              />
+            )}
           </>
         )}
         <Preload all />

@@ -6,7 +6,7 @@ import { PointerLockControls } from '@react-three/drei';
 import * as THREE from 'three';
 
 export default function MinecraftControls({ enabled }) {
-  const { camera } = useThree();
+  const { camera, gl } = useThree();
   const maxSpeed = 0.15;
   const verticalSpeed = 0.25;
   const acceleration = 2.8;
@@ -64,7 +64,5 @@ export default function MinecraftControls({ enabled }) {
     camera.position.add(velocity.current);
   });
 
-  if (!enabled) return null;
-
-  return <PointerLockControls />;
+  return null;
 }

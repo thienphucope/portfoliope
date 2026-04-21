@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 import { SIZES, STICKY_PALETTES } from './constants';
@@ -12,14 +13,15 @@ import NewspaperContent from './parts/NewspaperContent';
  * Base component for all 3D items on the board.
  * Handles positioning, physics-based curling geometry, and the nail.
  */
-function BaseThreeItem({ item, layout, scaleFactor, size, isSelected, onSelect }) {
+function BaseThreeItem({ item, layout, scaleFactor, size, isSelected, isHovered, onSelect }) {
   const { x, y, rotation, z } = layout;
-  
+  const router = useRouter();
+
   // Centering offsets for 2500x1700 resolution
   const pos = [
     (x - 1250) * scaleFactor,
     -(y - 850) * scaleFactor,
-    z * 0.005 + 0.002 
+    z * 0.005 + 0.002
   ];
 
   // Very subtle physics for a light, realistic curl
@@ -89,14 +91,43 @@ function BaseThreeItem({ item, layout, scaleFactor, size, isSelected, onSelect }
     : (item.type === 'newspaper' ? '#ede4c8' : '#f2ece0');
 
   return (
-    <group 
-      position={pos} 
+    <group
+      position={pos}
       rotation={[physics.tiltX, physics.tiltY, THREE.MathUtils.degToRad(-rotation)]}
+      userData={{ itemId: item.id }}
       onClick={(e) => {
         e.stopPropagation();
-        onSelect && onSelect();
+        if (isHovered) {
+          router.push('/project/casearchives');
+        }
       }}
     >
+      {/* Hover Glow Outline - Thin border */}
+      {isHovered && (
+        <>
+          {/* Top edge */}
+          <mesh position={[0, size[1] / 2 + 0.05, 0.01]}>
+            <planeGeometry args={[size[0] + 0.12, 0.04]} />
+            <meshBasicMaterial color="#ffdd00" transparent opacity={0.8} depthTest={false} />
+          </mesh>
+          {/* Bottom edge */}
+          <mesh position={[0, -size[1] / 2 - 0.05, 0.01]}>
+            <planeGeometry args={[size[0] + 0.12, 0.04]} />
+            <meshBasicMaterial color="#ffdd00" transparent opacity={0.8} depthTest={false} />
+          </mesh>
+          {/* Left edge */}
+          <mesh position={[-size[0] / 2 - 0.05, 0, 0.01]}>
+            <planeGeometry args={[0.04, size[1] + 0.12]} />
+            <meshBasicMaterial color="#ffdd00" transparent opacity={0.8} depthTest={false} />
+          </mesh>
+          {/* Right edge */}
+          <mesh position={[size[0] / 2 + 0.05, 0, 0.01]}>
+            <planeGeometry args={[0.04, size[1] + 0.12]} />
+            <meshBasicMaterial color="#ffdd00" transparent opacity={0.8} depthTest={false} />
+          </mesh>
+        </>
+      )}
+
       {/* Selection Highlight */}
       {isSelected && (
         <mesh position={[0, 0, -0.01]}>
@@ -144,7 +175,7 @@ function BaseThreeItem({ item, layout, scaleFactor, size, isSelected, onSelect }
  * Specialized component for Polaroid items to handle texture loading and dynamic sizing.
  */
 function PolaroidItem(props) {
-  const { item, isSelected, onSelect } = props;
+  const { item, isSelected, isHovered, onSelect } = props;
   const polaroidTexture = useTexture(item.imageUrl || '/placeholder.jpg');
 
   const size = useMemo(() => {
@@ -153,16 +184,16 @@ function PolaroidItem(props) {
       const imgW = polaroidTexture.image.width;
       const imgH = polaroidTexture.image.height;
       const aspect = imgW / imgH;
-      
-      const targetW = 0.9 * s; // Fixed width scaled
+
+      const targetW = 0.9 * s;
       const photoH = targetW / aspect;
-      const padding = 0.1 * s; // Scale padding
+      const padding = 0.1 * s;
       return [targetW + padding, photoH + padding];
     }
     return [SIZES.polaroid[0] * s, SIZES.polaroid[1] * s];
   }, [polaroidTexture, item.scale]);
 
-  return <BaseThreeItem {...props} size={size} isSelected={isSelected} onSelect={onSelect} />;
+  return <BaseThreeItem {...props} size={size} isSelected={isSelected} isHovered={isHovered} onSelect={onSelect} />;
 }
 
 /**
@@ -170,7 +201,7 @@ function PolaroidItem(props) {
  * Resolves the conditional hook issue by splitting into sub-components.
  */
 export default function ThreeItem(props) {
-  const { item, isSelected, onSelect } = props;
+  const { item, isSelected, isHovered, onSelect } = props;
 
   if (item.type === 'polaroid') {
     return <PolaroidItem {...props} />;
@@ -179,5 +210,5 @@ export default function ThreeItem(props) {
   const baseSize = SIZES[item.type] || [0.87, 0.87];
   const s = item.scale || 1.0;
   const size = [baseSize[0] * s, baseSize[1] * s];
-  return <BaseThreeItem {...props} size={size} isSelected={isSelected} onSelect={onSelect} />;
+  return <BaseThreeItem {...props} size={size} isSelected={isSelected} isHovered={isHovered} onSelect={onSelect} />;
 }
