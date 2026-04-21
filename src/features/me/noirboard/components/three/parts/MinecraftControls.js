@@ -7,8 +7,8 @@ import * as THREE from 'three';
 
 export default function MinecraftControls({ enabled }) {
   const { camera, gl } = useThree();
-  const maxSpeed = 0.15;
-  const verticalSpeed = 0.25;
+  const maxSpeed = 0.075;
+  const verticalSpeed = 0.125;
   const acceleration = 2.8;
   const friction = 0.65;
   const [keys, setKeys] = useState({});

@@ -15,32 +15,60 @@ import { getItemLayout } from '../../utils/seedLayout';
 
 const SCALE_FACTOR = 0.01;
 
-function Scene({ items, selectedId, setSelectedId, editMode, isMobile, lightingConfig, initialPov, povRef }) {
-  const { camera, controls } = useThree();
+function Scene({ items, selectedId, setSelectedId, editMode, isMobile, lightingConfig, initialPov, povRef, onUpdateItem }) {
+  const { camera, controls, raycaster, scene } = useThree();
   const [hoveredId, setHoveredId] = useState(null);
+  const mousePos = useRef({ x: 0, y: 0 });
 
-  // 1. Chỉ chạy 1 lần duy nhất khi load board để đặt camera vào đúng vị trí config
+  // 1. POV Init (Chạy 1 lần duy nhất)
   useEffect(() => {
     if (initialPov) {
       camera.position.set(...initialPov.position);
       camera.lookAt(new THREE.Vector3(...initialPov.target));
       povRef.current = JSON.parse(JSON.stringify(initialPov));
     }
-  }, [initialPov, camera]); // Chạy khi initialPov từ API về
+  }, [initialPov, camera]);
 
-  // 2. Luôn đồng bộ vị trí hiện tại của Camera vào povRef mỗi frame
+  // 2. Mouse Tracking (Chỉ dùng cho hover khi không Edit)
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (editMode) return;
+      mousePos.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mousePos.current.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [editMode]);
+
+  // 3. Frame Loop: Sync POV + Hover Raycasting
   useFrame(() => {
+    // Sync POV
     povRef.current.position = [camera.position.x, camera.position.y, camera.position.z];
     if (editMode && controls) {
       povRef.current.target = [controls.target.x, controls.target.y, controls.target.z];
     } else {
-      // Khi ở mode di chuyển (WASD), target giả định là 1 điểm phía trước camera
       const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
       povRef.current.target = [
         camera.position.x + dir.x * 5,
         camera.position.y + dir.y * 5,
         camera.position.z + dir.z * 5
       ];
+
+      // Hover Detection (Chỉ khi không edit)
+      raycaster.setFromCamera(mousePos.current, camera);
+      const intersects = raycaster.intersectObjects(scene.children, true);
+      let foundId = null;
+      if (intersects.length > 0) {
+        for (let i = 0; i < intersects.length; i++) {
+          let hitObj = intersects[i].object;
+          while (hitObj && !hitObj.userData?.itemId) hitObj = hitObj.parent;
+          if (hitObj?.userData?.itemId) {
+            foundId = hitObj.userData.itemId;
+            break;
+          }
+        }
+      }
+      if (hoveredId !== foundId) setHoveredId(foundId);
     }
   });
 
@@ -67,6 +95,7 @@ function Scene({ items, selectedId, setSelectedId, editMode, isMobile, lightingC
             layout={layouts[item.id]}
             scaleFactor={SCALE_FACTOR}
             isSelected={selectedId === item.id}
+            isHovered={hoveredId === item.id}
             onSelect={() => editMode && setSelectedId(item.id)}
           />
         ))}
