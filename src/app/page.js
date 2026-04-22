@@ -11,7 +11,12 @@ export default function RootPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.push('/me');
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 1024;
+      if (isMobile) {
+        router.push('/project/casearchives');
+      } else {
+        router.push('/me');
+      }
     }, 500);
 
     return () => clearTimeout(timer);
