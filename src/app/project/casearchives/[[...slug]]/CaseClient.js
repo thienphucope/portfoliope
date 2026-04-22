@@ -664,9 +664,10 @@ export default function CaseClient({ serverHydratedData = null }) {
 
       {!isMobile && (
         <a
-          href="mailto:thienphucmain1052004@gmail.com"
-          style={{
-            position: 'fixed',
+          href="https://mail.google.com/mail/?view=cm&fs=1&to=thienphucmain1052004@gmail.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{            position: 'fixed',
             right: '20px',
             top: '50%',
             transform: 'translateY(-50%)',

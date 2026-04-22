@@ -262,7 +262,7 @@ export default function NoteFeed({
               color: '#000',
               margin: 0,
               lineHeight: '1.2'
-            }}>Understand me?</h1>
+            }}>My Sightings</h1>
           </div>
         </div>
         {displayedFiles.map((file, idx) => (
@@ -278,7 +278,9 @@ export default function NoteFeed({
               reader={reader}
             />
             <a
-              href="mailto:thienphucmain1052004@gmail.com"
+              href="https://mail.google.com/mail/?view=cm&fs=1&to=thienphucmain1052004@gmail.com"
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
                 color: '#000',
                 background: 'var(--colorbutton, #FFFACD)',

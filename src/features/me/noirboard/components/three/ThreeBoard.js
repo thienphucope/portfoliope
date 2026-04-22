@@ -40,6 +40,11 @@ function Scene({ items, selectedId, setSelectedId, editMode, isMobile, lightingC
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [editMode]);
 
+  // Reset hover khi vào edit mode để tránh click navigate thay vì select
+  useEffect(() => {
+    if (editMode) setHoveredId(null);
+  }, [editMode]);
+
   // 3. Frame Loop: Sync POV + Hover Raycasting
   useFrame(() => {
     // Sync POV
@@ -72,14 +77,6 @@ function Scene({ items, selectedId, setSelectedId, editMode, isMobile, lightingC
     }
   });
 
-  const layouts = useMemo(() => {
-    return items.reduce((acc, item, i) => {
-      const defaultLayout = getItemLayout(item.id, i, items.length, 2500, 1700);
-      acc[item.id] = { ...defaultLayout, ...item };
-      return acc;
-    }, {});
-  }, [items]);
-
   return (
     <>
       <Lighting editMode={editMode} config={lightingConfig} />
@@ -92,10 +89,11 @@ function Scene({ items, selectedId, setSelectedId, editMode, isMobile, lightingC
           <ThreeItem
             key={item.id}
             item={item}
-            layout={layouts[item.id]}
+            layout={item}
             scaleFactor={SCALE_FACTOR}
             isSelected={selectedId === item.id}
             isHovered={hoveredId === item.id}
+            editMode={editMode}
             onSelect={() => editMode && setSelectedId(item.id)}
           />
         ))}
@@ -125,8 +123,20 @@ export default function ThreeBoard() {
   const povRef = useRef({ position: [0, 0, 15], target: [0, 0, 0] });
 
   useEffect(() => {
-    if (!loading) {
-      setLocalItems(initialItems || []);
+    if (!loading && initialItems) {
+      // Merge seeded layout as defaults if not present in saved data
+      const merged = initialItems.map((it, i) => {
+        const layout = getItemLayout(it.id, i, initialItems.length, 2500, 1700);
+        return {
+          ...layout,
+          ...it,
+          // Ensure coordinates are integers to prevent drift
+          x: Math.round(it.x ?? layout.x),
+          y: Math.round(it.y ?? layout.y),
+          z: Math.round(it.z ?? layout.z)
+        };
+      });
+      setLocalItems(merged);
       if (initialConfig?.pov) povRef.current = initialConfig.pov;
     }
   }, [loading, initialItems, initialConfig]);
@@ -134,6 +144,8 @@ export default function ThreeBoard() {
   const handleUpdateItem = useCallback((id, updates) => {
     setLocalItems(prev => prev.map(it => it.id === id ? { ...it, ...updates } : it));
   }, []);
+
+  // ... (keep handleSavePov)
 
   const handleSavePov = async () => {
     await fetch('/api/noir/save', {
@@ -158,7 +170,7 @@ export default function ThreeBoard() {
     <div style={{ position: 'fixed', inset: 0, background: '#000' }}>
       <button 
         onClick={() => { setEditMode(!editMode); setSelectedId(null); }}
-        style={{ position: 'absolute', bottom: '20px', right: '20px', zIndex: 1000, background: editMode ? '#d4920f' : '#222', color: '#fff', border: '1px solid #444', padding: '8px 20px', borderRadius: '20px', cursor: 'pointer' }}
+        style={{ position: 'absolute', bottom: '20px', right: '20px', zIndex: 1000, background: editMode ? '#d4920f' : '#222', color: '#fff', border: 'none', padding: '4px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}
       >
         {editMode ? 'EXIT' : 'EDIT'}
       </button>

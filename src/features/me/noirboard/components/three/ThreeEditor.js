@@ -20,15 +20,17 @@ export default function ThreeEditor({
   const { camera, controls, scene } = useThree();
   const lastUpdate = useRef(0);
   const isSetting = useRef(false);
+  const isDragging = useRef(false);
 
   const selectedItem = items.find(it => it.id === selectedId);
 
   // Find the actual 3D object in the scene to attach TransformControls
   const selectedObject = useMemo(() => {
-    if (!selectedId) return null;
+    if (!selectedId || !scene) return null;
     let found = null;
+    // Tìm object Group chứa itemId, tránh tìm nhầm vào mesh con bên trong
     scene.traverse(obj => {
-      if (obj.userData?.itemId === selectedId) {
+      if (obj.userData?.itemId === selectedId && obj.type === 'Group') {
         found = obj;
       }
     });
@@ -54,7 +56,7 @@ export default function ThreeEditor({
       'X': {
         value: selectedItem ? Math.round(selectedItem.x) : 0,
         onChange: (v) => { 
-          if (!isSetting.current && selectedId && editMode) {
+          if (!isSetting.current && !isDragging.current && selectedId && editMode) {
             onUpdateItem(selectedId, { x: v });
           }
         },
@@ -64,7 +66,7 @@ export default function ThreeEditor({
       'Y': {
         value: selectedItem ? Math.round(selectedItem.y) : 0,
         onChange: (v) => { 
-          if (!isSetting.current && selectedId && editMode) {
+          if (!isSetting.current && !isDragging.current && selectedId && editMode) {
             onUpdateItem(selectedId, { y: v });
           }
         },
@@ -74,7 +76,7 @@ export default function ThreeEditor({
       'Z': {
         value: selectedItem ? Math.round(selectedItem.z) : 0,
         onChange: (v) => { 
-          if (!isSetting.current && selectedId && editMode) {
+          if (!isSetting.current && !isDragging.current && selectedId && editMode) {
             onUpdateItem(selectedId, { z: v });
           }
         },
@@ -85,7 +87,7 @@ export default function ThreeEditor({
         value: selectedItem?.scale || 1.0,
         min: 0.1, max: 10, step: 0.1,
         onChange: (v) => { 
-          if (!isSetting.current && selectedId && editMode) {
+          if (!isSetting.current && !isDragging.current && selectedId && editMode) {
             onUpdateItem(selectedId, { scale: v });
           }
         },
@@ -96,7 +98,7 @@ export default function ThreeEditor({
         value: selectedItem?.rotation || 0,
         min: -180, max: 180, step: 1,
         onChange: (v) => { 
-          if (!isSetting.current && selectedId && editMode) {
+          if (!isSetting.current && !isDragging.current && selectedId && editMode) {
             onUpdateItem(selectedId, { rotation: v });
           }
         },
@@ -108,7 +110,7 @@ export default function ThreeEditor({
 
   // Sync Leva when selection changes
   useEffect(() => {
-    if (selectedItem && editMode) {
+    if (selectedItem && editMode && !isDragging.current) {
       isSetting.current = true;
       set({
         'Title': selectedItem.title,
@@ -118,8 +120,7 @@ export default function ThreeEditor({
         'Scale': selectedItem.scale,
         'Rotation': Math.round(selectedItem.rotation || 0)
       });
-      // Small timeout to ensure Leva internal state is updated before allowing onChange again
-      setTimeout(() => { isSetting.current = false; }, 10);
+      setTimeout(() => { isSetting.current = false; }, 50);
     }
   }, [selectedId, selectedItem, set, editMode]);
 
@@ -158,19 +159,41 @@ export default function ThreeEditor({
     <>
       {selectedId && selectedItem && selectedObject && (
         <TransformControls 
+          key={selectedId}
           object={selectedObject}
           mode="translate"
-          onMouseDown={() => { if(controls) controls.enabled = false }}
+          onMouseDown={() => { 
+            isDragging.current = true;
+            if(controls) controls.enabled = false; 
+          }}
           onMouseUp={() => { 
+            isDragging.current = false;
             if(controls) controls.enabled = true;
             onUpdateItem(selectedId, {}, true); // Commit history on drag end
           }}
           onObjectChange={(e) => {
-            if (isSetting.current) return;
+            if (isSetting.current || !isDragging.current) return;
             const target = e.target.object;
-            const newX = target.position.x / SCALE_FACTOR + 1250;
-            const newY = -target.position.y / SCALE_FACTOR + 850;
-            onUpdateItem(selectedId, { x: newX, y: newY }, false); 
+            if (!target) return;
+
+            // Chuyển đổi ngược từ tọa độ 3D về tọa độ Canvas
+            const rawX = target.position.x / SCALE_FACTOR + 1250;
+            const rawY = -target.position.y / SCALE_FACTOR + 850;
+            const rawZ = (target.position.z - 0.002) / 0.005;
+
+            if (isNaN(rawX) || isNaN(rawY) || isNaN(rawZ)) return;
+
+            // Clamping an toàn để item không bao giờ thoát khỏi phạm vi Board
+            // Canvas: 2500x1700, Z: layer index
+            const finalX = Math.max(0, Math.min(2500, Math.round(rawX)));
+            const finalY = Math.max(0, Math.min(1700, Math.round(rawY)));
+            const finalZ = Math.max(-100, Math.min(500, Math.round(rawZ)));
+
+            onUpdateItem(selectedId, { 
+              x: finalX, 
+              y: finalY, 
+              z: finalZ 
+            }, false);
           }}
         />
       )}

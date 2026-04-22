@@ -13,7 +13,7 @@ import NewspaperContent from './parts/NewspaperContent';
  * Base component for all 3D items on the board.
  * Handles positioning, physics-based curling geometry, and the nail.
  */
-function BaseThreeItem({ item, layout, scaleFactor, size, isSelected, isHovered, onSelect }) {
+function BaseThreeItem({ item, layout, scaleFactor, size, isSelected, isHovered, editMode, onSelect }) {
   const { x, y, rotation, z } = layout;
   const router = useRouter();
 
@@ -24,20 +24,35 @@ function BaseThreeItem({ item, layout, scaleFactor, size, isSelected, isHovered,
     z * 0.005 + 0.002
   ];
 
-  // Very subtle physics for a light, realistic curl
-  const physics = useMemo(() => ({
-    tiltX: (Math.random() - 0.5) * 0.015,
-    tiltY: (Math.random() - 0.5) * 0.015,
-    curl: 0.01 + Math.random() * 0.02, 
-    noise: 0.005,
-    cornerLift: {
-      bl: 0.03 + Math.random() * 0.07, 
-      br: 0.03 + Math.random() * 0.07, 
-    },
-    bottomCurl: 0.03 + Math.random() * 0.05,
-    edgeWave: 0.005 + Math.random() * 0.01,
-    seed: Math.random() * 20
-  }), []);
+  // Stable seeded random based on item.id to prevent "random jumps" on remount
+  const physics = useMemo(() => {
+    // Simple hash function
+    let h = 0x811c9dc5;
+    const str = item.id || '';
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    const seed = h >>> 0;
+    const rng = () => {
+      h = (Math.imul(1664525, h) + 1013904223) >>> 0;
+      return h / 0xffffffff;
+    };
+
+    return {
+      tiltX: (rng() - 0.5) * 0.015,
+      tiltY: (rng() - 0.5) * 0.015,
+      curl: 0.01 + rng() * 0.02, 
+      noise: 0.005,
+      cornerLift: {
+        bl: 0.03 + rng() * 0.07, 
+        br: 0.03 + rng() * 0.07, 
+      },
+      bottomCurl: 0.03 + rng() * 0.05,
+      edgeWave: 0.005 + rng() * 0.01,
+      seed: rng() * 20
+    };
+  }, [item.id]);
 
   const geometry = useMemo(() => {
     const geo = new THREE.PlaneGeometry(size[0], size[1], 32, 32); 
@@ -97,7 +112,7 @@ function BaseThreeItem({ item, layout, scaleFactor, size, isSelected, isHovered,
       userData={{ itemId: item.id }}
       onClick={(e) => {
         e.stopPropagation();
-        if (isHovered) {
+        if (!editMode && isHovered) {
           router.push('/project/casearchives');
         } else if (onSelect) {
           onSelect();
