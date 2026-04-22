@@ -1,33 +1,86 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import BlockEditor from './BlockEditor';
+import { BlockView } from './BlockEditor';
+import { mkBlock } from '../utils/editor';
+import { ensureLibsLoaded } from '../utils/markdown';
+import { ExternalLink } from 'lucide-react';
 
-const DISCUSSION_PHRASES = [
-  'wanna discuss about this?',
-  'same interest?',
-  'lets talk about it',
-  'thoughts?',
-  'connect?'
-];
+const NoteFeedItem = React.forwardRef(({ block, onLinkClick, fileRegistry, style }, ref) => {
+  const isQuote = block.type === 'blockquote';
+  const isMedia = block.raw.trim().startsWith('!') || 
+                  block.raw.toLowerCase().includes('<video') || 
+                  block.raw.toLowerCase().includes('<audio') || 
+                  block.raw.toLowerCase().includes('<iframe');
+  
+  const processContent = (raw) => {
+    if (isMedia) return raw; 
+    const isActuallyQuote = raw.trim().startsWith('>');
+    const cleanText = isActuallyQuote ? raw.replace(/^>+/mg, '').trim() : raw;
+    const words = cleanText.split(/\s+/);
+    if (words.length > 50) {
+      const truncated = words.slice(0, 50).join(' ') + '...';
+      return isActuallyQuote ? `> ${truncated}` : truncated;
+    }
+    return raw;
+  };
 
-const NoteFeedItem = React.forwardRef(({ file, content, onLinkClick, fileRegistry, reader }, ref) => {
+  const displayBlock = { ...block, raw: processContent(block.raw) };
+
   return (
     <div ref={ref} className="note-feed-item" style={{
-      marginBottom: '8rem',
-      width: '100%',
-      maxWidth: '550px',
-      margin: '0 auto 8rem auto',
-      background: 'transparent',
+      position: 'absolute',
+      ...style,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 10,
+      transition: 'transform 0.3s ease'
     }}>
-      <BlockEditor
-        content={content}
-        fileName={file.id}
-        onLinkClick={onLinkClick}
-        readOnly={true}
-        isEditing={false}
-        fileRegistry={fileRegistry}
-        reader={reader}
-        onSaveFile={() => {}}
-      />
+      <div 
+        onClick={(e) => {
+          e.stopPropagation();
+          const target = block.fileId || block.id;
+          if (!target) return;
+          const link = document.createElement('a');
+          link.setAttribute('data-target', target);
+          link.classList.add('internal-link');
+          onLinkClick({ target: link, preventDefault: () => {} });
+        }}
+        style={{
+          position: 'absolute',
+          right: '-10px',
+          top: '-10px',
+          cursor: 'pointer',
+          zIndex: 20,
+          color: 'var(--colorone)',
+          opacity: 0.4,
+          padding: '10px',
+          transition: 'all 0.2s ease'
+        }}
+        className="link-icon-hover"
+        title={`View note: ${block.fileId}`}
+      >
+        <ExternalLink size={16} />
+      </div>
+
+      <div className="naked-block-content" style={{
+        width: '100%',
+        height: 'auto',
+        color: 'var(--colorone)',
+        fontSize: '1.2rem',
+        fontStyle: isQuote ? 'italic' : 'normal',
+        lineHeight: '1.4'
+      }}>
+        <BlockView
+          block={displayBlock}
+          isEditing={false}
+          isActive={false}
+          isReading={false}
+          onActivate={() => {}}
+          onLinkClick={onLinkClick}
+          onDoubleClick={() => {}}
+          fileRegistry={fileRegistry}
+        />
+      </div>
     </div>
   );
 });
@@ -42,118 +95,202 @@ export default function NoteFeed({
   reader,
   upsertCacheEntry
 }) {
-  const [displayedFiles, setDisplayedFiles] = useState([]);
+  const [displayedBlocks, setDisplayedBlocks] = useState([]);
   const [remainingFiles, setRemainingFiles] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [currentFileIndex, setCurrentFileIndex] = useState(0);
-  const [showBookmark, setShowBookmark] = useState(false);
+  const [libsReady, setLibsReady] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const scrollRef = useRef(null);
-  const fileRefs = useRef({});
+  const containerRef = useRef(null);
+  
+  // Momentum scroll refs
+  const scrollTarget = useRef(0);
+  const isAnimating = useRef(false);
 
-  // Initialize remaining files and shuffle them
+  useEffect(() => { 
+    setIsMounted(true);
+    ensureLibsLoaded().then(() => setLibsReady(true)); 
+  }, []);
+
   useEffect(() => {
-    if (allFiles.length > 0 && remainingFiles.length === 0 && displayedFiles.length === 0) {
+    if (allFiles.length > 0 && remainingFiles.length === 0 && displayedBlocks.length === 0) {
       const shuffled = [...allFiles].sort(() => Math.random() - 0.5);
       setRemainingFiles(shuffled);
     }
   }, [allFiles]);
 
+  const generateBlockStyle = (index, type, raw) => {
+    const isMedia = raw.trim().startsWith('!') || 
+                    raw.toLowerCase().includes('<video') || 
+                    raw.toLowerCase().includes('<audio') || 
+                    raw.toLowerCase().includes('<iframe');
+    
+    const baseLeft = typeof window !== 'undefined' ? window.innerWidth : 1000;
+    const itemWidth = 750;
+    const left = baseLeft + (index * itemWidth) + (Math.random() * 200);
+    const topPercent = 40 + (Math.random() * 20); 
+    
+    if (isMedia) {
+      return {
+        left: `${left}px`,
+        top: `${topPercent}%`,
+        transform: `translateY(-50%)`,
+        width: '500px',
+        height: 'auto',
+        minHeight: '100px'
+      };
+    } else {
+      return {
+        left: `${left}px`,
+        top: `${topPercent}%`,
+        transform: `translateY(-50%)`,
+        width: 'auto',
+        minWidth: '400px',
+        maxWidth: '650px',
+        height: 'auto',
+        padding: '1rem',
+        backgroundColor: 'transparent'
+      };
+    }
+  };
+
+  const startMomentum = useCallback(() => {
+    if (isAnimating.current || !scrollRef.current) return;
+    isAnimating.current = true;
+    
+    const animate = () => {
+      const container = scrollRef.current;
+      if (!container) {
+        isAnimating.current = false;
+        return;
+      }
+      const currentX = container.scrollLeft;
+      const diff = scrollTarget.current - currentX;
+      
+      if (Math.abs(diff) < 0.5) {
+        container.scrollLeft = scrollTarget.current;
+        isAnimating.current = false;
+      } else {
+        container.scrollLeft = currentX + diff * 0.08;
+        requestAnimationFrame(animate);
+      }
+    };
+    requestAnimationFrame(animate);
+  }, []);
+
   const loadMore = useCallback(async () => {
-    if (loading || remainingFiles.length === 0) return;
+    if (loading || remainingFiles.length === 0 || !libsReady) return;
     setLoading(true);
 
-    const nextBatch = remainingFiles.slice(0, 3);
-    const newRemaining = remainingFiles.slice(3);
+    const nextBatch = remainingFiles.slice(0, 5);
+    const newRemaining = remainingFiles.slice(5);
 
-    // Fetch content for next batch if not in cache
-    const loadedBatch = await Promise.all(nextBatch.map(async (file) => {
-      if (fullContentCache[file.id]?.raw) {
-        return { ...file, content: fullContentCache[file.id].raw };
+    const loadedBlocks = [];
+    await Promise.all(nextBatch.map(async (file) => {
+      let content = fullContentCache[file.id]?.raw;
+      if (!content) {
+        try {
+          const githubUrl = fileRegistry[file.id.toLowerCase()] || fileRegistry[file.id.toLowerCase() + '.md'];
+          if (!githubUrl) return;
+          const res = await fetch(githubUrl);
+          content = await res.text();
+          upsertCacheEntry(file.id, content);
+        } catch (e) { return; }
       }
-      try {
-        const githubUrl = fileRegistry[file.id.toLowerCase()] || fileRegistry[file.id.toLowerCase() + '.md'];
-        if (!githubUrl) return null;
-        
-        const res = await fetch(githubUrl);
-        const text = await res.text();
-        upsertCacheEntry(file.id, text);
-        return { ...file, content: text };
-      } catch (e) {
-        console.error('Failed to load file for feed:', file.id, e);
-        return null;
+
+      if (content) {
+        const masterRegex = /(!\[.*?\]\(.*?\)|<audio[\s\S]*?<\/audio>|<video[\s\S]*?<\/video>|<iframe[\s\S]*?<\/iframe>|^>[\s\S]*?(?:\n\n|\n(?=[^>])|$))/gm;
+        let match;
+        while ((match = masterRegex.exec(content)) !== null) {
+          const rawPart = match[0].trim();
+          if (rawPart) {
+            const isQuote = rawPart.startsWith('>');
+            loadedBlocks.push({
+              ...mkBlock(rawPart, isQuote ? 'blockquote' : 'paragraph'),
+              fileId: file.id
+            });
+          }
+        }
       }
     }));
 
-    const validBatch = loadedBatch.filter(Boolean);
-    setDisplayedFiles(prev => [...prev, ...validBatch]);
+    if (loadedBlocks.length > 0) {
+      // Shuffling loaded blocks for extra randomness
+      const shuffledBlocks = loadedBlocks.sort(() => Math.random() - 0.5);
+      setDisplayedBlocks(prev => {
+        const startIndex = prev.length;
+        const newBlocksWithStyle = shuffledBlocks.map((b, i) => ({
+          ...b,
+          style: generateBlockStyle(startIndex + i, b.type, b.raw)
+        }));
+        return [...prev, ...newBlocksWithStyle];
+      });
+    }
+    
     setRemainingFiles(newRemaining);
     setLoading(false);
-  }, [remainingFiles, loading, fullContentCache, fileRegistry, upsertCacheEntry]);
+  }, [remainingFiles, loading, fullContentCache, fileRegistry, upsertCacheEntry, libsReady]);
 
-  // Initial load
   useEffect(() => {
-    if (remainingFiles.length > 0 && displayedFiles.length === 0) {
+    if (remainingFiles.length > 0 && displayedBlocks.length === 0 && libsReady) {
       loadMore();
     }
-  }, [remainingFiles, displayedFiles, loadMore]);
+  }, [remainingFiles, displayedBlocks, loadMore, libsReady]);
 
-  const allFilesInOrder = useMemo(() => [...displayedFiles, ...remainingFiles], [displayedFiles, remainingFiles]);
-
-  const pendingScrollTarget = useRef(null);
-
-  // After each load, check if pending scroll target is now available
   useEffect(() => {
-    const targetId = pendingScrollTarget.current;
-    if (!targetId) return;
-    const ref = fileRefs.current[targetId];
-    if (ref && scrollRef.current) {
-      // Found - scroll to it
-      pendingScrollTarget.current = null;
-      setTimeout(() => {
-        const r = fileRefs.current[targetId];
-        if (r && scrollRef.current) {
-          const rect = r.getBoundingClientRect();
-          scrollRef.current.scrollBy({ top: rect.top - 16, behavior: 'smooth' });
+    if (isMounted && displayedBlocks.length > 0 && scrollRef.current) {
+      const timer = setTimeout(() => {
+        if (scrollRef.current) {
+          scrollTarget.current = window.innerWidth;
+          startMomentum();
         }
-      }, 50);
-    } else if (!loading) {
-      // Not loaded yet - keep loading
-      loadMore();
+      }, 800);
+      return () => clearTimeout(timer);
     }
-  }, [displayedFiles, loading, loadMore]);
+  }, [displayedBlocks.length > 0, isMounted, startMomentum]);
 
   const onScroll = useCallback((e) => {
     const element = e.target;
-    const { scrollTop, scrollHeight, clientHeight } = element;
-    if (scrollHeight - scrollTop <= clientHeight + 1000) {
+    const { scrollLeft, scrollWidth, clientWidth } = element;
+    if (scrollWidth - scrollLeft <= clientWidth + 2500) {
       loadMore();
     }
-
-    // Show bookmark once user scrolls past intro
-    if (scrollTop > clientHeight * 0.8) {
-      setShowBookmark(true);
-    }
-
-    // Track current file: last note whose top is above viewport top
-    let found = 0;
-    for (let i = 0; i < displayedFiles.length; i++) {
-      const ref = fileRefs.current[displayedFiles[i].id];
-      if (ref) {
-        const top = ref.getBoundingClientRect().top;
-        if (top <= 80) found = i;
-        else break;
-      }
-    }
-    setCurrentFileIndex(found);
-  }, [loadMore, displayedFiles]);
+  }, [loadMore]);
 
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
 
+    const handleWheel = (e) => {
+      if (e.ctrlKey || e.shiftKey) return; 
+      e.preventDefault();
+      
+      if (!isAnimating.current) {
+        scrollTarget.current = container.scrollLeft;
+      }
+
+      const maxScroll = container.scrollWidth - container.clientWidth;
+      scrollTarget.current = Math.max(0, Math.min(scrollTarget.current + e.deltaY * 0.8, maxScroll));
+      
+      startMomentum();
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
     container.addEventListener('scroll', onScroll, { passive: true });
-    return () => container.removeEventListener('scroll', onScroll);
-  }, [onScroll]);
+    
+    return () => {
+      container.removeEventListener('wheel', handleWheel);
+      container.removeEventListener('scroll', onScroll);
+    };
+  }, [onScroll, startMomentum]);
+
+  const dynamicWidth = useMemo(() => {
+    if (!isMounted) return 2000;
+    const base = window.innerWidth;
+    return base + (displayedBlocks.length * 800) + 3000;
+  }, [displayedBlocks.length, isMounted]);
+
+  if (!isMounted) return null;
 
   return (
     <div
@@ -162,176 +299,112 @@ export default function NoteFeed({
       style={{
         position: 'fixed',
         inset: 0,
-        overflowY: 'auto',
-        overflowX: 'hidden',
+        overflowX: 'auto',
+        overflowY: 'hidden',
         zIndex: 5,
-        padding: '16px 16px 60px 16px',
         backgroundColor: '#161616',
         height: '100dvh',
-        width: '100vw'
+        width: '100vw',
+        display: 'flex',
+        flexDirection: 'row'
       }}
     >
-      {showBookmark && displayedFiles.length > 0 && (() => {
-        const startIdx = Math.max(0, currentFileIndex - 2);
-        const visibleFiles = allFilesInOrder.slice(startIdx, currentFileIndex + 3);
-        const posInSlice = currentFileIndex - startIdx;
-        return (
-          <div className="bookmark-wheel" style={{
-            position: 'fixed',
-            left: 'calc((100vw - 550px) / 4)',
-            top: '50%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 50,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '10px',
-            pointerEvents: 'none',
-            alignItems: 'flex-start'
-          }}>
-            {visibleFiles.map((file, idx) => {
-              const isCurrentFile = idx === posInSlice;
-              const isLoaded = !!fileRefs.current[file.id];
-              return (
-                <div
-                  key={file.id}
-                  onClick={() => {
-                    if (!scrollRef.current) return;
-                    if (isLoaded) {
-                      const ref = fileRefs.current[file.id];
-                      const rect = ref.getBoundingClientRect();
-                      scrollRef.current.scrollBy({ top: rect.top - 16, behavior: 'smooth' });
-                    } else {
-                      pendingScrollTarget.current = file.id;
-                      loadMore();
-                    }
-                  }}
-                  style={{
-                    fontSize: '11px',
-                    padding: '4px 0',
-                    whiteSpace: 'nowrap',
-                    fontWeight: isCurrentFile ? '600' : '400',
-                    color: 'var(--colorone)',
-                    transition: 'all 0.3s ease',
-                    cursor: isLoaded ? 'pointer' : 'default',
-                    textAlign: 'center',
-                    pointerEvents: 'auto',
-                    opacity: isCurrentFile ? 1 : 0.5
-                  }}
-                  title={file.id}
-                >
-                  {file.id.split('/').pop().replace(/\.md$/, '')}
-                </div>
-              );
-            })}
-          </div>
-        );
-      })()}
-
-      <div className="note-feed-content" style={{
-        maxWidth: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center'
-      }}>
+      <div 
+        ref={containerRef}
+        className="note-feed-content" 
+        style={{
+          height: '100%',
+          minWidth: `${dynamicWidth}px`,
+          position: 'relative'
+        }}
+      >
         <div style={{
-          height: '100dvh',
-          width: '100%',
-          maxWidth: '550px',
+          position: 'absolute',
+          left: 0,
+          width: '100vw',
+          height: '100vh',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '20px'
+          zIndex: 20
         }}>
           <div
             onClick={() => {
-              scrollRef.current?.scrollBy({ top: window.innerHeight, behavior: 'smooth' });
+              scrollTarget.current = containerRef.current.scrollLeft + window.innerWidth;
+              startMomentum();
             }}
             className="intro-card"
             style={{
               backgroundColor: 'var(--colorone)',
               borderRadius: '999px',
-              padding: '2rem 2.5rem',
+              padding: '3rem 4rem',
               cursor: 'pointer',
               textAlign: 'center',
-              width: '100%',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
             }}>
             <h1 className="intro-title" style={{
-              fontSize: '3rem',
+              fontSize: '4rem',
               fontWeight: '700',
               color: '#000',
               margin: 0,
-              lineHeight: '1.2'
+              lineHeight: '1.2',
+              whiteSpace: 'nowrap'
             }}>My Sightings</h1>
           </div>
         </div>
-        {displayedFiles.map((file, idx) => (
-          <React.Fragment key={`${file.id}-${idx}`}>
-            <NoteFeedItem
-              ref={(el) => {
-                if (el) fileRefs.current[file.id] = el;
-              }}
-              file={file}
-              content={file.content}
-              onLinkClick={onLinkClick}
-              fileRegistry={fileRegistry}
-              reader={reader}
-            />
-            <a
-              href="https://mail.google.com/mail/?view=cm&fs=1&to=thienphucmain1052004@gmail.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                color: '#000',
-                background: 'var(--colorbutton, #FFFACD)',
-                textDecoration: 'none',
-                fontSize: '14px',
-                fontStyle: 'italic',
-                fontWeight: '500',
-                padding: '8px 16px',
-                textAlign: 'center',
-                display: 'inline-block',
-                marginBottom: '10rem',
-                borderRadius: '16px'
-              }}
-            >
-              {DISCUSSION_PHRASES[Math.floor(Math.random() * DISCUSSION_PHRASES.length)]}
-            </a>
-          </React.Fragment>
+
+        {displayedBlocks.map((block, idx) => (
+          <NoteFeedItem
+            key={`${block.id}-${idx}`}
+            block={block}
+            onLinkClick={onLinkClick}
+            fileRegistry={fileRegistry}
+            reader={reader}
+            style={block.style}
+          />
         ))}
-        {loading && <div className="feed-loading" style={{ color: 'var(--accent)', padding: '20px', fontFamily: 'monospace' }}>Loading archives...</div>}
+
+        {loading && (
+          <div style={{ 
+            position: 'absolute', 
+            left: `${dynamicWidth - 1000}px`, 
+            top: '50%', 
+            transform: 'translateY(-50%)',
+            color: 'var(--accent)', 
+            fontFamily: 'monospace',
+            padding: '40px'
+          }}>
+            Loading archives...
+          </div>
+        )}
       </div>
       
-      <style jsx>{`
+      <style jsx global>{`
         .note-feed-container {
           scrollbar-width: none;
         }
         .note-feed-container::-webkit-scrollbar {
           display: none;
         }
-        .bookmark-wheel {
-          display: flex;
+        .naked-block-content blockquote {
+          margin: 0;
+          padding: 0;
+          border: none;
+          background: transparent;
         }
-        @media (max-width: 768px) {
-          .bookmark-wheel {
-            display: none !important;
-          }
+        .naked-block-content p {
+          margin: 0;
         }
         .intro-card {
-          transform: translateY(0) scale(1);
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+          transform: scale(1);
         }
         .intro-card:hover {
-          transform: translateY(-0.5rem) scale(1.02);
-          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+          transform: scale(1.05);
         }
-        .intro-title {
-          white-space: nowrap;
-        }
-        @media (max-width: 480px) {
-          .intro-title {
-            font-size: 1.75rem !important;
-          }
+        .note-feed-item:hover .link-icon-hover {
+          opacity: 1 !important;
+          transform: scale(1.1);
         }
       `}</style>
     </div>
