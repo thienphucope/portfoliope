@@ -8,9 +8,9 @@ export function useReader() {
   const [isPaused, setIsPaused] = useState(false);
   const [cefrLevel, setCefrLevel] = useState(() => {
     if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('sonia_cefr') || 'b1';
+      return sessionStorage.getItem('sonia_cefr') || 'b2';
     }
-    return 'b1';
+    return 'b2';
   });
 
   const cefrLevelRef = useRef(cefrLevel);

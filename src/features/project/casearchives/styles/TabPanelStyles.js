@@ -70,9 +70,9 @@ export default function TabPanelStyles() {
         .windows-container {
           display: flex;
           padding: 0;
-          width: 80vw;
-          height: 97vh;
-          margin: auto;
+          width: 100vw;
+          height: 100vh;
+          margin: 0;
           background: rgba(0, 0, 0, 0.2);
           transition: background 0.3s ease;
           overflow: hidden;

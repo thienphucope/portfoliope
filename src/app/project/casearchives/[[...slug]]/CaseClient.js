@@ -439,7 +439,7 @@ export default function CaseClient({ serverHydratedData = null }) {
           )}
 
           {openWindows.length > 0 && (
-            <div className={`windows-container ${maximizedWindow ? 'has-maximized' : ''} ${openWindows.includes('editor') ? 'has-editor' : ''} ${openWindows.length > (openWindows.includes('editor') ? 1 : 0) ? 'has-others' : ''} ${resizer.isDragging ? 'dragging' : ''}`}>
+            <div className={`windows-container ${maximizedWindow ? 'has-maximized' : ''} ${openWindows.includes('editor') ? 'has-editor' : ''} ${openWindows.length > (openWindows.includes('editor') ? 1 : 0) ? 'has-others' : ''} ${resizer.isDragging ? 'dragging' : ''}`} style={{ width: '100vw', height: '100vh', margin: 0 }}>
               
               {/* EDITOR WINDOW */}
               {everOpened.filter(winId => winId === 'editor').map((winId) => {
