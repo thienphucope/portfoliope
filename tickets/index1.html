@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mind Canvas - Nebula</title>
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #2a2826;
+  --surface: #363330;
+  --surface-light: #3e3b37;
+  --accent-1: #7a6f62;
+  --accent-2: #b08d6a;
+  --accent-3: #6a8a72;
+  --text: #ddd8ce;
+  --text-dim: #9a9488;
+  --highlight: #c9a87c;
+  --border: #4a4540;
+  --tape-gold: #c9a87c55;
+  --tape-green: #6a8a7255;
+  --tape-red: #a06a6a44;
+  --tape-blue: #6a7a9a55;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  color: var(--text);
+}
+
+/* ===== VIEWPORT & WORLD ===== */
+#viewport {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  cursor: grab;
+  overflow: hidden;
+}
+#viewport:active { cursor: grabbing; }
+
+#world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+#neural-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ===== CANVAS TEXTURE ===== */
+#viewport::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-8px) rotate(1deg); } }
+@keyframes floatSlow { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-5px) rotate(-0.5deg); } }
+@keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.6; } }
+@keyframes spinSlow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes stampIn { from { opacity: 0; transform: scale(1.3) rotate(-5deg); } to { opacity: 1; transform: scale(1) rotate(0deg); } }
+@keyframes scribble { from { stroke-dashoffset: 200; } to { stroke-dashoffset: 0; } }
+@keyframes confetti { 0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.4; } 50% { transform: translateY(-10px) rotate(180deg); opacity: 0.7; } }
+
+.doodle-float { animation: float 6s ease-in-out infinite; }
+.doodle-float-slow { animation: floatSlow 8s ease-in-out infinite; }
+.doodle-pulse { animation: pulse 4s ease-in-out infinite; }
+.doodle-spin { animation: spinSlow 30s linear infinite; }
+.doodle-confetti { animation: confetti 3s ease-in-out infinite; }
+
+/* ===== CLUSTERS (formerly screens) ===== */
+.cluster {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  z-index: 1;
+  transition: opacity 0.5s ease-out;
+}
+.cluster-inner {
+  display: grid;
+  gap: 2rem;
+  position: relative;
+}
+
+/* ===== ENTRY CARDS ===== */
+.entry-card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 1.75rem;
+  position: relative;
+  transition: transform 0.2s, box-shadow 0.2s;
+  overflow: visible;
+}
+.entry-card:hover { transform: translateY(-3px) rotate(-0.3deg); box-shadow: 0 8px 30px #0003; }
+
+.entry-card.stitched { border-style: dashed; border-color: var(--accent-2); }
+.entry-card.taped::before {
+  content: ''; position: absolute; top: -12px; left: 50%; transform: translateX(-50%) rotate(-3deg);
+  width: 70px; height: 24px; background: var(--tape-gold); border-radius: 2px; z-index: 2;
+}
+.entry-card.torn::after {
+  content: ''; position: absolute; bottom: -6px; left: 0; right: 0; height: 10px; background: var(--surface);
+  clip-path: polygon(0% 0%, 3% 100%, 7% 20%, 11% 100%, 15% 0%, 19% 80%, 23% 100%, 27% 15%, 31% 100%, 35% 0%, 39% 70%, 43% 100%, 47% 20%, 51% 100%, 55% 0%, 59% 90%, 63% 100%, 67% 15%, 71% 100%, 75% 0%, 79% 80%, 83% 100%, 87% 20%, 91% 100%, 95% 0%, 100% 40%);
+}
+.entry-card.origami::before {
+  content: ''; position: absolute; top: 0; right: 0; width: 0; height: 0; border-style: solid;
+  border-width: 0 30px 30px 0; border-color: transparent var(--surface-light) var(--surface-light) transparent;
+  opacity: 0.8; z-index: 2; filter: drop-shadow(-1px 1px 2px #0004);
+}
+.entry-card.pushpin::before {
+  content: ''; position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+  width: 14px; height: 14px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #d45454, #8b2020);
+  box-shadow: 0 2px 4px #0005, inset 0 1px 2px #ff888866; z-index: 3;
+}
+.entry-card.sticker {
+  background: #fff8f0; color: #333; border-color: #ddd;
+  box-shadow: 0 4px 15px #0003, 0 0 0 4px #fff, 0 0 0 5px #ccc;
+}
+.entry-card .stamp-badge {
+  position: absolute; top: -15px; right: -10px; width: 50px; height: 50px; border: 2px solid var(--accent-2);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.55rem;
+  text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-2); opacity: 0.7;
+  transform: rotate(-15deg); animation: stampIn 0.3s ease-out; pointer-events: none;
+}
+.entry-card.crosshatch {
+  background-image: repeating-linear-gradient(45deg, transparent, transparent 8px, #4a454022 8px, #4a454022 9px);
+}
+.entry-card.dot-grid {
+  background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+  background-size: 16px 16px; background-color: var(--surface-light);
+}
+
+.entry-card .card-label {
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-dim);
+  margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;
+}
+.entry-card .card-label::before {
+  content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent-2);
+}
+
+.entry-card.text-normal { font-size: 1.05rem; }
+.entry-card.text-large { font-size: 1.5rem; font-weight: bold; line-height: 1.4; }
+.entry-card.text-quote {
+  border-left: 4px solid var(--highlight) !important; border-style: solid !important;
+  font-style: italic; padding-left: 2rem; background: var(--surface-light);
+}
+.entry-card.text-small { font-size: 0.85rem; color: var(--text-dim); }
+
+.media-frame { border-radius: 8px; overflow: hidden; border: 1px solid var(--border); background: var(--bg); line-height: 0; }
+.media-frame img, .media-frame video { width: 100%; display: block; border-radius: 7px; }
+.media-frame iframe { width: 100%; height: 100%; border: none; border-radius: 7px; }
+.embed-frame { aspect-ratio: 16/9; }
+.media-frame.polaroid-frame { padding: 10px 10px 45px 10px !important; background: #fff8f0 !important; border-color: #ddd !important; box-shadow: 0 3px 12px #0003; }
+
+/* ===== DOODLES ===== */
+.doodle-layer { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.doodle-layer svg { position: absolute; }
+
+/* ===== TITLE CLUSTER ===== */
+.title-cluster { text-align: center; }
+.title-cluster h1 { font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 400; color: var(--highlight); letter-spacing: -0.02em; }
+.title-cluster p { color: var(--text-dim); font-size: 1.2rem; margin-top: 0.5rem; }
+.title-cluster .seed-info { margin-top: 2rem; font-size: 0.8rem; color: var(--accent-1); }
+
+/* ===== NAV UI ===== */
+.nav-ui {
+  position: fixed; right: 1.5rem; top: 50%; transform: translateY(-50%);
+  z-index: 100; display: flex; flex-direction: column; gap: 0.75rem;
+}
+.nav-ui button {
+  width: 12px; height: 12px; border-radius: 50%; border: 1px solid var(--accent-1);
+  background: transparent; cursor: pointer; transition: all 0.2s;
+}
+.nav-ui button.active { background: var(--highlight); border-color: var(--highlight); transform: scale(1.3); }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 640px) {
+  .cluster { padding: 1rem; }
+  .entry-card { padding: 1.25rem; }
+  .nav-ui { right: 0.75rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="nav-ui" id="navUI"></div>
+
+<div id="viewport">
+  <div id="world">
+    <svg id="neural-layer"></svg>
+    <div id="app"></div>
+  </div>
+</div>
+
+<script>
+// ===== SEEDED RANDOM (mulberry32) =====
+function mulberry32(seed) {
+  let s = seed | 0;
+  return function() {
+    s |= 0; s = s + 0x6D2B79F5 | 0;
+    let t = Math.imul(s ^ s >>> 15, 1 | s);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+const SEED = 42;
+const rng = mulberry32(SEED);
+function random(from, to) { return Math.floor(rng() * (to - from + 1)) + from; }
+function pick(arr) { return arr[Math.floor(rng() * arr.length)]; }
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ===== DATA =====
+const screens = [
+  {
+    bg: '#2a2826',
+    entries: [{ type: 'title', text: 'mind canvas', subtitle: 'things i like, arranged by seed' }],
+  },
+  {
+    bg: '#28262a',
+    entries: [
+      { type: 'text', variant: 'large', label: 'inspiration #1', text: 'No Man\'s Sky taught me that randomness can feel deeply personal.' },
+      { type: 'image', src: 'https://picsum.photos/seed/mind1/600/400', label: 'photo 1' },
+      { type: 'image', src: 'https://picsum.photos/seed/mind2/600/400', label: 'photo 2' },
+      { type: 'text', variant: 'small', text: 'Every world is generated. Every feeling is real.' },
+    ],
+  },
+  {
+    bg: '#262a28',
+    entries: [
+      { type: 'text', variant: 'large', label: 'soundtrack', text: 'Songs that stay with you.' },
+      { type: 'embed', src: 'https://www.youtube.com/embed/dQw4w9WgXcQ', label: 'video' },
+      { type: 'text', variant: 'quote', text: '"Music is the reminder of things not yet forgotten."' },
+    ],
+  },
+  {
+    bg: '#2a2628',
+    entries: [
+      { type: 'text', variant: 'large', label: 'thought', text: 'A collection of things that remind me who I am.' },
+      { type: 'quote', text: '"The canvas is yours. Keep filling it."' },
+      { type: 'text', text: 'Add entries to the `screens` array below to grow your mind.' },
+      { type: 'image', src: 'https://picsum.photos/seed/mind3/600/400', label: 'illustration' },
+    ],
+  },
+];
+
+// ===== DOODLES =====
+const doodleColors = ['#b08d6a', '#7a6f62', '#6a8a72', '#c9a87c', '#a06a6a', '#6a7a9a'];
+function dColor() { return pick(doodleColors); }
+
+function doodleStar(cx, cy, r = 14) {
+  let d = '';
+  for (let i = 0; i < 10; i++) {
+    const angle = (i * Math.PI * 2) / 10 - Math.PI / 2;
+    const rad = i % 2 === 0 ? r : r * 0.4;
+    d += (i === 0 ? 'M' : 'L') + `${cx + Math.cos(angle) * rad},${cy + Math.sin(angle) * rad} `;
+  }
+  return `<svg width="60" height="60" viewBox="0 0 60 60"><path d="${d}Z" fill="none" stroke="${dColor()}" stroke-width="1.5"/></svg>`;
+}
+
+function doodleCross(cx, cy, s = 10) {
+  return `<svg width="${s*2}" height="${s*2}" viewBox="0 0 ${s*2} ${s*2}"><line x1="0" y1="0" x2="${s*2}" y2="${s*2}" stroke="${dColor()}" stroke-width="1.5"/><line x1="${s*2}" y1="0" x2="0" y2="${s*2}" stroke="${dColor()}" stroke-width="1.5"/></svg>`;
+}
+
+function doodleArrow(cx, cy, angle = 0) {
+  const rad = angle * Math.PI / 180;
+  const cos = Math.cos(rad), sin = Math.sin(rad);
+  const len = 28, hw = 8;
+  const tipX = cx + len * cos, tipY = cy + len * sin;
+  const bx = tipX - hw * cos, by = tipY - hw * sin;
+  const blx = bx + hw * sin, bly = by - hw * cos;
+  const brx = bx - hw * sin, bry = by + hw * cos;
+  const d = `M${cx},${cy} L${tipX},${tipY} L${blx},${bly} M${tipX},${tipY} L${brx},${bry}`;
+  return `<svg width="80" height="80" viewBox="0 0 80 80"><path d="${d}" fill="none" stroke="${dColor()}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
+function doodleBlob(cx, cy, rx = 35, ry = 25) {
+  const pts = [];
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2;
+    const r = rx + (rng() - 0.5) * rx * 0.5;
+    pts.push(`${cx + Math.cos(angle) * r},${cy + Math.sin(angle) * ry * (r / rx)}`);
+  }
+  return `<svg width="120" height="120" viewBox="0 0 120 120"><polygon points="${pts.join(' ')}" fill="${dColor()}15" stroke="${dColor()}" stroke-width="1"/></svg>`;
+}
+
+const doodles = [doodleStar, doodleCross, doodleArrow, doodleBlob];
+
+function buildDoodles(entries, clusterX, clusterY) {
+  const count = Math.max(5, entries.length * 2);
+  let svgEls = '';
+  for (let i = 0; i < count; i++) {
+    const cx = random(-200, 200);
+    const cy = random(-200, 200);
+    const gen = pick(doodles);
+    const svg = gen(cx, cy);
+    const anim = pick(['', 'float 6s ease-in-out infinite', 'floatSlow 8s ease-in-out infinite', 'pulse 4s ease-in-out infinite']);
+    svgEls += `<span style="position:absolute;left:${cx}px;top:${cy}px;opacity:${(rng() * 0.3 + 0.1).toFixed(2)};${anim ? 'animation:'+anim : ''}">${svg}</span>`;
+  }
+  return `<div class="doodle-layer">${svgEls}</div>`;
+}
+
+// ===== RENDER ENTRY =====
+function renderEntry(entry) {
+  switch (entry.type) {
+    case 'title':
+      return `<div class="title-cluster"><h1>${entry.text}</h1><p>${entry.subtitle || ''}</p><div class="seed-info">seed: ${SEED} — explore the nebula</div></div>`;
+    case 'text': {
+      const variants = ['', 'stitched', 'taped', 'torn', 'origami', 'pushpin', 'sticker', 'crosshatch', 'dot-grid'];
+      const variant = pick(variants);
+      const styledClass = `entry-card text-${entry.variant || 'normal'} ${variant}`.trim();
+      const badge = rng() > 0.7 ? `<span class="stamp-badge">${pick(['★NEW', '♥LIKE', 'TOP', '!!!'])}</span>` : '';
+      const labelHtml = entry.label ? `<div class="card-label">${entry.label}</div>` : '';
+      return `<div class="${styledClass}">${badge}${labelHtml}${entry.text}</div>`;
+    }
+    case 'quote': {
+      const variant = pick(['', 'stitched', 'taped', 'pushpin', 'dot-grid']);
+      return `<div class="entry-card text-quote ${variant}">${entry.text}</div>`;
+    }
+    case 'image': {
+      const labelHtml = entry.label ? `<div class="card-label">${entry.label}</div>` : '';
+      if (pick(['', 'polaroid']) === 'polaroid') {
+        return `<div style="transform:rotate(${rng(-3,3)}deg)"><div class="media-frame polaroid-frame"><img src="${entry.src}" alt="${entry.label || ''}" loading="lazy"/><div style="text-align:center;margin-top:6px;font-size:0.75rem;color:#888;letter-spacing:0.1em">${entry.label || ''}</div></div></div>`;
+      }
+      return `<div>${labelHtml}<div class="media-frame"><img src="${entry.src}" alt="${entry.label || ''}" loading="lazy"/></div></div>`;
+    }
+    case 'embed': {
+      const labelHtml = entry.label ? `<div class="card-label">${entry.label}</div>` : '';
+      const sticker = pick(['', 'sticker']);
+      if (sticker === 'sticker') {
+        return `<div><div class="entry-card sticker" style="padding:0;overflow:hidden">${labelHtml}<div class="media-frame embed-frame" style="border:none"><iframe src="${entry.src}" allowfullscreen loading="lazy"></iframe></div></div></div>`;
+      }
+      return `<div>${labelHtml}<div class="media-frame embed-frame"><iframe src="${entry.src}" allowfullscreen loading="lazy"></iframe></div></div>`;
+    }
+    default: return `<div class="entry-card text-normal">${JSON.stringify(entry)}</div>`;
+  }
+}
+
+// ===== BUILD NEBULA =====
+function buildNebula() {
+  const app = document.getElementById('app');
+  const navUI = document.getElementById('navUI');
+  const neuralLayer = document.getElementById('neural-layer');
+
+  let html = '';
+  let dots = '';
+  const clusterPositions = [];
+
+  screens.forEach((screen, si) => {
+    const x = random(500, 3000);
+    const y = random(500, 3000);
+    clusterPositions.push({x, y});
+
+    const colCount = screen.entries.length <= 1 ? 1 : pick([1, 2]);
+    const gridStyle = colCount === 1 ? 'grid-template-columns: 1fr; max-width: 700px;' : 'grid-template-columns: repeat(2, 1fr);';
+
+    let cardsHtml = '';
+    screen.entries.forEach((entry, ei) => {
+      const span = (colCount === 2 && ei === 0 && screen.entries.length >= 3) ? 'grid-column: span 2;' : '';
+      cardsHtml += `<div style="${span}">${renderEntry(entry)}</div>`;
+    });
+
+    const doodlesHtml = buildDoodles(screen.entries, x, y);
+    html += `<section class="cluster" data-index="${si}" style="left:${x}px; top:${y}px; background:${screen.bg}">
+      ${doodlesHtml}
+      <div class="cluster-inner" style="${gridStyle}">${cardsHtml}</div>
+    </section>`;
+
+    dots += `<button class="${si === 0 ? 'active' : ''}" data-target="${si}"></button>`;
+  });
+
+  app.innerHTML = html;
+  navUI.innerHTML = dots;
+
+  // Neural Links
+  let lines = '';
+  for (let i = 0; i < clusterPositions.length; i++) {
+    for (let j = i + 1; j < clusterPositions.length; j++) {
+      const p1 = clusterPositions[i];
+      const p2 = clusterPositions[j];
+      const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+      if (dist < 2000) {
+        lines += `<line x1="${p1.x + 200}" y1="${p1.y + 200}" x2="${p2.x + 200}" y2="${p2.y + 200}" stroke="${dColor()}" stroke-width="1" opacity="0.2" />`;
+      }
+    }
+  }
+  neuralLayer.innerHTML = lines;
+
+  return clusterPositions;
+}
+
+const clusterPositions = buildNebula();
+
+// ===== PAN & ZOOM ENGINE =====
+const viewport = document.getElementById('viewport');
+const world = document.getElementById('world');
+
+let state = {
+  x: -clusterPositions[0].x + window.innerWidth/2,
+  y: -clusterPositions[0].y + window.innerHeight/2,
+  z: 1,
+  isDragging: false,
+  lastMouseX: 0,
+  lastMouseY: 0
+};
+
+function updateTransform() {
+  world.style.transform = `translate(${state.x}px, ${state.y}px) scale(${state.z})`;
+}
+
+viewport.addEventListener('mousedown', (e) => {
+  state.isDragging = true;
+  state.lastMouseX = e.clientX;
+  state.lastMouseY = e.clientY;
+});
+
+window.addEventListener('mousemove', (e) => {
+  if (!state.isDragging) return;
+  const dx = e.clientX - state.lastMouseX;
+  const dy = e.clientY - state.lastMouseY;
+  state.x += dx;
+  state.y += dy;
+  state.lastMouseX = e.clientX;
+  state.lastMouseY = e.clientY;
+  updateTransform();
+});
+
+window.addEventListener('mouseup', () => state.isDragging = false);
+
+viewport.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const zoomSpeed = 0.001;
+  const delta = -e.deltaY;
+  const oldZ = state.z;
+  state.z += delta * zoomSpeed;
+  state.z = Math.min(Math.max(state.z, 0.2), 2);
+
+  // Zoom toward mouse
+  const rect = viewport.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+
+  const worldX = (mouseX - state.x) / oldZ;
+  const worldY = (mouseY - state.y) / oldZ;
+
+  state.x = mouseX - worldX * state.z;
+  state.y = mouseY - worldY * state.z;
+
+  updateTransform();
+}, { passive: false });
+
+// ===== NAV UI =====
+document.getElementById('navUI').addEventListener('click', (e) => {
+  if (e.target.tagName === 'BUTTON') {
+    const target = parseInt(e.target.dataset.target);
+    const pos = clusterPositions[target];
+
+    // Animate flight
+    const startTime = performance.now();
+    const startX = state.x;
+    const startY = state.y;
+    const startZ = state.z;
+    const endX = -pos.x + window.innerWidth/2;
+    const endY = -pos.y + window.innerHeight/2;
+    const endZ = 1;
+
+    function animate(time) {
+      const progress = Math.min((time - startTime) / 800, 1);
+      const ease = 1 - Math.pow(1 - progress, 3); // Cubic ease out
+
+      state.x = startX + (endX - startX) * ease;
+      state.y = startY + (endY - startY) * ease;
+      state.z = startZ + (endZ - startZ) * ease;
+      updateTransform();
+
+      if (progress < 1) requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+
+    document.querySelectorAll('.nav-ui button').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+  }
+});
+
+// Init
+updateTransform();
+</script>
+</body>
+</html>
