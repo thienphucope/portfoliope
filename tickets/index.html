@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mind Canvas</title>
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #2a2826;
+  --surface: #363330;
+  --surface-light: #3e3b37;
+  --accent-1: #7a6f62;
+  --accent-2: #b08d6a;
+  --accent-3: #6a8a72;
+  --text: #ddd8ce;
+  --text-dim: #9a9488;
+  --highlight: #c9a87c;
+  --border: #4a4540;
+  --tape-gold: #c9a87c55;
+  --tape-green: #6a8a7255;
+  --tape-red: #a06a6a44;
+  --tape-blue: #6a7a9a55;
+}
+
+html { scroll-snap-type: y: mandatory; overflow-y: scroll; }
+body {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+/* ===== CANVAS TEXTURE ===== */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(1deg); }
+}
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-5px) rotate(-0.5deg); }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+@keyframes stampIn {
+  from { opacity: 0; transform: scale(1.3) rotate(-5deg); }
+  to { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+@keyframes scribble {
+  from { stroke-dashoffset: 200; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes confetti {
+  0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.4; }
+  50% { transform: translateY(-10px) rotate(180deg); opacity: 0.7; }
+}
+
+.doodle-float { animation: float 6s ease-in-out infinite; }
+.doodle-float-slow { animation: floatSlow 8s ease-in-out infinite; }
+.doodle-pulse { animation: pulse 4s ease-in-out infinite; }
+.doodle-spin { animation: spinSlow 30s linear infinite; }
+.doodle-confetti { animation: confetti 3s ease-in-out infinite; }
+
+/* ===== SCREENS ===== */
+.screen {
+  min-height: 100vh;
+  scroll-snap-align: start;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+}
+.screen-inner {
+  max-width: 1100px;
+  width: 100%;
+  display: grid;
+  gap: 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== ENTRY CARDS — children book / infographic style ===== */
+.entry-card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 1.75rem;
+  position: relative;
+  transition: transform 0.2s, box-shadow 0.2s;
+  animation: fadeInUp 0.5s ease-out;
+  overflow: visible;
+}
+.entry-card:hover { transform: translateY(-3px) rotate(-0.3deg); box-shadow: 0 8px 30px #0003; }
+
+/* --- Card decorative variants --- */
+
+/* 1. Stitched (dashed) border */
+.entry-card.stitched { border-style: dashed; border-color: var(--accent-2); }
+
+/* 2. Tape (washi tape on top) */
+.entry-card.taped::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-3deg);
+  width: 70px;
+  height: 24px;
+  background: var(--tape-gold);
+  border-radius: 2px;
+  z-index: 2;
+}
+
+/* 3. Torn paper bottom (clip-path) */
+.entry-card.torn::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: var(--surface);
+  clip-path: polygon(0% 0%, 3% 100%, 7% 20%, 11% 100%, 15% 0%, 19% 80%, 23% 100%, 27% 15%, 31% 100%, 35% 0%, 39% 70%, 43% 100%, 47% 20%, 51% 100%, 55% 0%, 59% 90%, 63% 100%, 67% 15%, 71% 100%, 75% 0%, 79% 80%, 83% 100%, 87% 20%, 91% 100%, 95% 0%, 100% 40%);
+}
+.entry-card.torn { padding-bottom: 1.5rem; }
+
+/* 4. Origami corner (dog-ear) */
+.entry-card.origami::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 30px 30px 0;
+  border-color: transparent var(--surface-light) var(--surface-light) transparent;
+  opacity: 0.8;
+  z-index: 2;
+  filter: drop-shadow(-1px 1px 2px #0004);
+}
+.entry-card.origami { box-shadow: 1px 1px 0 #0002; }
+
+/* 5. Pushpin (top center) */
+.entry-card.pushpin::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #d45454, #8b2020);
+  box-shadow: 0 2px 4px #0005, inset 0 1px 2px #ff888866;
+  z-index: 3;
+}
+.entry-card.pushpin::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  width: 2px;
+  height: 30px;
+  background: linear-gradient(to bottom, transparent, #4a4540);
+  transform: translateX(-50%);
+}
+
+/* 6. Sticker (white border + shadow) */
+.entry-card.sticker {
+  background: #fff8f0;
+  color: #333;
+  border-color: #ddd;
+  box-shadow: 0 4px 15px #0003, 0 0 0 4px #fff, 0 0 0 5px #ccc;
+}
+.entry-card.sticker:hover { box-shadow: 0 6px 20px #0004, 0 0 0 4px #fff, 0 0 0 5px #ccc; }
+
+/* 7. Stamp (circular badge) */
+.entry-card .stamp-badge {
+  position: absolute;
+  top: -15px;
+  right: -10px;
+  width: 50px;
+  height: 50px;
+  border: 2px solid var(--accent-2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent-2);
+  opacity: 0.7;
+  transform: rotate(-15deg);
+  animation: stampIn 0.3s ease-out;
+  pointer-events: none;
+}
+
+/* 8. Crosshatch fill */
+.entry-card.crosshatch {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 8px,
+    #4a454022 8px,
+    #4a454022 9px
+  );
+}
+
+/* 9. Corner fold (bottom right) */
+.entry-card.fold-corner::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 0 20px 20px;
+  border-color: transparent transparent var(--border) transparent;
+  opacity: 0.5;
+}
+
+/* 10. Paperclip (right side) */
+.entry-card.paperclip::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  top: 20px;
+  bottom: 20px;
+  width: 12px;
+  border: 2px solid var(--accent-1);
+  border-radius: 6px 0 0 6px;
+  border-right: none;
+  opacity: 0.4;
+}
+
+/* 11. Washi tape variants */
+.entry-card.washi-top::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 15%;
+  width: 70%;
+  height: 20px;
+  background: var(--tape-green);
+  transform: rotate(-1.5deg);
+  border-radius: 2px;
+  z-index: 2;
+}
+.entry-card.washi-left { border-left: 4px solid var(--accent-3) !important; }
+.entry-card.washi-bottom::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 20%;
+  width: 60%;
+  height: 16px;
+  background: var(--tape-red);
+  transform: rotate(2deg);
+  border-radius: 2px;
+}
+
+/* 12. Dot-grid background */
+.entry-card.dot-grid {
+  background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+  background-size: 16px 16px;
+  background-color: var(--surface-light);
+}
+
+/* 13. Notched corner */
+.entry-card.notch::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 25px 25px 0;
+  border-color: transparent var(--bg) var(--bg) transparent;
+  filter: drop-shadow(-1px 1px 1px #0003);
+}
+
+/* Card label */
+.entry-card .card-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--text-dim);
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.entry-card .card-label::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-2);
+}
+
+/* Text variants */
+.entry-card.text-normal { font-size: 1.05rem; }
+.entry-card.text-large { font-size: 1.5rem; font-weight: bold; line-height: 1.4; }
+.entry-card.text-quote {
+  border-left: 4px solid var(--highlight) !important;
+  border-style: solid !important;
+  font-style: italic;
+  padding-left: 2rem;
+  background: var(--surface-light);
+}
+.entry-card.text-small { font-size: 0.85rem; color: var(--text-dim); }
+
+/* Media frames */
+.media-frame {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  line-height: 0;
+}
+.media-frame img,
+.media-frame video {
+  width: 100%;
+  display: block;
+  border-radius: 7px;
+}
+.media-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 7px;
+}
+.embed-frame { aspect-ratio: 16/9; }
+
+/* Polaroid frame for images */
+.media-frame.polaroid-frame {
+  padding: 10px 10px 45px 10px !important;
+  background: #fff8f0 !important;
+  border-color: #ddd !important;
+  box-shadow: 0 3px 12px #0003;
+}
+
+/* ===== DECORATIVE DOODLES (children book style) ===== */
+.doodle-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.doodle-layer svg { position: absolute; }
+
+/* Star doodle */
+.doodle-star {
+  animation: none;
+}
+
+/* Floating blob */
+.doodle-blob {
+  opacity: 0.15;
+}
+
+/* Cross / plus marks */
+.doodle-cross {
+  opacity: 0.25;
+}
+
+/* Arrow doodle */
+.doodle-arrow svg {
+  opacity: 0.2;
+}
+
+/* ===== TITLE SCREEN ===== */
+.title-screen {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  position: relative;
+}
+.title-screen h1 {
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  font-weight: 400;
+  color: var(--highlight);
+  letter-spacing: -0.02em;
+}
+.title-screen p {
+  color: var(--text-dim);
+  font-size: 1.2rem;
+  margin-top: 0.5rem;
+}
+.title-screen .seed-info {
+  margin-top: 2rem;
+  font-size: 0.8rem;
+  color: var(--accent-1);
+}
+
+/* ===== NAV DOTS ===== */
+.nav-dots {
+  position: fixed;
+  right: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.nav-dots button {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  border: 1px solid var(--accent-1);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.2s;
+  padding: 0;
+}
+.nav-dots button.active { background: var(--highlight); border-color: var(--highlight); }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 640px) {
+  .screen { padding: 2rem 1rem; }
+  .entry-card { padding: 1.25rem; }
+  .entry-card.text-large { font-size: 1.25rem; }
+  .nav-dots { right: 0.75rem; }
+  .doodle-layer { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV DOTS -->
+<div class="nav-dots" id="navDots"></div>
+
+<!-- SCREENS injected here -->
+<div id="app"></div>
+
+<script>
+// ===== SEEDED RANDOM (mulberry32) =====
+function mulberry32(seed) {
+  let s = seed | 0;
+  return function() {
+    s |= 0; s = s + 0x6D2B79F5 | 0;
+    let t = Math.imul(s ^ s >>> 15, 1 | s);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+// ===== CONFIG =====
+const SEED = 42;
+const rng = mulberry32(SEED);
+
+function random(from, to) { return Math.floor(rng() * (to - from + 1)) + from; }
+function pick(arr) { return arr[Math.floor(rng() * arr.length)]; }
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ===== ENTRY DATA — chỉ quản lý content, không quản lý layout =====
+// Mỗi screen = một chủ đề trong tâm trí bạn
+const screens = [
+  // --- Screen 0: Title ---
+  {
+    bg: '#2a2826',
+    entries: [
+      { type: 'title', text: 'mind canvas', subtitle: 'things i like, arranged by seed' },
+    ],
+  },
+  // --- Screen 1: Inspirations ---
+  {
+    bg: '#28262a',
+    entries: [
+      { type: 'text', variant: 'large', label: 'inspiration #1', text: 'No Man\'s Sky taught me that randomness can feel deeply personal.' },
+      { type: 'image', src: 'https://picsum.photos/seed/mind1/600/400', label: 'photo 1' },
+      { type: 'image', src: 'https://picsum.photos/seed/mind2/600/400', label: 'photo 2' },
+      { type: 'text', variant: 'small', text: 'Every world is generated. Every feeling is real.' },
+    ],
+  },
+  // --- Screen 2: Music ---
+  {
+    bg: '#262a28',
+    entries: [
+      { type: 'text', variant: 'large', label: 'soundtrack', text: 'Songs that stay with you.' },
+      { type: 'embed', src: 'https://www.youtube.com/embed/dQw4w9WgXcQ', label: 'video' },
+      { type: 'text', variant: 'quote', text: '"Music is the reminder of things not yet forgotten."' },
+    ],
+  },
+  // --- Screen 3: Thoughts ---
+  {
+    bg: '#2a2628',
+    entries: [
+      { type: 'text', variant: 'large', label: 'thought', text: 'A collection of things that remind me who I am.' },
+      { type: 'quote', text: '"The canvas is yours. Keep filling it."' },
+      { type: 'text', text: 'Add entries to the `screens` array below to grow your mind.' },
+      { type: 'image', src: 'https://picsum.photos/seed/mind3/600/400', label: 'illustration' },
+    ],
+  },
+];
+
+// ===== DOODLE GENERATORS — children book / infographic style =====
+// Each doodle can be called as doodleName(cx, cy, ...params)
+// Returns an <svg> string with inline style positioning
+
+const doodleColors = ['#b08d6a', '#7a6f62', '#6a8a72', '#c9a87c', '#a06a6a', '#6a7a9a'];
+function dColor() { return pick(doodleColors); }
+
+/* --- Shapes --- */
+
+function doodleStar(cx, cy, r) {
+  r = r || 14;
+  let d = '';
+  for (let i = 0; i < 10; i++) {
+    const angle = (i * Math.PI * 2) / 10 - Math.PI / 2;
+    const rad = i % 2 === 0 ? r : r * 0.4;
+    const x = cx + Math.cos(angle) * rad;
+    const y = cy + Math.sin(angle) * rad;
+    d += (i === 0 ? 'M' : 'L') + `${x},${y} `;
+  }
+  d += 'Z';
+  return `<svg width="60" height="60" viewBox="0 0 60 60"><path d="${d}" fill="none" stroke="${dColor()}" stroke-width="1.5"/></svg>`;
+}
+
+function doodleCross(cx, cy, s) {
+  s = s || 10;
+  return `<svg width="${s*2}" height="${s*2}" viewBox="0 0 ${s*2} ${s*2}"><line x1="0" y1="0" x2="${s*2}" y2="${s*2}" stroke="${dColor()}" stroke-width="1.5"/><line x1="${s*2}" y1="0" x2="0" y2="${s*2}" stroke="${dColor()}" stroke-width="1.5"/></svg>`;
+}
+
+function doodleArrow(cx, cy, angle) {
+  const rad = (angle || 0) * Math.PI / 180;
+  const cos = Math.cos(rad), sin = Math.sin(rad);
+  const len = 28, hw = 8;
+  const tipX = cx + len * cos, tipY = cy + len * sin;
+  const bx = tipX - hw * cos, by = tipY - hw * sin;
+  const blx = bx + hw * sin, bly = by - hw * cos;
+  const brx = bx - hw * sin, bry = by + hw * cos;
+  const d = `M${cx},${cy} L${tipX},${tipY} L${blx},${bly} M${tipX},${tipY} L${brx},${bry}`;
+  return `<svg width="80" height="80" viewBox="0 0 80 80"><path d="${d}" fill="none" stroke="${dColor()}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
+function doodleBlob(cx, cy, rx, ry) {
+  rx = rx || 35; ry = ry || 25;
+  const pts = [];
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2;
+    const r = rx + (rng() - 0.5) * rx * 0.5;
+    const x = cx + Math.cos(angle) * r;
+    const y = cy + Math.sin(angle) * ry * (r / rx);
+    pts.push(`${x},${y}`);
+  }
+  return `<svg width="120" height="120" viewBox="0 0 120 120"><polygon points="${pts.join(' ')}" fill="${dColor()}15" stroke="${dColor()}" stroke-width="1"/></svg>`;
+}
+
+function doodleDots(cx, cy, count, spacing) {
+  spacing = spacing || 10;
+  let rects = '';
+  for (let i = 0; i < count; i++) {
+    const x = cx + (rng() - 0.5) * spacing * 4;
+    const y = cy + (rng() - 0.5) * spacing * 4;
+    rects += `<rect x="${x}" y="${y}" width="3" height="3" rx="1" fill="${dColor()}" opacity="0.3"/>`;
+  }
+  return `<svg width="120" height="120" viewBox="-60 -60 120 120">${rects}</svg>`;
+}
+
+function doodleWave(cx, cy, w, h) {
+  w = w || 80; h = h || 18;
+  let pts = [];
+  for (let i = 0; i <= 10; i++) {
+    const x = -w/2 + (i / 10) * w;
+    const y = Math.sin(i * 0.8) * h * (rng() * 0.5 + 0.5);
+    pts.push(`${x},${y}`);
+  }
+  return `<svg width="${w+40}" height="${h*2+40}" viewBox="-20 -${h/2+20} ${w+40} ${h+40}"><polyline points="${pts.join(' ')}" fill="none" stroke="${dColor()}" stroke-width="1.2"/></svg>`;
+}
+
+/* --- Illustrative doodles --- */
+
+function doodleSpiral(cx, cy, r) {
+  r = r || 20;
+  let d = 'M';
+  for (let i = 0; i < 60; i++) {
+    const angle = i * 0.3;
+    const rad = (i / 60) * r;
+    const x = cx + Math.cos(angle) * rad;
+    const y = cy + Math.sin(angle) * rad;
+    d += `${x},${y} `;
+  }
+  return `<svg width="80" height="80" viewBox="0 0 80 80"><path d="${d}" fill="none" stroke="${dColor()}" stroke-width="1.2" stroke-linecap="round"/></svg>`;
+}
+
+function doodleHeart(cx, cy, s) {
+  s = s || 20;
+  const d = `M${cx},${cy+s*0.3} C${cx-s*0.6},${cy} ${cx-s},${cy+s*0.4} ${cx-s*0.5},${cy+s} C${cx-s*0.2},${cy+s*1.3} ${cx},${cy+s*1.4} ${cx},${cy+s*1.4} C${cx},${cy+s*1.4} ${cx+s*0.2},${cy+s*1.3} ${cx+s*0.5},${cy+s} C${cx+s},${cy+s*0.4} ${cx+s*1.4},${cy} ${cx+s*0.6},${cy} C${cx+s*0.1},${cy+s*0.1} ${cx},${cy+s*0.3} ${cx},${cy+s*0.3}Z`;
+  return `<svg width="${s*3}" height="${s*2}" viewBox="0 0 ${s*3} ${s*2}"><path d="${d}" fill="${dColor()}20" stroke="${dColor()}" stroke-width="1.2"/></svg>`;
+}
+
+function doodleLeaf(cx, cy, s) {
+  s = s || 20;
+  const d = `M${cx},${cy+s} C${cx-s},${cy+s*0.5} ${cx-s*0.5},${cy-s*0.5} ${cx},${cy-s} C${cx+s*0.5},${cy-s*0.5} ${cx+s},${cy+s*0.5} ${cx},${cy+s}Z`;
+  const vein = `M${cx},${cy+s*0.8} L${cx},${cy-s*0.7}`;
+  return `<svg width="${s*2}" height="${s*2.5}" viewBox="0 0 ${s*2} ${s*2.5}"><path d="${d}" fill="${dColor()}18" stroke="${dColor()}" stroke-width="1"/><path d="${vein}" fill="none" stroke="${dColor()}" stroke-width="0.7"/></svg>`;
+}
+
+function doodleMusicNote(cx, cy) {
+  const x = cx - 12, y = cy - 15;
+  return `<svg width="40" height="50" viewBox="0 0 40 50">
+    <ellipse cx="${x+8}" cy="${y+35}" rx="7" ry="5" fill="none" stroke="${dColor()}" stroke-width="1.2"/>
+    <line x1="${x+15}" y1="${y+35}" x2="${x+15}" y2="${y+5}" stroke="${dColor()}" stroke-width="1.5"/>
+    <path d="M${x+15},${y+5} C${x+25},${y} ${x+32},${y+10} ${x+28},${y+18}" fill="none" stroke="${dColor()}" stroke-width="1.2"/>
+    <circle cx="${x+28}" cy="${y+17}" r="3" fill="${dColor()}30" stroke="${dColor()}" stroke-width="1"/>
+  </svg>`;
+}
+
+function doodleCloud(cx, cy, w) {
+  w = w || 50;
+  return `<svg width="${w*3}" height="${w}" viewBox="0 0 ${w*3} ${w}">
+    <ellipse cx="${cx}" cy="${cy+w*0.3}" rx="${w}" ry="${w*0.4}" fill="${dColor()}10" stroke="${dColor()}" stroke-width="1"/>
+    <ellipse cx="${cx-w*0.4}" cy="${cy+w*0.4}" rx="${w*0.6}" ry="${w*0.3}" fill="${dColor()}10" stroke="${dColor()}" stroke-width="1"/>
+    <ellipse cx="${cx+w*0.5}" cy="${cy+w*0.35}" rx="${w*0.7}" ry="${w*0.35}" fill="${dColor()}10" stroke="${dColor()}" stroke-width="1"/>
+  </svg>`;
+}
+
+function doodleDiamond(cx, cy, s) {
+  s = s || 15;
+  const d = `M${cx},${cy-s} L${cx+s*0.7},${cy} L${cx},${cy+s} L${cx-s*0.7},${cy} Z`;
+  return `<svg width="${s*2}" height="${s*2.5}" viewBox="0 0 ${s*2} ${s*2.5}"><path d="${d}" fill="${dColor()}15" stroke="${dColor()}" stroke-width="1.2"/></svg>`;
+}
+
+function doodleZigzag(cx, cy, w, h) {
+  w = w || 60; h = h || 16;
+  let pts = [];
+  const steps = 8;
+  for (let i = 0; i <= steps; i++) {
+    const x = cx - w/2 + (i / steps) * w;
+    const y = cy + (i % 2 === 0 ? -1 : 1) * h * 0.5;
+    pts.push(`${x},${y}`);
+  }
+  return `<svg width="${w+20}" height="${h+20}" viewBox="0 0 ${w+20} ${h+20}"><polyline points="${pts.join(' ')}" fill="none" stroke="${dColor()}" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
+}
+
+function doodleScribble(cx, cy, r) {
+  r = r || 20;
+  let d = `M${cx + rng() * r - r/2},${cy + rng() * r - r/2}`;
+  for (let i = 0; i < 20; i++) {
+    const x = cx + (rng() - 0.5) * r * 1.5;
+    const y = cy + (rng() - 0.5) * r * 1.5;
+    d += ` Q${cx + (rng()-0.5)*r},${cy + (rng()-0.5)*r} ${x},${y}`;
+  }
+  return `<svg width="${r*3}" height="${r*3}" viewBox="0 0 ${r*3} ${r*3}"><path d="${d}" fill="none" stroke="${dColor()}" stroke-width="1.2" stroke-linecap="round" stroke-dasharray="200" style="animation:scribble 2s ease-out forwards"/></svg>`;
+}
+
+function doodleConfetti(cx, cy) {
+  let rects = '';
+  for (let i = 0; i < 12; i++) {
+    const x = cx + (rng() - 0.5) * 50;
+    const y = cy + (rng() - 0.5) * 50;
+    const rot = rng() * 360;
+    const w = rng(3, 7), h = rng(3, 7);
+    rects += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${dColor()}" opacity="0.35" transform="rotate(${rot} ${x+w/2} ${y+h/2})" style="animation:confetti ${2+rng(0,3)}s ease-in-out infinite;animation-delay:${rng(0,2000)}ms"/>`;
+  }
+  return `<svg width="80" height="80" viewBox="-40 -40 80 80">${rects}</svg>`;
+}
+
+function doodleEye(cx, cy, r) {
+  r = r || 15;
+  return `<svg width="${r*3}" height="${r*1.6}" viewBox="0 0 ${r*3} ${r*1.6}">
+    <ellipse cx="${cx}" cy="${cy}" rx="${r}" ry="${r*0.5}" fill="none" stroke="${dColor()}" stroke-width="1.2"/>
+    <circle cx="${cx}" cy="${cy}" r="${r*0.25}" fill="${dColor()}40"/>
+    <circle cx="${cx}" cy="${cy}" r="${r*0.1}" fill="${dColor()}80"/>
+  </svg>`;
+}
+
+function doodleFlower(cx, cy, petals, r) {
+  petals = petals || 6; r = r || 12;
+  let paths = '';
+  for (let i = 0; i < petals; i++) {
+    const angle = (i / petals) * Math.PI * 2;
+    const px = cx + Math.cos(angle) * r * 0.6;
+    const py = cy + Math.sin(angle) * r * 0.6;
+    paths += `<ellipse cx="${px}" cy="${py}" rx="${r*0.5}" ry="${r*0.25}" fill="${dColor()}15" stroke="${dColor()}" stroke-width="0.8" transform="rotate(${i*360/petals} ${px} ${py})"/>`;
+  }
+  return `<svg width="${r*3}" height="${r*3}" viewBox="0 0 ${r*3} ${r*3}">${paths}<circle cx="${cx}" cy="${cy}" r="${r*0.2}" fill="${dColor()}30"/></svg>`;
+}
+
+const doodles = [
+  // Basic shapes
+  doodleStar, doodleCross, doodleArrow, doodleBlob, doodleDots, doodleWave,
+  // Illustrative
+  doodleSpiral, doodleHeart, doodleLeaf, doodleMusicNote, doodleCloud,
+  doodleDiamond, doodleZigzag, doodleScribble, doodleEye,
+  // Decorative
+  doodleConfetti, doodleFlower,
+];
+
+// ===== BUILD DOODLE LAYER FOR A SCREEN =====
+function buildDoodles(screenEntries) {
+  const count = Math.max(12, screenEntries.length * 4);
+  const anims = [
+    '', '', '',                         // no anim (heavy)
+    'float 6s ease-in-out infinite',
+    'floatSlow 8s ease-in-out infinite',
+    'pulse 4s ease-in-out infinite',
+    'spinSlow 30s linear infinite',
+  ];
+  let svgEls = '';
+  for (let i = 0; i < count; i++) {
+    const cx = random(20, 1060);
+    const cy = random(30, 720);
+    const gen = pick(doodles);
+    let svg = '';
+    if (gen === doodleDots) {
+      svg = doodleDots(cx, cy, random(3, 8), 10);
+    } else if (gen === doodleArrow) {
+      svg = doodleArrow(cx, cy, random(-45, 45));
+    } else if (gen === doodleBlob) {
+      svg = doodleBlob(cx, cy, random(25, 50), random(20, 40));
+    } else if (gen === doodleSpiral) {
+      svg = doodleSpiral(cx, cy, random(12, 25));
+    } else if (gen === doodleHeart) {
+      svg = doodleHeart(cx, cy, random(12, 22));
+    } else if (gen === doodleLeaf) {
+      svg = doodleLeaf(cx, cy, random(12, 22));
+    } else if (gen === doodleDiamond) {
+      svg = doodleDiamond(cx, cy, random(10, 18));
+    } else if (gen === doodleZigzag) {
+      svg = doodleZigzag(cx, cy, random(40, 80), random(10, 20));
+    } else if (gen === doodleScribble) {
+      svg = doodleScribble(cx, cy, random(12, 25));
+    } else if (gen === doodleFlower) {
+      svg = doodleFlower(cx, cy, random(4, 8), random(8, 15));
+    } else if (gen === doodleEye) {
+      svg = doodleEye(cx, cy, random(10, 18));
+    } else {
+      svg = gen(cx, cy);
+    }
+    const anim = pick(anims);
+    const opacity = (rng() * 0.45 + 0.08).toFixed(2);
+    const scale = (rng(0.5, 1.4)).toFixed(2);
+    const rot = random(-15, 15);
+    svgEls += `<span style="position:absolute;left:${cx}px;top:${cy}px;opacity:${opacity};transform:scale(${scale}) rotate(${rot}deg);${anim ? 'animation:'+anim : ''}">${svg}</span>`;
+  }
+  return `<div class="doodle-layer">${svgEls}</div>`;
+}
+
+// ===== RENDER INDIVIDUAL ENTRY =====
+function renderEntry(entry, si) {
+  switch (entry.type) {
+    case 'title':
+      return `<div class="title-screen" style="text-align:center">
+        <h1>${entry.text}</h1>
+        <p>${entry.subtitle || ''}</p>
+        <div class="seed-info">seed: ${SEED} — scroll to explore</div>
+      </div>`;
+
+    case 'text': {
+      const cls = `entry-card text-${entry.variant || 'normal'}`;
+      // Randomly pick a card variant
+      const variants = ['', 'stitched', 'taped', 'torn', 'origami', 'pushpin', 'sticker',
+                        'crosshatch', 'fold-corner', 'paperclip', 'washi-top washi-left',
+                        'washi-bottom', 'dot-grid', 'notch'];
+      const variant = pick(variants);
+      const styledClass = `${cls} ${variant}`.trim();
+      const badge = rng() > 0.7 ? `<span class="stamp-badge">${pick(['★NEW', '♥LIKE', 'TOP', '!!!', '★GO', '★★★', '☆FUN', '★MUSIC'])}</span>` : '';
+      const labelHtml = entry.label ? `<div class="card-label">${entry.label}</div>` : '';
+      return `<div class="${styledClass}">${badge}${labelHtml}${entry.text}</div>`;
+    }
+
+    case 'quote': {
+      const variants = ['', 'stitched', 'taped', 'pushpin', 'dot-grid'];
+      const variant = pick(variants);
+      const styledClass = `entry-card text-quote ${variant}`.trim();
+      return `<div class="${styledClass}">${entry.text}</div>`;
+    }
+
+    case 'image': {
+      const labelHtml = entry.label ? `<div class="card-label">${entry.label}</div>` : '';
+      // Polaroid frame for images
+      const polaroid = pick(['', 'polaroid']);
+      if (polaroid === 'polaroid') {
+        return `<div style="animation:fadeInUp 0.5s ease-out;transform:rotate(${rng(-3,3)}deg)">
+          <div class="media-frame" style="padding:8px 8px 35px 8px;background:#fff8f0;border-color:#ddd">
+            <img src="${entry.src}" alt="${entry.label || ''}" loading="lazy" style="border-radius:4px"/>
+            <div style="text-align:center;margin-top:6px;font-size:0.75rem;color:#888;letter-spacing:0.1em">${entry.label || ''}</div>
+          </div>
+        </div>`;
+      }
+      return `<div style="animation:fadeInUp 0.5s ease-out">${labelHtml}<div class="media-frame"><img src="${entry.src}" alt="${entry.label || ''}" loading="lazy"/></div></div>`;
+    }
+
+    case 'embed': {
+      const labelHtml = entry.label ? `<div class="card-label">${entry.label}</div>` : '';
+      const sticker = pick(['', 'sticker']);
+      if (sticker === 'sticker') {
+        return `<div style="animation:fadeInUp 0.5s ease-out"><div class="entry-card sticker" style="padding:0;overflow:hidden">
+          ${labelHtml}
+          <div class="media-frame embed-frame" style="border:none"><iframe src="${entry.src}" allowfullscreen loading="lazy"></iframe></div>
+        </div></div>`;
+      }
+      return `<div style="animation:fadeInUp 0.5s ease-out">${labelHtml}<div class="media-frame embed-frame"><iframe src="${entry.src}" allowfullscreen loading="lazy"></iframe></div></div>`;
+    }
+
+    default:
+      return `<div class="entry-card text-normal">${JSON.stringify(entry)}</div>`;
+  }
+}
+
+// ===== BUILD SCREENS =====
+function buildScreens() {
+  const app = document.getElementById('app');
+  const navDots = document.getElementById('navDots');
+  let html = '';
+  let dots = '';
+
+  screens.forEach((screen, si) => {
+    const colCount = screen.entries.length <= 1 ? 1 : pick([1, 2]);
+    const gridStyle = colCount === 1
+      ? 'grid-template-columns: 1fr; max-width: 700px; margin: 0 auto;'
+      : 'grid-template-columns: repeat(2, 1fr);';
+
+    // Make first entry span full width if 2-col
+    let cardsHtml = '';
+    screen.entries.forEach((entry, ei) => {
+      const span = (colCount === 2 && ei === 0 && screen.entries.length >= 3) ? 'grid-column: span 2;' : '';
+      cardsHtml += `<div style="${span}">${renderEntry(entry)}</div>`;
+    });
+
+    const doodlesHtml = buildDoodles(screen.entries);
+
+    html += `<section class="screen" data-screen="${si}" style="background:${screen.bg}">
+      ${doodlesHtml}
+      <div class="screen-inner" style="${gridStyle}">${cardsHtml}</div>
+    </section>`;
+
+    dots += `<button class="${si === 0 ? 'active' : ''}" data-target="${si}"></button>`;
+  });
+
+  app.innerHTML = html;
+  navDots.innerHTML = dots;
+}
+
+// ===== NAV DOTS =====
+document.getElementById('navDots').addEventListener('click', (e) => {
+  if (e.target.tagName === 'BUTTON') {
+    const target = parseInt(e.target.dataset.target);
+    document.querySelectorAll('.screen')[target]?.scrollIntoView({ behavior: 'smooth' });
+  }
+});
+
+// ===== ACTIVE DOT TRACKING =====
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      document.querySelectorAll('.nav-dots button').forEach(b => b.classList.remove('active'));
+      const dot = document.querySelector(`.nav-dots button[data-target="${entry.target.dataset.screen}"]`);
+      dot?.classList.add('active');
+    }
+  });
+}, { threshold: 0.5 });
+
+// ===== INIT =====
+buildScreens();
+document.querySelectorAll('.screen').forEach(s => observer.observe(s));
+
+// ===== KEYBOARD NAV =====
+document.addEventListener('keydown', (e) => {
+  const screens = document.querySelectorAll('.screen');
+  const current = findCurrentScreen(screens);
+  if (e.key === 'ArrowDown' && current < screens.length - 1) {
+    screens[current + 1].scrollIntoView({ behavior: 'smooth' });
+  } else if (e.key === 'ArrowUp' && current > 0) {
+    screens[current - 1].scrollIntoView({ behavior: 'smooth' });
+  }
+});
+
+function findCurrentScreen(screens) {
+  const mid = window.innerHeight / 2;
+  for (let i = 0; i < screens.length; i++) {
+    const rect = screens[i].getBoundingClientRect();
+    if (rect.top <= mid && rect.bottom >= mid) return i;
+  }
+  return 0;
+}
+</script>
+</body>
+</html>

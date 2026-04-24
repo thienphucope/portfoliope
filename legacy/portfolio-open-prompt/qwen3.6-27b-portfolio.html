@@ -1,0 +1,1898 @@
+/*tạo một portfolio cho tôi theo phong cách thám tử 
+nhưng được integrate vào phong cách hiện đại bằng html*/
+
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DETECTIVE PORTFOLIO — File Confidentiel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* ========== CSS VARIABLES ========== */
+        :root {
+            --noir: #0a0a0a;
+            --dark: #1a1a1a;
+            --dark2: #2a2a2a;
+            --paper: #f4e8c1;
+            --paper-dark: #d4c8a1;
+            --accent: #c9a84c;
+            --accent2: #e8c547;
+            --red-seal: #c0392b;
+            --red-light: #e74c3c;
+            --text-light: #e8e8e8;
+            --text-muted: #888;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        /* ========== RESET & BASE ========== */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent) var(--dark);
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--dark); }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--noir);
+            color: var(--text-light);
+            overflow-x: hidden;
+            cursor: default;
+        }
+
+        /* ========== CUSTOM CURSOR ========== */
+        .cursor-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 99999;
+            transition: transform 0.1s;
+            mix-blend-mode: difference;
+        }
+
+        .cursor-ring {
+            width: 40px;
+            height: 40px;
+            border: 1.5px solid var(--accent);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 99998;
+            transition: all 0.15s ease-out;
+            mix-blend-mode: difference;
+        }
+
+        /* ========== NOISE OVERLAY ========== */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* ========== LOADING SCREEN ========== */
+        .loading-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--noir);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100000;
+            transition: opacity 0.8s, visibility 0.8s;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loading-magnifier {
+            width: 80px;
+            height: 80px;
+            animation: magnifySearch 1.5s ease-in-out infinite;
+        }
+
+        @keyframes magnifySearch {
+            0%, 100% { transform: scale(1) rotate(-15deg); }
+            50% { transform: scale(1.15) rotate(5deg); }
+        }
+
+        .loading-text {
+            font-family: 'Courier Prime', monospace;
+            color: var(--accent);
+            margin-top: 24px;
+            font-size: 14px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        .loading-bar {
+            width: 200px;
+            height: 2px;
+            background: var(--dark2);
+            margin-top: 16px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .loading-bar-fill {
+            height: 100%;
+            background: var(--accent);
+            animation: loadBar 2s ease-in-out forwards;
+        }
+
+        @keyframes loadBar {
+            0% { width: 0; }
+            100% { width: 100%; }
+        }
+
+        /* ========== NAVIGATION ========== */
+        .nav {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            padding: 20px 48px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            transition: all 0.4s;
+            background: transparent;
+        }
+
+        .nav.scrolled {
+            background: rgba(10, 10, 10, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 14px 48px;
+        }
+
+        .nav-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 22px;
+            font-weight: 900;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-logo svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 36px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            font-family: 'Courier Prime', monospace;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px; left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--accent);
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover { color: var(--accent); }
+        .nav-links a:hover::after { width: 100%; }
+
+        .nav-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 4px;
+        }
+
+        .nav-toggle span {
+            width: 24px;
+            height: 2px;
+            background: var(--accent);
+            transition: all 0.3s;
+        }
+
+        /* ========== HERO SECTION ========== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-bg {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background:
+                radial-gradient(ellipse at 20% 50%, rgba(201, 168, 76, 0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(192, 57, 43, 0.05) 0%, transparent 50%);
+        }
+
+        .hero-grid {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        .hero-content {
+            text-align: center;
+            z-index: 2;
+            padding: 0 24px;
+        }
+
+        .hero-file-number {
+            font-family: 'Courier Prime', monospace;
+            color: var(--red-seal);
+            font-size: 13px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            opacity: 0;
+            animation: fadeInUp 0.8s 2.2s forwards;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .hero-file-number::before,
+        .hero-file-number::after {
+            content: '';
+            width: 40px;
+            height: 1px;
+            background: var(--red-seal);
+        }
+
+        .hero-classified {
+            font-family: 'Courier Prime', monospace;
+            font-size: 12px;
+            color: var(--red-seal);
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            margin-bottom: 32px;
+            opacity: 0;
+            animation: fadeInUp 0.8s 2.4s forwards;
+        }
+
+        .hero-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(48px, 8vw, 120px);
+            font-weight: 900;
+            line-height: 1;
+            margin-bottom: 8px;
+            opacity: 0;
+            animation: fadeInUp 0.8s 2.6s forwards;
+        }
+
+        .hero-title .line1 {
+            display: block;
+            color: var(--text-light);
+        }
+
+        .hero-title .line2 {
+            display: block;
+            color: var(--accent);
+            font-style: italic;
+        }
+
+        .hero-subtitle {
+            font-family: 'Courier Prime', monospace;
+            font-size: 16px;
+            color: var(--text-muted);
+            margin-top: 24px;
+            letter-spacing: 3px;
+            opacity: 0;
+            animation: fadeInUp 0.8s 2.8s forwards;
+        }
+
+        .hero-typewriter {
+            font-family: 'Courier Prime', monospace;
+            font-size: 15px;
+            color: var(--accent);
+            margin-top: 16px;
+            min-height: 24px;
+            opacity: 0;
+            animation: fadeInUp 0.8s 3s forwards;
+        }
+
+        .hero-typewriter .cursor-blink {
+            animation: blink 0.8s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .hero-cta {
+            margin-top: 48px;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            opacity: 0;
+            animation: fadeInUp 0.8s 3.2s forwards;
+        }
+
+        .btn {
+            padding: 14px 36px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 13px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.4s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--noir);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent2);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(201, 168, 76, 0.3);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+        }
+
+        .btn-outline:hover {
+            background: var(--accent);
+            color: var(--noir);
+            transform: translateY(-2px);
+        }
+
+        .hero-scroll {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            opacity: 0;
+            animation: fadeInUp 0.8s 3.4s forwards;
+        }
+
+        .hero-scroll span {
+            font-family: 'Courier Prime', monospace;
+            font-size: 10px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .scroll-line {
+            width: 1px;
+            height: 40px;
+            background: linear-gradient(to bottom, var(--accent), transparent);
+            animation: scrollPulse 2s infinite;
+        }
+
+        @keyframes scrollPulse {
+            0%, 100% { opacity: 1; transform: scaleY(1); }
+            50% { opacity: 0.3; transform: scaleY(0.6); }
+        }
+
+        /* ========== SECTION COMMON ========== */
+        .section {
+            padding: 120px 48px;
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .section-header {
+            margin-bottom: 80px;
+        }
+
+        .section-label {
+            font-family: 'Courier Prime', monospace;
+            font-size: 12px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--red-seal);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-label::before {
+            content: '';
+            width: 30px;
+            height: 1px;
+            background: var(--red-seal);
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(36px, 5vw, 64px);
+            font-weight: 900;
+            color: var(--text-light);
+            line-height: 1.1;
+        }
+
+        .section-title span {
+            color: var(--accent);
+            font-style: italic;
+        }
+
+        .section-desc {
+            font-family: 'Courier Prime', monospace;
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-top: 16px;
+            max-width: 600px;
+            line-height: 1.8;
+        }
+
+        /* ========== DIVIDER ========== */
+        .divider {
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--glass-border), transparent);
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* ========== ABOUT / PROFILE ========== */
+        .about-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 80px;
+            align-items: start;
+        }
+
+        .about-image-wrapper {
+            position: relative;
+        }
+
+        .about-image {
+            width: 100%;
+            aspect-ratio: 3/4;
+            background: var(--dark);
+            border: 1px solid var(--glass-border);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .about-image-placeholder {
+            font-size: 120px;
+            opacity: 0.15;
+        }
+
+        .about-image::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(to bottom, transparent 60%, rgba(10,10,10,0.8));
+            z-index: 1;
+        }
+
+        .about-image-stamp {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 2;
+            border: 2px solid var(--red-seal);
+            color: var(--red-seal);
+            padding: 6px 14px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 11px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            transform: rotate(-3deg);
+        }
+
+        .about-image-border {
+            position: absolute;
+            top: 16px; left: 16px;
+            width: 100%; height: 100%;
+            border: 1px solid var(--accent);
+            opacity: 0.3;
+            z-index: -1;
+        }
+
+        .about-info {
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        .about-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            line-height: 1.9;
+            color: var(--text-muted);
+        }
+
+        .about-text strong {
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        .profile-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            padding: 32px;
+            backdrop-filter: blur(10px);
+        }
+
+        .profile-card-title {
+            font-family: 'Courier Prime', monospace;
+            font-size: 12px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .profile-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .profile-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .profile-field-label {
+            font-family: 'Courier Prime', monospace;
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .profile-field-value {
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .profile-note {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--glass-border);
+            font-family: 'Courier Prime', monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.8;
+            font-style: italic;
+        }
+
+        /* ========== SKILLS / ARMORY ========== */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .skill-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            padding: 40px 32px;
+            transition: all 0.5s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .skill-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 2px;
+            background: linear-gradient(to right, var(--accent), transparent);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.5s;
+        }
+
+        .skill-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .skill-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-4px);
+            border-color: rgba(201, 168, 76, 0.2);
+        }
+
+        .skill-icon {
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+
+        .skill-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text-light);
+        }
+
+        .skill-desc {
+            font-family: 'Courier Prime', monospace;
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+
+        .skill-bar {
+            width: 100%;
+            height: 3px;
+            background: var(--dark2);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .skill-bar-fill {
+            height: 100%;
+            background: linear-gradient(to right, var(--accent), var(--accent2));
+            border-radius: 2px;
+            transition: width 1.5s ease-out;
+            width: 0;
+        }
+
+        .skill-bar-fill.animate {
+            /* width set via inline style */
+        }
+
+        .skill-level {
+            font-family: 'Courier Prime', monospace;
+            font-size: 11px;
+            color: var(--accent);
+            margin-top: 8px;
+            text-align: right;
+            letter-spacing: 1px;
+        }
+
+        /* ========== PROJECTS / CASE FILES ========== */
+        .cases-grid {
+            display: grid;
+            gap: 32px;
+        }
+
+        .case-card {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            overflow: hidden;
+            transition: all 0.5s;
+            opacity: 0;
+            transform: translateY(40px);
+        }
+
+        .case-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .case-card:hover {
+            border-color: rgba(201, 168, 76, 0.3);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .case-card:nth-child(even) {
+            direction: rtl;
+        }
+
+        .case-card:nth-child(even) > * {
+            direction: ltr;
+        }
+
+        .case-image {
+            aspect-ratio: 16/10;
+            background: var(--dark);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .case-image-inner {
+            font-size: 60px;
+            opacity: 0.2;
+            transition: all 0.5s;
+        }
+
+        .case-card:hover .case-image-inner {
+            opacity: 0.4;
+            transform: scale(1.1);
+        }
+
+        .case-image-overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(10,10,10,0.5));
+        }
+
+        .case-card:nth-child(even) .case-image-overlay {
+            background: linear-gradient(to left, transparent, rgba(10,10,10,0.5));
+        }
+
+        .case-info {
+            padding: 48px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .case-number {
+            font-family: 'Courier Prime', monospace;
+            font-size: 11px;
+            letter-spacing: 3px;
+            color: var(--red-seal);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .case-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-light);
+            margin-bottom: 16px;
+            line-height: 1.2;
+        }
+
+        .case-desc {
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.8;
+            margin-bottom: 24px;
+        }
+
+        .case-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .case-tag {
+            font-family: 'Courier Prime', monospace;
+            font-size: 11px;
+            letter-spacing: 1px;
+            padding: 4px 12px;
+            border: 1px solid var(--glass-border);
+            color: var(--accent);
+        }
+
+        .case-link {
+            font-family: 'Courier Prime', monospace;
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--accent);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: gap 0.3s;
+        }
+
+        .case-link:hover {
+            gap: 14px;
+        }
+
+        /* ========== EXPERIENCE / TIMELINE ========== */
+        .timeline {
+            position: relative;
+            padding-left: 48px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 1px;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--accent), var(--glass-border));
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 60px;
+            padding: 32px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            transition: all 0.4s;
+        }
+
+        .timeline-item:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(201,168,76,0.2);
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -53px;
+            top: 38px;
+            width: 10px;
+            height: 10px;
+            background: var(--accent);
+            border-radius: 50%;
+            border: 2px solid var(--noir);
+        }
+
+        .timeline-year {
+            font-family: 'Courier Prime', monospace;
+            font-size: 12px;
+            letter-spacing: 3px;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .timeline-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-light);
+            margin-bottom: 4px;
+        }
+
+        .timeline-company {
+            font-family: 'Courier Prime', monospace;
+            font-size: 13px;
+            color: var(--red-seal);
+            margin-bottom: 12px;
+        }
+
+        .timeline-desc {
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+
+        /* ========== TESTIMONIALS / WITNESS ========== */
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 24px;
+        }
+
+        .testimonial-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            padding: 40px 32px;
+            position: relative;
+            transition: all 0.4s;
+        }
+
+        .testimonial-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(201,168,76,0.2);
+        }
+
+        .testimonial-quote {
+            font-family: 'Playfair Display', serif;
+            font-size: 48px;
+            color: var(--accent);
+            opacity: 0.3;
+            line-height: 1;
+            margin-bottom: 16px;
+        }
+
+        .testimonial-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            color: var(--text-muted);
+            line-height: 1.8;
+            font-style: italic;
+            margin-bottom: 24px;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .testimonial-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--dark2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .testimonial-name {
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        .testimonial-role {
+            font-family: 'Courier Prime', monospace;
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+
+        /* ========== CONTACT ========== */
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+        }
+
+        .contact-info {
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        .contact-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .contact-item-icon {
+            width: 48px;
+            height: 48px;
+            border: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .contact-item-label {
+            font-family: 'Courier Prime', monospace;
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .contact-item-value {
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            color: var(--text-light);
+            margin-top: 2px;
+        }
+
+        .contact-item-value a {
+            color: var(--text-light);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .contact-item-value a:hover {
+            color: var(--accent);
+        }
+
+        .contact-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-label {
+            font-family: 'Courier Prime', monospace;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .form-input,
+        .form-textarea {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            padding: 14px 18px;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            color: var(--text-light);
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus {
+            border-color: var(--accent);
+        }
+
+        .form-textarea {
+            min-height: 140px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        /* ========== FOOTER ========== */
+        .footer {
+            padding: 48px;
+            border-top: 1px solid var(--glass-border);
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .footer-text {
+            font-family: 'Courier Prime', monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+        }
+
+        .footer-socials {
+            display: flex;
+            gap: 16px;
+        }
+
+        .footer-social {
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .footer-social:hover {
+            border-color: var(--accent);
+            background: rgba(201,168,76,0.1);
+            transform: translateY(-2px);
+        }
+
+        /* ========== FLOATING ELEMENTS ========== */
+        .floating-evidence {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 56px;
+            height: 56px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 999;
+            transition: all 0.4s;
+            box-shadow: 0 4px 20px rgba(201,168,76,0.3);
+            text-decoration: none;
+        }
+
+        .floating-evidence:hover {
+            transform: scale(1.1) translateY(-4px);
+            box-shadow: 0 8px 30px rgba(201,168,76,0.4);
+        }
+
+        /* ========== ANIMATIONS ========== */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ========== REDACTED TEXT ========== */
+        .redacted {
+            background: var(--text-light);
+            color: transparent;
+            padding: 0 4px;
+            user-select: none;
+            transition: all 0.3s;
+        }
+
+        .redacted:hover {
+            background: transparent;
+            color: var(--text-light);
+        }
+
+        /* ========== STAMP ========== */
+        .stamp {
+            display: inline-block;
+            border: 3px solid var(--red-seal);
+            color: var(--red-seal);
+            padding: 8px 20px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 14px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            transform: rotate(-5deg);
+            opacity: 0.7;
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 1024px) {
+            .about-grid {
+                grid-template-columns: 1fr;
+                gap: 48px;
+            }
+
+            .case-card {
+                grid-template-columns: 1fr;
+            }
+
+            .case-card:nth-child(even) {
+                direction: ltr;
+            }
+
+            .contact-grid {
+                grid-template-columns: 1fr;
+                gap: 48px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .section {
+                padding: 80px 24px;
+            }
+
+            .nav {
+                padding: 16px 24px;
+            }
+
+            .nav-links {
+                display: none;
+                position: fixed;
+                top: 0; left: 0;
+                width: 100%; height: 100vh;
+                background: rgba(10,10,10,0.98);
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 32px;
+            }
+
+            .nav-links.active {
+                display: flex;
+            }
+
+            .nav-links a {
+                font-size: 18px;
+            }
+
+            .nav-toggle {
+                display: flex;
+                z-index: 1001;
+            }
+
+            .profile-fields {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .testimonials-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .cursor-dot, .cursor-ring {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-title {
+                font-size: 40px;
+            }
+
+            .skills-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LOADING SCREEN -->
+    <div class="loading-screen" id="loadingScreen">
+        <svg class="loading-magnifier" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="28" cy="28" r="20" stroke="#c9a84c" stroke-width="2"/>
+            <circle cx="28" cy="28" r="14" stroke="#c9a84c" stroke-width="1" opacity="0.5"/>
+            <line x1="42" y1="42" x2="58" y2="58" stroke="#c9a84c" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="32" cy="24" r="3" fill="#c9a84c" opacity="0.3"/>
+        </svg>
+        <div class="loading-text">Opening File...</div>
+        <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+    </div>
+
+    <!-- CUSTOM CURSOR -->
+    <div class="cursor-dot" id="cursorDot"></div>
+    <div class="cursor-ring" id="cursorRing"></div>
+
+    <!-- NAVIGATION -->
+    <nav class="nav" id="navbar">
+        <a href="#" class="nav-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            DETECTIVE
+        </a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="#about" onclick="closeNav()">Hồ sơ</a></li>
+            <li><a href="#skills" onclick="closeNav()">Vũ khí</a></li>
+            <li><a href="#cases" onclick="closeNav()">Vụ án</a></li>
+            <li><a href="#experience" onclick="closeNav()">Tiểu sử</a></li>
+            <li><a href="#contact" onclick="closeNav()">Liên hệ</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" onclick="toggleNav()">
+            <span></span><span></span><span></span>
+        </button>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section class="hero" id="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-grid"></div>
+        <div class="hero-content">
+            <div class="hero-file-number">FILE #2024-001 — CONFIDENTIAL</div>
+            <div class="hero-classified">⬛ CLASSIFIED ⬛</div>
+            <h1 class="hero-title">
+                <span class="line1">John</span>
+                <span class="line2">Detective</span>
+            </h1>
+            <p class="hero-subtitle">FULL-STACK DEVELOPER & CREATIVE DESIGNER</p>
+            <div class="hero-typewriter" id="typewriter"></div>
+            <div class="hero-cta">
+                <a href="#cases" class="btn btn-primary">Xem các vụ án</a>
+                <a href="#contact" class="btn btn-outline">Gửi mật thư</a>
+            </div>
+        </div>
+        <div class="hero-scroll">
+            <span>Scroll</span>
+            <div class="scroll-line"></div>
+        </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ABOUT SECTION -->
+    <section class="section" id="about">
+        <div class="section-header reveal">
+            <div class="section-label">Hồ sơ bí mật</div>
+            <h2 class="section-title">Biết rõ <span>đối phương</span></h2>
+            <p class="section-desc">Thông tin cá nhân đã được giải mật một phần. Cấp độ truy cập: Cơ bản.</p>
+        </div>
+        <div class="about-grid">
+            <div class="about-image-wrapper reveal">
+                <div class="about-image">
+                    <div class="about-image-placeholder">🕵️</div>
+                    <div class="about-image-stamp">VERIFIED</div>
+                </div>
+                <div class="about-image-border"></div>
+            </div>
+            <div class="about-info">
+                <p class="about-text reveal">
+                    Tôi là một <strong>thám tử công nghệ</strong> — người giải mã những vấn đề phức tạp nhất trong thế giới kỹ thuật số. Với <strong>5+ năm</strong> kinh nghiệm điều tra và giải quyết các vụ án coding, tôi đã giúp hàng trăm khách hàng tìm ra <strong>giải pháp</strong> cho những bài toán hóc búa.
+                    <br><br>
+                    Chuyên môn của tôi bao gồm <strong>phân tích mã nguồn</strong>, <strong>xây dựng hệ thống</strong>, và <strong>thiết kế giao diện</strong> — tất cả đều được thực hiện với sự tỉ mỉ và chính xác của một thám tử thực thụ.
+                </p>
+                <div class="profile-card reveal">
+                    <div class="profile-card-title">📋 Hồ sơ cá nhân</div>
+                    <div class="profile-fields">
+                        <div class="profile-field">
+                            <span class="profile-field-label">Họ tên</span>
+                            <span class="profile-field-value">Nguyễn Văn A</span>
+                        </div>
+                        <div class="profile-field">
+                            <span class="profile-field-label">Vị trí</span>
+                            <span class="profile-field-value">Senior Developer</span>
+                        </div>
+                        <div class="profile-field">
+                            <span class="profile-field-label">Địa điểm</span>
+                            <span class="profile-field-value">TP. Hồ Chí Minh, VN</span>
+                        </div>
+                        <div class="profile-field">
+                            <span class="profile-field-label">Kinh nghiệm</span>
+                            <span class="profile-field-value">5+ Năm</span>
+                        </div>
+                        <div class="profile-field">
+                            <span class="profile-field-label">Ngôn ngữ</span>
+                            <span class="profile-field-value">Việt, Anh, Nhật</span>
+                        </div>
+                        <div class="profile-field">
+                            <span class="profile-field-label">Trạng thái</span>
+                            <span class="profile-field-value" style="color: #27ae60;">● Sẵn sàng nhận案</span>
+                        </div>
+                    </div>
+                    <div class="profile-note">
+                        "Mỗi dòng code là một manh mối, mỗi bug là một nghi phạm — và tôi luôn tìm ra sự thật."
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- SKILLS SECTION -->
+    <section class="section" id="skills">
+        <div class="section-header reveal">
+            <div class="section-label">Tủ vũ khí</div>
+            <h2 class="section-title">Công cụ <span>thám tử</span></h2>
+            <p class="section-desc">Những kỹ năng và công nghệ đã được huấn luyện và rèn giũa qua hàng trăm vụ án.</p>
+        </div>
+        <div class="skills-grid">
+            <div class="skill-card reveal">
+                <div class="skill-icon">🔍</div>
+                <h3 class="skill-name">Frontend Development</h3>
+                <p class="skill-desc">React, Vue, Next.js — Phân tích và xây dựng giao diện người dùng với độ chính xác cao.</p>
+                <div class="skill-bar"><div class="skill-bar-fill" data-width="95%"></div></div>
+                <div class="skill-level">MASTER LEVEL — 95%</div>
+            </div>
+            <div class="skill-card reveal">
+                <div class="skill-icon">⚙️</div>
+                <h3 class="skill-name">Backend Architecture</h3>
+                <p class="skill-desc">Node.js, Python, Go — Thiết kế hệ thống backend mạnh mẽ và scalable.</p>
+                <div class="skill-bar"><div class="skill-bar-fill" data-width="90%"></div></div>
+                <div class="skill-level">EXPERT LEVEL — 90%</div>
+            </div>
+            <div class="skill-card reveal">
+                <div class="skill-icon">🎨</div>
+                <h3 class="skill-name">UI/UX Design</h3>
+                <p class="skill-desc">Figma, Adobe XD — Thiết kế trải nghiệm người dùng trực quan và hấp dẫn.</p>
+                <div class="skill-bar"><div class="skill-bar-fill" data-width="85%"></div></div>
+                <div class="skill-level">ADVANCED LEVEL — 85%</div>
+            </div>
+            <div class="skill-card reveal">
+                <div class="skill-icon">🗄️</div>
+                <h3 class="skill-name">Database & DevOps</h3>
+                <p class="skill-desc">PostgreSQL, MongoDB, Docker, AWS — Quản lý dữ liệu và triển khai hệ thống.</p>
+                <div class="skill-bar"><div class="skill-bar-fill" data-width="88%"></div></div>
+                <div class="skill-level">EXPERT LEVEL — 88%</div>
+            </div>
+            <div class="skill-card reveal">
+                <div class="skill-icon">🔐</div>
+                <h3 class="skill-name">Cybersecurity</h3>
+                <p class="skill-desc">Penetration testing, OWASP — Bảo vệ hệ thống khỏi các mối đe dọa.</p>
+                <div class="skill-bar"><div class="skill-bar-fill" data-width="78%"></div></div>
+                <div class="skill-level">PROFESSIONAL — 78%</div>
+            </div>
+            <div class="skill-card reveal">
+                <div class="skill-icon">📱</div>
+                <h3 class="skill-name">Mobile Development</h3>
+                <p class="skill-desc">React Native, Flutter — Xây dựng ứng dụng di động cross-platform.</p>
+                <div class="skill-bar"><div class="skill-bar-fill" data-width="82%"></div></div>
+                <div class="skill-level">ADVANCED LEVEL — 82%</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- PROJECTS / CASES SECTION -->
+    <section class="section" id="cases">
+        <div class="section-header reveal">
+            <div class="section-label">Các vụ án đã giải</div>
+            <h2 class="section-title">Hồ sơ <span>vụ án</span></h2>
+            <p class="section-desc">Những dự án đã được điều tra, phân tích và hoàn thành thành công. Cấp độ: Mở.</p>
+        </div>
+        <div class="cases-grid">
+            <div class="case-card">
+                <div class="case-image">
+                    <div class="case-image-inner">🏦</div>
+                    <div class="case-image-overlay"></div>
+                </div>
+                <div class="case-info">
+                    <div class="case-number">CASE #001 — COMPLETED</div>
+                    <h3 class="case-title">Fintech Dashboard</h3>
+                    <p class="case-desc">Hệ thống quản lý tài chính với real-time analytics, AI-powered insights và bảo mật đa lớp. Giải quyết bài toán xử lý 10M+ giao dịch/ngày.</p>
+                    <div class="case-tags">
+                        <span class="case-tag">React</span>
+                        <span class="case-tag">Node.js</span>
+                        <span class="case-tag">PostgreSQL</span>
+                        <span class="case-tag">D3.js</span>
+                    </div>
+                    <a href="#" class="case-link">Xem báo cáo chi tiết →</a>
+                </div>
+            </div>
+            <div class="case-card">
+                <div class="case-image">
+                    <div class="case-image-inner">🛒</div>
+                    <div class="case-image-overlay"></div>
+                </div>
+                <div class="case-info">
+                    <div class="case-number">CASE #002 — COMPLETED</div>
+                    <h3 class="case-title">E-Commerce Platform</h3>
+                    <p class="case-desc">Nền tảng thương mại điện tử quy mô lớn với hệ thống recommendation engine, thanh toán đa phương thức và inventory management.</p>
+                    <div class="case-tags">
+                        <span class="case-tag">Next.js</span>
+                        <span class="case-tag">Python</span>
+                        <span class="case-tag">Redis</span>
+                        <span class="case-tag">AWS</span>
+                    </div>
+                    <a href="#" class="case-link">Xem báo cáo chi tiết →</a>
+                </div>
+            </div>
+            <div class="case-card">
+                <div class="case-image">
+                    <div class="case-image-inner">🏥</div>
+                    <div class="case-image-overlay"></div>
+                </div>
+                <div class="case-info">
+                    <div class="case-number">CASE #003 — COMPLETED</div>
+                    <h3 class="case-title">Healthcare AI System</h3>
+                    <p class="case-desc">Hệ thống trí tuệ nhân tạo hỗ trợ chẩn đoán y tế, xử lý hình ảnh X-quang với độ chính xác 97.3%. Đã được cấp bằng sáng chế.</p>
+                    <div class="case-tags">
+                        <span class="case-tag">Python</span>
+                        <span class="case-tag">TensorFlow</span>
+                        <span class="case-tag">FastAPI</span>
+                        <span class="case-tag">Docker</span>
+                    </div>
+                    <a href="#" class="case-link">Xem báo cáo chi tiết →</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- EXPERIENCE / TIMELINE -->
+    <section class="section" id="experience">
+        <div class="section-header reveal">
+            <div class="section-label">Tiểu sử điều tra</div>
+            <h2 class="section-title">Hành trình <span>thám tử</span></h2>
+            <p class="section-desc">Các cột mốc quan trọng trong sự nghiệp điều tra kỹ thuật số.</p>
+        </div>
+        <div class="timeline">
+            <div class="timeline-item reveal">
+                <div class="timeline-year">2023 — HIỆN TẠI</div>
+                <h3 class="timeline-title">Lead Developer</h3>
+                <div class="timeline-company">@ TechDetective Agency</div>
+                <p class="timeline-desc">Dẫn dắt đội nhóm 12 người trong việc phát triển các hệ thống phức tạp. Chịu trách nhiệm kiến trúc tổng thể và code review cho tất cả các dự án quan trọng.</p>
+            </div>
+            <div class="timeline-item reveal">
+                <div class="timeline-year">2021 — 2023</div>
+                <h3 class="timeline-title">Senior Full-Stack Developer</h3>
+                <div class="timeline-company">@ Digital Investigators Inc.</div>
+                <p class="timeline-desc">Phát triển và bảo trì 5+ sản phẩm SaaS. Tối ưu hiệu suất hệ thống giảm 40% thời gian tải. Xây dựng CI/CD pipeline tự động hóa.</p>
+            </div>
+            <div class="timeline-item reveal">
+                <div class="timeline-year">2019 — 2021</div>
+                <h3 class="timeline-title">Frontend Developer</h3>
+                <div class="timeline-company">@ Code Mystery Studio</div>
+                <p class="timeline-desc">Chuyên trách phát triển giao diện người dùng cho các ứng dụng web. Thiết kế và implement design system được sử dụng bởi 8 dự án.</p>
+            </div>
+            <div class="timeline-item reveal">
+                <div class="timeline-year">2019</div>
+                <h3 class="timeline-title">Bắt đầu hành trình</h3>
+                <div class="timeline-company">@ Self-taught Journey</div>
+                <p class="timeline-desc">Bắt đầu con đường tự học lập trình. Giải quyết 500+ bài toán trên LeetCode. Tham gia 10+ hackathon và giành 3 giải thưởng.</p>
+            </div>
+        </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- TESTIMONIALS -->
+    <section class="section" id="testimonials">
+        <div class="section-header reveal">
+            <div class="section-label">Lời khai chứng nhân</div>
+            <h2 class="section-title">Chứng từ <span>bảo vệ</span></h2>
+            <p class="section-desc">Những lời khai từ các đồng nghiệp và khách hàng đã từng hợp tác trong các vụ án.</p>
+        </div>
+        <div class="testimonials-grid">
+            <div class="testimonial-card reveal">
+                <div class="testimonial-quote">"</div>
+                <p class="testimonial-text">John là thám tử coding xuất sắc nhất tôi từng gặp. Anh ấy giải quyết những bug mà cả team không thể tìm ra trong hàng tuần.</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">👤</div>
+                    <div>
+                        <div class="testimonial-name">Trần Thị B</div>
+                        <div class="testimonial-role">CTO, TechCorp Vietnam</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card reveal">
+                <div class="testimonial-quote">"</div>
+                <p class="testimonial-text">Hệ thống fintech mà John phát triển đã giúp chúng tôi xử lý tăng 300% khối lượng giao dịch mà không gặp sự cố nào.</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">👤</div>
+                    <div>
+                        <div class="testimonial-name">Lê Văn C</div>
+                        <div class="testimonial-role">Product Director, FinTech Plus</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card reveal">
+                <div class="testimonial-quote">"</div>
+                <p class="testimonial-text">Sự kết hợp giữa tư duy thám tử và kỹ năng coding của John là độc nhất vô nhị. Mỗi dự án đều được hoàn thành xuất sắc.</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">👤</div>
+                    <div>
+                        <div class="testimonial-name">Vũ Thị D</div>
+                        <div class="testimonial-role">Design Lead, Creative Agency</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- CONTACT SECTION -->
+    <section class="section" id="contact">
+        <div class="section-header reveal">
+            <div class="section-label">Kênh liên lạc mật</div>
+            <h2 class="section-title">Gửi <span>mật thư</span></h2>
+            <p class="section-desc">Bạn có một vụ án cần giải quyết? Liên hệ qua kênh an toàn bên dưới.</p>
+        </div>
+        <div class="contact-grid">
+            <div class="contact-info reveal">
+                <p class="contact-text">
+                    Dù vụ án của bạn có phức tạp đến đâu, tôi luôn sẵn sàng nhận lời mời điều tra. Hãy liên hệ qua bất kỳ kênh nào bên dưới — tất cả đều được mã hóa và bảo mật.
+                </p>
+                <div class="contact-item">
+                    <div class="contact-item-icon">📧</div>
+                    <div>
+                        <div class="contact-item-label">Email mật</div>
+                        <div class="contact-item-value"><a href="mailto:detective@email.com">detective@email.com</a></div>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-item-icon">📱</div>
+                    <div>
+                        <div class="contact-item-label">Số máy mật</div>
+                        <div class="contact-item-value"><a href="tel:+84123456789">+84 123 456 789</a></div>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-item-icon">📍</div>
+                    <div>
+                        <div class="contact-item-label">Trụ sở</div>
+                        <div class="contact-item-value">Quận 1, TP. Hồ Chí Minh</div>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-item-icon">🌐</div>
+                    <div>
+                        <div class="contact-item-label">Tor Network</div>
+                        <div class="contact-item-value"><a href="#">detective.onion</a></div>
+                    </div>
+                </div>
+                <div class="stamp" style="margin-top: 16px;">READY FOR MISSION</div>
+            </div>
+            <form class="contact-form reveal" onsubmit="handleSubmit(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Mã danh nghĩa</label>
+                        <input type="text" class="form-input" placeholder="Tên của bạn" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Kênh liên lạc</label>
+                        <input type="email" class="form-input" placeholder="Email của bạn" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Chủ đề vụ án</label>
+                    <input type="text" class="form-input" placeholder="Tiêu đề mật vụ">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Chi tiết vụ án</label>
+                    <textarea class="form-textarea" placeholder="Mô tả chi tiết vụ án cần điều tra..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="align-self: flex-start;">
+                    🔒 Gửi mật thư
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-text">© 2024 DETECTIVE PORTFOLIO — ALL RIGHTS RESERVED — FILE CLASSIFIED</div>
+            <div class="footer-socials">
+                <a href="#" class="footer-social" title="GitHub">💻</a>
+                <a href="#" class="footer-social" title="LinkedIn">🔗</a>
+                <a href="#" class="footer-social" title="Twitter">🐦</a>
+                <a href="#" class="footer-social" title="Dribbble">🏀</a>
+            </div>
+            <div class="footer-text">DESIGNED WITH 🔍 & COFFEE</div>
+        </div>
+    </footer>
+
+    <!-- FLOATING BUTTON -->
+    <a href="#hero" class="floating-evidence" title="Return to HQ">🔍</a>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        // ========== LOADING SCREEN ==========
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('loadingScreen').classList.add('hidden');
+            }, 2200);
+        });
+
+        // ========== CUSTOM CURSOR ==========
+        const cursorDot = document.getElementById('cursorDot');
+        const cursorRing = document.getElementById('cursorRing');
+        let mouseX = 0, mouseY = 0;
+        let ringX = 0, ringY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            cursorDot.style.left = mouseX - 4 + 'px';
+            cursorDot.style.top = mouseY - 4 + 'px';
+        });
+
+        function animateCursor() {
+            ringX += (mouseX - ringX) * 0.15;
+            ringY += (mouseY - ringY) * 0.15;
+            cursorRing.style.left = ringX - 20 + 'px';
+            cursorRing.style.top = ringY - 20 + 'px';
+            requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
+
+        // Cursor hover effect
+        document.querySelectorAll('a, button, .skill-card, .case-card, .testimonial-card').forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                cursorRing.style.transform = 'scale(1.5)';
+                cursorRing.style.borderColor = 'var(--red-seal)';
+            });
+            el.addEventListener('mouseleave', () => {
+                cursorRing.style.transform = 'scale(1)';
+                cursorRing.style.borderColor = 'var(--accent)';
+            });
+        });
+
+        // ========== NAVBAR SCROLL ==========
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 80) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // ========== MOBILE NAV ==========
+        function toggleNav() {
+            document.getElementById('navLinks').classList.toggle('active');
+        }
+        function closeNav() {
+            document.getElementById('navLinks').classList.remove('active');
+        }
+
+        // ========== TYPEWRITER EFFECT ==========
+        const typewriterEl = document.getElementById('typewriter');
+        const phrases = [
+            '> Đang phân tích mã nguồn...',
+            '> Đã phát hiện 378 bugs — tất cả đã được giải quyết',
+            '> Building the future, one line at a time_',
+            '> Every pixel tells a story_',
+            '> Ready to solve your next challenge_'
+        ];
+        let phraseIndex = 0;
+        let charIndex = 0;
+        let isDeleting = false;
+        let typingSpeed = 80;
+
+        function typeWriter() {
+            const current = phrases[phraseIndex];
+            if (isDeleting) {
+                typewriterEl.innerHTML = current.substring(0, charIndex - 1) + '<span class="cursor-blink">|</span>';
+                charIndex--;
+                typingSpeed = 40;
+            } else {
+                typewriterEl.innerHTML = current.substring(0, charIndex + 1) + '<span class="cursor-blink">|</span>';
+                charIndex++;
+                typingSpeed = 80;
+            }
+
+            if (!isDeleting && charIndex === current.length) {
+                typingSpeed = 2500;
+                isDeleting = true;
+            } else if (isDeleting && charIndex === 0) {
+                isDeleting = false;
+                phraseIndex = (phraseIndex + 1) % phrases.length;
+                typingSpeed = 400;
+            }
+
+            setTimeout(typeWriter, typingSpeed);
+        }
+
+        setTimeout(typeWriter, 3200);
+
+        // ========== SCROLL REVEAL ==========
+        const revealElements = document.querySelectorAll('.reveal, .case-card');
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+        revealElements.forEach(el => revealObserver.observe(el));
+
+        // ========== SKILL BAR ANIMATION ==========
+        const skillBars = document.querySelectorAll('.skill-bar-fill');
+        const skillObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const width = entry.target.getAttribute('data-width');
+                    entry.target.style.width = width;
+                    entry.target.classList.add('animate');
+                }
+            });
+        }, { threshold: 0.5 });
+
+        skillBars.forEach(bar => skillObserver.observe(bar));
+
+        // ========== PARALLAX EFFECT ON HERO ==========
+        window.addEventListener('scroll', () => {
+            const scrolled = window.scrollY;
+            const hero = document.querySelector('.hero-content');
+            if (hero && scrolled < window.innerHeight) {
+                hero.style.transform = `translateY(${scrolled * 0.3}px)`;
+                hero.style.opacity = 1 - (scrolled / window.innerHeight) * 0.8;
+            }
+        });
+
+        // ========== FORM SUBMIT ==========
+        function handleSubmit(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '✅ Mật thư đã được gửi!';
+            btn.style.background = '#27ae60';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.background = '';
+                e.target.reset();
+            }, 3000);
+        }
+
+        // ========== SMOOTH ANCHOR SCROLL ==========
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // ========== KONAMI CODE EASTER EGG ==========
+        let konamiCode = [];
+        const konamiSequence = [38,38,40,40,37,39,37,39,66,65];
+        document.addEventListener('keydown', (e) => {
+            konamiCode.push(e.keyCode);
+            if (konamiCode.length > 10) konamiCode.shift();
+            if (konamiCode.join(',') === konamiSequence.join(',')) {
+                document.body.style.filter = 'invert(1)';
+                setTimeout(() => document.body.style.filter = '', 2000);
+            }
+        });
+    </script>
+</body>
+</html>

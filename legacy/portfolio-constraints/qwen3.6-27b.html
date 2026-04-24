@@ -1,0 +1,2131 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOIR://Detective Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Inter:wght@300;400;500;600&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   0. CSS CUSTOM PROPERTIES (DESIGN TOKENS)
+   ═══════════════════════════════════════════ */
+:root {
+  --bg-pitch: #000000;
+  --bg-charcoal: #1a1a1a;
+  --bg-surface: rgba(26, 26, 26, 0.1);
+  --crimson: #8B0000;
+  --crimson-bright: #DC143C;
+  --cyan: #00f0ff;
+  --cyan-dim: rgba(0, 240, 255, 0.3);
+  --amber: #FFBF00;
+  --text-primary: #e0e0e0;
+  --text-secondary: #888888;
+  --text-muted: #555555;
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --font-typewriter: 'Courier Prime', 'Special Elite', monospace;
+  --font-body: 'Inter', -apple-system, sans-serif;
+  --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ═══════════════════════════════════════════
+   1. GLOBAL RESET & BASE
+   ═══════════════════════════════════════════ */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--crimson) var(--bg-pitch);
+}
+
+body {
+  background: var(--bg-pitch);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-weight: 300;
+  line-height: 1.7;
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* ═══════════════════════════════════════════
+   2. CUSTOM CURSOR
+   ═══════════════════════════════════════════ */
+#custom-cursor {
+  position: fixed;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--cyan);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 100000;
+  transition: transform 0.15s ease, border-color 0.3s ease, width 0.2s, height 0.2s;
+  transform: translate(-50%, -50%);
+  mix-blend-mode: difference;
+}
+
+#custom-cursor.hovering {
+  width: 40px;
+  height: 40px;
+  border-color: var(--amber);
+  background: rgba(255, 191, 0, 0.1);
+}
+
+/* ═══════════════════════════════════════════
+   3. FILM GRAIN OVERLAY
+   ═══════════════════════════════════════════ */
+#film-grain {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+  animation: grainShift 0.5s steps(10) infinite;
+}
+
+@keyframes grainShift {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-5%, -5%); }
+  20% { transform: translate(3%, -8%); }
+  30% { transform: translate(7%, 2%); }
+  40% { transform: translate(-3%, 6%); }
+  50% { transform: translate(5%, 3%); }
+  60% { transform: translate(-7%, -2%); }
+  70% { transform: translate(2%, 7%); }
+  80% { transform: translate(4%, -4%); }
+  90% { transform: translate(-2%, 5%); }
+}
+
+/* ═══════════════════════════════════════════
+   4. GLOBAL NAVIGATION
+   ═══════════════════════════════════════════ */
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 10000;
+  padding: 0 2rem;
+  transition: background 0.4s ease;
+}
+
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 70px;
+  max-width: 1400px;
+  margin: 0 auto;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--glass-border);
+  border-radius: 0 0 12px 12px;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--cyan);
+}
+
+.nav-logo svg {
+  width: 36px;
+  height: 36px;
+  filter: drop-shadow(0 0 6px var(--cyan));
+}
+
+.nav-logo-text {
+  font-family: var(--font-typewriter);
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px var(--cyan-dim);
+}
+
+.nav-links {
+  display: flex;
+  list-style: none;
+  gap: 2.5rem;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-family: var(--font-typewriter);
+  font-size: 0.85rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  position: relative;
+  padding-bottom: 6px;
+  transition: color 0.3s ease;
+}
+
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: repeating-linear-gradient(
+    to right,
+    var(--amber) 0px,
+    var(--amber) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+  transition: width 0.4s ease;
+}
+
+.nav-links a:hover {
+  color: var(--amber);
+  text-shadow: 0 0 8px rgba(255, 191, 0, 0.4);
+}
+
+.nav-links a:hover::after {
+  width: 100%;
+}
+
+/* Mobile menu toggle */
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: none;
+  padding: 8px;
+}
+
+.nav-toggle span {
+  width: 24px;
+  height: 2px;
+  background: var(--cyan);
+  transition: var(--transition-smooth);
+}
+
+/* ═══════════════════════════════════════════
+   5. HERO SECTION — FLASHLIGHT
+   ═══════════════════════════════════════════ */
+#hero {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Flashlight mask layer */
+#flashlight-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(
+    circle 180px at var(--mx, 50%) var(--my, 50%),
+    transparent 0%,
+    rgba(0, 0, 0, 0.45) 30%,
+    rgba(0, 0, 0, 0.92) 65%,
+    rgba(0, 0, 0, 1) 100%
+  );
+}
+
+/* Dark background grid for depth */
+#hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  z-index: 0;
+}
+
+/* Crime scene tape decorations */
+#hero::after {
+  content: '⚠ CAUTION — CRIME SCENE — DO NOT CROSS ⚠';
+  position: absolute;
+  top: 15%;
+  left: -5%;
+  width: 110%;
+  font-family: var(--font-typewriter);
+  font-size: 0.75rem;
+  letter-spacing: 4px;
+  color: var(--crimson-bright);
+  opacity: 0.25;
+  white-space: nowrap;
+  transform: rotate(-2deg);
+  z-index: 1;
+  text-shadow: 0 0 10px var(--crimson);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 3;
+  text-align: center;
+  padding: 2rem;
+}
+
+#hero h1 {
+  font-family: var(--font-typewriter);
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--text-primary);
+  min-height: 1.3em;
+  position: relative;
+  display: inline-block;
+}
+
+#hero h1 .glitch-char {
+  display: inline-block;
+  animation: glitchAnim 0.15s ease-in-out;
+  color: var(--crimson-bright);
+  text-shadow:
+    2px 0 var(--cyan),
+    -2px 0 var(--crimson);
+}
+
+@keyframes glitchAnim {
+  0% { transform: translate(0, 0) skewX(0); }
+  25% { transform: translate(-3px, 1px) skewX(5deg); }
+  50% { transform: translate(3px, -1px) skewX(-5deg); }
+  75% { transform: translate(-1px, 2px) skewX(3deg); }
+  100% { transform: translate(0, 0) skewX(0); }
+}
+
+.hero-subtitle {
+  font-family: var(--font-typewriter);
+  font-size: clamp(0.85rem, 2vw, 1.2rem);
+  color: var(--cyan);
+  margin-top: 1.2rem;
+  letter-spacing: 3px;
+  opacity: 0;
+  animation: fadeInUp 1s ease 2.5s forwards;
+  text-shadow: 0 0 15px var(--cyan-dim);
+}
+
+.hero-tagline {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin-top: 0.8rem;
+  opacity: 0;
+  animation: fadeInUp 1s ease 3s forwards;
+  max-width: 600px;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Scroll indicator */
+.scroll-indicator {
+  position: absolute;
+  bottom: 3rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  animation: fadeInUp 1s ease 3.5s forwards;
+}
+
+.scroll-indicator span {
+  font-family: var(--font-typewriter);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.scroll-arrow {
+  width: 24px;
+  height: 24px;
+  border-right: 2px solid var(--crimson-bright);
+  border-bottom: 2px solid var(--crimson-bright);
+  transform: rotate(45deg);
+  animation: bounceDown 2s ease infinite;
+  filter: drop-shadow(0 0 6px var(--crimson));
+}
+
+@keyframes bounceDown {
+  0%, 100% { transform: rotate(45deg) translate(0, 0); opacity: 1; }
+  50% { transform: rotate(45deg) translate(5px, 5px); opacity: 0.5; }
+}
+
+/* ═══════════════════════════════════════════
+   6. DOSSIER SECTION — HỒ SƠ CÁ NHÂN
+   ═══════════════════════════════════════════ */
+#dossier {
+  padding: 8rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.section-header h2 {
+  font-family: var(--font-typewriter);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  color: var(--text-primary);
+  letter-spacing: 3px;
+  position: relative;
+  display: inline-block;
+}
+
+.section-header h2::before {
+  content: '//';
+  color: var(--cyan);
+  margin-right: 12px;
+  text-shadow: 0 0 10px var(--cyan-dim);
+}
+
+.section-header .section-line {
+  display: block;
+  width: 80px;
+  height: 2px;
+  background: var(--crimson);
+  margin: 1rem auto 0;
+  box-shadow: 0 0 8px var(--crimson);
+}
+
+.section-header .section-label {
+  font-family: var(--font-typewriter);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-top: 0.5rem;
+}
+
+.dossier-container {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 3rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 2.5rem;
+  background: rgba(15, 15, 15, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Portrait */
+.dossier-portrait {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.dossier-portrait figure {
+  position: relative;
+  width: 100%;
+  max-width: 350px;
+  aspect-ratio: 3/4;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dossier-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(100%) contrast(1.3) brightness(0.9);
+  transition: filter 0.6s ease;
+}
+
+.dossier-portrait figure:hover img {
+  filter: grayscale(40%) contrast(1.1) brightness(1);
+}
+
+/* Placeholder portrait */
+.portrait-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 6rem;
+  opacity: 0.4;
+  filter: grayscale(100%);
+}
+
+/* CONFIDENTIAL stamp */
+.confidential-stamp {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-25deg);
+  border: 3px solid var(--crimson-bright);
+  color: var(--crimson-bright);
+  font-family: var(--font-typewriter);
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: 6px;
+  padding: 0.5rem 1.5rem;
+  opacity: 0.7;
+  pointer-events: none;
+  text-shadow: 0 0 15px var(--crimson);
+  box-shadow: inset 0 0 15px rgba(220, 20, 60, 0.3);
+  user-select: none;
+}
+
+/* Dossier info */
+.dossier-info h3 {
+  font-family: var(--font-typewriter);
+  font-size: 1.6rem;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  letter-spacing: 1px;
+}
+
+.dossier-info .dossier-role {
+  font-family: var(--font-typewriter);
+  font-size: 0.85rem;
+  color: var(--cyan);
+  letter-spacing: 2px;
+  margin-bottom: 2rem;
+  text-shadow: 0 0 8px var(--cyan-dim);
+}
+
+.dossier-info p {
+  color: var(--text-secondary);
+  margin-bottom: 1.2rem;
+  font-size: 0.95rem;
+  line-height: 1.8;
+}
+
+/* Redacted text */
+.redacted {
+  background: #000;
+  color: transparent;
+  padding: 0 4px;
+  border-radius: 2px;
+  cursor: none;
+  transition: all 0.8s ease;
+  user-select: none;
+  position: relative;
+}
+
+.redacted::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255,255,255,0.03) 2px,
+    rgba(255,255,255,0.03) 4px
+  );
+  pointer-events: none;
+}
+
+.redacted:hover,
+.redacted.revealed {
+  background: transparent;
+  color: var(--cyan);
+  text-shadow: 0 0 8px var(--cyan-dim);
+  user-select: all;
+}
+
+.redacted-label {
+  font-family: var(--font-typewriter);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  vertical-align: super;
+  margin-left: 4px;
+}
+
+.dossier-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meta-item .meta-label {
+  font-family: var(--font-typewriter);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.meta-item .meta-value {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+/* ═══════════════════════════════════════════
+   7. EVIDENCE BOARD — KỸ NĂNG
+   ═══════════════════════════════════════════ */
+#evidence {
+  padding: 6rem 2rem;
+  position: relative;
+}
+
+#evidence-canvas {
+  width: 100%;
+  max-width: 1400px;
+  height: 600px;
+  margin: 0 auto;
+  display: block;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  background: rgba(8, 8, 12, 0.8);
+  backdrop-filter: blur(8px);
+  cursor: none;
+}
+
+.evidence-instructions {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-family: var(--font-typewriter);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+}
+
+/* ═══════════════════════════════════════════
+   8. CASE FILES — DỰ ÁN
+   ═══════════════════════════════════════════ */
+#cases {
+  padding: 6rem 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.cases-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+/* Case file card */
+.case-card {
+  perspective: 1200px;
+  height: 420px;
+  cursor: none;
+}
+
+.case-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.case-card.flipped .case-card-inner {
+  transform: rotateY(180deg);
+}
+
+/* Card face common */
+.case-card-front,
+.case-card-back {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Front — File folder look */
+.case-card-front {
+  background: linear-gradient(145deg, #2a2a2a 0%, #1e1e1e 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+  position: relative;
+}
+
+.case-card-front::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--crimson), var(--crimson-bright));
+  opacity: 0.6;
+}
+
+/* Tape label */
+.case-tape {
+  position: absolute;
+  top: -8px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(4px);
+  padding: 4px 16px;
+  font-family: var(--font-typewriter);
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  letter-spacing: 2px;
+  transform: rotate(1deg);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.case-number {
+  font-family: var(--font-typewriter);
+  font-size: 0.7rem;
+  color: var(--crimson);
+  letter-spacing: 3px;
+  margin-bottom: 1rem;
+}
+
+.case-title {
+  font-family: var(--font-typewriter);
+  font-size: 1.3rem;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  letter-spacing: 1px;
+  line-height: 1.4;
+}
+
+.case-desc {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  flex: 1;
+}
+
+.case-tech-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 1.5rem;
+}
+
+.case-tech-preview span {
+  font-family: var(--font-typewriter);
+  font-size: 0.65rem;
+  color: var(--cyan);
+  border: 1px solid var(--cyan-dim);
+  padding: 2px 8px;
+  border-radius: 3px;
+  letter-spacing: 1px;
+}
+
+.case-flip-hint {
+  position: absolute;
+  bottom: 1rem;
+  right: 1.5rem;
+  font-family: var(--font-typewriter);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.case-flip-hint svg {
+  width: 14px;
+  height: 14px;
+  fill: var(--text-muted);
+}
+
+/* Back — Inside the file */
+.case-card-back {
+  background: linear-gradient(145deg, #1a1a1a 0%, #111 100%);
+  border: 1px solid rgba(0, 240, 255, 0.1);
+  transform: rotateY(180deg);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.case-card-back::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--cyan), transparent);
+}
+
+.case-back-title {
+  font-family: var(--font-typewriter);
+  font-size: 1.1rem;
+  color: var(--cyan);
+  margin-bottom: 1rem;
+  letter-spacing: 1px;
+  text-shadow: 0 0 8px var(--cyan-dim);
+}
+
+.case-back-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  flex: 1;
+}
+
+.case-back-techs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 1rem 0;
+}
+
+.case-back-techs span {
+  font-family: var(--font-typewriter);
+  font-size: 0.65rem;
+  color: var(--amber);
+  background: rgba(255, 191, 0, 0.08);
+  border: 1px solid rgba(255, 191, 0, 0.2);
+  padding: 3px 10px;
+  border-radius: 3px;
+  letter-spacing: 1px;
+}
+
+.case-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: auto;
+}
+
+.case-actions a {
+  font-family: var(--font-typewriter);
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  transition: var(--transition-smooth);
+}
+
+.btn-github {
+  color: var(--text-primary);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.btn-github:hover {
+  border-color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.btn-live {
+  color: var(--cyan);
+  border: 1px solid var(--cyan-dim);
+}
+
+.btn-live:hover {
+  background: rgba(0, 240, 255, 0.1);
+  box-shadow: 0 0 15px var(--cyan-dim);
+}
+
+/* ═══════════════════════════════════════════
+   9. TIP LINE — LIÊN HỆ (FOOTER)
+   ═══════════════════════════════════════════ */
+#contact {
+  padding: 6rem 2rem 4rem;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.terminal-frame {
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(0, 240, 255, 0.15);
+  border-radius: 12px;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.terminal-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(0, 240, 255, 0.05);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.1);
+}
+
+.terminal-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.terminal-dot.red { background: #ff5f57; }
+.terminal-dot.yellow { background: #ffbd2e; }
+.terminal-dot.green { background: #28c840; }
+
+.terminal-titlebar span {
+  flex: 1;
+  text-align: center;
+  font-family: var(--font-typewriter);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+}
+
+.terminal-body {
+  padding: 2rem;
+}
+
+.terminal-prompt {
+  font-family: var(--font-typewriter);
+  font-size: 0.8rem;
+  color: var(--cyan);
+  margin-bottom: 2rem;
+  letter-spacing: 1px;
+}
+
+.terminal-prompt .prompt-symbol {
+  color: var(--crimson-bright);
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  position: relative;
+}
+
+.form-group label {
+  display: block;
+  font-family: var(--font-typewriter);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid rgba(0, 240, 255, 0.2);
+  padding: 10px 0;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.3s ease;
+  cursor: none;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-bottom-color: var(--cyan);
+  box-shadow: 0 2px 0 0 var(--cyan-dim);
+  caret-color: transparent;
+}
+
+/* Block cursor effect on focus */
+.form-group input:focus,
+.form-group textarea:focus {
+  background-image: linear-gradient(to right, transparent calc(100% - 2px), transparent);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: var(--text-muted);
+  font-family: var(--font-typewriter);
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+}
+
+.submit-btn {
+  align-self: flex-start;
+  font-family: var(--font-typewriter);
+  font-size: 0.85rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--cyan);
+  background: transparent;
+  border: 1px solid var(--cyan-dim);
+  padding: 14px 32px;
+  border-radius: 4px;
+  cursor: none;
+  position: relative;
+  overflow: hidden;
+  transition: color 0.3s ease, border-color 0.3s ease;
+  margin-top: 1rem;
+}
+
+.submit-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.15), transparent);
+  transition: left 0.5s ease;
+}
+
+.submit-btn:hover {
+  color: #fff;
+  border-color: var(--cyan);
+  box-shadow: 0 0 20px var(--cyan-dim), inset 0 0 20px rgba(0, 240, 255, 0.05);
+}
+
+.submit-btn:hover::before {
+  left: 100%;
+}
+
+/* Running border effect */
+.submit-btn::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 6px;
+  background: conic-gradient(from 0deg, transparent, var(--cyan), transparent, transparent);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  animation: rotateBorder 3s linear infinite;
+}
+
+.submit-btn:hover::after {
+  opacity: 1;
+}
+
+@keyframes rotateBorder {
+  to { transform: rotate(360deg); }
+}
+
+/* Footer copyright */
+.footer-bottom {
+  text-align: center;
+  padding: 3rem 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+  margin-top: 4rem;
+}
+
+.footer-bottom p {
+  font-family: var(--font-typewriter);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+}
+
+.footer-bottom .lock-icon {
+  color: var(--crimson);
+  margin-right: 6px;
+}
+
+/* ═══════════════════════════════════════════
+   10. SCROLL ANIMATIONS
+   ═══════════════════════════════════════════ */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ═══════════════════════════════════════════
+   11. RESPONSIVE
+   ═══════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .dossier-container {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .dossier-portrait {
+    max-width: 280px;
+    margin: 0 auto;
+  }
+
+  .cases-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #evidence-canvas {
+    height: 450px;
+  }
+}
+
+@media (max-width: 768px) {
+  .nav-links {
+    display: none;
+    position: absolute;
+    top: 70px;
+    left: 0;
+    width: 100%;
+    flex-direction: column;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(16px);
+    padding: 1.5rem 2rem;
+    gap: 1.5rem;
+    border-bottom: 1px solid var(--glass-border);
+  }
+
+  .nav-links.active {
+    display: flex;
+  }
+
+  .nav-toggle {
+    display: flex;
+  }
+
+  body {
+    cursor: auto;
+  }
+
+  #custom-cursor {
+    display: none;
+  }
+
+  .case-card,
+  .case-card input,
+  .case-card textarea,
+  .submit-btn {
+    cursor: auto;
+  }
+
+  .dossier-meta {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  nav {
+    padding: 0 1rem;
+  }
+
+  #hero h1 {
+    font-size: 1.8rem;
+  }
+
+  .dossier-container {
+    padding: 1.5rem;
+  }
+
+  .case-card {
+    height: 380px;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   12. UTILITY & MISC
+   ═══════════════════════════════════════════ */
+::selection {
+  background: var(--crimson);
+  color: #fff;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+</style>
+</head>
+<body>
+
+<!-- FILM GRAIN OVERLAY -->
+<div id="film-grain"></div>
+
+<!-- CUSTOM CURSOR -->
+<div id="custom-cursor"></div>
+
+<!-- ═══════════ HEADER / NAVIGATION ═══════════ -->
+<header>
+  <nav>
+    <a href="#hero" class="nav-logo">
+      <!-- Fingerprint SVG with circuit paths -->
+      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20 4C11.163 4 4 11.163 4 20s7.163 16 16 16 16-7.163 16-16S28.837 4 20 4z" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
+        <path d="M20 8c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12S26.627 8 20 8z" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+        <path d="M20 12c-4.418 0-8 3.582-8 8s3.582 8 8 8 8-3.582 8-8-3.582-8-8-8z" stroke="currentColor" stroke-width="1.5" opacity="0.7"/>
+        <path d="M20 16c-2.216 0-4 1.784-4 4s1.784 4 4 4 4-1.784 4-4-1.784-4-4-4z" stroke="currentColor" stroke-width="1.5"/>
+        <!-- Circuit-like accent lines -->
+        <path d="M20 12v-2M20 28v2M12 20h-2M28 20h2" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="20" cy="20" r="2" fill="currentColor"/>
+        <circle cx="20" cy="10" r="1.2" fill="currentColor" opacity="0.6"/>
+        <circle cx="20" cy="30" r="1.2" fill="currentColor" opacity="0.6"/>
+        <circle cx="10" cy="20" r="1.2" fill="currentColor" opacity="0.6"/>
+        <circle cx="30" cy="20" r="1.2" fill="currentColor" opacity="0.6"/>
+      </svg>
+      <span class="nav-logo-text">NOIR://DEV</span>
+    </a>
+
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#dossier">Hồ sơ</a></li>
+      <li><a href="#evidence">Chứng cứ</a></li>
+      <li><a href="#cases">Vụ án</a></li>
+      <li><a href="#contact">Manh mối</a></li>
+    </ul>
+  </nav>
+</header>
+
+<!-- ═══════════ HERO SECTION ═══════════ -->
+<section id="hero">
+  <div id="flashlight-mask"></div>
+  <div class="hero-content">
+    <h1 id="hero-name"></h1>
+    <p class="hero-subtitle">Software Developer &amp; Systems Investigator</p>
+    <p class="hero-tagline">Mỗi dòng code là một manh mối. Mỗi hệ thống là một hiện trường vụ án cần được giải mã.</p>
+  </div>
+  <div class="scroll-indicator">
+    <span>Bắt đầu điều tra</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</section>
+
+<!-- ═══════════ DOSSIER SECTION ═══════════ -->
+<section id="dossier">
+  <div class="section-header reveal">
+    <h2>Hồ sơ Cá nhân</h2>
+    <span class="section-line"></span>
+    <p class="section-label">Classified Level: Restricted</p>
+  </div>
+
+  <div class="dossier-container reveal">
+    <!-- Left: Portrait -->
+    <div class="dossier-portrait">
+      <figure>
+        <div class="portrait-placeholder">🕵️</div>
+        <div class="confidential-stamp">CONFIDENTIAL</div>
+      </figure>
+    </div>
+
+    <!-- Right: Info -->
+    <div class="dossier-info">
+      <h3>Nguyễn Văn A</h3>
+      <p class="dossier-role">// FULL-STACK ENGINEER &amp; AI RESEARCHER</p>
+
+      <p>
+        Là một kỹ sư phần mềm với hơn 3 năm kinh nghiệm điều tra sâu vào các hệ thống phức tạp.
+        Chuyên về xây dựng các giải pháp <span class="redacted">trí tuệ nhân tạo<span class="redacted-label">[HOVER TO REVEAL]</span></span>,
+        phát triển ứng dụng web hiện đại và xử lý dữ liệu thời gian thực.
+      </p>
+      <p>
+        Tốt nghiệp <span class="redacted">Đại học Bách Khoa<span class="redacted-label">[HOVER TO REVEAL]</span></span>,
+        chuyên ngành <span class="redacted">Khoa học Máy tính<span class="redacted-label">[HOVER TO REVEAL]</span></span>.
+        Có kinh nghiệm triển khai các mô hình LLM vào thực tế và xây dựng hệ thống
+        <span class="redacted">Real-time Audio Processing<span class="redacted-label">[HOVER TO REVEAL]</span></span>.
+      </p>
+      <p>
+        Đam mê chuyển hóa các vấn đề phức tạp thành những giải pháp thanh lịch —
+        giống như một thám tử giải mã từng manh mối để tìm ra sự thật cuối cùng.
+      </p>
+
+      <div class="dossier-meta">
+        <div class="meta-item">
+          <span class="meta-label">Vị trí</span>
+          <span class="meta-value">Ho Chi Minh City, VN</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Kinh nghiệm</span>
+          <span class="meta-value">3+ năm</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Ngôn ngữ</span>
+          <span class="meta-value">VI / EN</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Trạng thái</span>
+          <span class="meta-value" style="color: var(--cyan);">● Mở việc</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ EVIDENCE BOARD SECTION ═══════════ -->
+<section id="evidence">
+  <div class="section-header reveal">
+    <h2>Bảng Chứng cứ</h2>
+    <span class="section-line"></span>
+    <p class="section-label">Interactive Knowledge Graph</p>
+  </div>
+
+  <canvas id="evidence-canvas" class="reveal"></canvas>
+  <p class="evidence-instructions reveal">⟵ Kéo các nút kỹ năng để khám phá kết nối ⟶</p>
+</section>
+
+<!-- ═══════════ CASE FILES SECTION ═══════════ -->
+<section id="cases">
+  <div class="section-header reveal">
+    <h2>Kho Lưu Trữ</h2>
+    <span class="section-line"></span>
+    <p class="section-label">Project Archives — Click to Open</p>
+  </div>
+
+  <div class="cases-grid">
+    <!-- Case 1 -->
+    <div class="case-card reveal" onclick="this.classList.toggle('flipped')">
+      <div class="case-card-inner">
+        <div class="case-card-front">
+          <div class="case-tape">CASE FILE #001</div>
+          <p class="case-number">CASE-2024-001 — AI SYSTEM</p>
+          <h3 class="case-title">Intelligent RAG Document Analyzer</h3>
+          <p class="case-desc">Hệ thống phân tích tài liệu thông minh sử dụng Retrieval-Augmented Generation, cho phép truy vấn tự nhiên lên kho dữ liệu lớn với độ chính xác cao.</p>
+          <div class="case-tech-preview">
+            <span>RAG</span><span>LangChain</span><span>Python</span><span>PostgreSQL</span>
+          </div>
+          <div class="case-flip-hint">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+            Mở hồ sơ →
+          </div>
+        </div>
+        <div class="case-card-back">
+          <h3 class="case-back-title">// REPORT SUMMARY</h3>
+          <p class="case-back-desc">
+            Triển khai hệ thống RAG end-to-end với pipeline embedding → vector search → LLM generation.
+            Hỗ trợ phân tích đa định dạng (PDF, DOCX, TXT) và trả lời truy vấn bằng ngôn ngữ tự nhiên.
+          </p>
+          <div class="case-back-techs">
+            <span>RAG</span><span>LangChain</span><span>ChromaDB</span><span>FastAPI</span><span>React</span><span>Docker</span>
+          </div>
+          <div class="case-actions">
+            <a href="#" class="btn-github">⬡ GitHub</a>
+            <a href="#" class="btn-live">◉ Live Demo</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Case 2 -->
+    <div class="case-card reveal" onclick="this.classList.toggle('flipped')">
+      <div class="case-card-inner">
+        <div class="case-card-front">
+          <div class="case-tape">CASE FILE #002</div>
+          <p class="case-number">CASE-2024-002 — EVOLUTIONARY ALGORITHM</p>
+          <h3 class="case-title">Genetic Algorithm Neural Network Optimizer</h3>
+          <p class="case-desc">Bộ tối ưu hóa cấu trúc mạng nơ-ron bằng thuật toán di truyền, tự động khám phá kiến trúc tối ưu cho các bài toán phân loại.</p>
+          <div class="case-tech-preview">
+            <span>Genetic Algorithm</span><span>TensorFlow</span><span>Python</span>
+          </div>
+          <div class="case-flip-hint">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+            Mở hồ sơ →
+          </div>
+        </div>
+        <div class="case-card-back">
+          <h3 class="case-back-title">// REPORT SUMMARY</h3>
+          <p class="case-back-desc">
+            Tự động hóa quy trình kiến trúc NN thông qua GA: mã hóa gen → selection → crossover → mutation.
+            Đạt độ chính xác +12% so với manual tuning trên benchmark CIFAR-10.
+          </p>
+          <div class="case-back-techs">
+            <span>Genetic Algorithm</span><span>TensorFlow</span><span>NumPy</span><span>Matplotlib</span><span>PyTorch</span>
+          </div>
+          <div class="case-actions">
+            <a href="#" class="btn-github">⬡ GitHub</a>
+            <a href="#" class="btn-live">◉ Paper</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Case 3 -->
+    <div class="case-card reveal" onclick="this.classList.toggle('flipped')">
+      <div class="case-card-inner">
+        <div class="case-card-front">
+          <div class="case-tape">CASE FILE #003</div>
+          <p class="case-number">CASE-2024-003 — REAL-TIME 3D</p>
+          <h3 class="case-title">Immersive 3D Data Visualization Platform</h3>
+          <p class="case-desc">Nền tảng trực quan hóa dữ liệu 3D thời gian thực, sử dụng WebGL và React Three Fiber để tạo các biểu đồ tương tác trong không gian ảo.</p>
+          <div class="case-tech-preview">
+            <span>React Three Fiber</span><span>Three.js</span><span>WebGL</span><span>GSAP</span>
+          </div>
+          <div class="case-flip-hint">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+            Mở hồ sơ →
+          </div>
+        </div>
+        <div class="case-card-back">
+          <h3 class="case-back-title">// REPORT SUMMARY</h3>
+          <p class="case-back-desc">
+            Xây dựng platform 3D visualization với khả năng render >10K data points real-time.
+            Tích hợp gesture control, VR mode và export báo cáo tự động.
+          </p>
+          <div class="case-back-techs">
+            <span>React Three Fiber</span><span>Three.js</span><span>WebGPU</span><span>TypeScript</span><span>GSAP</span><span>Node.js</span>
+          </div>
+          <div class="case-actions">
+            <a href="#" class="btn-github">⬡ GitHub</a>
+            <a href="#" class="btn-live">◉ Live Demo</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Case 4 -->
+    <div class="case-card reveal" onclick="this.classList.toggle('flipped')">
+      <div class="case-card-inner">
+        <div class="case-card-front">
+          <div class="case-tape">CASE FILE #004</div>
+          <p class="case-number">CASE-2024-004 — AUDIO PROCESSING</p>
+          <h3 class="case-title">Real-Time Speech-to-Text with Noise Cancellation</h3>
+          <p class="case-desc">Hệ thống chuyển đổi giọng nói thành văn bản thời gian thực với khả năng lọc nhiễu môi trường thông tin, hoạt động offline.</p>
+          <div class="case-tech-preview">
+            <span>Whisper</span><span>WebRTC</span><span>Audio Processing</span>
+          </div>
+          <div class="case-flip-hint">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+            Mở hồ sơ →
+          </div>
+        </div>
+        <div class="case-card-back">
+          <h3 class="case-back-title">// REPORT SUMMARY</h3>
+          <p class="case-back-desc">
+            Pipeline audio processing: noise gate → VAD → Whisper transcription → post-processing.
+            Latency <200ms trên edge device, hỗ trợ đa ngôn ngữ VI/EN.
+          </p>
+          <div class="case-back-techs">
+            <span>Whisper</span><span>WebRTC</span><span>ONNX Runtime</span><span>React</span><span>FastAPI</span><span>Docker</span>
+          </div>
+          <div class="case-actions">
+            <a href="#" class="btn-github">⬡ GitHub</a>
+            <a href="#" class="btn-live">◉ Live Demo</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Case 5 -->
+    <div class="case-card reveal" onclick="this.classList.toggle('flipped')">
+      <div class="case-card-inner">
+        <div class="case-card-front">
+          <div class="case-tape">CASE FILE #005</div>
+          <p class="case-number">CASE-2024-005 — PLATFORM</p>
+          <h3 class="case-title">E-Commerce Platform with AI Recommendation</h3>
+          <p class="case-desc">Sàn thương mại điện tử tích hợp hệ thống gợi ý sản phẩm AI-based, xử lý thanh toán và quản lý kho hàng tự động.</p>
+          <div class="case-tech-preview">
+            <span>React</span><span>Node.js</span><span>AI Recommendation</span><span>MongoDB</span>
+          </div>
+          <div class="case-flip-hint">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+            Mở hồ sơ →
+          </div>
+        </div>
+        <div class="case-card-back">
+          <h3 class="case-back-title">// REPORT SUMMARY</h3>
+          <p class="case-back-desc">
+            Full-stack e-commerce với AI recommendation engine (collaborative filtering + content-based).
+            Xử lý 10K+ sản phẩm, tích hợp payment gateway và analytics dashboard.
+          </p>
+          <div class="case-back-techs">
+            <span>React</span><span>Node.js</span><span>MongoDB</span><span>Redis</span><span>Stripe</span><span>Docker</span><span>AWS</span>
+          </div>
+          <div class="case-actions">
+            <a href="#" class="btn-github">⬡ GitHub</a>
+            <a href="#" class="btn-live">◉ Live Demo</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Case 6 -->
+    <div class="case-card reveal" onclick="this.classList.toggle('flipped')">
+      <div class="case-card-inner">
+        <div class="case-card-front">
+          <div class="case-tape">CASE FILE #006</div>
+          <p class="case-number">CASE-2024-006 — LLM APPLICATION</p>
+          <h3 class="case-title">Custom LLM Fine-Tuning & Deployment Pipeline</h3>
+          <p class="case-desc">Pipeline tự động fine-tuning và deploy các mô hình LLM lên edge devices, hỗ trợ multiple model architectures.</p>
+          <div class="case-tech-preview">
+            <span>LLM</span><span>HuggingFace</span><span>PyTorch</span><span>Kubernetes</span>
+          </div>
+          <div class="case-flip-hint">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+            Mở hồ sơ →
+          </div>
+        </div>
+        <div class="case-card-back">
+          <h3 class="case-back-title">// REPORT SUMMARY</h3>
+          <p class="case-back-desc">
+            MLOps pipeline end-to-end: data preparation → LoRA fine-tuning → quantization → deployment.
+            Giảm inference latency 60% trên edge hardware.
+          </p>
+          <div class="case-back-techs">
+            <span>LLM</span><span>HuggingFace</span><span>PyTorch</span><span>Kubernetes</span><span>MLflow</span><span>ONNX</span>
+          </div>
+          <div class="case-actions">
+            <a href="#" class="btn-github">⬡ GitHub</a>
+            <a href="#" class="btn-live">◉ Paper</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ CONTACT SECTION ═══════════ -->
+<section id="contact">
+  <div class="section-header reveal">
+    <h2>Đường Dây Nóng</h2>
+    <span class="section-line"></span>
+    <p class="section-label">Encrypted Transmission Channel</p>
+  </div>
+
+  <div class="terminal-frame reveal">
+    <div class="terminal-titlebar">
+      <div class="terminal-dot red"></div>
+      <div class="terminal-dot yellow"></div>
+      <div class="terminal-dot green"></div>
+      <span>tip-line://secure-connection — bash</span>
+    </div>
+    <div class="terminal-body">
+      <p class="terminal-prompt">
+        <span class="prompt-symbol">❯</span>Initializing encrypted communication channel...<br>
+        <span class="prompt-symbol">❯</span>Waiting for input...
+      </p>
+
+      <form class="contact-form" onsubmit="handleSubmit(event)">
+        <div class="form-group">
+          <label>Tên / Alias</label>
+          <input type="text" placeholder="Nhập mã danh của bạn..." required autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>Truyền tin qua kênh</label>
+          <input type="email" placeholder="email@encrypted-channel.io" required autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>Nội dung manh mối</label>
+          <textarea placeholder="Mô tả thông tin, yêu cầu hợp tác, hoặc cơ hội điều tra mới..." required></textarea>
+        </div>
+        <button type="submit" class="submit-btn">
+          ⟩⟩ Truyền tin mật ⟩⟩
+        </button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer-bottom">
+  <p><span class="lock-icon">🔒</span> Mọi dữ liệu đã được mã hóa. © 2026 NOIR://DETECTIVE PORTFOLIO</p>
+</footer>
+
+<!-- ═══════════════════════════════════════════
+     JAVASCRIPT
+     ═══════════════════════════════════════════ -->
+<script>
+// ═══════════════════════════════════════════
+// 1. CUSTOM CURSOR
+// ═══════════════════════════════════════════
+const cursor = document.getElementById('custom-cursor');
+let cursorX = -100, cursorY = -100;
+let targetX = -100, targetY = -100;
+
+document.addEventListener('mousemove', (e) => {
+  targetX = e.clientX;
+  targetY = e.clientY;
+});
+
+function animateCursor() {
+  cursorX += (targetX - cursorX) * 0.15;
+  cursorY += (targetY - cursorY) * 0.15;
+  cursor.style.left = cursorX + 'px';
+  cursor.style.top = cursorY + 'px';
+  requestAnimationFrame(animateCursor);
+}
+animateCursor();
+
+// Hover effects
+document.querySelectorAll('a, button, .case-card, input, textarea').forEach(el => {
+  el.addEventListener('mouseenter', () => cursor.classList.add('hovering'));
+  el.addEventListener('mouseleave', () => cursor.classList.remove('hovering'));
+});
+
+// ═══════════════════════════════════════════
+// 2. FLASHLIGHT EFFECT (HERO)
+// ═══════════════════════════════════════════
+const flashlight = document.getElementById('flashlight-mask');
+const hero = document.getElementById('hero');
+
+hero.addEventListener('mousemove', (e) => {
+  const rect = hero.getBoundingClientRect();
+  const x = ((e.clientX - rect.left) / rect.width) * 100;
+  const y = ((e.clientY - rect.top) / rect.height) * 100;
+  flashlight.style.setProperty('--mx', x + '%');
+  flashlight.style.setProperty('--my', y + '%');
+});
+
+// ═══════════════════════════════════════════
+// 3. TYPING EFFECT WITH GLITCH
+// ═══════════════════════════════════════════
+const heroName = document.getElementById('hero-name');
+const nameText = 'NGUYỄN VĂN A';
+let charIndex = 0;
+
+function typeNextChar() {
+  if (charIndex < nameText.length) {
+    const span = document.createElement('span');
+    span.textContent = nameText[charIndex];
+
+    // Random glitch effect (5% chance)
+    if (Math.random() < 0.08 && charIndex > 2) {
+      span.classList.add('glitch-char');
+    }
+
+    heroName.appendChild(span);
+    charIndex++;
+
+    // Variable typing speed
+    let delay = 80 + Math.random() * 120;
+    if (Math.random() < 0.1) delay += 300; // occasional pause
+
+    setTimeout(typeNextChar, delay);
+  }
+}
+
+// Start typing after a small delay
+setTimeout(typeNextChar, 800);
+
+// ═══════════════════════════════════════════
+// 4. MOBILE NAV TOGGLE
+// ═══════════════════════════════════════════
+const navToggle = document.getElementById('navToggle');
+const navLinks = document.getElementById('navLinks');
+
+navToggle.addEventListener('click', () => {
+  navLinks.classList.toggle('active');
+  const spans = navToggle.querySelectorAll('span');
+  if (navLinks.classList.contains('active')) {
+    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+    spans[1].style.opacity = '0';
+    spans[2].style.transform = 'rotate(-45deg) translate(5px, -5px)';
+  } else {
+    spans[0].style.transform = 'none';
+    spans[1].style.opacity = '1';
+    spans[2].style.transform = 'none';
+  }
+});
+
+// Close menu on link click
+navLinks.querySelectorAll('a').forEach(link => {
+  link.addEventListener('click', () => {
+    navLinks.classList.remove('active');
+    const spans = navToggle.querySelectorAll('span');
+    spans[0].style.transform = 'none';
+    spans[1].style.opacity = '1';
+    spans[2].style.transform = 'none';
+  });
+});
+
+// ═══════════════════════════════════════════
+// 5. SCROLL REVEAL ANIMATIONS
+// ═══════════════════════════════════════════
+const revealElements = document.querySelectorAll('.reveal');
+
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+revealElements.forEach(el => revealObserver.observe(el));
+
+// ═══════════════════════════════════════════
+// 6. REDACTED TEXT INTERACTION
+// ═══════════════════════════════════════════
+document.querySelectorAll('.redacted').forEach(el => {
+  el.addEventListener('mouseenter', () => el.classList.add('revealed'));
+  el.addEventListener('mouseleave', () => {
+    // Optional: remove class to re-hide, or keep revealed
+    // el.classList.remove('revealed');
+  });
+});
+
+// ═══════════════════════════════════════════
+// 7. FORCE-DIRECTED GRAPH (EVIDENCE BOARD)
+// ═══════════════════════════════════════════
+(function initEvidenceBoard() {
+  const canvas = document.getElementById('evidence-canvas');
+  const ctx = canvas.getContext('2d');
+  let width, height;
+  let animationId;
+  let draggingNode = null;
+  let hoveredNode = null;
+
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    width = rect.width * window.devicePixelRatio;
+    height = rect.height * window.devicePixelRatio;
+    canvas.width = width;
+    canvas.height = height;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  }
+
+  resize();
+  window.addEventListener('resize', () => {
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * window.devicePixelRatio;
+    canvas.height = rect.height * window.devicePixelRatio;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
+    ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+  });
+
+  // Node data
+  const nodeData = [
+    // Main category nodes (larger)
+    { id: 'frontend', label: 'Front-end', x: 300, y: 200, r: 38, color: '#00f0ff', group: 'main' },
+    { id: 'backend', label: 'Back-end', x: 700, y: 180, r: 36, color: '#00f0ff', group: 'main' },
+    { id: 'ai', label: 'AI / ML', x: 500, y: 420, r: 38, color: '#00f0ff', group: 'main' },
+    { id: 'audio', label: 'Audio Processing', x: 850, y: 420, r: 32, color: '#00f0ff', group: 'main' },
+    { id: 'devops', label: 'DevOps & Cloud', x: 150, y: 420, r: 30, color: '#00f0ff', group: 'main' },
+
+    // Sub-nodes for Frontend
+    { id: 'react', label: 'React', x: 250, y: 100, r: 18, color: '#61dafb', group: 'frontend' },
+    { id: 'threejs', label: 'Three.js', x: 400, y: 100, r: 18, color: '#61dafb', group: 'frontend' },
+    { id: 'r3f', label: 'R3F', x: 200, y: 300, r: 16, color: '#61dafb', group: 'frontend' },
+    { id: 'gsap', label: 'GSAP', x: 350, y: 290, r: 16, color: '#61dafb', group: 'frontend' },
+    { id: 'typescript', label: 'TypeScript', x: 180, y: 160, r: 17, color: '#61dafb', group: 'frontend' },
+    { id: 'nextjs', label: 'Next.js', x: 330, y: 80, r: 16, color: '#61dafb', group: 'frontend' },
+
+    // Sub-nodes for Backend
+    { id: 'nodejs', label: 'Node.js', x: 800, y: 80, r: 18, color: '#68a063', group: 'backend' },
+    { id: 'fastapi', label: 'FastAPI', x: 900, y: 120, r: 17, color: '#68a063', group: 'backend' },
+    { id: 'postgresql', label: 'PostgreSQL', x: 750, y: 300, r: 17, color: '#68a063', group: 'backend' },
+    { id: 'redis', label: 'Redis', x: 880, y: 280, r: 16, color: '#68a063', group: 'backend' },
+    { id: 'mongodb', label: 'MongoDB', x: 650, y: 100, r: 17, color: '#68a063', group: 'backend' },
+
+    // Sub-nodes for AI
+    { id: 'llm', label: 'LLM', x: 400, y: 520, r: 18, color: '#FFBF00', group: 'ai' },
+    { id: 'rag', label: 'RAG', x: 550, y: 520, r: 17, color: '#FFBF00', group: 'ai' },
+    { id: 'ga', label: 'Genetic Alg.', x: 620, y: 400, r: 17, color: '#FFBF00', group: 'ai' },
+    { id: 'tts', label: 'TTS', x: 750, y: 380, r: 16, color: '#FFBF00', group: 'ai' },
+    { id: 'langchain', label: 'LangChain', x: 480, y: 340, r: 17, color: '#FFBF00', group: 'ai' },
+    { id: 'pytorch', label: 'PyTorch', x: 350, y: 460, r: 17, color: '#FFBF00', group: 'ai' },
+
+    // Sub-nodes for Audio
+    { id: 'whisper', label: 'Whisper', x: 950, y: 330, r: 17, color: '#DC143C', group: 'audio' },
+    { id: 'webrtc', label: 'WebRTC', x: 950, y: 500, r: 17, color: '#DC143C', group: 'audio' },
+    { id: 'onnx', label: 'ONNX', x: 800, y: 520, r: 16, color: '#DC143C', group: 'audio' },
+
+    // Sub-nodes for DevOps
+    { id: 'docker', label: 'Docker', x: 80, y: 320, r: 17, color: '#2496ed', group: 'devops' },
+    { id: 'k8s', label: 'Kubernetes', x: 80, y: 520, r: 17, color: '#2496ed', group: 'devops' },
+    { id: 'aws', label: 'AWS', x: 150, y: 540, r: 16, color: '#2496ed', group: 'devops' },
+    { id: 'ci', label: 'CI/CD', x: 250, y: 480, r: 16, color: '#2496ed', group: 'devops' },
+  ];
+
+  // Connections
+  const connections = [
+    // Frontend connections
+    ['frontend', 'react'], ['frontend', 'threejs'], ['frontend', 'r3f'],
+    ['frontend', 'gsap'], ['frontend', 'typescript'], ['frontend', 'nextjs'],
+    // Backend connections
+    ['backend', 'nodejs'], ['backend', 'fastapi'], ['backend', 'postgresql'],
+    ['backend', 'redis'], ['backend', 'mongodb'],
+    // AI connections
+    ['ai', 'llm'], ['ai', 'rag'], ['ai', 'ga'], ['ai', 'tts'],
+    ['ai', 'langchain'], ['ai', 'pytorch'],
+    // Audio connections
+    ['audio', 'whisper'], ['audio', 'webrtc'], ['audio', 'onnx'],
+    // DevOps connections
+    ['devops', 'docker'], ['devops', 'k8s'], ['devops', 'aws'], ['devops', 'ci'],
+    // Cross-connections (interesting links)
+    ['ai', 'audio'], ['backend', 'ai'], ['frontend', 'devops'],
+    ['tts', 'audio'], ['whisper', 'ai'], ['langchain', 'backend'],
+  ];
+
+  // Node lookup
+  const nodeMap = {};
+  nodeData.forEach(n => {
+    nodeMap[n.id] = n;
+    n.vx = 0;
+    n.vy = 0;
+    n.forceX = 0;
+    n.forceY = 0;
+  });
+
+  // Physics simulation
+  const ALPHA = 0.3;
+  const DAMPING = 0.85;
+  const REPULSION = 3000;
+  const SPRING_LENGTH = 120;
+  const SPRING_STRENGTH = 0.005;
+  const CENTER_GRAVITY = 0.002;
+
+  function simulate() {
+    const w = canvas.style.width ? parseInt(canvas.style.width) : 1000;
+    const h = canvas.style.height ? parseInt(canvas.style.height) : 600;
+    const cx = w / 2;
+    const cy = h / 2;
+
+    // Reset forces
+    nodeData.forEach(n => {
+      n.fx = 0;
+      n.fy = 0;
+    });
+
+    // Repulsion between all nodes
+    for (let i = 0; i < nodeData.length; i++) {
+      for (let j = i + 1; j < nodeData.length; j++) {
+        const a = nodeData[i];
+        const b = nodeData[j];
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const force = REPULSION / (dist * dist);
+        const fx = (dx / dist) * force;
+        const fy = (dy / dist) * force;
+        a.fx += fx;
+        a.fy += fy;
+        b.fx -= fx;
+        b.fy -= fy;
+      }
+    }
+
+    // Spring forces along connections
+    connections.forEach(([idA, idB]) => {
+      const a = nodeMap[idA];
+      const b = nodeMap[idB];
+      if (!a || !b) return;
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      const displacement = dist - SPRING_LENGTH;
+      const force = displacement * SPRING_STRENGTH;
+      const fx = (dx / dist) * force;
+      const fy = (dy / dist) * force;
+      a.fx += fx;
+      a.fy += fy;
+      b.fx -= fx;
+      b.fy -= fy;
+    });
+
+    // Center gravity
+    nodeData.forEach(n => {
+      n.fx += (cx - n.x) * CENTER_GRAVITY;
+      n.fy += (cy - n.y) * CENTER_GRAVITY;
+    });
+
+    // Apply forces
+    nodeData.forEach(n => {
+      if (n === draggingNode) return;
+      n.vx = (n.vx + n.fx * ALPHA) * DAMPING;
+      n.vy = (n.vy + n.fy * ALPHA) * DAMPING;
+      n.x += n.vx;
+      n.y += n.vy;
+
+      // Boundary constraints
+      const margin = n.r + 20;
+      n.x = Math.max(margin, Math.min(w - margin, n.x));
+      n.y = Math.max(margin, Math.min(h - margin, n.y));
+    });
+  }
+
+  function draw() {
+    const w = parseInt(canvas.style.width);
+    const h = parseInt(canvas.style.height);
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Draw subtle grid
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.015)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < w; x += 50) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, h);
+      ctx.stroke();
+    }
+    for (let y = 0; y < h; y += 50) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
+
+    // Draw connections (red threads)
+    connections.forEach(([idA, idB]) => {
+      const a = nodeMap[idA];
+      const b = nodeMap[idB];
+      if (!a || !b) return;
+
+      const isHighlighted = hoveredNode &&
+        (hoveredNode.id === idA || hoveredNode.id === idB);
+
+      ctx.beginPath();
+      const midX = (a.x + b.x) / 2;
+      const midY = (a.y + b.y) / 2;
+      const perpX = -(b.y - a.y) * 0.1;
+      const perpY = (b.x - a.x) * 0.1;
+
+      ctx.moveTo(a.x, a.y);
+      ctx.quadraticCurveTo(midX + perpX, midY + perpY, b.x, b.y);
+
+      if (isHighlighted) {
+        ctx.strokeStyle = 'rgba(220, 20, 60, 0.8)';
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = 'rgba(220, 20, 60, 0.5)';
+        ctx.shadowBlur = 10;
+      } else {
+        ctx.strokeStyle = 'rgba(220, 20, 60, 0.2)';
+        ctx.lineWidth = 1;
+        ctx.shadowBlur = 0;
+      }
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    });
+
+    // Draw nodes
+    nodeData.forEach(n => {
+      const isHovered = n === hoveredNode;
+      const isConnected = hoveredNode && connections.some(([a, b]) =>
+        (a === hoveredNode.id && b === n.id) || (b === hoveredNode.id && a === n.id)
+      );
+      const isDimmed = hoveredNode && !isHovered && !isConnected;
+
+      ctx.save();
+
+      // Glow effect for main nodes
+      if (n.group === 'main') {
+        const gradient = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r * 2.5);
+        gradient.addColorStop(0, n.color + '25');
+        gradient.addColorStop(1, 'transparent');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(n.x - n.r * 2.5, n.y - n.r * 2.5, n.r * 5, n.r * 5);
+      }
+
+      // Node circle
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+
+      if (isDimmed) {
+        ctx.globalAlpha = 0.2;
+      }
+
+      ctx.fillStyle = n.color + (n.group === 'main' ? '15' : '10');
+      ctx.fill();
+
+      ctx.strokeStyle = n.color + (isHovered ? 'ff' : '66');
+      ctx.lineWidth = isHovered ? 2.5 : 1.5;
+      ctx.stroke();
+
+      // Label
+      ctx.globalAlpha = isDimmed ? 0.15 : (isHovered ? 1 : 0.85);
+      ctx.fillStyle = n.color;
+      ctx.font = `${n.group === 'main' ? '700' : '400'} ${n.group === 'main' ? 12 : 10}px 'Courier Prime', monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      if (n.group === 'main') {
+        ctx.shadowColor = n.color;
+        ctx.shadowBlur = isHovered ? 15 : 8;
+        ctx.fillText(n.label, n.x, n.y);
+      } else {
+        ctx.shadowBlur = isHovered ? 8 : 4;
+        ctx.fillText(n.label, n.x, n.y);
+      }
+
+      ctx.restore();
+    });
+  }
+
+  function loop() {
+    simulate();
+    draw();
+    animationId = requestAnimationFrame(loop);
+  }
+
+  loop();
+
+  // Interaction
+  function getMousePos(e) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+  }
+
+  function findNodeAt(pos) {
+    for (let i = nodeData.length - 1; i >= 0; i--) {
+      const n = nodeData[i];
+      const dx = pos.x - n.x;
+      const dy = pos.y - n.y;
+      if (dx * dx + dy * dy <= (n.r + 5) * (n.r + 5)) {
+        return n;
+      }
+    }
+    return null;
+  }
+
+  canvas.addEventListener('mousedown', (e) => {
+    const pos = getMousePos(e);
+    const node = findNodeAt(pos);
+    if (node) {
+      draggingNode = node;
+      canvas.style.cursor = 'grabbing';
+    }
+  });
+
+  canvas.addEventListener('mousemove', (e) => {
+    const pos = getMousePos(e);
+    if (draggingNode) {
+      draggingNode.x = pos.x;
+      draggingNode.y = pos.y;
+      draggingNode.vx = 0;
+      draggingNode.vy = 0;
+    } else {
+      const node = findNodeAt(pos);
+      hoveredNode = node;
+      canvas.style.cursor = node ? 'pointer' : 'none';
+    }
+  });
+
+  canvas.addEventListener('mouseup', () => {
+    draggingNode = null;
+    canvas.style.cursor = 'none';
+  });
+
+  canvas.addEventListener('mouseleave', () => {
+    draggingNode = null;
+    hoveredNode = null;
+    canvas.style.cursor = 'none';
+  });
+
+  // Touch support
+  canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const pos = getMousePos(touch);
+    const node = findNodeAt(pos);
+    if (node) draggingNode = node;
+  }, { passive: false });
+
+  canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    if (draggingNode) {
+      const touch = e.touches[0];
+      const pos = getMousePos(touch);
+      draggingNode.x = pos.x;
+      draggingNode.y = pos.y;
+      draggingNode.vx = 0;
+      draggingNode.vy = 0;
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchend', () => {
+    draggingNode = null;
+  });
+})();
+
+// ═══════════════════════════════════════════
+// 8. FORM SUBMISSION HANDLER
+// ═══════════════════════════════════════════
+function handleSubmit(e) {
+  e.preventDefault();
+  const btn = e.target.querySelector('.submit-btn');
+  const originalText = btn.textContent;
+
+  btn.textContent = '⟨⟨ Đang truyền... ⟩⟩';
+  btn.style.color = 'var(--amber)';
+  btn.style.borderColor = 'var(--amber)';
+
+  setTimeout(() => {
+    btn.textContent = '✓ Tin đã được gửi — Kết nối mã hóa thành công';
+    btn.style.color = '#28c840';
+    btn.style.borderColor = '#28c840';
+
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.style.color = '';
+      btn.style.borderColor = '';
+      e.target.reset();
+    }, 3000);
+  }, 2000);
+}
+
+// ═══════════════════════════════════════════
+// 9. SMOOTH SCROLL FOR NAV LINKS
+// ═══════════════════════════════════════════
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', function(e) {
+    e.preventDefault();
+    const target = document.querySelector(this.getAttribute('href'));
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+});
+
+// ═══════════════════════════════════════════
+// 10. NAV BACKGROUND ON SCROLL
+// ═══════════════════════════════════════════
+window.addEventListener('scroll', () => {
+  const nav = document.querySelector('nav');
+  if (window.scrollY > 100) {
+    nav.style.background = 'rgba(0, 0, 0, 0.85)';
+  } else {
+    nav.style.background = 'rgba(0, 0, 0, 0.5)';
+  }
+});
+</script>
+
+</body>
+</html>

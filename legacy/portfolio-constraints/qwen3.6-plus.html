@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modern Noir Detective Portfolio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #050505;
+      --surface-glass: rgba(30, 30, 30, 0.5);
+      --accent-red: #D90429;
+      --accent-cyan: #00F5FF;
+      --text-body: #E0E0E0;
+      --text-muted: #888;
+      --font-heading: 'Courier Prime', monospace;
+      --font-body: 'Inter', sans-serif;
+      --grain-url: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-primary);
+      color: var(--text-body);
+      font-family: var(--font-body);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    /* Film Grain Overlay */
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background: var(--grain-url);
+      pointer-events: none; z-index: 999;
+      mix-blend-mode: overlay;
+    }
+
+    /* A. Navigation */
+    header {
+      position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
+      backdrop-filter: blur(12px); background: var(--surface-glass);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center;
+    }
+    .logo { font-size: 1.2rem; font-family: var(--font-heading); color: var(--accent-cyan); }
+    nav ul { display: flex; gap: 2rem; list-style: none; }
+    nav a {
+      text-decoration: none; color: var(--text-muted); position: relative; padding: 4px 0;
+      transition: color 0.3s;
+    }
+    nav a::after {
+      content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 1px;
+      background: repeating-linear-gradient(90deg, transparent, transparent 3px, var(--accent-amber) 3px, var(--accent-amber) 5px);
+      transform: scaleX(0); transform-origin: left; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    nav a:hover { color: #F5C518; }
+    nav a:hover::after { transform: scaleX(1); }
+
+    /* B. Hero Section */
+    #hero {
+      height: 100vh; position: relative; display: flex; flex-direction: column;
+      justify-content: center; align-items: center; text-align: center;
+      cursor: none; /* Ẩn cursor mặc định, thay bằng flashlight */
+    }
+    .flashlight-layer {
+      position: fixed; inset: 0; pointer-events: none; z-index: 2;
+      background: radial-gradient(circle 200px at var(--mx, 50vw) var(--my, 50vh), rgba(255,255,255,0.08) 0%, transparent 80%);
+    }
+    h1 { font-family: var(--font-heading); font-size: clamp(2.5rem, 6vw, 5rem); letter-spacing: 2px; position: relative; z-index: 3; }
+    .cursor-char { display: inline-block; animation: blink 0.8s infinite; }
+    h2 { font-size: 1.2rem; color: var(--text-muted); margin-top: 0.5rem; }
+    .scroll-indicator {
+      position: absolute; bottom: 2rem; animation: pulse 2s infinite; cursor: pointer;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+    @keyframes pulse { 0%, 100% { transform: translateY(0); opacity: 0.5; } 50% { transform: translateY(6px); opacity: 1; } }
+
+    /* Glitch Class (Dynamic) */
+    .glitch { animation: glitch-anim 0.15s infinite; color: var(--accent-red); }
+    @keyframes glitch-anim { 0% { transform: translate(0) skew(0deg); } 25% { transform: translate(-2px, 1px) skew(-1deg); } 75% { transform: translate(2px, -1px) skew(1deg); } 100% { transform: translate(0) skew(0deg); } }
+
+    /* C. Dossier */
+    section { padding: 6rem 10vw; }
+    .dossier-container {
+      display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem;
+      border: 1px solid rgba(255,255,255,0.1); padding: 2rem; position: relative;
+    }
+    .dossier-container::after {
+      content: 'CONFIDENTIAL'; position: absolute; top: -15px; right: 30px;
+      transform: rotate(-12deg); border: 2px solid var(--accent-red);
+      padding: 4px 8px; font-family: var(--font-heading); color: var(--accent-red); font-size: 0.9rem;
+    }
+    .portrait { filter: grayscale(1) contrast(1.4); width: 100%; height: 300px; object-fit: cover; border-radius: 4px; }
+    .redacted { background: #000; color: transparent; transition: all 0.4s; cursor: default; padding: 0 2px; }
+    .redacted:hover { background: transparent; color: var(--accent-cyan); }
+
+    /* D. Evidence Board */
+    #evidence-board { position: relative; width: 100%; height: 60vh; background: rgba(0,0,0,0.3); border: 1px dashed var(--accent-red); }
+    .graph-svg { width: 100%; height: 100%; }
+
+    /* E. Case Files (3D Flip) */
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+    .case-card { perspective: 1000px; height: 320px; cursor: pointer; }
+    .card-inner {
+      position: relative; width: 100%; height: 100%; transform-style: preserve-3d;
+      transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .case-card.flipped .card-inner { transform: rotateY(180deg); }
+    .card-front, .card-back {
+      position: absolute; inset: 0; backface-visibility: hidden; padding: 1.5rem;
+      border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);
+      display: flex; flex-direction: column;
+    }
+    .card-front { background: #2a2a2a; justify-content: center; align-items: center; }
+    .label-tape {
+      background: #e0e0e0; color: #111; padding: 4px 10px; font-family: var(--font-heading);
+      transform: rotate(-3deg); margin-bottom: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    .card-back { background: #1a1a1a; transform: rotateY(180deg); gap: 1rem; }
+    .tech-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .tag { font-size: 0.7rem; padding: 2px 6px; border: 1px solid var(--accent-cyan); color: var(--accent-cyan); }
+
+    /* F. Tip Line */
+    form { max-width: 600px; margin: 0 auto; }
+    .input-group { position: relative; margin-bottom: 1.5rem; }
+    input, textarea {
+      width: 100%; background: transparent; border: none; border-bottom: 2px solid var(--accent-cyan);
+      color: #fff; font-family: var(--font-body); padding: 0.5rem; font-size: 1rem;
+    }
+    input:focus, textarea:focus { outline: none; border-color: #fff; }
+    .block-cursor {
+      position: absolute; right: 4px; bottom: 6px; width: 8px; height: 18px; background: var(--accent-cyan);
+      animation: cursor-blink 1s step-end infinite; display: none; pointer-events: none;
+    }
+    input:focus ~ .block-cursor, textarea:focus ~ .block-cursor { display: block; }
+    @keyframes cursor-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    .btn-transmit {
+      background: transparent; border: 2px solid var(--accent-red); color: var(--accent-red);
+      padding: 0.8rem 2rem; font-family: var(--font-heading); cursor: pointer; position: relative; overflow: hidden;
+    }
+    .btn-transmit::before {
+      content: ''; position: absolute; top: -2px; left: -2px; width: calc(100% + 4px); height: calc(100% + 4px);
+      background: linear-gradient(90deg, transparent, var(--accent-red), transparent);
+      transform: translateX(-100%); transition: transform 0.6s;
+    }
+    .btn-transmit:hover::before { transform: translateX(100%); }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .dossier-container { grid-template-columns: 1fr; }
+      nav ul { gap: 1rem; font-size: 0.9rem; }
+      section { padding: 4rem 5vw; }
+    }
+
+    /* Accessibility: Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="flashlight-layer" id="flashlight"></div>
+
+  <header>
+    <div class="logo" aria-label="Logo Dấu vân tay mạch điện tử">⚡ FP_CIRCUIT</div>
+    <nav>
+      <ul>
+        <li><a href="#dossier">Hồ Sơ</a></li>
+        <li><a href="#evidence">Chứng Cứ</a></li>
+        <li><a href="#cases">Vụ Án</a></li>
+        <li><a href="#tip-line">Manh Mối</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section id="hero">
+      <h1 id="typing-target"></h1>
+      <h2>Software Developer & Systems Investigator</h2>
+      <div class="scroll-indicator" onclick="document.getElementById('dossier').scrollIntoView({behavior:'smooth'})">
+        <span style="font-family:var(--font-heading); color:var(--accent-cyan);">↓ Bắt đầu điều tra</span>
+      </div>
+    </section>
+
+    <section id="dossier">
+      <div class="dossier-container">
+        <figure><img src="https://picsum.photos/400/300" alt="Portrait" class="portrait"></figure>
+        <article>
+          <p>Tôi là một kỹ sư phần mềm chuyên giải mã các hệ thống phức tạp. Tốt nghiệp <span class="redacted">ĐH Bách Khoa</span>, chuyên sâu <span class="redacted">Trí Tuệ Nhân Tạo</span> và <span class="redacted">Xử Lý Tín Hiệu Số</span>.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="evidence">
+      <h2 style="text-align:center; margin-bottom:2rem; font-family:var(--font-heading); color:var(--accent-red);">The Evidence Board</h2>
+      <div id="evidence-board"></div>
+    </section>
+
+    <section id="cases">
+      <h2 style="margin-bottom:2rem; font-family:var(--font-heading);">Case Files</h2>
+      <div class="grid">
+        <article class="case-card" tabindex="0">
+          <div class="card-inner">
+            <div class="card-front">
+              <div class="label-tape">CASE_001: LLM DEPLOYMENT</div>
+              <p style="color:#aaa;">Hệ thống truy vấn ngữ cảnh RAG tốc độ cao</p>
+            </div>
+            <div class="card-back">
+              <p>Mô hình tinh chỉnh cho pipeline xử lý tài liệu pháp lý. Giảm latency 40%.</p>
+              <div class="tech-tags"><span class="tag">RAG</span><span class="tag">FastAPI</span><span class="tag">LangChain</span></div>
+              <button style="margin-top:auto; background:none; border:1px solid var(--accent-red); color:#fff; padding:0.5rem; cursor:pointer;">Xem báo cáo</button>
+            </div>
+          </div>
+        </article>
+        <!-- Thêm card tương tự -->
+      </div>
+    </section>
+
+    <section id="tip-line">
+      <h2 style="text-align:center; margin-bottom:2rem; font-family:var(--font-heading); color:var(--accent-cyan);">The Tip Line</h2>
+      <form onsubmit="event.preventDefault(); alert('Tin mật đã được mã hóa và truyền đi.');">
+        <div class="input-group">
+          <input type="text" placeholder="Danh tính / Callsign" required>
+          <span class="block-cursor"></span>
+        </div>
+        <div class="input-group">
+          <input type="email" placeholder="Tần số liên lạc (Email)" required>
+          <span class="block-cursor"></span>
+        </div>
+        <div class="input-group">
+          <textarea rows="3" placeholder="Nội dung manh mối..."></textarea>
+          <span class="block-cursor"></span>
+        </div>
+        <div style="text-align:center;">
+          <button type="submit" class="btn-transmit">TRUYỀN TIN MẬT</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <footer style="text-align:center; padding:2rem; color:#444; font-size:0.8rem; border-top:1px solid rgba(255,255,255,0.05);">
+    Mọi dữ liệu đã được mã hóa. © 2026
+  </footer>
+
+  <!-- JS Logic -->
+  <script>
+    // 1. Flashlight Mask
+    const flashlight = document.getElementById('flashlight');
+    let rafId = null;
+    document.addEventListener('mousemove', e => {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        flashlight.style.setProperty('--mx', `${e.clientX}px`);
+        flashlight.style.setProperty('--my', `${e.clientY}px`);
+      });
+    });
+
+    // 2. Typing Effect + Random Glitch
+    const text = "TÊN CỦA_BẠN_Ở_ĐÂY";
+    const target = document.getElementById('typing-target');
+    let i = 0, speed = 80;
+    function type() {
+      if (i < text.length) {
+        target.textContent = text.substring(0, i + 1);
+        // 10% chance glitch
+        if (Math.random() < 0.1) target.classList.add('glitch');
+        else target.classList.remove('glitch');
+        setTimeout(type, speed + Math.random() * 50);
+        i++;
+      } else {
+        target.classList.remove('glitch');
+        target.innerHTML += '<span class="cursor-char">█</span>';
+      }
+    }
+    setTimeout(type, 600);
+
+    // 3. 3D Flip Cards
+    document.querySelectorAll('.case-card').forEach(card => {
+      card.addEventListener('click', () => card.classList.toggle('flipped'));
+      card.addEventListener('keydown', e => { if(e.key === 'Enter') card.click(); });
+    });
+
+    // 4. Evidence Board (Placeholder D3.js init)
+    // Bạn có thể thay thế bằng D3-force hoặc Canvas/WebGL thuần
+    // Tham khảo: https://github.com/d3/d3-force
+  </script>
+</body>
+</html>

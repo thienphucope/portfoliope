@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Noir Portfolio</title>
+    <style>
+        /* --- 1. DESIGN SYSTEM --- */
+        :root {
+            --pitch-black: #050505;
+            --deep-charcoal: #1a1a1a;
+            --crimson-red: #dc143c;
+            --neon-cyan: #00ffff;
+            --amber: #ffbf00;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--pitch-black);
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif; /* Modern Sans-serif */
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, .typewriter {
+            font-family: 'Courier Prime', 'Courier New', monospace;
+        }
+
+        /* Film Grain Overlay */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-image: url('https://www.transparenttextures.com/patterns/stardust.png');
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* --- A. GLOBAL NAVIGATION --- */
+        header {
+            position: fixed;
+            top: 0; width: 100%;
+            background: rgba(26, 26, 26, 0.1);
+            backdrop-filter: blur(12px); /* Glassmorphism */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 40px;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .logo {
+            color: var(--neon-cyan);
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-shadow: 0 0 5px var(--neon-cyan);
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 30px;
+        }
+
+        nav a {
+            color: #888;
+            text-decoration: none;
+            font-family: 'Courier Prime', monospace;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        nav a:hover {
+            color: var(--amber);
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 1px;
+            bottom: -5px;
+            left: 0;
+            background-color: var(--amber);
+            border-bottom: 1px dashed var(--amber);
+            transition: width 0.4s ease;
+        }
+
+        nav a:hover::after {
+            width: 100%;
+        }
+
+        /* --- B. HERO SECTION (Flashlight & Glitch) --- */
+        #hero {
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background: var(--pitch-black);
+        }
+
+        /* Flashlight Mask */
+        .flashlight-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle 150px at var(--cursor-x) var(--cursor-y), transparent 0%, rgba(5, 5, 5, 0.98) 80%);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .hero-content {
+            z-index: 5;
+            text-align: center;
+        }
+
+        .glitch {
+            font-size: 4rem;
+            color: white;
+            position: relative;
+        }
+        
+        .glitch::before, .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--pitch-black);
+        }
+        
+        .glitch::before {
+            left: 2px;
+            text-shadow: -2px 0 var(--crimson-red);
+            clip: rect(24px, 550px, 90px, 0);
+            animation: glitch-anim 3s infinite linear alternate-reverse;
+        }
+        
+        .glitch::after {
+            left: -2px;
+            text-shadow: -2px 0 var(--neon-cyan);
+            clip: rect(85px, 550px, 140px, 0);
+            animation: glitch-anim 2.5s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim {
+            0% { clip: rect(15px, 9999px, 44px, 0); }
+            20% { clip: rect(55px, 9999px, 14px, 0); }
+            40% { clip: rect(85px, 9999px, 94px, 0); }
+            60% { clip: rect(25px, 9999px, 54px, 0); }
+            80% { clip: rect(65px, 9999px, 34px, 0); }
+            100% { clip: rect(5px, 9999px, 84px, 0); }
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            color: var(--crimson-red);
+            font-family: monospace;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* --- C. THE DOSSIER (Redacted Text) --- */
+        #dossier {
+            padding: 100px 10%;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 50px;
+        }
+
+        .profile-pic {
+            width: 100%;
+            filter: grayscale(100%) contrast(120%);
+            border: 1px solid #333;
+            position: relative;
+        }
+
+        .confidential-stamp {
+            position: absolute;
+            top: 10px; right: 10px;
+            color: var(--crimson-red);
+            border: 2px solid var(--crimson-red);
+            padding: 5px 10px;
+            transform: rotate(15deg);
+            font-weight: bold;
+            font-family: 'Courier Prime', monospace;
+            letter-spacing: 2px;
+        }
+
+        .redacted {
+            background-color: #000;
+            color: #000;
+            padding: 0 5px;
+            transition: color 0.5s ease, background-color 0.5s ease;
+            cursor: crosshair;
+        }
+
+        .redacted:hover {
+            color: white;
+            background-color: transparent;
+            text-shadow: 0 0 3px rgba(255,255,255,0.5);
+        }
+
+        /* --- D. CASE FILES (3D Flipbook) --- */
+        #case-files {
+            padding: 100px 10%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .folder-card {
+            background-color: transparent;
+            width: 100%;
+            height: 400px;
+            perspective: 1000px; /* 3D space */
+            cursor: pointer;
+        }
+
+        .folder-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.8s;
+            transform-style: preserve-3d;
+        }
+
+        .folder-card:hover .folder-inner {
+            transform: rotateY(180deg);
+        }
+
+        .folder-front, .folder-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #444;
+            padding: 20px;
+        }
+
+        .folder-front {
+            background-color: #8b7355; /* Manila folder color */
+            background-image: url('https://www.transparenttextures.com/patterns/cardboard.png');
+            color: #111;
+        }
+
+        .tape-label {
+            background: #e5e5e5;
+            padding: 10px 20px;
+            transform: rotate(-3deg);
+            font-family: 'Courier Prime', monospace;
+            font-weight: bold;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+        }
+
+        .folder-back {
+            background-color: var(--deep-charcoal);
+            color: white;
+            transform: rotateY(180deg);
+            border-color: var(--crimson-red);
+        }
+
+        .tech-tag {
+            background: rgba(0, 255, 255, 0.1);
+            color: var(--neon-cyan);
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            margin: 5px;
+            border: 1px solid var(--neon-cyan);
+            border-radius: 3px;
+            display: inline-block;
+        }
+
+        /* --- E. FOOTER (Terminal Form) --- */
+        footer {
+            padding: 80px 20px;
+            text-align: center;
+            background: #020202;
+        }
+
+        .terminal-form {
+            max-width: 500px;
+            margin: 0 auto;
+            text-align: left;
+            font-family: monospace;
+        }
+
+        .terminal-input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            font-family: monospace;
+            font-size: 1.2rem;
+            padding: 10px 0;
+            margin-bottom: 30px;
+            outline: none;
+            caret-color: transparent; /* Hide default caret */
+        }
+
+        .terminal-input:focus {
+            border-bottom: 2px solid var(--neon-cyan);
+        }
+
+        /* Custom Block Cursor */
+        .input-wrapper {
+            position: relative;
+        }
+        .input-wrapper::after {
+            content: '█';
+            color: var(--neon-cyan);
+            position: absolute;
+            right: 0; bottom: 15px;
+            animation: blink 1s infinite;
+            pointer-events: none;
+            display: none;
+        }
+        .terminal-input:focus + .input-wrapper::after {
+            display: inline;
+        }
+
+        .btn-transmit {
+            background: transparent;
+            color: var(--crimson-red);
+            border: 1px solid var(--crimson-red);
+            padding: 10px 20px;
+            font-family: monospace;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-transmit:hover {
+            background: rgba(220, 20, 60, 0.1);
+            box-shadow: 0 0 10px var(--crimson-red);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">[ ID_PRINT ]</div>
+        <nav>
+            <ul>
+                <li><a href="#dossier">Hồ sơ</a></li>
+                <li><a href="#skills">Chứng cứ</a></li>
+                <li><a href="#case-files">Vụ án</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section id="hero">
+        <div class="flashlight-overlay" id="flashlight"></div>
+        <div class="hero-content">
+            <h1 class="glitch" data-text="NGUYEN VAN A">NGUYEN VAN A</h1>
+            <h2 style="color: #aaa; margin-top: 10px;">Software Developer & Systems Investigator</h2>
+        </div>
+        <div class="scroll-indicator">↓ Bắt đầu điều tra ↓</div>
+    </section>
+
+    <section id="dossier">
+        <figure style="position: relative;">
+            <img src="https://via.placeholder.com/400x500/111/555?text=SUBJECT+PHOTO" alt="Portrait" class="profile-pic">
+            <div class="confidential-stamp">CONFIDENTIAL</div>
+        </figure>
+        <article>
+            <h2 style="color: var(--crimson-red); border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 20px;">// BÁO CÁO NHÂN SỰ</h2>
+            <p style="line-height: 1.8;">
+                Đối tượng được biết đến với khả năng xâm nhập vào các hệ thống phức tạp. Tốt nghiệp tại <span class="redacted">Đại học Bách Khoa</span> chuyên ngành <span class="redacted">Khoa học Máy tính</span>. 
+                <br><br>
+                Đã từng triệt phá các bug nghiêm trọng tại <span class="redacted">Tập đoàn công nghệ X</span>, sử dụng các công cụ ẩn danh để tối ưu hóa hiệu suất backend.
+            </p>
+        </article>
+    </section>
+
+    <section id="case-files">
+        <article class="folder-card">
+            <div class="folder-inner">
+                <div class="folder-front">
+                    <div class="tape-label">CASE #01: SYSTEM BREACH</div>
+                </div>
+                <div class="folder-back">
+                    <h3>E-Commerce Optimization</h3>
+                    <p style="margin: 15px 0; font-size: 0.9rem;">Resolved critical database bottlenecks during peak traffic.</p>
+                    <div>
+                        <span class="tech-tag">Node.js</span>
+                        <span class="tech-tag">Redis</span>
+                    </div>
+                    <button style="margin-top: 20px; padding: 5px 10px; background: #333; color: white; border: none; cursor: pointer;">Xem chi tiết</button>
+                </div>
+            </div>
+        </article>
+        
+        <article class="folder-card">
+            <div class="folder-inner">
+                <div class="folder-front">
+                    <div class="tape-label">CASE #02: THE AI PHANTOM</div>
+                </div>
+                <div class="folder-back">
+                    <h3>LLM Data Pipeline</h3>
+                    <p style="margin: 15px 0; font-size: 0.9rem;">Automated intelligence gathering using RAG architecture.</p>
+                    <div>
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">LangChain</span>
+                    </div>
+                    <button style="margin-top: 20px; padding: 5px 10px; background: #333; color: white; border: none; cursor: pointer;">Xem chi tiết</button>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <footer>
+        <div class="terminal-form">
+            <p style="color: var(--crimson-red); margin-bottom: 20px;">> INITIATE SECURE COMMS</p>
+            <div class="input-wrapper">
+                <input type="text" class="terminal-input" placeholder="Nhập tên bí danh...">
+            </div>
+            <div class="input-wrapper">
+                <input type="email" class="terminal-input" placeholder="Nhập tần số email...">
+            </div>
+            <button class="btn-transmit">Truyền tin mật</button>
+        </div>
+        <p style="margin-top: 50px; font-size: 0.8rem; color: #555;">Mọi dữ liệu đã được mã hóa. © 2026.</p>
+    </footer>
+
+    <script>
+        // Flashlight logic
+        const flashlight = document.getElementById('flashlight');
+        const hero = document.getElementById('hero');
+
+        hero.addEventListener('mousemove', (e) => {
+            const rect = hero.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            flashlight.style.setProperty('--cursor-x', `${x}px`);
+            flashlight.style.setProperty('--cursor-y', `${y}px`);
+        });
+
+        // Initialize flashlight off-screen before hover
+        flashlight.style.setProperty('--cursor-x', `-500px`);
+        flashlight.style.setProperty('--cursor-y', `-500px`);
+    </script>
+</body>
+</html>

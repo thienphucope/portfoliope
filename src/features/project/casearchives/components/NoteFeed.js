@@ -66,7 +66,7 @@ const NoteFeedItem = React.forwardRef(({ block, onLinkClick, fileRegistry, style
         width: '100%',
         height: 'auto',
         color: 'var(--colorone)',
-        fontSize: '1.2rem',
+        fontSize: 'clamp(1rem, 1.5vw, 1.2rem)',
         fontStyle: isQuote ? 'italic' : 'normal',
         lineHeight: '1.4'
       }}>
@@ -103,7 +103,6 @@ export default function NoteFeed({
   const scrollRef = useRef(null);
   const containerRef = useRef(null);
   
-  // Momentum scroll refs
   const scrollTarget = useRef(0);
   const isAnimating = useRef(false);
 
@@ -126,8 +125,8 @@ export default function NoteFeed({
                     raw.toLowerCase().includes('<iframe');
     
     const baseLeft = typeof window !== 'undefined' ? window.innerWidth : 1000;
-    const itemWidth = 750;
-    const left = baseLeft + (index * itemWidth) + (Math.random() * 200);
+    const itemSpacing = 850; 
+    const left = baseLeft + (index * itemSpacing) + 100;
     const topPercent = 40 + (Math.random() * 20); 
     
     if (isMedia) {
@@ -135,7 +134,7 @@ export default function NoteFeed({
         left: `${left}px`,
         top: `${topPercent}%`,
         transform: `translateY(-50%)`,
-        width: '500px',
+        width: 'clamp(300px, 40vw, 500px)',
         height: 'auto',
         minHeight: '100px'
       };
@@ -145,10 +144,10 @@ export default function NoteFeed({
         top: `${topPercent}%`,
         transform: `translateY(-50%)`,
         width: 'auto',
-        minWidth: '400px',
-        maxWidth: '650px',
+        minWidth: 'clamp(280px, 35vw, 400px)',
+        maxWidth: 'clamp(400px, 50vw, 650px)',
         height: 'auto',
-        padding: '1rem',
+        padding: '1.5rem',
         backgroundColor: 'transparent'
       };
     }
@@ -185,41 +184,43 @@ export default function NoteFeed({
     const nextBatch = remainingFiles.slice(0, 5);
     const newRemaining = remainingFiles.slice(5);
 
-    const loadedBlocks = [];
-    await Promise.all(nextBatch.map(async (file) => {
+    // Process notes in batch, keeping items in order within each note
+    const batchResults = await Promise.all(nextBatch.map(async (file) => {
       let content = fullContentCache[file.id]?.raw;
       if (!content) {
         try {
           const githubUrl = fileRegistry[file.id.toLowerCase()] || fileRegistry[file.id.toLowerCase() + '.md'];
-          if (!githubUrl) return;
+          if (!githubUrl) return [];
           const res = await fetch(githubUrl);
           content = await res.text();
           upsertCacheEntry(file.id, content);
-        } catch (e) { return; }
+        } catch (e) { return []; }
       }
 
+      const fileBlocks = [];
       if (content) {
-        const masterRegex = /(!\[.*?\]\(.*?\)|<audio[\s\S]*?<\/audio>|<video[\s\S]*?<\/video>|<iframe[\s\S]*?<\/iframe>|^>[\s\S]*?(?:\n\n|\n(?=[^>])|$))/gm;
+        const masterRegex = /<audio[\s\S]*?<\/audio>|<video[\s\S]*?<\/video>|<iframe[\s\S]*?<\/iframe>|!\[.*?\]\(.*?\)|^>[\s\S]*?(?:\n\n|\n(?=[^>])|$)/gm;
         let match;
         while ((match = masterRegex.exec(content)) !== null) {
           const rawPart = match[0].trim();
           if (rawPart) {
             const isQuote = rawPart.startsWith('>');
-            loadedBlocks.push({
+            fileBlocks.push({
               ...mkBlock(rawPart, isQuote ? 'blockquote' : 'paragraph'),
               fileId: file.id
             });
           }
         }
       }
+      return fileBlocks;
     }));
 
+    const loadedBlocks = batchResults.flat();
+
     if (loadedBlocks.length > 0) {
-      // Shuffling loaded blocks for extra randomness
-      const shuffledBlocks = loadedBlocks.sort(() => Math.random() - 0.5);
       setDisplayedBlocks(prev => {
         const startIndex = prev.length;
-        const newBlocksWithStyle = shuffledBlocks.map((b, i) => ({
+        const newBlocksWithStyle = loadedBlocks.map((b, i) => ({
           ...b,
           style: generateBlockStyle(startIndex + i, b.type, b.raw)
         }));
@@ -263,15 +264,14 @@ export default function NoteFeed({
 
     const handleWheel = (e) => {
       if (e.ctrlKey || e.shiftKey) return; 
-      e.preventDefault();
+      if (window.innerWidth <= 1024) return;
       
+      e.preventDefault();
       if (!isAnimating.current) {
         scrollTarget.current = container.scrollLeft;
       }
-
       const maxScroll = container.scrollWidth - container.clientWidth;
       scrollTarget.current = Math.max(0, Math.min(scrollTarget.current + e.deltaY * 0.8, maxScroll));
-      
       startMomentum();
     };
 
@@ -287,7 +287,7 @@ export default function NoteFeed({
   const dynamicWidth = useMemo(() => {
     if (!isMounted) return 2000;
     const base = window.innerWidth;
-    return base + (displayedBlocks.length * 800) + 3000;
+    return base + (displayedBlocks.length * 850) + 2000;
   }, [displayedBlocks.length, isMounted]);
 
   if (!isMounted) return null;
@@ -337,14 +337,15 @@ export default function NoteFeed({
             style={{
               backgroundColor: 'var(--colorone)',
               borderRadius: '999px',
-              padding: '3rem 4rem',
+              padding: 'clamp(1.5rem, 5vw, 3rem) clamp(2rem, 8vw, 4rem)',
               cursor: 'pointer',
               textAlign: 'center',
               transition: 'all 0.3s ease',
-              boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+              boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+              maxWidth: '90vw'
             }}>
             <h1 className="intro-title" style={{
-              fontSize: '4rem',
+              fontSize: 'clamp(1.5rem, 10vw, 4rem)',
               fontWeight: '700',
               color: '#000',
               margin: 0,
@@ -368,7 +369,7 @@ export default function NoteFeed({
         {loading && (
           <div style={{ 
             position: 'absolute', 
-            left: `${dynamicWidth - 1000}px`, 
+            left: `${displayedBlocks.length * 850 + window.innerWidth + 500}px`, 
             top: '50%', 
             transform: 'translateY(-50%)',
             color: 'var(--accent)', 
@@ -383,6 +384,7 @@ export default function NoteFeed({
       <style jsx global>{`
         .note-feed-container {
           scrollbar-width: none;
+          -webkit-overflow-scrolling: touch;
         }
         .note-feed-container::-webkit-scrollbar {
           display: none;
@@ -396,6 +398,10 @@ export default function NoteFeed({
         .naked-block-content p {
           margin: 0;
         }
+        .naked-block-content audio {
+          display: block;
+          margin: 10px 0;
+        }
         .intro-card {
           transform: scale(1);
         }
@@ -405,6 +411,11 @@ export default function NoteFeed({
         .note-feed-item:hover .link-icon-hover {
           opacity: 1 !important;
           transform: scale(1.1);
+        }
+        @media (max-width: 1024px) {
+          .note-feed-container {
+            overflow-x: scroll;
+          }
         }
       `}</style>
     </div>
