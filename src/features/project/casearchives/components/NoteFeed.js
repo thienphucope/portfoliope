@@ -737,7 +737,7 @@ const scrollToSection = (id) => {
           max-width: 1400px; 
           margin: 0 auto; 
           position: relative; 
-          padding: 80px 0 80px 120px; 
+          padding: 5rem 0 5rem 7.5rem; 
           box-sizing: border-box;
         }
         .cases-timeline::before { 
@@ -752,39 +752,38 @@ const scrollToSection = (id) => {
         
         .case-item { 
           display: flex; 
-          gap: 100px; 
-          padding: 100px 0; 
+          gap: 6.25rem; 
+          padding: 6.25rem 0; 
           border-bottom: 1px solid rgba(212, 168, 67, 0.1); 
           position: relative;
         }
         .case-item::after {
           content: '';
           position: absolute;
-          left: -125px;
-          top: 108px;
-          width: 12px;
-          height: 12px;
+          left: -7.8125rem;
+          top: 6.75rem;
+          width: 0.75rem;
+          height: 0.75rem;
           background: var(--void);
           border: 1px solid var(--gaslight);
           transform: rotate(45deg);
         }
         .case-year { font-family: var(--font-typewriter); color: var(--gaslight); font-size: 1.2rem; font-weight: 700; letter-spacing: 3px; }
         .case-info { cursor: pointer; flex: 1; }
-        .case-info h3 { font-family: var(--font-display); font-size: clamp(2.5rem, 8vw, 4.5rem); margin: 0 0 12px 0; transition: all 0.4s; line-height: 1.1; color: var(--parchment); }
-        .case-info:hover h3 { color: var(--gaslight); transform: translateX(20px); }
-        .case-type { font-family: var(--font-typewriter); color: var(--gaslight-dim); font-size: 0.9rem; letter-spacing: 4px; text-transform: uppercase; display: block; margin-bottom: 30px; }
+        .case-info h3 { font-family: var(--font-display); font-size: clamp(2rem, 6vw, 4.5rem); margin: 0 0 0.75rem 0; transition: all 0.4s; line-height: 1.1; color: var(--parchment); }
+        .case-info:hover h3 { color: var(--gaslight); transform: translateX(1.25rem); }
         
         .case-desc-compiled { 
           color: rgba(244, 232, 193, 0.85); 
           line-height: 1.8; 
-          margin-bottom: 40px; 
-          max-width: 1000px; 
-          font-size: 1.4rem;
+          margin-bottom: 2.5rem; 
+          max-width: 62.5rem; 
+          font-size: 1.2rem;
         }
-        .case-desc-compiled p { margin: 0 0 20px 0; }
+        .case-desc-compiled p { margin: 0 0 1.25rem 0; }
         .case-desc-compiled blockquote { 
-          margin: 0 0 25px 0; 
-          padding: 15px 0 15px 40px; 
+          margin: 0 0 1.5rem 0; 
+          padding: 1rem 0 1rem 2.5rem; 
           border-left: 4px solid var(--gaslight-dim); 
           font-style: italic;
           color: var(--gaslight);
@@ -792,33 +791,63 @@ const scrollToSection = (id) => {
         }
 
         .case-metadata {
-          display: flex; flex-wrap: wrap; gap: 8px 20px; margin-bottom: 16px; align-items: center;
+          display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; margin-bottom: 1rem; align-items: center;
         }
         .meta-item {
           font-family: var(--font-typewriter); font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase;
-          color: var(--parchment-dark); opacity: 0.75; display: flex; align-items: center; gap: 6px;
+          color: var(--parchment-dark); opacity: 0.75; display: flex; align-items: center; gap: 0.375rem;
         }
         .meta-item strong { color: var(--gaslight-dim); font-weight: 400; }
-        .meta-item:not(:last-child)::after { content: '·'; margin-left: 12px; color: var(--gaslight-dim); opacity: 0.5; }
 
-        .case-status { font-family: var(--font-typewriter); font-size: 0.9rem; color: var(--gaslight-dim); border: 1px solid var(--gaslight-dim); padding: 10px 30px; text-transform: uppercase; letter-spacing: 5px; transition: all 0.3s; }
-        .case-item:hover .case-status { color: var(--gaslight); border-color: var(--gaslight); background: rgba(212, 168, 67, 0.1); }
+        .case-status { font-family: var(--font-typewriter); font-size: 0.9rem; color: var(--gaslight-dim); border: 1px solid var(--gaslight-dim); padding: 0.625rem 1.875rem; text-transform: uppercase; letter-spacing: 5px; transition: all 0.3s; }
 
         /* Animations */
-        .reveal { opacity: 0; transform: translateY(60px); transition: all 1.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .reveal { opacity: 0; transform: translateY(3.75rem); transition: all 1.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
         .reveal.visible { opacity: 1; transform: translateY(0); }
 
-        .footer { padding: 150px 40px; border-top: 1px solid rgba(212, 168, 67, 0.15); background: rgba(0,0,0,0.6); }
+        .footer { padding: 9.375rem 2.5rem; border-top: 1px solid rgba(212, 168, 67, 0.15); background: rgba(0,0,0,0.6); }
         .footer-bottom { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; font-family: var(--font-typewriter); font-size: 1rem; color: rgba(244, 232, 193, 0.4); letter-spacing: 5px; text-transform: uppercase; }
-        .footer-wig { font-size: 2.5rem; opacity: 0.7; }
 
         @media (max-width: 1024px) {
-          .case-item { flex-direction: column; gap: 40px; }
-          .cases-timeline { padding-left: 80px; }
-          .case-item::after { left: -85px; top: 38px; }
-          .detective-board { height: 1400px; }
-          .board-note { width: 90%; left: 5% !important; position: relative !important; top: auto !important; margin: 0 auto 40px !important; transform: none !important; }
+          section { padding: 6rem 0.25rem; }
+          .hero { height: auto; min-height: 100vh; padding: 5rem 1rem; }
+          .nav-mind-palace { top: 0; bottom: auto; right: 0; left: 0; width: 100%; flex-direction: row; background: rgba(10, 10, 12, 0.98); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(212, 168, 67, 0.3); padding: 0.5rem 0; justify-content: center; box-shadow: 0 4px 30px rgba(0,0,0,0.8); }
+          .nav-label { writing-mode: horizontal-tb; transform: none; font-size: 0.7rem; letter-spacing: 1px; }
+          .nav-item::before { display: none; }
+          .nav-item { padding: 0.5rem; border: none; background: transparent; flex: 1; text-align: center; max-width: 110px; }
+          .nav-item.active { background: transparent; color: var(--gaslight); font-weight: bold; border-bottom: 2px solid var(--gaslight); }
+
+          .engine-container { max-width: 100%; margin: 0; padding: 0; }
+          .engine-box { padding: 1rem; min-height: auto; border: none; background: transparent; }
+          .engine-history { gap: 2rem; margin-bottom: 2rem; padding-right: 0; }
+          .engine-message { padding-left: 15px; }
+          .msg-content { font-size: 1.15rem; max-width: 100%; }
+          .engine-input-wrapper { padding: 1.25rem 0.75rem 1.25rem 2.5rem; margin: 0; border: 1px solid rgba(212, 168, 67, 0.2); background: rgba(212, 168, 67, 0.05); }
+          .engine-prompt-symbol { left: 1rem; top: 1.25rem; }
+
+          .case-item { flex-direction: column; gap: 2rem; padding: 4rem 0.75rem; }
+          .cases-timeline { padding-left: 1.5rem; padding-right: 0.5rem; }
+          .case-item::after { left: -1.875rem; top: 4.125rem; width: 0.5rem; height: 0.5rem; }
+          .case-left { min-width: auto; }
+          .case-media-preview { width: 100%; max-width: 100%; }
+          .case-desc-compiled { font-size: 1.2rem; }
+          .case-info h3 { transform: none !important; font-size: clamp(2rem, 10vw, 3rem); }
+          
+          .footer-bottom { flex-direction: column; gap: 1.5rem; text-align: center; font-size: 0.8rem; padding: 3rem 0; }
         }
+
+        @media (max-width: 480px) {
+          section { padding: 5rem 0.15rem; }
+          .hero-title { font-size: 2.6rem; }
+          .hero-subtitle { font-size: 1rem; }
+          .nav-item { padding: 0.5rem 0.15rem; }
+          .nav-label { font-size: 0.6rem; }
+          .engine-input-wrapper { padding-left: 2rem; }
+          .engine-prompt-symbol { left: 0.75rem; }
+          .cases-timeline { padding-left: 1.25rem; }
+          .case-item::after { left: -1.5rem; }
+        }
+
       `}</style>
     </div>
   );
