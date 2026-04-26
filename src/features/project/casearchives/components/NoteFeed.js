@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Image from 'next/image';
+import { FaYoutube, FaInstagram, FaGithub, FaEnvelope, FaTwitter } from 'react-icons/fa';
 import { ensureLibsLoaded, postProcess } from '../utils/markdown';
 import { useAI } from '../hooks/useAI';
 
@@ -20,6 +22,7 @@ const CaseItem = ({ caseData, onLinkClick }) => {
         <span className="case-year">{caseData.year || '2025'}</span>
         {mediaSrc && (
           <div className="case-media-preview">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={mediaSrc} alt="" />
           </div>
         )}
@@ -95,12 +98,6 @@ End each response with a punchy, one-sentence conclusion. Keep it concise.`;
     };
   }, []);
 
-  useEffect(() => {
-    if (isMounted && libsReady && allFiles.length > 0 && displayedCases.length === 0) {
-        fetchBatch(0, BATCH_SIZE);
-    }
-  }, [allFiles, isMounted, libsReady]);
-
   const extractMedia = (content) => {
     const ytRegex = /(?:youtube\.com\/(?:[^/\n]+\/[^\n]+\/|(?:v|e(?:mbed)?)\/|[^\n]*?[?&]v=)|youtu\.be\/)([A-Za-z0-9_-]{11})/;
     const items = [];
@@ -123,7 +120,7 @@ End each response with a punchy, one-sentence conclusion. Keep it concise.`;
     return items;
   };
 
-  const parseNote = (content, fileName, fileId) => {
+  const parseNote = useCallback((content, fileName, fileId) => {
     const lines = content.split('\n');
     const displayTitle = fileName.split('/').pop().replace(/\.md$/, '');
     
@@ -184,9 +181,9 @@ End each response with a punchy, one-sentence conclusion. Keep it concise.`;
       descriptionHtml, 
       year: '2025' 
     };
-  };
+  }, []);
 
-  const fetchBatch = async (start, end) => {
+  const fetchBatch = useCallback(async (start, end) => {
     if (loading) return;
     setLoading(true);
     const slice = allFiles.slice(start, end);
@@ -210,7 +207,13 @@ End each response with a punchy, one-sentence conclusion. Keep it concise.`;
     setDisplayedCases(prev => [...prev, ...results.filter(Boolean)]);
     setLoadedCount(end);
     setLoading(false);
-  };
+  }, [allFiles, fileRegistry, fullContentCache, loading, upsertCacheEntry, parseNote]);
+
+  useEffect(() => {
+    if (isMounted && libsReady && allFiles.length > 0 && displayedCases.length === 0) {
+        fetchBatch(0, BATCH_SIZE);
+    }
+  }, [allFiles, isMounted, libsReady, displayedCases.length, fetchBatch]);
 
   const handleAnalyze = async () => {
     if (!engineInput.trim() || isThinking || isStreaming) return;
@@ -390,7 +393,7 @@ const scrollToSection = (id) => {
         <section className="engine-section" id="engine">
           <div className="engine-container">
             <div className="section-header reveal">
-              <span className="section-number">File 005 — The Engine</span>
+              <span className="section-number">File 001 — The Engine</span>
               <h2 className="section-title">The <span className="accent">Deduction</span> Engine</h2>
               <div className="section-line"></div>
               <p className="section-desc">Present your observations. I shall render my analysis.</p>
@@ -450,7 +453,7 @@ const scrollToSection = (id) => {
 {/* DOSSIER SECTION */}
         <section className="cases-section" id="cases">
           <div className="section-header reveal">
-            <span className="section-number">File 004 — The Dossier</span>
+            <span className="section-number">File 002 — The Dossier</span>
             <h2 className="section-title">Notable <span className="accent">Cases</span></h2>
             <div className="section-line"></div>
           </div>
@@ -470,10 +473,30 @@ const scrollToSection = (id) => {
         </section>
 
         <footer className="footer">
+          <div className="footer-container reveal">
+            <div className="footer-address">
+              <span className="street">222B Baker Street</span>
+              Marylebone, London W1U 3AB<br />
+              United Kingdom
+              <div className="footer-socials">
+                <a href="https://github.com/thienphucope" target="_blank" rel="noopener noreferrer"><FaGithub /></a>
+                <a href="https://www.instagram.com/t22felton/" target="_blank" rel="noopener noreferrer"><FaInstagram /></a>
+                <a href="https://x.com/a" target="_blank" rel="noopener noreferrer"><FaTwitter /></a>
+                <a href="https://www.youtube.com/watch?v=zqcrDCynF8k" target="_blank" rel="noopener noreferrer"><FaYoutube /></a>
+                <a href="https://mail.google.com/mail/?view=cm&fs=1&to=thienphucmain1052004@gmail.com" target="_blank" rel="noopener noreferrer"><FaEnvelope /></a>
+              </div>
+            </div>
+            
+            <div className="footer-philosophy">
+              <blockquote>&ldquo;The world is full of obvious things which nobody by any chance ever observes.&rdquo;</blockquote>
+              <cite>— Sherlock&apos;s Neighbor</cite>
+            </div>
+          </div>
+
           <div className="footer-bottom">
             <span>The Mind Palace · MMXXV</span>
             <span className="footer-wig">🕵️</span>
-            <span>"Elementary"</span>
+            <span>&ldquo;Elementary&rdquo;</span>
           </div>
         </footer>
       </div>
@@ -805,8 +828,19 @@ const scrollToSection = (id) => {
         .reveal { opacity: 0; transform: translateY(3.75rem); transition: all 1.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
         .reveal.visible { opacity: 1; transform: translateY(0); }
 
-        .footer { padding: 9.375rem 2.5rem; border-top: 1px solid rgba(212, 168, 67, 0.15); background: rgba(0,0,0,0.6); }
-        .footer-bottom { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; font-family: var(--font-typewriter); font-size: 1rem; color: rgba(244, 232, 193, 0.4); letter-spacing: 5px; text-transform: uppercase; }
+        .footer { padding: 80px 40px 40px; border-top: 1px solid rgba(212, 168, 67, 0.08); position: relative; z-index: 2; background: rgba(0,0,0,0.6); }
+        .footer-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: flex-start; }
+        .footer-address { font-family: var(--font-body); font-style: italic; color: rgba(244, 232, 193, 0.3); font-size: 0.95rem; line-height: 2; }
+        .footer-address .street { color: var(--gaslight-dim); font-family: var(--font-typewriter); font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; display: block; font-style: normal; }
+        .footer-socials { display: flex; gap: 15px; margin-top: 15px; font-size: 1.1rem; }
+        .footer-socials a { color: rgba(244, 232, 193, 0.3); transition: color 0.3s; cursor: none; }
+        .footer-socials a:hover { color: var(--gaslight); }
+        .footer-philosophy { text-align: right; max-width: 350px; }
+        .footer-philosophy blockquote { font-family: var(--font-display); font-style: italic; font-size: 0.9rem; color: rgba(244, 232, 193, 0.3); line-height: 1.7; margin: 0; }
+        .footer-philosophy cite { display: block; margin-top: 10px; font-family: var(--font-typewriter); font-size: 0.6rem; letter-spacing: 2px; text-transform: uppercase; color: var(--gaslight-dim); font-style: normal; }
+        .footer-bottom { max-width: 1200px; margin: 60px auto 0; padding-top: 20px; border-top: 1px solid rgba(212, 168, 67, 0.05); display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .footer-bottom span { font-family: var(--font-typewriter); font-size: 0.6rem; letter-spacing: 2px; color: rgba(244, 232, 193, 0.15); text-transform: uppercase; }
+        .footer-wig { font-size: 1.5rem; opacity: 0.3; }
 
         @media (max-width: 1024px) {
           section { padding: 6rem 0.25rem; }
