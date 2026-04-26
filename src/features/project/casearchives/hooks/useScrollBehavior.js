@@ -128,10 +128,10 @@ export function useScrollBehavior({ appShellRef, tabs, setShowHeader, setShowFun
       }
 
       // 2. Inner vertical-scrollable elements
-      const vScrollable = e.target.closest('.markdown-container, .file-list, .horizontal-tabs-container, .search-results, .note-gallery-container, .note-feed-container');
+      const vScrollable = e.target.closest('.markdown-container, .file-list, .horizontal-tabs-container, .search-results, .note-gallery-container, .note-feed-container, .mind-palace-scroll-container');
       
       // Special case: Allow these to scroll natively without custom animation or horizontal hijacking
-      if (e.target.closest('.pdf-body, .chat-history, canvas, .note-feed-container')) {
+      if (e.target.closest('.pdf-body, .chat-history, canvas, .note-feed-container, .mind-palace-scroll-container, .mind-palace-scroll-wrapper')) {
         return; 
       }
 

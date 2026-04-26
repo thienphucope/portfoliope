@@ -1,0 +1,2112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sherlock Holmes — The Game is Afoot</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Special+Elite&family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap');
+
+  /* ═══════════════════════════════════════
+     CSS CUSTOM PROPERTIES — THE MIND PALACE
+     ═══════════════════════════════════════ */
+  :root {
+    --void: #0a0a0c;
+    --dark-room: #111115;
+    --gaslight: #d4a843;
+    --gaslight-dim: #8a6d2b;
+    --gaslight-glow: rgba(212, 168, 67, 0.15);
+    --blood-ink: #8b1a1a;
+    --parchment: #f4e8c1;
+    --parchment-dark: #c4b48a;
+    --smoke: rgba(150, 150, 160, 0.08);
+    --fog: rgba(200, 200, 210, 0.03);
+    --clue-red: #c0392b;
+    --clue-blue: #2c3e6b;
+    --clue-green: #1a5c2a;
+    --string-color: rgba(212, 168, 67, 0.4);
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-typewriter: 'Special Elite', monospace;
+    --font-body: 'EB Garamond', Georgia, serif;
+  }
+
+  /* ═══════════════════════════════════════
+     RESET & BASE
+     ═══════════════════════════════════════ */
+  *, *::before, *::after {
+    margin: 0; padding: 0; box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: var(--gaslight-dim) var(--void);
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--void); }
+  ::-webkit-scrollbar-thumb {
+    background: var(--gaslight-dim);
+    border-radius: 3px;
+  }
+
+  body {
+    background: var(--void);
+    color: var(--parchment);
+    font-family: var(--font-body);
+    overflow-x: hidden;
+    cursor: none;
+    line-height: 1.7;
+  }
+
+  ::selection {
+    background: var(--gaslight);
+    color: var(--void);
+  }
+
+  /* ═══════════════════════════════════════
+     CUSTOM CURSOR — THE MAGNIFYING GLASS
+     ═══════════════════════════════════════ */
+  .cursor-dot {
+    width: 8px; height: 8px;
+    background: var(--gaslight);
+    border-radius: 50%;
+    position: fixed;
+    top: 0; left: 0;
+    pointer-events: none;
+    z-index: 99999;
+    transition: transform 0.1s ease;
+    mix-blend-mode: difference;
+  }
+
+  .cursor-ring {
+    width: 40px; height: 40px;
+    border: 1.5px solid var(--gaslight);
+    border-radius: 50%;
+    position: fixed;
+    top: 0; left: 0;
+    pointer-events: none;
+    z-index: 99998;
+    transition: all 0.15s ease-out;
+    opacity: 0.6;
+  }
+
+  .cursor-ring.inspecting {
+    width: 80px; height: 80px;
+    border-color: var(--gaslight);
+    opacity: 1;
+    background: radial-gradient(circle, rgba(212,168,67,0.08) 0%, transparent 70%);
+  }
+
+  .cursor-ring::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 2px; height: 2px;
+    background: var(--gaslight);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  /* ═══════════════════════════════════════
+     AMBIENT FOG CANVAS
+     ═══════════════════════════════════════ */
+  #fog-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.4;
+  }
+
+  /* ═══════════════════════════════════════
+     LOADING SCREEN — THE MIND AWAKENS
+     ═══════════════════════════════════════ */
+  .loading-screen {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: var(--void);
+    z-index: 100000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.8s ease, visibility 0.8s ease;
+  }
+
+  .loading-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .loading-text {
+    font-family: var(--font-typewriter);
+    font-size: 1rem;
+    color: var(--gaslight-dim);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    overflow: hidden;
+    white-space: nowrap;
+    border-right: 2px solid var(--gaslight);
+    animation: typing 2s steps(20) forwards, blink 0.8s step-end infinite;
+    width: 0;
+  }
+
+  @keyframes typing {
+    to { width: 380px; }
+  }
+
+  @keyframes blink {
+    50% { border-color: transparent; }
+  }
+
+  .loading-sub {
+    font-family: var(--font-body);
+    font-style: italic;
+    color: var(--parchment-dark);
+    margin-top: 20px;
+    opacity: 0;
+    animation: fadeIn 1s ease 2.2s forwards;
+    font-size: 0.95rem;
+  }
+
+  @keyframes fadeIn {
+    to { opacity: 1; }
+  }
+
+  /* ═══════════════════════════════════════
+     NAVIGATION — THE MIND PALACE INDEX
+     ═══════════════════════════════════════ */
+  .nav-mind-palace {
+    position: fixed;
+    top: 30px; right: 30px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: var(--parchment-dark);
+    font-family: var(--font-typewriter);
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    opacity: 0.5;
+    transition: all 0.4s ease;
+    position: relative;
+  }
+
+  .nav-item::before {
+    content: '';
+    width: 20px; height: 1px;
+    background: var(--gaslight-dim);
+    transition: all 0.4s ease;
+  }
+
+  .nav-item:hover {
+    opacity: 1;
+    color: var(--gaslight);
+  }
+
+  .nav-item:hover::before {
+    width: 40px;
+    background: var(--gaslight);
+  }
+
+  .nav-item.active {
+    opacity: 1;
+    color: var(--gaslight);
+  }
+
+  .nav-item.active::before {
+    width: 40px;
+    background: var(--gaslight);
+  }
+
+  .nav-label {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+  }
+
+  /* ═══════════════════════════════════════
+     HERO SECTION — THE CASE FILE
+     ═══════════════════════════════════════ */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    overflow: hidden;
+  }
+
+  .hero-bg-pattern {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(212,168,67,0.03) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 50%, rgba(139,26,26,0.03) 0%, transparent 50%);
+    z-index: 0;
+  }
+
+  /* Gaslight lamp effect */
+  .gaslight-lamp {
+    position: absolute;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(ellipse at top, rgba(212,168,67,0.06) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    max-width: 900px;
+    padding: 0 40px;
+  }
+
+  .hero-overline {
+    font-family: var(--font-typewriter);
+    font-size: 0.7rem;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    color: var(--gaslight-dim);
+    margin-bottom: 30px;
+    opacity: 0;
+    animation: slideUp 0.8s ease 2.8s forwards;
+  }
+
+  .hero-title {
+    font-family: var(--font-display);
+    font-size: clamp(3rem, 8vw, 7rem);
+    font-weight: 900;
+    line-height: 1;
+    color: var(--parchment);
+    margin-bottom: 10px;
+    opacity: 0;
+    animation: slideUp 1s ease 3s forwards;
+  }
+
+  .hero-title .italic {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--gaslight);
+  }
+
+  .hero-subtitle {
+    font-family: var(--font-display);
+    font-size: clamp(1.2rem, 3vw, 2rem);
+    font-weight: 400;
+    font-style: italic;
+    color: var(--parchment-dark);
+    margin-bottom: 40px;
+    opacity: 0;
+    animation: slideUp 1s ease 3.3s forwards;
+  }
+
+  .hero-quote {
+    font-family: var(--font-body);
+    font-size: 1.05rem;
+    font-style: italic;
+    color: rgba(244,232,193,0.5);
+    max-width: 600px;
+    margin: 0 auto 50px;
+    line-height: 1.9;
+    opacity: 0;
+    animation: slideUp 1s ease 3.6s forwards;
+  }
+
+  .hero-quote::before,
+  .hero-quote::after {
+    content: '—';
+    color: var(--gaslight-dim);
+  }
+
+  .hero-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 15px;
+    font-family: var(--font-typewriter);
+    font-size: 0.75rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gaslight);
+    text-decoration: none;
+    padding: 18px 40px;
+    border: 1px solid var(--gaslight-dim);
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    animation: slideUp 1s ease 3.9s forwards;
+    transition: all 0.5s ease;
+  }
+
+  .hero-cta::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(212,168,67,0.1), transparent);
+    transition: left 0.6s ease;
+  }
+
+  .hero-cta:hover::before {
+    left: 100%;
+  }
+
+  .hero-cta:hover {
+    border-color: var(--gaslight);
+    box-shadow: 0 0 30px rgba(212,168,67,0.1);
+  }
+
+  .hero-cta .arrow {
+    transition: transform 0.3s ease;
+  }
+
+  .hero-cta:hover .arrow {
+    transform: translateX(5px);
+  }
+
+  .hero-scroll-indicator {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    animation: slideUp 1s ease 4.2s forwards;
+  }
+
+  .hero-scroll-indicator span {
+    font-family: var(--font-typewriter);
+    font-size: 0.6rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gaslight-dim);
+  }
+
+  .scroll-line {
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, var(--gaslight-dim), transparent);
+    animation: scrollPulse 2s ease infinite;
+  }
+
+  @keyframes scrollPulse {
+    0%, 100% { opacity: 0.3; transform: scaleY(0.5); }
+    50% { opacity: 1; transform: scaleY(1); }
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ═══════════════════════════════════════
+     SECTION COMMON — CASE FILES
+     ═══════════════════════════════════════ */
+  section {
+    position: relative;
+    z-index: 2;
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 80px;
+  }
+
+  .section-number {
+    font-family: var(--font-typewriter);
+    font-size: 0.65rem;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: var(--gaslight-dim);
+    display: block;
+    margin-bottom: 15px;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    color: var(--parchment);
+    margin-bottom: 15px;
+  }
+
+  .section-title .accent {
+    color: var(--gaslight);
+    font-style: italic;
+  }
+
+  .section-line {
+    width: 60px;
+    height: 1px;
+    background: var(--gaslight-dim);
+    margin: 20px auto;
+  }
+
+  .section-desc {
+    font-family: var(--font-body);
+    font-size: 1.05rem;
+    font-style: italic;
+    color: rgba(244,232,193,0.45);
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  /* ═══════════════════════════════════════
+     DEDUCTION SECTION — THE METHOD
+     ═══════════════════════════════════════ */
+  .deduction-section {
+    padding: 120px 40px;
+    background: linear-gradient(180deg, var(--void) 0%, var(--dark-room) 50%, var(--void) 100%);
+  }
+
+  .deduction-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+
+  .deduction-visual {
+    position: relative;
+    height: 500px;
+  }
+
+  /* The Mind Palace illustration */
+  .mind-palace {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  .palace-ring {
+    position: absolute;
+    border: 1px solid rgba(212,168,67,0.15);
+    border-radius: 50%;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    animation: ringPulse 4s ease infinite;
+  }
+
+  .palace-ring:nth-child(1) {
+    width: 150px; height: 150px;
+    animation-delay: 0s;
+  }
+  .palace-ring:nth-child(2) {
+    width: 250px; height: 250px;
+    animation-delay: 0.5s;
+  }
+  .palace-ring:nth-child(3) {
+    width: 350px; height: 350px;
+    animation-delay: 1s;
+  }
+  .palace-ring:nth-child(4) {
+    width: 450px; height: 450px;
+    animation-delay: 1.5s;
+  }
+
+  .palace-ring::after {
+    content: '';
+    position: absolute;
+    width: 6px; height: 6px;
+    background: var(--gaslight);
+    border-radius: 50%;
+    top: -3px; left: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 0 10px var(--gaslight);
+  }
+
+  @keyframes ringPulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.8; }
+  }
+
+  .palace-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px; height: 60px;
+    border: 1px solid var(--gaslight);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    color: var(--gaslight);
+    background: var(--void);
+    z-index: 2;
+  }
+
+  .palace-label {
+    position: absolute;
+    font-family: var(--font-typewriter);
+    font-size: 0.55rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gaslight-dim);
+    white-space: nowrap;
+  }
+
+  .palace-label:nth-child(6) { top: 15%; left: 50%; transform: translateX(-50%); }
+  .palace-label:nth-child(7) { top: 50%; right: 5%; transform: translateY(-50%); }
+  .palace-label:nth-child(8) { bottom: 15%; left: 50%; transform: translateX(-50%); }
+  .palace-label:nth-child(9) { top: 50%; left: 5%; transform: translateY(-50%); }
+
+  .deduction-content {
+    padding: 20px 0;
+  }
+
+  .deduction-content h3 {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--parchment);
+    margin-bottom: 20px;
+  }
+
+  .deduction-content h3 .italic {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--gaslight);
+  }
+
+  .deduction-content p {
+    font-family: var(--font-body);
+    font-size: 1.05rem;
+    color: rgba(244,232,193,0.6);
+    line-height: 1.9;
+    margin-bottom: 15px;
+  }
+
+  .deduction-steps {
+    list-style: none;
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .deduction-step {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    padding: 20px;
+    border-left: 1px solid rgba(212,168,67,0.2);
+    transition: all 0.4s ease;
+    position: relative;
+  }
+
+  .deduction-step::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: 0;
+    width: 1px;
+    height: 0;
+    background: var(--gaslight);
+    transition: height 0.6s ease;
+  }
+
+  .deduction-step:hover::before {
+    height: 100%;
+  }
+
+  .deduction-step:hover {
+    background: rgba(212,168,67,0.03);
+  }
+
+  .step-number {
+    font-family: var(--font-typewriter);
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+    color: var(--gaslight);
+    min-width: 30px;
+    padding-top: 2px;
+  }
+
+  .step-text {
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    color: rgba(244,232,193,0.6);
+    line-height: 1.7;
+  }
+
+  .step-text strong {
+    color: var(--parchment);
+    font-weight: 700;
+  }
+
+  /* ═══════════════════════════════════════
+     CASE BOARD — DETECTIVE BOARD
+     ═══════════════════════════════════════ */
+  .caseboard-section {
+    padding: 120px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .caseboard-section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background:
+      repeating-linear-gradient(0deg, transparent, transparent 49px, rgba(212,168,67,0.03) 50px),
+      repeating-linear-gradient(90deg, transparent, transparent 49px, rgba(212,168,67,0.03) 50px);
+    z-index: 0;
+  }
+
+  .caseboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  .detective-board {
+    position: relative;
+    min-height: 600px;
+    background: rgba(15, 15, 20, 0.8);
+    border: 1px solid rgba(212,168,67,0.1);
+    padding: 40px;
+    margin-top: 20px;
+  }
+
+  .detective-board::before {
+    content: 'CASE FILE — CONFIDENTIAL';
+    position: absolute;
+    top: 15px; right: 20px;
+    font-family: var(--font-typewriter);
+    font-size: 0.55rem;
+    letter-spacing: 3px;
+    color: var(--blood-ink);
+    opacity: 0.6;
+  }
+
+  .board-pin {
+    position: absolute;
+    width: 12px; height: 12px;
+    background: var(--gaslight);
+    border-radius: 50%;
+    cursor: none;
+    z-index: 5;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 15px rgba(212,168,67,0.3);
+  }
+
+  .board-pin::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 4px; height: 4px;
+    background: var(--void);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .board-pin:hover {
+    transform: scale(1.5);
+    box-shadow: 0 0 25px rgba(212,168,67,0.5);
+  }
+
+  .board-pin.red { background: var(--clue-red); box-shadow: 0 0 15px rgba(192,57,43,0.3); }
+  .board-pin.blue { background: var(--clue-blue); box-shadow: 0 0 15px rgba(44,62,107,0.3); }
+  .board-pin.green { background: var(--clue-green); box-shadow: 0 0 15px rgba(26,92,42,0.3); }
+
+  .board-note {
+    position: absolute;
+    background: rgba(244,232,193,0.08);
+    border: 1px solid rgba(212,168,67,0.15);
+    padding: 20px;
+    max-width: 220px;
+    font-family: var(--font-typewriter);
+    font-size: 0.7rem;
+    color: var(--parchment-dark);
+    line-height: 1.6;
+    transition: all 0.5s ease;
+    cursor: none;
+  }
+
+  .board-note:hover {
+    background: rgba(244,232,193,0.12);
+    border-color: var(--gaslight-dim);
+    transform: scale(1.05) rotate(-1deg);
+    z-index: 10;
+  }
+
+  .board-note .note-title {
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    color: var(--gaslight);
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .board-note .note-tag {
+    display: inline-block;
+    font-size: 0.55rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    margin-top: 10px;
+    border: 1px solid;
+  }
+
+  .board-note .note-tag.suspect { border-color: var(--clue-red); color: var(--clue-red); }
+  .board-note .note-tag.clue { border-color: var(--gaslight); color: var(--gaslight); }
+  .board-note .note-tag.evidence { border-color: var(--clue-blue); color: var(--clue-blue); }
+  .board-note .note-tag.motive { border-color: var(--clue-green); color: var(--clue-green); }
+
+  /* String connections via SVG */
+  .board-strings {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .board-strings line {
+    stroke: var(--string-color);
+    stroke-width: 1;
+    stroke-dasharray: 5,5;
+  }
+
+  .board-strings line.active {
+    stroke: var(--gaslight);
+    stroke-width: 1.5;
+    stroke-dasharray: none;
+    filter: drop-shadow(0 0 3px rgba(212,168,67,0.3));
+  }
+
+  /* Note positions */
+  .note-1 { top: 30px; left: 30px; }
+  .note-2 { top: 60px; right: 40px; }
+  .note-3 { top: 200px; left: 200px; }
+  .note-4 { top: 280px; right: 120px; }
+  .note-5 { bottom: 80px; left: 60px; }
+  .note-6 { bottom: 60px; right: 60px; }
+
+  .pin-1 { top: 20px; left: 20px; }
+  .pin-2 { top: 50px; right: 30px; }
+  .pin-3 { top: 190px; left: 190px; }
+  .pin-4 { top: 270px; right: 110px; }
+  .pin-5 { bottom: 70px; left: 50px; }
+  .pin-6 { bottom: 50px; right: 50px; }
+
+  /* ═══════════════════════════════════════
+     PHILOSOPHY SECTION — DATA BEFORE THEORY
+     ═══════════════════════════════════════ */
+  .philosophy-section {
+    padding: 120px 40px;
+    background: linear-gradient(180deg, var(--void) 0%, rgba(10,10,15,1) 100%);
+  }
+
+  .philosophy-container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .philosophy-quote {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3.5vw, 2.5rem);
+    font-style: italic;
+    font-weight: 400;
+    color: var(--parchment);
+    line-height: 1.6;
+    text-align: center;
+    padding: 60px 0;
+    position: relative;
+  }
+
+  .philosophy-quote::before {
+    content: '"';
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 6rem;
+    color: var(--gaslight-dim);
+    opacity: 0.3;
+    font-style: normal;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .philosophy-quote .highlight {
+    color: var(--gaslight);
+    font-weight: 700;
+    font-style: normal;
+  }
+
+  .philosophy-attribution {
+    text-align: center;
+    font-family: var(--font-typewriter);
+    font-size: 0.7rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gaslight-dim);
+    margin-top: 20px;
+  }
+
+  .philosophy-principles {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 80px;
+    position: relative;
+  }
+
+  .philosophy-principles::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 1px;
+    height: 100%;
+    background: linear-gradient(to bottom, transparent, var(--gaslight-dim), transparent);
+  }
+
+  .principle {
+    display: flex;
+    align-items: center;
+    padding: 30px 0;
+    position: relative;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.6s ease;
+  }
+
+  .principle.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .principle:nth-child(odd) {
+    flex-direction: row;
+    padding-right: calc(50% + 40px);
+    text-align: right;
+  }
+
+  .principle:nth-child(even) {
+    flex-direction: row-reverse;
+    padding-left: calc(50% + 40px);
+    text-align: left;
+  }
+
+  .principle-dot {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 10px; height: 10px;
+    background: var(--void);
+    border: 1.5px solid var(--gaslight-dim);
+    border-radius: 50%;
+    transition: all 0.4s ease;
+    z-index: 2;
+  }
+
+  .principle:hover .principle-dot {
+    background: var(--gaslight);
+    border-color: var(--gaslight);
+    box-shadow: 0 0 15px rgba(212,168,67,0.4);
+    transform: translateX(-50%) scale(1.5);
+  }
+
+  .principle h4 {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    color: var(--gaslight);
+    margin-bottom: 5px;
+  }
+
+  .principle p {
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    color: rgba(244,232,193,0.5);
+    font-style: italic;
+  }
+
+  /* ═══════════════════════════════════════
+     CASES SECTION — THE DOSSIER
+     ═══════════════════════════════════════ */
+  .cases-section {
+    padding: 120px 40px;
+  }
+
+  .cases-container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .cases-timeline {
+    position: relative;
+    padding: 40px 0;
+  }
+
+  .cases-timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1px;
+    height: 100%;
+    background: linear-gradient(to bottom, transparent, var(--gaslight-dim), transparent);
+  }
+
+  .case-item {
+    display: flex;
+    gap: 40px;
+    padding: 40px 0 40px 40px;
+    position: relative;
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: all 0.8s ease;
+  }
+
+  .case-item.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .case-item::before {
+    content: '';
+    position: absolute;
+    left: -5px;
+    top: 50px;
+    width: 10px; height: 10px;
+    border: 1px solid var(--gaslight-dim);
+    background: var(--void);
+    transform: rotate(45deg);
+    transition: all 0.4s ease;
+  }
+
+  .case-item:hover::before {
+    background: var(--gaslight);
+    border-color: var(--gaslight);
+    box-shadow: 0 0 10px rgba(212,168,67,0.3);
+  }
+
+  .case-year {
+    font-family: var(--font-typewriter);
+    font-size: 0.65rem;
+    letter-spacing: 3px;
+    color: var(--gaslight);
+    min-width: 60px;
+    padding-top: 5px;
+  }
+
+  .case-info h3 {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    color: var(--parchment);
+    margin-bottom: 8px;
+    transition: color 0.3s ease;
+  }
+
+  .case-item:hover .case-info h3 {
+    color: var(--gaslight);
+  }
+
+  .case-info .case-type {
+    font-family: var(--font-typewriter);
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gaslight-dim);
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .case-info p {
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    color: rgba(244,232,193,0.5);
+    line-height: 1.7;
+    max-width: 600px;
+  }
+
+  .case-status {
+    display: inline-block;
+    margin-top: 12px;
+    font-family: var(--font-typewriter);
+    font-size: 0.55rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border: 1px solid var(--gaslight-dim);
+    color: var(--gaslight-dim);
+  }
+
+  .case-status.solved {
+    border-color: var(--clue-green);
+    color: var(--clue-green);
+  }
+
+  /* ═══════════════════════════════════════
+     DEDUCTION ENGINE — INTERACTIVE
+     ═══════════════════════════════════════ */
+  .engine-section {
+    padding: 120px 40px;
+    background: linear-gradient(180deg, var(--void) 0%, var(--dark-room) 50%, var(--void) 100%);
+  }
+
+  .engine-container {
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .engine-box {
+    background: rgba(15, 15, 20, 0.9);
+    border: 1px solid rgba(212,168,67,0.15);
+    padding: 50px;
+    margin-top: 40px;
+    position: relative;
+  }
+
+  .engine-box::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: -1px;
+    right: -1px; bottom: -1px;
+    background: linear-gradient(135deg, var(--gaslight-dim), transparent, var(--gaslight-dim));
+    opacity: 0.1;
+    z-index: 0;
+  }
+
+  .engine-prompt {
+    font-family: var(--font-body);
+    font-size: 1.1rem;
+    font-style: italic;
+    color: rgba(244,232,193,0.6);
+    margin-bottom: 30px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .engine-input-area {
+    position: relative;
+    z-index: 1;
+  }
+
+  .engine-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(212,168,67,0.3);
+    padding: 15px 0;
+    font-family: var(--font-typewriter);
+    font-size: 0.9rem;
+    color: var(--parchment);
+    outline: none;
+    transition: border-color 0.3s ease;
+  }
+
+  .engine-input::placeholder {
+    color: rgba(244,232,193,0.2);
+    font-style: italic;
+  }
+
+  .engine-input:focus {
+    border-bottom-color: var(--gaslight);
+  }
+
+  .engine-output {
+    margin-top: 30px;
+    padding: 25px;
+    background: rgba(212,168,67,0.03);
+    border-left: 2px solid var(--gaslight-dim);
+    text-align: left;
+    position: relative;
+    z-index: 1;
+    min-height: 80px;
+    display: none;
+  }
+
+  .engine-output.visible {
+    display: block;
+    animation: slideUp 0.5s ease;
+  }
+
+  .engine-output p {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    color: var(--parchment-dark);
+    line-height: 1.8;
+    font-style: italic;
+  }
+
+  .engine-output .deduction-line {
+    display: block;
+    opacity: 0;
+    animation: typeLine 0.5s ease forwards;
+  }
+
+  .engine-output .deduction-line:nth-child(1) { animation-delay: 0.3s; }
+  .engine-output .deduction-line:nth-child(2) { animation-delay: 0.8s; }
+  .engine-output .deduction-line:nth-child(3) { animation-delay: 1.3s; }
+  .engine-output .deduction-line:nth-child(4) { animation-delay: 1.8s; }
+
+  @keyframes typeLine {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .engine-btn {
+    margin-top: 25px;
+    background: transparent;
+    border: 1px solid var(--gaslight-dim);
+    color: var(--gaslight);
+    font-family: var(--font-typewriter);
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 14px 35px;
+    cursor: none;
+    transition: all 0.4s ease;
+    position: relative;
+    z-index: 1;
+  }
+
+  .engine-btn:hover {
+    background: rgba(212,168,67,0.08);
+    border-color: var(--gaslight);
+    box-shadow: 0 0 20px rgba(212,168,67,0.1);
+  }
+
+  /* ═══════════════════════════════════════
+     FOOTER — 221B BAKER STREET
+     ═══════════════════════════════════════ */
+  .footer {
+    padding: 80px 40px 40px;
+    border-top: 1px solid rgba(212,168,67,0.08);
+    position: relative;
+    z-index: 2;
+  }
+
+  .footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .footer-address {
+    font-family: var(--font-body);
+    font-style: italic;
+    color: rgba(244,232,193,0.3);
+    font-size: 0.95rem;
+    line-height: 2;
+  }
+
+  .footer-address .street {
+    color: var(--gaslight-dim);
+    font-family: var(--font-typewriter);
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    display: block;
+    font-style: normal;
+  }
+
+  .footer-philosophy {
+    text-align: right;
+    max-width: 350px;
+  }
+
+  .footer-philosophy blockquote {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 0.9rem;
+    color: rgba(244,232,193,0.3);
+    line-height: 1.7;
+  }
+
+  .footer-philosophy cite {
+    display: block;
+    margin-top: 10px;
+    font-family: var(--font-typewriter);
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gaslight-dim);
+    font-style: normal;
+  }
+
+  .footer-bottom {
+    max-width: 1200px;
+    margin: 60px auto 0;
+    padding-top: 20px;
+    border-top: 1px solid rgba(212,168,67,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-bottom span {
+    font-family: var(--font-typewriter);
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+    color: rgba(244,232,193,0.15);
+    text-transform: uppercase;
+  }
+
+  .footer-wig {
+    font-size: 1.5rem;
+    opacity: 0.3;
+  }
+
+  /* ═══════════════════════════════════════
+     REVEAL ANIMATIONS
+     ═══════════════════════════════════════ */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.3s; }
+  .reveal-delay-4 { transition-delay: 0.4s; }
+  .reveal-delay-5 { transition-delay: 0.5s; }
+  .reveal-delay-6 { transition-delay: 0.6s; }
+
+  /* ═══════════════════════════════════════
+     RESPONSIVE
+     ═══════════════════════════════════════ */
+  @media (max-width: 768px) {
+    .deduction-grid {
+      grid-template-columns: 1fr;
+      gap: 40px;
+    }
+
+    .deduction-visual {
+      height: 350px;
+    }
+
+    .board-note {
+      position: relative !important;
+      top: auto !important;
+      left: auto !important;
+      right: auto !important;
+      bottom: auto !important;
+      margin-bottom: 20px;
+      max-width: 100%;
+    }
+
+    .detective-board {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .board-strings { display: none; }
+    .board-pin { display: none; }
+
+    .principle:nth-child(odd),
+    .principle:nth-child(even) {
+      flex-direction: row;
+      padding: 30px 0 30px 50px;
+      text-align: left;
+    }
+
+    .philosophy-principles::before {
+      left: 15px;
+    }
+
+    .principle-dot {
+      left: 15px;
+    }
+
+    .footer-container {
+      flex-direction: column;
+      gap: 40px;
+    }
+
+    .footer-philosophy {
+      text-align: left;
+    }
+
+    .footer-bottom {
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .nav-mind-palace {
+      display: none;
+    }
+
+    body { cursor: auto; }
+    .cursor-dot, .cursor-ring { display: none; }
+  }
+
+  /* ═══════════════════════════════════════
+     GRAIN OVERLAY
+     ═══════════════════════════════════════ */
+  .grain {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 256px 256px;
+  }
+
+  /* ═══════════════════════════════════════
+     EASTER EGG — WATSON'S NOTES
+     ═══════════════════════════════════════ */
+  .watson-note {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+    z-index: 100;
+    font-family: var(--font-typewriter);
+    font-size: 0.6rem;
+    letter-spacing: 1px;
+    color: var(--gaslight-dim);
+    opacity: 0.3;
+    transition: opacity 0.3s ease;
+  }
+
+  .watson-note:hover {
+    opacity: 0.8;
+  }
+
+  /* ═══════════════════════════════════════
+     FLOATING PARTICLES
+     ═══════════════════════════════════════ */
+  .particle {
+    position: fixed;
+    width: 2px; height: 2px;
+    background: var(--gaslight);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0;
+    animation: floatParticle 8s ease-in-out infinite;
+  }
+
+  @keyframes floatParticle {
+    0% { opacity: 0; transform: translateY(100vh) scale(0); }
+    10% { opacity: 0.4; }
+    90% { opacity: 0.4; }
+    100% { opacity: 0; transform: translateY(-20vh) scale(1); }
+  }
+</style>
+</head>
+<body>
+
+<!-- GRAIN OVERLAY -->
+<div class="grain"></div>
+
+<!-- CUSTOM CURSOR -->
+<div class="cursor-dot" id="cursor-dot"></div>
+<div class="cursor-ring" id="cursor-ring"></div>
+
+<!-- FOG CANVAS -->
+<canvas id="fog-canvas"></canvas>
+
+<!-- FLOATING PARTICLES -->
+<div id="particles"></div>
+
+<!-- LOADING SCREEN -->
+<div class="loading-screen" id="loading">
+  <div class="loading-text">Consulting the evidence...</div>
+  <div class="loading-sub">"The mind, once stretched, never returns to its original dimensions."</div>
+</div>
+
+<!-- NAVIGATION -->
+<nav class="nav-mind-palace">
+  <a href="#hero" class="nav-item active">
+    <span class="nav-label">Entry</span>
+  </a>
+  <a href="#deduction" class="nav-item">
+    <span class="nav-label">Method</span>
+  </a>
+  <a href="#caseboard" class="nav-item">
+    <span class="nav-label">Case Board</span>
+  </a>
+  <a href="#philosophy" class="nav-item">
+    <span class="nav-label">Philosophy</span>
+  </a>
+  <a href="#cases" class="nav-item">
+    <span class="nav-label">Dossier</span>
+  </a>
+  <a href="#engine" class="nav-item">
+    <span class="nav-label">Engine</span>
+  </a>
+</nav>
+
+<!-- ═══════════════════════════════════
+     HERO SECTION
+     ═══════════════════════════════════ -->
+<section class="hero" id="hero">
+  <div class="hero-bg-pattern"></div>
+  <div class="gaslight-lamp"></div>
+
+  <div class="hero-content">
+    <div class="hero-overline">Consulting Detective · Baker Street</div>
+    <h1 class="hero-title">Sherlock <span class="italic">Holmes</span></h1>
+    <p class="hero-subtitle">The art of deduction, refined to a science.</p>
+    <p class="hero-quote">It has long been an axiom of mine that the little things are infinitely the most important.</p>
+    <a href="#deduction" class="hero-cta">
+      Examine the Evidence <span class="arrow">→</span>
+    </a>
+  </div>
+
+  <div class="hero-scroll-indicator">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     DEDUCTION SECTION
+     ═══════════════════════════════════ -->
+<section class="deduction-section" id="deduction">
+  <div class="section-header reveal">
+    <span class="section-number">File 001 — The Method</span>
+    <h2 class="section-title">The Science of <span class="accent">Deduction</span></h2>
+    <div class="section-line"></div>
+    <p class="section-desc">"You see, but you do not observe. The distinction is clear."</p>
+  </div>
+
+  <div class="deduction-grid">
+    <div class="deduction-visual reveal reveal-delay-2">
+      <div class="mind-palace">
+        <div class="palace-ring"></div>
+        <div class="palace-ring"></div>
+        <div class="palace-ring"></div>
+        <div class="palace-ring"></div>
+        <div class="palace-center">SH</div>
+        <span class="palace-label">Observation</span>
+        <span class="palace-label">Knowledge</span>
+        <span class="palace-label">Analysis</span>
+        <span class="palace-label">Deduction</span>
+      </div>
+    </div>
+
+    <div class="deduction-content reveal reveal-delay-3">
+      <h3>A Mind Like <span class="italic">Stiletto</span></h3>
+      <p>My brain is like an attic — I am never without the tools I need, but I arrange them with precision. Every fact is a tool; every tool must earn its place.</p>
+      <p>The common man collects data indiscriminately. I select only that which is relevant — and from that selection, the truth reveals itself.</p>
+
+      <ul class="deduction-steps">
+        <li class="deduction-step">
+          <span class="step-number">01</span>
+          <span class="step-text"><strong>Observe.</strong> Note what others overlook — the mud on a shoe, the callus on a finger, the hesitation in a voice.</span>
+        </li>
+        <li class="deduction-step">
+          <span class="step-number">02</span>
+          <span class="step-text"><strong>Eliminate.</strong> Remove the impossible from consideration. Whatever remains, however improbable, must be the truth.</span>
+        </li>
+        <li class="deduction-step">
+          <span class="step-number">03</span>
+          <span class="step-text"><strong>Deduce.</strong> Chain observation to knowledge to inference. Each link must be ironclad.</span>
+        </li>
+        <li class="deduction-step">
+          <span class="step-number">04</span>
+          <span class="step-text"><strong>Conclude.</strong> The answer was always there — hidden in plain sight, waiting for the right mind to assemble the pieces.</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     CASE BOARD SECTION
+     ═══════════════════════════════════ -->
+<section class="caseboard-section" id="caseboard">
+  <div class="section-header reveal">
+    <span class="section-number">File 002 — The Investigation</span>
+    <h2 class="section-title">The <span class="accent">Case Board</span></h2>
+    <div class="section-line"></div>
+    <p class="section-desc">Connect the dots. The pattern will emerge.</p>
+  </div>
+
+  <div class="caseboard-container">
+    <div class="detective-board reveal reveal-delay-2">
+      <!-- SVG Strings -->
+      <svg class="board-strings" id="board-strings" viewBox="0 0 1200 600" preserveAspectRatio="none">
+        <line x1="50" y1="40" x2="220" y2="220" />
+        <line x1="220" y1="220" x2="400" y2="300" />
+        <line x1="400" y1="300" x2="900" y2="300" />
+        <line x1="900" y1="300" x2="1100" y2="520" />
+        <line x1="50" y1="40" x2="1100" y2="70" />
+        <line x1="1100" y1="70" x2="900" y2="300" />
+        <line x1="220" y1="220" x2="150" y2="520" />
+        <line x1="150" y1="520" x2="400" y2="300" />
+        <line x1="150" y1="520" x2="1100" y2="520" />
+      </svg>
+
+      <!-- Pins -->
+      <div class="board-pin pin-1"></div>
+      <div class="board-pin red pin-2"></div>
+      <div class="board-pin blue pin-3"></div>
+      <div class="board-pin green pin-4"></div>
+      <div class="board-pin pin-5"></div>
+      <div class="board-pin red pin-6"></div>
+
+      <!-- Notes -->
+      <div class="board-note note-1">
+        <span class="note-title">The Speckled Band</span>
+        A whistle, a ventilator, a phantom snake. The details are never random — they are always connected.
+        <span class="note-tag clue">Clue</span>
+      </div>
+
+      <div class="board-note note-2">
+        <span class="note-title">Suspect: Dr. Grimesby Roylott</span>
+        Violent temper, Indian background, knowledge of exotic animals. The profile fits — but correlation is not causation.
+        <span class="note-tag suspect">Suspect</span>
+      </div>
+
+      <div class="board-note note-3">
+        <span class="note-title">The Ventilation Grate</span>
+        A useless ventilation opening. A bell-pull connected to nothing. A bed lashed to the floor. Each anomaly is a breadcrumb.
+        <span class="note-tag evidence">Evidence</span>
+      </div>
+
+      <div class="board-note note-4">
+        <span class="note-title">Motive: Inheritance</span>
+        The sister's marriage would halve the income. A fortune in railway stock hangs on the question of a wife.
+        <span class="note-tag motive">Motive</span>
+      </div>
+
+      <div class="board-note note-5">
+        <span class="note-title">The Swamp Adder</span>
+        A venomous serpent, trained to traverse a cord. The instrument of murder — invisible, silent, deniable.
+        <span class="note-tag evidence">Evidence</span>
+      </div>
+
+      <div class="board-note note-6">
+        <span class="note-title">Resolution</span>
+        The creature turned upon its master. Justice, delivered by nature itself. The impossible, made inevitable.
+        <span class="note-tag clue">Resolved</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     PHILOSOPHY SECTION
+     ═══════════════════════════════════ -->
+<section class="philosophy-section" id="philosophy">
+  <div class="philosophy-container">
+    <div class="section-header reveal">
+      <span class="section-number">File 003 — The Philosophy</span>
+      <h2 class="section-title">Data. <span class="accent">Always.</span> Data.</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="philosophy-quote reveal reveal-delay-2">
+      I cannot make <span class="highlight">bricks</span> without <span class="highlight">clay</span>.
+      <div class="philosophy-attribution">— A Scandal in Bohemia</div>
+    </div>
+
+    <div class="philosophy-principles">
+      <div class="principle">
+        <div class="principle-dot"></div>
+        <div>
+          <h4>Data Before Theory</h4>
+          <p>"It is a capital mistake to theorize before one has data. Insensibly one begins to twist facts to suit theories, instead of theories to suit facts."</p>
+        </div>
+      </div>
+      <div class="principle">
+        <div class="principle-dot"></div>
+        <div>
+          <h4>The Elimination Principle</h4>
+          <p>"When you have eliminated the impossible, whatever remains, however improbable, must be the truth."</p>
+        </div>
+      </div>
+      <div class="principle">
+        <div class="principle-dot"></div>
+        <div>
+          <h4>The Mind's Attic</h4>
+          <p>"The brain is like a muscle — it strengthens with use, weakens with disuse. But the skilled workman is very careful indeed that he shall not put anything that might take up any room."</p>
+        </div>
+      </div>
+      <div class="principle">
+        <div class="principle-dot"></div>
+        <div>
+          <h4>The Little Things</h4>
+          <p>"It has long been an axiom of mine that the little things are infinitely the most important."</p>
+        </div>
+      </div>
+      <div class="principle">
+        <div class="principle-dot"></div>
+        <div>
+          <h4>Emotion is the Enemy</h4>
+          <p>"Emotions are liable to be misleading. You suggest that they are a guide to action, but they are usually a hindrance."</p>
+        </div>
+      </div>
+      <div class="principle">
+        <div class="principle-dot"></div>
+        <div>
+          <h4>Live in the Present</h4>
+          <p>"I never think of the past, good or bad. I try to live entirely for the present."</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     CASES / DOSSIER SECTION
+     ═══════════════════════════════════ -->
+<section class="cases-section" id="cases">
+  <div class="cases-container">
+    <div class="section-header reveal">
+      <span class="section-number">File 004 — The Dossier</span>
+      <h2 class="section-title">Notable <span class="accent">Cases</span></h2>
+      <div class="section-line"></div>
+      <p class="section-desc">A selection of matters that demanded the fullest application of the deductive method.</p>
+    </div>
+
+    <div class="cases-timeline">
+      <div class="case-item reveal">
+        <span class="case-year">1881</span>
+        <div class="case-info">
+          <h3>A Scandal in Bohemia</h3>
+          <span class="case-type">The Memoirs · Case I</span>
+          <p>King of Bohemia sought the recovery of a compromising photograph from the formidable Irene Adler — the only woman to outwit me.</p>
+          <span class="case-status solved">Resolved</span>
+        </div>
+      </div>
+
+      <div class="case-item reveal reveal-delay-1">
+        <span class="case-year">1882</span>
+        <div class="case-info">
+          <h3>The Speckled Band</h3>
+          <span class="case-type">The Memoirs · Case III</span>
+          <p>A strange death on the estate of Stoke Moran. A whistle in the night. A band of speckled color. The most singular case I ever handled.</p>
+          <span class="case-status solved">Resolved</span>
+        </div>
+      </div>
+
+      <div class="case-item reveal reveal-delay-2">
+        <span class="case-year">1888</span>
+        <div class="case-info">
+          <h3>The Sign of the Four</h3>
+          <span class="case-type">The Adventures · Case I</span>
+          <p>A mystery involving a treasure of Thuggee origin, a man with a wooden leg, and a young woman's desperate cry for help.</p>
+          <span class="case-status solved">Resolved</span>
+        </div>
+      </div>
+
+      <div class="case-item reveal reveal-delay-3">
+        <span class="case-year">1891</span>
+        <div class="case-info">
+          <h3>The Final Problem</h3>
+          <span class="case-type">The Adventures · Case XI</span>
+          <p>The confrontation with Professor Moriarty — Napoleon of crime. At the Reichenbach Falls, the game was afoot in its most dangerous form.</p>
+          <span class="case-status">Undisclosed</span>
+        </div>
+      </div>
+
+      <div class="case-item reveal reveal-delay-4">
+        <span class="case-year">1894</span>
+        <div class="case-info">
+          <h3>The Empty House</h3>
+          <span class="case-type">The Return · Case I</span>
+          <p>"I have never been alone," I told Watson. Three years of absence — in Afghanistan, Tibet, South America. And now, the return.</p>
+          <span class="case-status solved">Resolved</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     DEDUCTION ENGINE SECTION
+     ═══════════════════════════════════ -->
+<section class="engine-section" id="engine">
+  <div class="engine-container">
+    <div class="section-header reveal">
+      <span class="section-number">File 005 — The Engine</span>
+      <h2 class="section-title">The <span class="accent">Deduction</span> Engine</h2>
+      <div class="section-line"></div>
+      <p class="section-desc">Present your observations. I shall render my analysis.</p>
+    </div>
+
+    <div class="engine-box reveal reveal-delay-2">
+      <p class="engine-prompt">Describe a person before you. I will deduce what you cannot see.</p>
+      <div class="engine-input-area">
+        <input type="text" class="engine-input" id="engine-input" placeholder="e.g., 'A man with ink stains on his right fingers, muddy left boot, and a university ring...'">
+      </div>
+      <button class="engine-btn" id="engine-btn">Analyze</button>
+      <div class="engine-output" id="engine-output"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════ -->
+<footer class="footer">
+  <div class="footer-container">
+    <div class="footer-address">
+      <span class="street">221B Baker Street</span>
+      Marylebone, London W1U 3AB<br>
+      United Kingdom
+    </div>
+    <div class="footer-philosophy">
+      <blockquote>"The world is full of obvious things which nobody by any chance ever observes."</blockquote>
+      <cite>— Sherlock Holmes</cite>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>The Mind Palace · MMXXV</span>
+    <span class="footer-wig">🕵️</span>
+    <span>"Elementary"</span>
+  </div>
+</footer>
+
+<!-- WATSON'S NOTE -->
+<div class="watson-note" id="watson-note">Dr. Watson is taking notes...</div>
+
+<!-- ═══════════════════════════════════
+     JAVASCRIPT
+     ═══════════════════════════════════ -->
+<script>
+(function() {
+  'use strict';
+
+  // ─── LOADING SCREEN ───
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      document.getElementById('loading').classList.add('hidden');
+    }, 3000);
+  });
+
+  // ─── CUSTOM CURSOR ───
+  const dot = document.getElementById('cursor-dot');
+  const ring = document.getElementById('cursor-ring');
+  let mouseX = 0, mouseY = 0;
+  let ringX = 0, ringY = 0;
+
+  document.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    dot.style.left = mouseX - 4 + 'px';
+    dot.style.top = mouseY - 4 + 'px';
+  });
+
+  function animateRing() {
+    ringX += (mouseX - ringX) * 0.15;
+    ringY += (mouseY - ringY) * 0.15;
+    ring.style.left = ringX - 20 + 'px';
+    ring.style.top = ringY - 20 + 'px';
+    requestAnimationFrame(animateRing);
+  }
+  animateRing();
+
+  // Inspecting state
+  const inspectTargets = document.querySelectorAll('a, button, .board-note, .deduction-step, .principle, .case-item');
+  inspectTargets.forEach(el => {
+    el.addEventListener('mouseenter', () => ring.classList.add('inspecting'));
+    el.addEventListener('mouseleave', () => ring.classList.remove('inspecting'));
+  });
+
+  // ─── FOG CANVAS ───
+  const canvas = document.getElementById('fog-canvas');
+  const ctx = canvas.getContext('2d');
+  let fogParticles = [];
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  class FogParticle {
+    constructor() {
+      this.reset();
+    }
+    reset() {
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.size = Math.random() * 200 + 100;
+      this.speedX = (Math.random() - 0.5) * 0.3;
+      this.speedY = (Math.random() - 0.5) * 0.1;
+      this.opacity = Math.random() * 0.03 + 0.01;
+      this.life = Math.random() * 500 + 200;
+      this.maxLife = this.life;
+    }
+    update() {
+      this.x += this.speedX;
+      this.y += this.speedY;
+      this.life--;
+      if (this.life <= 0) this.reset();
+    }
+    draw() {
+      const fade = this.life / this.maxLife;
+      const alpha = this.opacity * fade;
+      const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
+      gradient.addColorStop(0, `rgba(180, 180, 190, ${alpha})`);
+      gradient.addColorStop(1, 'rgba(180, 180, 190, 0)');
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  for (let i = 0; i < 20; i++) {
+    fogParticles.push(new FogParticle());
+  }
+
+  function animateFog() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    fogParticles.forEach(p => {
+      p.update();
+      p.draw();
+    });
+    requestAnimationFrame(animateFog);
+  }
+  animateFog();
+
+  // ─── FLOATING PARTICLES ───
+  const particlesContainer = document.getElementById('particles');
+  for (let i = 0; i < 15; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.animationDelay = Math.random() * 8 + 's';
+    p.style.animationDuration = (Math.random() * 6 + 6) + 's';
+    p.style.width = (Math.random() * 2 + 1) + 'px';
+    p.style.height = p.style.width;
+    particlesContainer.appendChild(p);
+  }
+
+  // ─── SCROLL REVEAL ───
+  const revealElements = document.querySelectorAll('.reveal, .principle, .case-item');
+
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, {
+    threshold: 0.15,
+    rootMargin: '0px 0px -50px 0px'
+  });
+
+  revealElements.forEach(el => revealObserver.observe(el));
+
+  // ─── ACTIVE NAV TRACKING ───
+  const sections = document.querySelectorAll('section[id]');
+  const navItems = document.querySelectorAll('.nav-item');
+
+  const navObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.getAttribute('id');
+        navItems.forEach(item => {
+          item.classList.toggle('active', item.getAttribute('href') === '#' + id);
+        });
+      }
+    });
+  }, {
+    threshold: 0.3
+  });
+
+  sections.forEach(s => navObserver.observe(s));
+
+  // ─── SMOOTH SCROLL ───
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+      e.preventDefault();
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+
+  // ─── DEDUCTION ENGINE ───
+  const deductions = [
+    {
+      keywords: ['ink', 'pen', 'write', 'writing', 'fingers'],
+      response: [
+        'The ink stains upon the right hand — specifically the index and middle fingers — indicate a person who writes extensively with a fountain pen.',
+        'The position of the stains suggests a right-handed individual, and the depth of saturation implies this is a daily habit, not a recent acquisition.',
+        'Combined with the university ring, I deduce: a scholar, likely in the later stages of producing a thesis or monograph. The pressure of the deadline is evident in the hurried, uneven nature of the stains.',
+        'Conclusion: A postgraduate researcher, three to six months from completion, currently working under significant pressure.'
+      ]
+    },
+    {
+      keywords: ['mud', 'boot', 'shoe', 'feet', 'dirt'],
+      response: [
+        'The mud upon the left boot — but not the right — is most revealing. The consistency is red clay, the type found along the Thames embankment near Southwark.',
+        'The absence of corresponding marks on the right boot suggests the person stepped into a puddle or soft ground while standing still, not while walking.',
+        'The height of the splatter indicates they were leaning — perhaps examining something at ground level. A person of considerable interest to the Crown, no doubt.',
+        'Conclusion: This individual was at the Southwark embankment between 3 and 5 PM yesterday — the tide tables confirm this is when the clay is exposed. They were examining something on the ground, alone.'
+      ]
+    },
+    {
+      keywords: ['callus', 'hand', 'finger', 'writing', 'pen'],
+      response: [
+        'A callus upon the middle finger of the right hand — the precise position where a pen is gripped. But note: it is not the callus of an occasional writer.',
+        'This is the mark of thousands of hours. A musician, perhaps? No — the position is too high for a violin bow, and too precise for a conductor\'s baton.',
+        'A scrivener. A copyist. Or perhaps — and this is more interesting — someone who practices their signature. Someone who must authenticate documents.',
+        'Conclusion: A forger. The callus is too perfectly placed, the skin too uniformly hardened. This is the mark of someone who has replicated another\'s hand until their own became an instrument of deception.'
+      ]
+    },
+    {
+      keywords: ['ring', 'wedding', 'finger', 'marriage', 'married'],
+      response: [
+        'The wedding ring — but observe closely. The inner surface is pristine, while the outer shows considerable wear. This ring has been removed frequently and deliberately.',
+        'The gap of un-tanned skin beneath it is only two weeks wide. Recently removed. But the ring itself is of considerable value — a family piece, not a purchase of convenience.',
+        'The man\'s overall appearance suggests he is mourning something. Not grief — mourning is performative. This is calculation. He has removed the ring but keeps it visible on his chain.',
+        'Conclusion: He is not a widower. He is a man testing the waters — gauging how far he can step away from his obligations while maintaining the appearance of fidelity.'
+      ]
+    }
+  ];
+
+  const defaultResponse = [
+    'Interesting observations. Though somewhat sparse, they reveal more than you might think.',
+    'The very act of selecting which details to report tells me much — you notice the surface, but not the depth. Like most people, you see but do not observe.',
+    'Had you told me the angle of the shadows upon the face, the exact nature of the footwear\'s wear pattern, or the scent carried upon the coat, I could have placed this individual to within a three-block radius.',
+    'Conclusion: Your witness is competent but untrained. The observations are accurate but incomplete. Return when you have examined — truly examined — the subject.'
+  ];
+
+  const engineInput = document.getElementById('engine-input');
+  const engineBtn = document.getElementById('engine-btn');
+  const engineOutput = document.getElementById('engine-output');
+
+  engineBtn.addEventListener('click', () => {
+    const input = engineInput.value.trim().toLowerCase();
+    if (!input) return;
+
+    let response = defaultResponse;
+    for (const d of deductions) {
+      if (d.keywords.some(k => input.includes(k))) {
+        response = d.response;
+        break;
+      }
+    }
+
+    engineOutput.innerHTML = response.map(line =>
+      `<span class="deduction-line">${line}</span>`
+    ).join('');
+    engineOutput.classList.add('visible');
+
+    // Reset animations
+    engineOutput.querySelectorAll('.deduction-line').forEach((line, i) => {
+      line.style.animation = 'none';
+      line.offsetHeight; // trigger reflow
+      line.style.animation = `typeLine 0.5s ease ${0.3 + i * 0.5}s forwards`;
+      line.style.opacity = '0';
+    });
+  });
+
+  engineInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') engineBtn.click();
+  });
+
+  // ─── WATSON'S NOTE — DYNAMIC ───
+  const watsonMessages = [
+    "Dr. Watson is taking notes...",
+    "Watson: 'He solved it before breakfast.'",
+    "Watson: 'I could not follow his reasoning.'",
+    "Watson: 'It was elementary, he said.'",
+    "Watson: 'The game is afoot!'",
+    "Watson: 'He hasn't spoken in three hours.'",
+    "Watson: 'I don't think he sleeps.'",
+    "Watson: 'Another case, another impossible solution.'",
+    "Watson: 'The violin at midnight again.'",
+  ];
+
+  let watsonIndex = 0;
+  const watsonNote = document.getElementById('watson-note');
+
+  setInterval(() => {
+    watsonIndex = (watsonIndex + 1) % watsonMessages.length;
+    watsonNote.style.opacity = '0';
+    setTimeout(() => {
+      watsonNote.textContent = watsonMessages[watsonIndex];
+      watsonNote.style.opacity = '0.3';
+    }, 500);
+  }, 5000);
+
+  // ─── PARALLAX ON MIND PALACE RINGS ───
+  const palaceRings = document.querySelectorAll('.palace-ring');
+  window.addEventListener('scroll', () => {
+    const scrollY = window.scrollY;
+    palaceRings.forEach((ring, i) => {
+      const speed = 0.02 * (i + 1);
+      ring.style.transform = `translate(-50%, -50%) rotate(${scrollY * speed}deg)`;
+    });
+  });
+
+  // ─── BOARD STRING HOVER EFFECT ───
+  const boardNotes = document.querySelectorAll('.board-note');
+  const boardLines = document.querySelectorAll('.board-strings line');
+
+  boardNotes.forEach((note, i) => {
+    note.addEventListener('mouseenter', () => {
+      if (boardLines[i]) boardLines[i].classList.add('active');
+    });
+    note.addEventListener('mouseleave', () => {
+      if (boardLines[i]) boardLines[i].classList.remove('active');
+    });
+  });
+
+  // ─── EASTER EGG: KONAMI-ish CODE ───
+  let konamiBuffer = '';
+  const konamiCode = 'elementary';
+  document.addEventListener('keydown', (e) => {
+    konamiBuffer += e.key.toLowerCase();
+    if (konamiBuffer.length > konamiCode.length) {
+      konamiBuffer = konamiBuffer.slice(-konamiCode.length);
+    }
+    if (konamiBuffer === konamiCode) {
+      document.body.style.transition = 'filter 1s ease';
+      document.body.style.filter = 'sepia(0.3)';
+      setTimeout(() => {
+        document.body.style.filter = 'none';
+      }, 3000);
+      konamiBuffer = '';
+    }
+  });
+
+})();
+</script>
+</body>
+</html>
