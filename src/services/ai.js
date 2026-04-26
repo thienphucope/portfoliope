@@ -6,11 +6,11 @@ const SEA_LION_API_KEY = process.env.SEA_LION_API_KEY || '';
 const RAG_API_URL = "https://rag-backend-zh2e.onrender.com/rag";
 const SYSTEM_INSTRUCTION = process.env.SYSTEM_INSTRUCTION || " ";
 
-export async function handleAiRequest({ query, history, username }) {
+export async function handleAiRequest({ query, history, username, systemInstruction: customInstruction }) {
   if (!query) throw new Error('Missing query');
   console.log(`🤖 [AI Action] Request received. Query: "${query.slice(0, 50)}..."`);
 
-  const systemInstruction = SYSTEM_INSTRUCTION;
+  const systemInstruction = customInstruction || SYSTEM_INSTRUCTION;
 
   // 1a. Try Grok (xAI) first
   if (XAI_API_KEY) {

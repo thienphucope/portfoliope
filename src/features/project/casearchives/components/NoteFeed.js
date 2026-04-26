@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ensureLibsLoaded, postProcess } from '../utils/markdown';
+import { useAI } from '../hooks/useAI';
 
 const CaseItem = ({ caseData, onLinkClick }) => {
   const contentRef = useRef(null);
@@ -55,13 +56,30 @@ export default function NoteFeed({
   const [activeSection, setActiveSection] = useState('hero');
   const [loadedCount, setLoadedCount] = useState(0);
   const [engineInput, setEngineInput] = useState('');
-  const [engineOutput, setEngineOutput] = useState([]);
+  const [convo, setConvo] = useState([
+    { role: 'assistant', content: "Present your observations. I shall render my analysis of the matter." }
+  ]);
   
+  const { requestAI, streamResponse, isThinking, isStreaming, streamingText } = useAI();
+  const SHERLOCK_PROMPT = `You are Ope Watson, a consulting archivist with the sharp, brilliant mind of Sherlock Holmes. 
+Your task: Provide a sharp deduction based on the observations provided.
+Personality: Sharp, clinical, dramatic, but use very simple words.
+Language: ALWAYS respond in the same language the user uses. If you speak English, use the simplest vocabulary possible.
+Format: Use Markdown (bold, lists, blockquotes) to highlight key evidence and make your points stand out.
+End each response with a punchy, one-sentence conclusion. Keep it concise.`;
+
   const BATCH_SIZE = 10;
   const cursorDotRef = useRef(null);
   const cursorRingRef = useRef(null);
   const fogCanvasRef = useRef(null);
   const scrollRef = useRef(null);
+  const engineHistoryRef = useRef(null);
+
+  useEffect(() => {
+    if (engineHistoryRef.current) {
+      engineHistoryRef.current.scrollTop = engineHistoryRef.current.scrollHeight;
+    }
+  }, [convo, streamingText]);
 
   useEffect(() => { 
     setIsMounted(true);
@@ -194,44 +212,30 @@ export default function NoteFeed({
     setLoading(false);
   };
 
-  const handleAnalyze = () => {
-    if (!engineInput.trim()) return;
-    const input = engineInput.toLowerCase();
-    const deductions = [
-      {
-        keywords: ['ink', 'pen', 'write', 'writing', 'fingers'],
-        response: [
-          'The ink stains upon the right hand — specifically the index and middle fingers — indicate a person who writes extensively with a fountain pen.',
-          'The position of the stains suggests a right-handed individual, and the depth of saturation implies this is a daily habit.',
-          'Combined with the university ring, I deduce: a scholar working under significant pressure.',
-          'Conclusion: A postgraduate researcher near completion.'
-        ]
-      },
-      {
-        keywords: ['mud', 'boot', 'shoe', 'feet', 'dirt'],
-        response: [
-          'The mud upon the left boot — but not the right — is most revealing.',
-          'The consistency is red clay, found along the Thames embankment near Southwark.',
-          'The absence of corresponding marks on the right boot suggests you were leaning, examining something at ground level.',
-          'Conclusion: You were at the Southwark embankment recently, investigating something in the mud.'
-        ]
-      },
-      {
-        keywords: ['callus', 'hand', 'finger'],
-        response: [
-          'A callus upon the middle finger of the right hand — the precise position where a pen is gripped.',
-          'This is the mark of thousands of hours. Not a scholar, but a copyist.',
-          'Or perhaps someone who practices their signature. Someone who must authenticate documents.',
-          'Conclusion: A professional forger.'
-        ]
-      }
-    ];
-
-    const match = deductions.find(d => d.keywords.some(k => input.includes(k)));
-    if (match) {
-      setEngineOutput(match.response);
-    } else {
-      setEngineOutput(['Observations insufficient. Please provide more granular details of the subject.', 'Even the smallest detail can be the key to the entire mystery.']);
+  const handleAnalyze = async () => {
+    if (!engineInput.trim() || isThinking || isStreaming) return;
+    
+    const userMsg = engineInput.trim();
+    setEngineInput('');
+    
+    const currentConvo = [...convo, { role: 'user', content: userMsg }];
+    setConvo([...currentConvo, { role: 'assistant', content: '' }]);
+    
+    try {
+      const reply = await requestAI(userMsg, convo.filter(m => m.content), 'Detective', SHERLOCK_PROMPT);
+      streamResponse(reply, (fullText) => {
+        setConvo(prev => {
+          const n = [...prev];
+          n[n.length - 1] = { role: 'assistant', content: fullText };
+          return n;
+        });
+      });
+    } catch (e) {
+      setConvo(prev => {
+        const n = [...prev];
+        n[n.length - 1] = { role: 'assistant', content: "Error: The deduction was interrupted. Even my mind has its limits." };
+        return n;
+      });
     }
   };
 
@@ -393,25 +397,52 @@ const scrollToSection = (id) => {
             </div>
 
             <div className="engine-box reveal">
-              <p className="engine-prompt">Describe a person before you. I will deduce what you cannot see.</p>
-              <div className="engine-input-area">
-                <input 
-                  type="text" 
-                  className="engine-input" 
-                  placeholder="e.g., 'A man with ink stains on his right fingers...'"
-                  value={engineInput}
-                  onChange={(e) => setEngineInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAnalyze()}
-                />
+              <div className="engine-history" ref={engineHistoryRef}>
+                {convo.map((msg, i) => {
+                  const isLast = i === convo.length - 1;
+                  const content = isLast && isStreaming ? streamingText : msg.content;
+                  const html = window.marked ? window.marked.parse(content || '') : content;
+
+                  return (
+                    <div key={i} className={`engine-message ${msg.role}`}>
+                      <span className="msg-role">{msg.role === 'user' ? 'You' : 'Ope Watson'}</span>
+                      <div 
+                        className="msg-content markdown-content"
+                        dangerouslySetInnerHTML={{ __html: html }}
+                      />
+                      {isLast && isStreaming && <span className="streaming-cursor"></span>}
+                      {isLast && isThinking && <span className="thinking-dots">...</span>}
+                    </div>
+                  );
+                })}
+                
+                {!isStreaming && !isThinking && (
+                  <div className="engine-message user">
+                    <span className="msg-role">You</span>
+                    <div className="engine-input-wrapper inline">
+                      <span className="engine-prompt-symbol">&gt;</span>
+                      <textarea 
+                        className="engine-inline-input" 
+                        placeholder="Observe..."
+                        value={engineInput}
+                        onChange={(e) => setEngineInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleAnalyze();
+                          }
+                        }}
+                        rows={1}
+                        autoFocus
+                        onInput={(e) => {
+                          e.target.style.height = 'auto';
+                          e.target.style.height = e.target.scrollHeight + 'px';
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
-              <button className="engine-btn" onClick={handleAnalyze}>Analyze</button>
-              {engineOutput.length > 0 && (
-                <div className="engine-output visible">
-                  {engineOutput.map((line, idx) => (
-                    <span key={idx} className="deduction-line" style={{ animationDelay: `${idx * 0.5 + 0.3}s` }}>{line}</span>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         </section>
@@ -494,7 +525,7 @@ const scrollToSection = (id) => {
           position: fixed !important;
           inset: 0 !important;
           pointer-events: none !important;
-          z-index: 5 !important;
+          z-index: 9999999 !important;
         }
         .grain {
           position: absolute; inset: 0; z-index: 9999; opacity: 0.04;
@@ -590,41 +621,94 @@ const scrollToSection = (id) => {
         .section-desc { font-family: var(--font-body); font-size: 1.1rem; font-style: italic; color: rgba(244,232,193,0.5); text-align: center; margin-bottom: 50px; }
 
         /* Deduction Engine */
-        .engine-section { background: linear-gradient(180deg, var(--void) 0%, rgba(20,20,25,1) 50%, var(--void) 100%); }
-        .engine-container { max-width: 900px; margin: 0 auto; }
+        .engine-section { }
+        .engine-container { max-width: 1000px; margin: 0 auto; }
         .engine-box { 
-          background: rgba(15, 15, 20, 0.9); 
-          border: 1px solid rgba(212, 168, 67, 0.15); 
-          padding: 60px; 
+          background: transparent; 
+          border: none; 
+          padding: 0; 
           position: relative; 
-          text-align: center;
+          display: flex;
+          flex-direction: column;
+          gap: 0;
+          min-height: 400px;
         }
-        .engine-prompt { font-family: var(--font-body); font-size: 1.3rem; font-style: italic; color: rgba(244,232,193,0.6); margin-bottom: 40px; }
-        .engine-input {
-          width: 100%; background: transparent; border: none; border-bottom: 1px solid rgba(212, 168, 67, 0.3);
-          padding: 15px 0; font-family: var(--font-typewriter); font-size: 1.1rem; color: var(--parchment);
-          outline: none; transition: border-color 0.3s ease; text-align: center;
+
+        .engine-history {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 40px;
+          overflow-y: auto;
+          padding-right: 15px;
+          margin-bottom: 40px;
         }
-        .engine-input:focus { border-bottom-color: var(--gaslight); }
-        .engine-btn {
-          margin-top: 40px; background: transparent; border: 1px solid var(--gaslight-dim); color: var(--gaslight);
-          font-family: var(--font-typewriter); font-size: 0.8rem; letter-spacing: 4px; text-transform: uppercase;
-          padding: 16px 40px; cursor: none; transition: all 0.4s ease;
+        .engine-history::-webkit-scrollbar { width: 3px; }
+        .engine-history::-webkit-scrollbar-thumb { background: rgba(212, 168, 67, 0.1); }
+
+        .engine-message { 
+          display: block;
+          position: relative;
+          line-height: 1.8;
+          padding-left: 30px;
+          border-left: 2px solid transparent;
         }
-        .engine-btn:hover { background: rgba(212, 168, 67, 0.08); border-color: var(--gaslight); box-shadow: 0 0 20px rgba(212, 168, 67, 0.1); }
+        .engine-message.assistant { border-left-color: var(--gaslight-dim); }
+        .engine-message.user { border-left-color: rgba(244, 232, 193, 0.1); }
+
+        .msg-role { 
+          font-family: var(--font-typewriter); font-size: 0.75rem; letter-spacing: 3px; text-transform: uppercase; 
+          color: var(--gaslight-dim);
+          margin-bottom: 12px;
+          display: block;
+          opacity: 0.8;
+        }
+        .user .msg-role { color: var(--parchment-dark); }
+
+        .msg-content { 
+          font-family: var(--font-body); font-size: 1.3rem; color: var(--parchment);
+          opacity: 0.95;
+        }
+        .assistant .msg-content { 
+          color: var(--parchment);
+          font-style: italic;
+        }
+        .msg-content :global(p) { margin: 0 0 15px 0; }
+        .msg-content :global(p:last-child) { margin-bottom: 0; }
+
+        .engine-input-wrapper {
+          display: flex; align-items: flex-start; 
+          position: relative;
+          border: 1px solid var(--gaslight-dim);
+          padding: 25px 30px 25px 60px;
+          background: rgba(212, 168, 67, 0.03);
+          box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+        }
+        .engine-prompt-symbol { 
+          position: absolute;
+          left: 25px;
+          top: 25px;
+          color: var(--gaslight); font-family: var(--font-typewriter); font-size: 1.4rem;
+          opacity: 0.6;
+        }
+        .engine-inline-input {
+          flex: 1; background: transparent; border: none;
+          padding: 0; font-family: var(--font-body); font-size: 1.3rem; color: var(--parchment);
+          outline: none; opacity: 0.9;
+          line-height: 1.6;
+          overflow: hidden;
+          min-height: 1.6em;
+        }
+        .engine-inline-input::placeholder { color: rgba(244, 232, 193, 0.15); font-style: italic; }
         
-        .engine-output { 
-          margin-top: 50px; padding: 40px; background: rgba(212, 168, 67, 0.03); 
-          border-left: 2px solid var(--gaslight-dim); text-align: left; display: flex; flex-direction: column; gap: 15px;
+        .streaming-cursor {
+          display: inline-block; width: 2px; height: 1.1em; background: var(--gaslight); margin-left: 4px; vertical-align: middle; 
+          animation: blink 0.8s infinite;
         }
-        .deduction-line { 
-          font-family: var(--font-body); font-size: 1.2rem; color: var(--parchment-dark); 
-          font-style: italic; opacity: 0; animation: typeLine 0.5s ease forwards;
-        }
-        @keyframes typeLine {
-          from { opacity: 0; transform: translateX(-10px); }
-          to { opacity: 1; transform: translateX(0); }
-        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .thinking-dots { color: var(--gaslight-dim); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 
         .case-left { display: flex; flex-direction: column; gap: 12px; min-width: 180px; }
         .case-media-preview { width: 180px; }
