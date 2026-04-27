@@ -77,6 +77,7 @@ End each response with a punchy, one-sentence conclusion. Keep it concise.`;
   const fogCanvasRef = useRef(null);
   const scrollRef = useRef(null);
   const engineHistoryRef = useRef(null);
+  const scrollRestoredRef = useRef(false);
 
   useEffect(() => {
     if (engineHistoryRef.current) {
@@ -91,6 +92,7 @@ End each response with a punchy, one-sentence conclusion. Keep it concise.`;
     document.body.style.overflow = 'auto';
     document.body.style.overflowX = 'hidden';
     
+
     ensureLibsLoaded().then(() => setLibsReady(true));
 
     return () => {
@@ -142,7 +144,8 @@ End each response with a punchy, one-sentence conclusion. Keep it concise.`;
     const quoteMatch = content.match(/^>+ ([\s\S]*?)(?:\n\n|\n(?=[^>])|$)/m);
     let rawDescription = '';
     if (quoteMatch) {
-      rawDescription = quoteMatch[0]; 
+      // Remove leading '>' from all lines to treat it as normal text
+      rawDescription = quoteMatch[0].replace(/^>+\s?/gm, '').trim(); 
     } else {
       // 2. Fallback to intro text block (finding first significant text)
       let i = 0;
@@ -214,6 +217,18 @@ End each response with a punchy, one-sentence conclusion. Keep it concise.`;
         fetchBatch(0, BATCH_SIZE);
     }
   }, [allFiles, isMounted, libsReady, displayedCases.length, fetchBatch]);
+
+  useEffect(() => {
+    if (displayedCases.length > 0 && !scrollRestoredRef.current) {
+      scrollRestoredRef.current = true;
+      const savedPos = sessionStorage.getItem('notefeed_scroll_pos');
+      if (savedPos && scrollRef.current) {
+        requestAnimationFrame(() => {
+          if (scrollRef.current) scrollRef.current.scrollTop = parseInt(savedPos, 10);
+        });
+      }
+    }
+  }, [displayedCases]);
 
   const handleAnalyze = async () => {
     if (!engineInput.trim() || isThinking || isStreaming) return;
@@ -322,8 +337,13 @@ const scrollToSection = (id) => {
     // Refactored Section Tracking using Scroll Event
     const handleScroll = () => {
       if (!scrollRef.current) return;
-      const scrollPos = scrollRef.current.scrollTop + 100;
-      const sections = ['hero', 'engine', 'cases'];
+      
+      const currentScroll = scrollRef.current.scrollTop;
+      // Save position to session storage
+      sessionStorage.setItem('notefeed_scroll_pos', currentScroll.toString());
+
+      const scrollPos = currentScroll + 100;
+      const sections = ['hero', 'engine', 'cases', 'contact'];
       for (const id of sections) {
         const el = document.getElementById(id);
         if (el && scrollPos >= el.offsetTop && scrollPos < el.offsetTop + el.offsetHeight) {
@@ -358,6 +378,7 @@ const scrollToSection = (id) => {
           { id: 'hero', label: 'Entry' },
           { id: 'engine', label: 'Engine' },
           { id: 'cases', label: 'Dossier' },
+          { id: 'contact', label: 'Signal' },
         ].map(({ id, label }) => (
           <button key={id} className={`nav-item ${activeSection === id ? 'active' : ''}`} onClick={() => scrollToSection(id)}>
             <span className="nav-label">{label}</span>
@@ -382,6 +403,11 @@ const scrollToSection = (id) => {
             <button className="hero-cta" onClick={() => scrollToSection('engine')}>
               Examine the Evidence <span className="arrow">→</span>
             </button>
+            <div className="hero-links">
+              <a href="/about" className="hero-link">About</a>
+              <a href="/privacy" className="hero-link">Privacy</a>
+              <a href="/terms" className="hero-link">Terms</a>
+            </div>
             <div className="scroll-indicator">
               <span>Scroll to Observe</span>
               <div className="scroll-line"></div>
@@ -436,7 +462,6 @@ const scrollToSection = (id) => {
                           }
                         }}
                         rows={1}
-                        autoFocus
                         onInput={(e) => {
                           e.target.style.height = 'auto';
                           e.target.style.height = e.target.scrollHeight + 'px';
@@ -456,6 +481,7 @@ const scrollToSection = (id) => {
             <span className="section-number">File 002 — The Dossier</span>
             <h2 className="section-title">Notable <span className="accent">Cases</span></h2>
             <div className="section-line"></div>
+            <p className="section-desc">Transcribed records of investigative insights and documented wisdom.</p>
           </div>
 
           <div className="cases-timeline">
@@ -472,11 +498,11 @@ const scrollToSection = (id) => {
           )}
         </section>
 
-        <footer className="footer">
+        <footer className="footer" id="contact">
           <div className="footer-container reveal">
             <div className="footer-address">
               <span className="street">222B Baker Street</span>
-              Marylebone, London W1U 3AB<br />
+              London, NW1 6XE<br />
               United Kingdom
               <div className="footer-socials">
                 <a href="https://github.com/thienphucope" target="_blank" rel="noopener noreferrer"><FaGithub /></a>
@@ -488,15 +514,15 @@ const scrollToSection = (id) => {
             </div>
             
             <div className="footer-philosophy">
-              <blockquote>&ldquo;The world is full of obvious things which nobody by any chance ever observes.&rdquo;</blockquote>
-              <cite>— Sherlock&apos;s Neighbor</cite>
+              <span className="philosophy-quote">&ldquo;The world is full of obvious things which nobody by any chance ever observes.&rdquo;</span>
+              <span className="philosophy-author">— Sherlock&apos;s Neighbor</span>
             </div>
           </div>
 
           <div className="footer-bottom">
-            <span>The Mind Palace · MMXXV</span>
+            <span>The Mind Palace · MMXXVI</span>
             <span className="footer-wig">🕵️</span>
-            <span>&ldquo;Elementary&rdquo;</span>
+            <span>&ldquo;Elementary, my dear Sidekick!&rdquo;</span>
           </div>
         </footer>
       </div>
@@ -506,9 +532,8 @@ const scrollToSection = (id) => {
 
         :root {
           --void: #0a0a0c;
-          --gaslight: #d4a843;
-          --gaslight-dim: #8a6d2b;
-          --blood-ink: #8b1a1a;
+          --colorone: #ba9170;
+          --colorone-dim: #8a6b52;
           --parchment: #f4e8c1;
           --parchment-dark: #c4b48a;
           --font-display: 'Playfair Display', Georgia, serif;
@@ -541,7 +566,7 @@ const scrollToSection = (id) => {
           pointer-events: auto !important;
         }
 
-        ::selection { background: var(--gaslight); color: var(--void); }
+        ::selection { background: var(--colorone); color: var(--void); }
 
         /* Effects layer */
         .effects-layer {
@@ -557,13 +582,13 @@ const scrollToSection = (id) => {
         .fog-canvas { position: absolute; inset: 0; z-index: 1; opacity: 0.4; }
         
         .cursor-dot {
-          width: 8px; height: 8px; background: var(--gaslight); border-radius: 50%;
+          width: 8px; height: 8px; background: var(--colorone); border-radius: 50%;
           position: fixed !important; pointer-events: none !important; z-index: 1000000 !important; transform: translate(-50%, -50%);
           mix-blend-mode: difference;
           left: -10px; top: -10px;
         }
         .cursor-ring {
-          width: 40px; height: 40px; border: 1.5px solid var(--gaslight); border-radius: 50%;
+          width: 40px; height: 40px; border: 1.5px solid var(--colorone); border-radius: 50%;
           position: fixed !important; pointer-events: none !important; z-index: 999999 !important; transform: translate(-50%, -50%);
           opacity: 0.6; transition: width 0.3s, height 0.3s, background 0.3s;
           left: -100px; top: -100px;
@@ -588,18 +613,18 @@ const scrollToSection = (id) => {
           cursor: none; padding: 0;
         }
         .nav-item::before {
-          content: ''; width: 20px; height: 1px; background: var(--gaslight-dim); transition: all 0.4s ease;
+          content: ''; width: 20px; height: 1px; background: var(--colorone-dim); transition: all 0.4s ease;
         }
-        .nav-item:hover { opacity: 1; color: var(--gaslight); }
-        .nav-item:hover::before { width: 40px; background: var(--gaslight); }
-        .nav-item.active { opacity: 1; color: var(--gaslight); }
-        .nav-item.active::before { width: 40px; background: var(--gaslight); }
+        .nav-item:hover { opacity: 1; color: var(--colorone); }
+        .nav-item:hover::before { width: 40px; background: var(--colorone); }
+        .nav-item.active { opacity: 1; color: var(--colorone); }
+        .nav-item.active::before { width: 40px; background: var(--colorone); }
         .nav-label { writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); }
 
         .hero-cta {
           display: inline-flex; align-items: center; gap: 15px; margin-top: 40px;
           font-family: var(--font-typewriter); font-size: 0.75rem; letter-spacing: 4px; text-transform: uppercase;
-          color: var(--gaslight); background: transparent; border: 1px solid var(--gaslight-dim);
+          color: var(--colorone); background: transparent; border: 1px solid var(--colorone-dim);
           padding: 18px 40px; cursor: none; position: relative; overflow: hidden; transition: all 0.5s ease;
         }
         .hero-cta::before {
@@ -608,23 +633,39 @@ const scrollToSection = (id) => {
           transition: left 0.6s ease;
         }
         .hero-cta:hover::before { left: 100%; }
-        .hero-cta:hover { border-color: var(--gaslight); box-shadow: 0 0 30px rgba(212,168,67,0.1); }
+        .hero-cta:hover { border-color: var(--colorone); box-shadow: 0 0 30px rgba(212,168,67,0.1); }
         .hero-cta .arrow { transition: transform 0.3s ease; }
         .hero-cta:hover .arrow { transform: translateX(5px); }
 
-        .hero-overline { font-family: var(--font-typewriter); color: var(--gaslight-dim); letter-spacing: 8px; text-transform: uppercase; margin-bottom: 30px; }
+        .hero-overline { font-family: var(--font-typewriter); color: var(--colorone-dim); letter-spacing: 8px; text-transform: uppercase; margin-bottom: 30px; }
         .hero-title { font-family: var(--font-display); font-size: clamp(3rem, 12vw, 8rem); font-weight: 900; margin: 0; line-height: 1; }
-        .hero-title .italic { font-style: italic; font-weight: 400; color: var(--gaslight); }
+        .hero-title .italic { font-style: italic; font-weight: 400; color: var(--colorone); }
         .hero-subtitle { font-family: var(--font-display); font-style: italic; color: var(--parchment-dark); font-size: clamp(1.2rem, 4vw, 2.5rem); margin-top: 20px; }
+
+        .hero-links {
+          display: flex;
+          gap: 25px;
+          justify-content: center;
+          margin-top: 50px;
+          font-family: var(--font-typewriter);
+          font-size: 0.6rem;
+          letter-spacing: 3px;
+          text-transform: uppercase;
+          opacity: 0.3;
+          transition: opacity 0.4s ease;
+        }
+        .hero-links:hover { opacity: 0.7; }
+        .hero-link { color: var(--parchment-dark); text-decoration: none; transition: color 0.3s; cursor: none; }
+        .hero-link:hover { color: var(--colorone); }
 
         .scroll-indicator {
           margin-top: 60px; display: flex; flex-direction: column; align-items: center; gap: 14px;
           font-family: var(--font-typewriter); font-size: 0.7rem; letter-spacing: 6px; text-transform: uppercase;
-          color: var(--gaslight-dim); opacity: 0.7; animation: fadeInUp 2s ease 1s both;
+          color: var(--colorone-dim); opacity: 0.7; animation: fadeInUp 2s ease 1s both;
         }
         .scroll-line {
           width: 1px; height: 60px;
-          background: linear-gradient(to bottom, var(--gaslight-dim), transparent);
+          background: linear-gradient(to bottom, var(--colorone-dim), transparent);
           animation: scrollPulse 2s ease-in-out infinite;
         }
         @keyframes scrollPulse {
@@ -637,10 +678,10 @@ const scrollToSection = (id) => {
         }
 
         .section-header { text-align: center; margin-bottom: 100px; }
-        .section-number { font-family: var(--font-typewriter); color: var(--gaslight-dim); letter-spacing: 6px; display: block; margin-bottom: 15px; text-transform: uppercase; font-size: 0.7rem; }
+        .section-number { font-family: var(--font-typewriter); color: var(--colorone-dim); letter-spacing: 6px; display: block; margin-bottom: 15px; text-transform: uppercase; font-size: 0.7rem; }
         .section-title { font-family: var(--font-display); font-size: clamp(2.5rem, 8vw, 4.5rem); color: var(--parchment); font-weight: 700; margin: 0; }
-        .section-title .accent { color: var(--gaslight); font-style: italic; }
-        .section-line { width: 80px; height: 1px; background: var(--gaslight-dim); margin: 30px auto; }
+        .section-title .accent { color: var(--colorone); font-style: italic; }
+        .section-line { width: 80px; height: 1px; background: var(--colorone-dim); margin: 30px auto; }
         .section-desc { font-family: var(--font-body); font-size: 1.1rem; font-style: italic; color: rgba(244,232,193,0.5); text-align: center; margin-bottom: 50px; }
 
         /* Deduction Engine */
@@ -676,12 +717,12 @@ const scrollToSection = (id) => {
           padding-left: 30px;
           border-left: 2px solid transparent;
         }
-        .engine-message.assistant { border-left-color: var(--gaslight-dim); }
+        .engine-message.assistant { border-left-color: var(--colorone-dim); }
         .engine-message.user { border-left-color: rgba(244, 232, 193, 0.1); }
 
         .msg-role { 
           font-family: var(--font-typewriter); font-size: 0.75rem; letter-spacing: 3px; text-transform: uppercase; 
-          color: var(--gaslight-dim);
+          color: var(--colorone-dim);
           margin-bottom: 12px;
           display: block;
           opacity: 0.8;
@@ -702,7 +743,7 @@ const scrollToSection = (id) => {
         .engine-input-wrapper {
           display: flex; align-items: flex-start; 
           position: relative;
-          border: 1px solid var(--gaslight-dim);
+          border: 1px solid var(--colorone-dim);
           padding: 25px 30px 25px 60px;
           background: rgba(212, 168, 67, 0.03);
           box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
@@ -711,7 +752,7 @@ const scrollToSection = (id) => {
           position: absolute;
           left: 25px;
           top: 25px;
-          color: var(--gaslight); font-family: var(--font-typewriter); font-size: 1.4rem;
+          color: var(--colorone); font-family: var(--font-typewriter); font-size: 1.4rem;
           opacity: 0.6;
         }
         .engine-inline-input {
@@ -725,16 +766,16 @@ const scrollToSection = (id) => {
         .engine-inline-input::placeholder { color: rgba(244, 232, 193, 0.15); font-style: italic; }
         
         .streaming-cursor {
-          display: inline-block; width: 2px; height: 1.1em; background: var(--gaslight); margin-left: 4px; vertical-align: middle; 
+          display: inline-block; width: 2px; height: 1.1em; background: var(--colorone); margin-left: 4px; vertical-align: middle; 
           animation: blink 0.8s infinite;
         }
         @keyframes blink { 50% { opacity: 0; } }
 
-        .thinking-dots { color: var(--gaslight-dim); animation: pulse 1.5s infinite; }
+        .thinking-dots { color: var(--colorone-dim); animation: pulse 1.5s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 
-        .case-left { display: flex; flex-direction: column; gap: 12px; min-width: 180px; }
-        .case-media-preview { width: 180px; }
+        .case-left { display: flex; flex-direction: column; gap: 12px; min-width: 240px; }
+        .case-media-preview { width: 240px; }
         .case-media-preview img { width: 100%; height: auto; display: block; opacity: 0.75; filter: sepia(0.2); transition: all 0.4s; border: 1px solid rgba(212,168,67,0.15); }
         .case-item:hover .case-media-preview img { opacity: 1; filter: sepia(0); border-color: rgba(212,168,67,0.4); }
 
@@ -742,7 +783,7 @@ const scrollToSection = (id) => {
         .load-more-btn {
           display: inline-flex; align-items: center; gap: 12px;
           font-family: var(--font-typewriter); font-size: 0.75rem; letter-spacing: 4px; text-transform: uppercase;
-          color: var(--gaslight-dim); background: transparent; border: 1px solid var(--gaslight-dim);
+          color: var(--colorone-dim); background: transparent; border: 1px solid var(--colorone-dim);
           padding: 16px 36px; cursor: none; transition: all 0.4s ease; position: relative; overflow: hidden;
         }
         .load-more-btn::before {
@@ -751,7 +792,7 @@ const scrollToSection = (id) => {
           transition: left 0.5s ease;
         }
         .load-more-btn:hover::before { left: 100%; }
-        .load-more-btn:hover { color: var(--gaslight); border-color: var(--gaslight); }
+        .load-more-btn:hover { color: var(--colorone); border-color: var(--colorone); }
         .load-more-btn .arrow { transition: transform 0.3s ease; }
         .load-more-btn:hover .arrow { transform: translateX(4px); }
 
@@ -770,14 +811,14 @@ const scrollToSection = (id) => {
           top: 0; 
           width: 1px; 
           height: 100%; 
-          background: linear-gradient(to bottom, transparent, var(--gaslight-dim), transparent); 
+          background: linear-gradient(to bottom, transparent, var(--colorone-dim), transparent); 
         }
         
-        .case-item { 
-          display: flex; 
-          gap: 6.25rem; 
-          padding: 6.25rem 0; 
-          border-bottom: 1px solid rgba(212, 168, 67, 0.1); 
+        .case-item {
+          display: flex;
+          gap: 3rem;
+          padding: 6.25rem 0;
+          border-bottom: 1px solid rgba(212, 168, 67, 0.1);
           position: relative;
         }
         .case-item::after {
@@ -788,13 +829,13 @@ const scrollToSection = (id) => {
           width: 0.75rem;
           height: 0.75rem;
           background: var(--void);
-          border: 1px solid var(--gaslight);
+          border: 1px solid var(--colorone);
           transform: rotate(45deg);
         }
-        .case-year { font-family: var(--font-typewriter); color: var(--gaslight); font-size: 1.2rem; font-weight: 700; letter-spacing: 3px; }
+        .case-year { font-family: var(--font-typewriter); color: var(--colorone); font-size: 1.2rem; font-weight: 700; letter-spacing: 3px; }
         .case-info { cursor: pointer; flex: 1; }
         .case-info h3 { font-family: var(--font-display); font-size: clamp(2rem, 6vw, 4.5rem); margin: 0 0 0.75rem 0; transition: all 0.4s; line-height: 1.1; color: var(--parchment); }
-        .case-info:hover h3 { color: var(--gaslight); transform: translateX(1.25rem); }
+        .case-info:hover h3 { color: var(--colorone); transform: translateX(1.25rem); }
         
         .case-desc-compiled { 
           color: rgba(244, 232, 193, 0.85); 
@@ -807,9 +848,9 @@ const scrollToSection = (id) => {
         .case-desc-compiled blockquote { 
           margin: 0 0 1.5rem 0; 
           padding: 1rem 0 1rem 2.5rem; 
-          border-left: 4px solid var(--gaslight-dim); 
+          border-left: 4px solid var(--colorone-dim); 
           font-style: italic;
-          color: var(--gaslight);
+          color: var(--colorone);
           background: rgba(212, 168, 67, 0.04);
         }
 
@@ -820,9 +861,9 @@ const scrollToSection = (id) => {
           font-family: var(--font-typewriter); font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase;
           color: var(--parchment-dark); opacity: 0.75; display: flex; align-items: center; gap: 0.375rem;
         }
-        .meta-item strong { color: var(--gaslight-dim); font-weight: 400; }
+        .meta-item strong { color: var(--colorone-dim); font-weight: 400; }
 
-        .case-status { font-family: var(--font-typewriter); font-size: 0.9rem; color: var(--gaslight-dim); border: 1px solid var(--gaslight-dim); padding: 0.625rem 1.875rem; text-transform: uppercase; letter-spacing: 5px; transition: all 0.3s; }
+        .case-status { font-family: var(--font-typewriter); font-size: 0.9rem; color: var(--colorone-dim); border: 1px solid var(--colorone-dim); padding: 0.625rem 1.875rem; text-transform: uppercase; letter-spacing: 5px; transition: all 0.3s; }
 
         /* Animations */
         .reveal { opacity: 0; transform: translateY(3.75rem); transition: all 1.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
@@ -831,25 +872,25 @@ const scrollToSection = (id) => {
         .footer { padding: 80px 40px 40px; border-top: 1px solid rgba(212, 168, 67, 0.08); position: relative; z-index: 2; background: rgba(0,0,0,0.6); }
         .footer-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: flex-start; }
         .footer-address { font-family: var(--font-body); font-style: italic; color: rgba(244, 232, 193, 0.3); font-size: 0.95rem; line-height: 2; }
-        .footer-address .street { color: var(--gaslight-dim); font-family: var(--font-typewriter); font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; display: block; font-style: normal; }
+        .footer-address .street { color: var(--colorone-dim); font-family: var(--font-typewriter); font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; display: block; font-style: normal; }
         .footer-socials { display: flex; gap: 15px; margin-top: 15px; font-size: 1.1rem; }
         .footer-socials a { color: rgba(244, 232, 193, 0.3); transition: color 0.3s; cursor: none; }
-        .footer-socials a:hover { color: var(--gaslight); }
-        .footer-philosophy { text-align: right; max-width: 350px; }
-        .footer-philosophy blockquote { font-family: var(--font-display); font-style: italic; font-size: 0.9rem; color: rgba(244, 232, 193, 0.3); line-height: 1.7; margin: 0; }
-        .footer-philosophy cite { display: block; margin-top: 10px; font-family: var(--font-typewriter); font-size: 0.6rem; letter-spacing: 2px; text-transform: uppercase; color: var(--gaslight-dim); font-style: normal; }
+        .footer-socials a:hover { color: var(--colorone); }
+        .footer-philosophy { text-align: right; max-width: 350px; display: flex; flex-direction: column; }
+        .philosophy-quote { font-family: var(--font-display); font-style: italic; font-size: 0.9rem; color: rgba(244, 232, 193, 0.5); line-height: 1.7; font-weight: bold; }
+        .philosophy-author { display: block; margin-top: 10px; font-family: var(--font-typewriter); font-size: 0.6rem; letter-spacing: 2px; text-transform: uppercase; color: var(--colorone-dim); font-style: normal; font-weight: bold; }
         .footer-bottom { max-width: 1200px; margin: 60px auto 0; padding-top: 20px; border-top: 1px solid rgba(212, 168, 67, 0.05); display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        .footer-bottom span { font-family: var(--font-typewriter); font-size: 0.6rem; letter-spacing: 2px; color: rgba(244, 232, 193, 0.15); text-transform: uppercase; }
-        .footer-wig { font-size: 1.5rem; opacity: 0.3; }
+        .footer-bottom span { font-family: var(--font-typewriter); font-size: 0.6rem; letter-spacing: 2px; color: rgba(244, 232, 193, 0.5); text-transform: uppercase; font-weight: bold; }
+        .footer-wig { font-size: 1.5rem; opacity: 0.6; }
 
         @media (max-width: 1024px) {
           section { padding: 6rem 0.25rem; }
           .hero { height: auto; min-height: 100vh; padding: 5rem 1rem; }
-          .nav-mind-palace { top: 0; bottom: auto; right: 0; left: 0; width: 100%; flex-direction: row; background: rgba(10, 10, 12, 0.98); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(212, 168, 67, 0.3); padding: 0.5rem 0; justify-content: center; box-shadow: 0 4px 30px rgba(0,0,0,0.8); }
+          .nav-mind-palace { display: none; }
           .nav-label { writing-mode: horizontal-tb; transform: none; font-size: 0.7rem; letter-spacing: 1px; }
           .nav-item::before { display: none; }
           .nav-item { padding: 0.5rem; border: none; background: transparent; flex: 1; text-align: center; max-width: 110px; }
-          .nav-item.active { background: transparent; color: var(--gaslight); font-weight: bold; border-bottom: 2px solid var(--gaslight); }
+          .nav-item.active { background: transparent; color: var(--colorone); font-weight: bold; border-bottom: 2px solid var(--colorone); }
 
           .engine-container { max-width: 100%; margin: 0; padding: 0; }
           .engine-box { padding: 1rem; min-height: auto; border: none; background: transparent; }

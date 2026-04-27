@@ -62,7 +62,9 @@ const TitleBlock = ({ fileName, reader, onDoubleClick, isReading }) => {
             overflow: 'visible',
             textAlign: 'center',
             padding: '2rem 0',
-            margin: '0'
+            margin: '0',
+            fontFamily: 'var(--font-display)',
+            fontWeight: '900'
           }}
         >
           {displayTitle}

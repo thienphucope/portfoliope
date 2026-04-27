@@ -26,7 +26,8 @@ export default function PDFStyles() {
         .pdf-body,
         .pdf-viewer-overlay,
         .pdf-empty-container {
-          background: var(--colortab) !important;
+          background: #0a0a0c !important;
+          border: 1px solid rgba(255, 250, 205, 0.05);
         }
 
         /* Overlay Mode for PDF */

@@ -179,7 +179,7 @@ export default function TabPanelStyles() {
         .pc-layout .main-note-area {
           height: 100%;
           overflow: hidden;
-          background: var(--colortab);
+          background: #0a0a0c;
           position: relative;
         }
 
@@ -188,21 +188,21 @@ export default function TabPanelStyles() {
           display: flex;
           flex-direction: column;
           overflow: hidden;
-          background: var(--colortab);
+          background: #0a0a0c;
         }
 
         .pc-layout .mini-graph-container {
           flex: 1;
           min-height: 40%;
           border-bottom: 2px solid var(--colorborder);
-          background: var(--colortab);
+          background: #0a0a0c;
         }
 
         .pc-layout .horizontal-tabs-container {
           flex: 1;
           min-height: 0; /* Critical for flex scrolling */
           overflow-y: auto !important;
-          background: var(--colortab);
+          background: #0a0a0c;
           display: flex;
           flex-direction: column;
           scrollbar-width: none !important; /* Hide for Firefox */
@@ -336,10 +336,10 @@ export default function TabPanelStyles() {
           position: relative;
           display: flex;
           flex-direction: column;
-          background-color: var(--colortab);
+          background-color: #0a0a0c;
         }
 
-        .main-content { flex:1; overflow-y:auto; display:flex; justify-content:center; padding:10px 15px; background:var(--colortab); }
+        .main-content { flex:1; overflow-y:auto; display:flex; justify-content:center; padding:10px 15px; background:#0a0a0c; }
         .main-content::-webkit-scrollbar-thumb {
           background-color: rgba(255, 255, 255, 0.2);
         }

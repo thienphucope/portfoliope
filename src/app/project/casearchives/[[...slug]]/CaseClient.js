@@ -39,7 +39,7 @@ const GraphWindowWrapper = ({
   winId, title, isMaximized, isHidden, toggleMaximize, closeWindow,
   winContent, isLiveCallActive, chatRef, pdfState, pdfRef,
   allFiles, fileRegistry, loadFile, graphFiles, fullContentCache, setZoomToNodeId,
-  isPinned, onTogglePin
+  isPinned, onTogglePin, onBarClick
 }) => {
   const { nodes: graphNodes } = useGraphData({ allFiles: graphFiles, fullContentCache });
   
@@ -74,6 +74,7 @@ const GraphWindowWrapper = ({
       onTogglePin={onTogglePin}
       allFiles={winId === 'graph' ? graphNodes : (winId === 'editor' ? allFiles : [])}
       onSelectFile={handleSelect}
+      onBarClick={onBarClick}
     >
       {winContent}
     </WindowFrame>
@@ -181,7 +182,7 @@ export default function CaseClient({ serverHydratedData = null }) {
   }, [openWindows]);
 
   const closeEditorWindow = useCallback(() => {
-    setOpenWindows(prev => prev.filter(w => w !== 'editor'));
+    setOpenWindows([]);
     setMaximizedWindow(null);
     setActiveTab(null);
     window.history.replaceState({}, '', '/project/casearchives');
@@ -387,11 +388,77 @@ export default function CaseClient({ serverHydratedData = null }) {
 
   const resizer = useWindowResizer();
 
-  const visibleSecondary = useMemo(() =>
-    ['chat', 'pdf', 'graph'].filter(id => openWindows.includes(id) && maximizedWindow !== id),
+  const visibleLeft = useMemo(() =>
+    ['graph', 'pdf'].filter(id => openWindows.includes(id) && maximizedWindow !== id),
     [openWindows, maximizedWindow]
   );
+  
+  const visibleRight = useMemo(() =>
+    ['chat'].filter(id => openWindows.includes(id) && maximizedWindow !== id),
+    [openWindows, maximizedWindow]
+  );
+
   const hasEditor = openWindows.includes('editor') && maximizedWindow !== 'editor';
+
+  const [focusedWindow, setFocusedWindow] = useState(null);
+
+  const renderSecondaryWindow = (winId, isMax = false) => {
+    let title = ''; let winContent = null;
+
+    if (winId === 'chat') {
+      title = 'AI Chat Vault';
+      winContent = <div className="chat-container"><Chat ref={chatRef} isEmbedded={true} onLinkClick={handleLinkClick} onLiveCallChange={setIsLiveCallActive} /></div>;
+    } else if (winId === 'pdf') {
+      title = 'PDF Reader';
+      winContent = <div className="pdf-container"><PDFViewer ref={pdfRef} onClose={() => closeWindow('pdf')} reader={augmentedReader} isOpen={true} onStateChange={handlePdfStateChange} initialFile={lastPdfStateRef.current.file} initialPage={lastPdfStateRef.current.pageNumber} initialFitMode={lastPdfStateRef.current.fitMode} /></div>;
+    }
+    else if (winId === 'graph') {
+      const activeFile = graphFiles.find(f => f.id === activeTab);
+      let displayTag = 'Graph View';
+      if (activeFile && activeFile.fetchedContent) {
+        const tagMatch = activeFile.fetchedContent.match(/tag:\s*#?([^\n\r,]+)/i);
+        if (tagMatch && tagMatch[1]) {
+          displayTag = `#${tagMatch[1].trim()}`;
+        }
+      }
+      title = displayTag;
+      winContent = <GraphView
+        allFiles={graphFiles}
+        onSelectFile={(path, name, id) => {
+          const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md'];
+          if (githubUrl) loadFile(githubUrl, name, id, 'push', true);
+        }}
+        activeNodeId={activeTab}
+        zoomToNodeId={zoomToNodeId}
+        onZoomComplete={() => setZoomToNodeId(null)}
+      />;
+    }
+    
+    return (
+      <GraphWindowWrapper
+        winId={winId}
+        title={title}
+        isMaximized={isMax}
+        isHidden={false}
+        toggleMaximize={toggleMaximize}
+        closeWindow={closeWindow}
+        winContent={winContent}
+        isLiveCallActive={isLiveCallActive}
+        chatRef={chatRef}
+        pdfState={pdfState}
+        pdfRef={pdfRef}
+        allFiles={allFiles}
+        fileRegistry={fileRegistry}
+        loadFile={loadFile}
+        graphFiles={graphFiles}
+        fullContentCache={fullContentCache}
+        setZoomToNodeId={setZoomToNodeId}
+        isPinned={pinnedWindows.includes(winId)}
+        onTogglePin={togglePin}
+        onBarClick={winId === 'chat' ? () => setFocusedWindow('chat') : (winId === 'graph' || winId === 'pdf' ? () => setFocusedWindow(null) : null)}
+      />
+    );
+  };
 
   return (
     <div className={['accordion-app', !isMobile ? 'pc-layout' : '', activeTab || activeOverlay ? 'has-active' : '', activeOverlay === 'chat' ? 'chat-active' : '', activeOverlay === 'pdf' ? 'pdf-active' : '', activeOverlay === 'graph' ? 'graph-active' : '', !isMobile && openWindows.length === 0 ? 'feed-active' : ''].join(' ')} ref={appShellRef}>
@@ -407,7 +474,7 @@ export default function CaseClient({ serverHydratedData = null }) {
               if (!result) return;
               if (result === 'editor') {
                 if (openWindows.includes('editor')) {
-                  window.history.back();
+                  closeEditorWindow();
                 } else {
                   const rawDefault = process.env.NEXT_PUBLIC_DEFAULT_VAULT_FILE || '';
                   const cleanDefault = rawDefault.replace(/\.md$/, '').toLowerCase();
@@ -439,9 +506,23 @@ export default function CaseClient({ serverHydratedData = null }) {
           )}
 
           {openWindows.length > 0 && (
-            <div className={`windows-container ${maximizedWindow ? 'has-maximized' : ''} ${openWindows.includes('editor') ? 'has-editor' : ''} ${openWindows.length > (openWindows.includes('editor') ? 1 : 0) ? 'has-others' : ''} ${resizer.isDragging ? 'dragging' : ''}`} style={{ width: '100vw', height: '100vh', margin: 0 }}>
+            <div className={`windows-container ${maximizedWindow ? 'has-maximized' : ''} ${openWindows.includes('editor') ? 'has-editor' : ''} ${openWindows.length > (openWindows.includes('editor') ? 1 : 0) ? 'has-others' : ''} ${resizer.isDragging ? 'dragging' : ''}`} style={{ width: '100vw', height: '100vh', margin: 0, display: 'flex', flexDirection: 'row' }}>
               
-              {/* EDITOR WINDOW */}
+              {/* LEFT COLUMN: GRAPH & PDF */}
+              {visibleLeft.length > 0 && !maximizedWindow && (
+                <div 
+                  className="secondary-windows-left" 
+                  style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}
+                >
+                  {visibleLeft.map((winId) => (
+                    <div key={winId} className="window-frame-wrapper" style={{ flex: 1, height: '100%' }}>
+                      {renderSecondaryWindow(winId)}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* EDITOR WINDOW (CENTER) */}
               {everOpened.filter(winId => winId === 'editor').map((winId) => {
                 const isMax = maximizedWindow === winId;
                 const isOpen = openWindows.includes(winId);
@@ -449,9 +530,15 @@ export default function CaseClient({ serverHydratedData = null }) {
                 if (isHidden && !isMax) return null;
                 
                 const tabTitle = tabs.find(t => t.id === activeTab)?.title || 'Note';
+                const flexValue = focusedWindow === 'editor' ? 2 : 1;
                 
                 return (
-                  <div key={winId} className="window-frame-wrapper" style={isMax ? {} : { flex: hasEditor && visibleSecondary.length > 0 ? resizer.editorWidth : 1 }}>
+                  <div 
+                    key={winId} 
+                    className="window-frame-wrapper" 
+                    style={isMax ? {} : { flex: flexValue, height: '100%', transition: 'flex 0.4s ease' }}
+                    onClick={() => setFocusedWindow('editor')}
+                  >
                     <WindowFrame
                       id={winId}
                       title={`Case Archives - ${tabTitle}`}
@@ -482,158 +569,24 @@ export default function CaseClient({ serverHydratedData = null }) {
                 );
               })}
 
-              {/* MAIN VERTICAL RESIZER */}
-              {hasEditor && visibleSecondary.length > 0 && (
+              {/* RIGHT COLUMN: CHAT */}
+              {visibleRight.length > 0 && !maximizedWindow && (
                 <div 
-                  className={`resizer-v ${resizer.isDragging === 'main' ? 'active' : ''}`}
-                  onMouseDown={(e) => resizer.onMouseDown(e, 'main')}
+                  className="secondary-windows-right" 
+                  style={{ flex: focusedWindow === 'chat' ? 2 : 1, display: 'flex', flexDirection: 'column', height: '100%', transition: 'flex 0.4s ease' }}
                 >
-                  {/* JUNCTION POINTS */}
-                  {visibleSecondary.length > 1 && visibleSecondary.map((winId, idx) => {
-                    if (idx === visibleSecondary.length - 1) return null;
-                    const nextId = visibleSecondary[idx + 1];
-                    
-                    // Approximate junction position based on weights
-                    const totalWeight = visibleSecondary.reduce((acc, id) => acc + resizer.secondaryWeights[id], 0);
-                    const weightsBefore = visibleSecondary.slice(0, idx + 1).reduce((acc, id) => acc + resizer.secondaryWeights[id], 0);
-                    const topPercent = (weightsBefore / totalWeight) * 100;
-                    
-                    return (
-                      <div 
-                        key={`junction-${winId}-${nextId}`}
-                        className={`resizer-junction ${resizer.isDragging === `junction-${winId}-${nextId}` ? 'active' : ''}`}
-                        style={{ top: `${topPercent}%`, left: '50%' }}
-                        onMouseDown={(e) => {
-                          e.stopPropagation();
-                          resizer.onMouseDown(e, `junction-${winId}-${nextId}`);
-                        }}
-                      />
-                    );
-                  })}
+                  {visibleRight.map((winId) => (
+                    <div key={winId} className="window-frame-wrapper" style={{ flex: 1, height: '100%' }}>
+                      {renderSecondaryWindow(winId)}
+                    </div>
+                  ))}
                 </div>
               )}
 
-              {/* SECONDARY WINDOWS COLUMN */}
-              {visibleSecondary.length > 0 && !maximizedWindow && (
-                <div className="secondary-windows" style={{ flex: hasEditor ? (100 - resizer.editorWidth) : 1 }}>
-                  {visibleSecondary.map((winId, idx) => {
-                    let title = ''; let winContent = null;
-
-                    if (winId === 'chat') {
-                      title = 'AI Chat Vault';
-                      winContent = <div className="chat-container"><Chat ref={chatRef} isEmbedded={true} onLinkClick={handleLinkClick} onLiveCallChange={setIsLiveCallActive} /></div>;
-                    } else if (winId === 'pdf') {
-                      title = 'PDF Reader';
-                      winContent = <div className="pdf-container"><PDFViewer ref={pdfRef} onClose={() => closeWindow('pdf')} reader={augmentedReader} isOpen={true} onStateChange={handlePdfStateChange} initialFile={lastPdfStateRef.current.file} initialPage={lastPdfStateRef.current.pageNumber} initialFitMode={lastPdfStateRef.current.fitMode} /></div>;
-                    }
-                    else if (winId === 'graph') {
-                      const activeFile = graphFiles.find(f => f.id === activeTab);
-                      let displayTag = 'Graph View';
-                      if (activeFile && activeFile.fetchedContent) {
-                        const tagMatch = activeFile.fetchedContent.match(/tag:\s*#?([^\n\r,]+)/i);
-                        if (tagMatch && tagMatch[1]) {
-                          displayTag = `#${tagMatch[1].trim()}`;
-                        }
-                      }
-                      title = displayTag;
-                      winContent = <GraphView
-                        allFiles={graphFiles}
-                        onSelectFile={(path, name, id) => {
-                          const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md'];
-                          if (githubUrl) loadFile(githubUrl, name, id, 'push', true);
-                        }}
-                        activeNodeId={activeTab}
-                        zoomToNodeId={zoomToNodeId}
-                        onZoomComplete={() => setZoomToNodeId(null)}
-                      />;
-                    }
-                    
-                    return (
-                      <React.Fragment key={winId}>
-                        <div className="window-frame-wrapper" style={{ flex: resizer.secondaryWeights[winId] }}>
-                          <GraphWindowWrapper
-                            winId={winId}
-                            title={title}
-                            isMaximized={false}
-                            isHidden={false}
-                            toggleMaximize={toggleMaximize}
-                            closeWindow={closeWindow}
-                            winContent={winContent}
-                            isLiveCallActive={isLiveCallActive}
-                            chatRef={chatRef}
-                            pdfState={pdfState}
-                            pdfRef={pdfRef}
-                            allFiles={allFiles}
-                            fileRegistry={fileRegistry}
-                            loadFile={loadFile}
-                            graphFiles={graphFiles}
-                            fullContentCache={fullContentCache}
-                            setZoomToNodeId={setZoomToNodeId}
-                            isPinned={pinnedWindows.includes(winId)}
-                            onTogglePin={togglePin}
-                          />
-                        </div>
-                        
-                        {/* HORIZONTAL RESIZER */}
-                        {idx < visibleSecondary.length - 1 && (
-                          <div 
-                            className={`resizer-h ${resizer.isDragging === `${winId}-${visibleSecondary[idx+1]}` ? 'active' : ''}`}
-                            onMouseDown={(e) => resizer.onMouseDown(e, `${winId}-${visibleSecondary[idx+1]}`)}
-                          />
-                        )}
-                      </React.Fragment>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Handle Maximized Secondary Window */}
+              {/* MAXIMIZED VIEW (COVERS ALL) */}
               {maximizedWindow && maximizedWindow !== 'editor' && (
-                <div className="secondary-windows has-maximized">
-                  {(() => {
-                      const winId = maximizedWindow;
-                      let title = ''; let winContent = null;
-                      if (winId === 'chat') {
-                        title = 'AI Chat Vault';
-                        winContent = <div className="chat-container"><Chat ref={chatRef} isEmbedded={true} onLinkClick={handleLinkClick} onLiveCallChange={setIsLiveCallActive} /></div>;
-                      } else if (winId === 'pdf') {
-                        title = 'PDF Reader';
-                        winContent = <div className="pdf-container"><PDFViewer ref={pdfRef} onClose={() => closeWindow('pdf')} reader={augmentedReader} isOpen={true} onStateChange={handlePdfStateChange} initialFile={lastPdfStateRef.current.file} initialPage={lastPdfStateRef.current.pageNumber} initialFitMode={lastPdfStateRef.current.fitMode} /></div>;
-                      } else if (winId === 'graph') {
-                        const activeFile = graphFiles.find(f => f.id === activeTab);
-                        let displayTag = 'Graph View';
-                        if (activeFile && activeFile.fetchedContent) {
-                          const tagMatch = activeFile.fetchedContent.match(/tag:\s*#?([^\n\r,]+)/i);
-                          if (tagMatch && tagMatch[1]) displayTag = `#${tagMatch[1].trim()}`;
-                        }
-                        title = displayTag;
-                        winContent = <GraphView allFiles={graphFiles} onSelectFile={(path, name, id) => { const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md']; if (githubUrl) loadFile(githubUrl, name, id, 'push', true); }} activeNodeId={activeTab} zoomToNodeId={zoomToNodeId} onZoomComplete={() => setZoomToNodeId(null)} />;
-                      }
-
-                      return (
-                        <GraphWindowWrapper
-                          winId={winId}
-                          title={title}
-                          isMaximized={true}
-                          isHidden={false}
-                          toggleMaximize={toggleMaximize}
-                          closeWindow={closeWindow}
-                          winContent={winContent}
-                          isLiveCallActive={isLiveCallActive}
-                          chatRef={chatRef}
-                          pdfState={pdfState}
-                          pdfRef={pdfRef}
-                          allFiles={allFiles}
-                          fileRegistry={fileRegistry}
-                          loadFile={loadFile}
-                          graphFiles={graphFiles}
-                          fullContentCache={fullContentCache}
-                          setZoomToNodeId={setZoomToNodeId}
-                          isPinned={pinnedWindows.includes(winId)}
-                          onTogglePin={togglePin}
-                        />
-                      );
-                  })()}
+                <div className="maximized-window-container" style={{ position: 'fixed', inset: 0, zIndex: 100 }}>
+                  {renderSecondaryWindow(maximizedWindow, true)}
                 </div>
               )}
             </div>
@@ -660,41 +613,6 @@ export default function CaseClient({ serverHydratedData = null }) {
             </>
           )}
         </>
-      )}
-
-      {!isMobile && (
-        <a
-          href="https://mail.google.com/mail/?view=cm&fs=1&to=thienphucmain1052004@gmail.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{            position: 'fixed',
-            right: '20px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            zIndex: 1000,
-            color: 'var(--colorbutton, #FFFACD)',
-            textDecoration: 'none',
-            fontSize: '14px',
-            fontStyle: 'italic',
-            fontWeight: '500',
-            padding: '8px 12px',
-            background: 'transparent',
-            transition: 'all 0.3s ease',
-            cursor: 'pointer'
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.color = '#000';
-            e.target.style.background = 'var(--colorbutton, #FFFACD)';
-            e.target.style.borderRadius = '16px';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.color = 'var(--colorbutton, #FFFACD)';
-            e.target.style.background = 'transparent';
-            e.target.style.borderRadius = '0px';
-          }}
-        >
-          wanna discuss?
-        </a>
       )}
 
       {(pendingReadConfirm || reader.isPlaying) && (

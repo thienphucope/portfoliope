@@ -33,6 +33,7 @@ export default function WindowFrame({
   isHidden = false,
   isPinned = false,
   onTogglePin,
+  onBarClick,
 }) {
   const [localPageInput, setLocalPageInput] = React.useState('');
   const [isSearchOpen, setIsSearchOpen] = React.useState(false);
@@ -88,11 +89,18 @@ export default function WindowFrame({
 
   return (
     <div className={`window-frame ${isMaximized ? 'maximized' : ''} ${isHidden ? 'hidden-window' : ''}`} data-id={id}>
-      <div className="window-title-bar">
+      {/* Grain effect overlay */}
+      <div className="window-grain"></div>
+      
+      <div className="window-content">
+        {children}
+      </div>
+
+      <div className="window-title-bar" onClick={onBarClick}>
         {/* Render Title Bar based on window type */}
         {(id === 'editor' || id === 'graph') ? (
           <>
-            {/* Left: Fixed Prefix */}
+            {/* Fixed Prefix - Now at top in vertical mode */}
             <div className="window-title-prefix">{prefix || (id === 'graph' ? 'Graph' : '')}</div>
 
             {/* Center: Interactive Subject Box */}
@@ -143,14 +151,14 @@ export default function WindowFrame({
                     setSearchTerm('');
                   }}
                 >
-                  <span className="window-title-text">{subject}</span>
                   <Search size={12} color="var(--colorbutton)" className="title-search-hint" />
+                  <span className="window-title-text">{subject}</span>
                 </div>
               )}
             </div>
           </>
         ) : (
-          /* For PDF and Chat: Just show the full title on the left as a fixed label */
+          /* For PDF and Chat: Just show the full title as a fixed label */
           <div className="window-title-fixed">{title}</div>
         )}
 
@@ -184,7 +192,6 @@ export default function WindowFrame({
                     }
                   }}
                 />
-                <span>/ {pdfState.numPages || 0}</span>
               </div>
               <button className="window-control-btn" onClick={onPdfNext} disabled={pdfState.pageNumber >= pdfState.numPages}>
                 <ChevronRight size={16} />
@@ -242,15 +249,6 @@ export default function WindowFrame({
               <Zap size={16} fill={isLiveCallActive ? "#ff4d4d" : "currentColor"} color={isLiveCallActive ? "#ff4d4d" : "currentColor"} className={isLiveCallActive ? 'animate-pulse' : ''} />
             </button>
           )}
-          {onTogglePin && (
-            <button
-              className={`window-control-btn pin-btn ${isPinned ? 'pinned' : ''}`}
-              onClick={() => onTogglePin(id)}
-              title={isPinned ? "Unpin window" : "Pin window"}
-            >
-              {isPinned ? <Pin size={15} fill="currentColor" /> : <PinOff size={15} />}
-            </button>
-          )}
           <button
             className="window-control-btn"
             onClick={() => onToggleMaximize(id)}
@@ -258,31 +256,32 @@ export default function WindowFrame({
           >
             {isMaximized ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
           </button>
-          <button 
-            className="window-control-btn close-btn" 
-            onClick={() => onClose(id)}
-            title="Close Window"
-          >
-            <X size={18} />
-          </button>
         </div>
-      </div>
-      <div className="window-content">
-        {children}
       </div>
 
       <style jsx>{`
         .window-frame {
           display: flex;
-          flex-direction: column;
-          background: var(--colortab);
-          border: 2px solid var(--colorborder);
+          flex-direction: row;
+          background: #0a0a0c;
+          border: none;
           border-radius: 0;
           overflow: hidden;
           height: 100%;
           width: 100%;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+          position: relative;
+          container-type: inline-size;
+        }
+
+        .window-grain {
+          position: absolute;
+          inset: 0;
+          z-index: 9999;
+          opacity: 0.04;
+          pointer-events: none;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
         }
 
         .window-frame.hidden-window {
@@ -302,61 +301,74 @@ export default function WindowFrame({
 
         .window-title-bar {
           position: relative;
-          height: 38px;
-          padding: 0 12px;
+          width: 38px;
+          height: 100%;
+          padding: 12px 0;
           background: rgba(255, 250, 205, 0.08);
           display: flex;
+          flex-direction: column;
           align-items: center;
           justify-content: space-between;
-          border-bottom: 2px solid var(--colorborder);
+          border-left: none;
           user-select: none;
+          flex-shrink: 0;
         }
 
         .window-title-prefix {
           font-family: 'Prata', serif;
-          font-size: 0.8rem;
+          font-size: 0.85rem;
+          font-weight: 700;
           color: var(--colorbutton);
           opacity: 1;
           white-space: nowrap;
-          flex-shrink: 0;
-          min-width: 100px;
           z-index: 1;
+          writing-mode: vertical-rl;
+          transform: rotate(180deg);
+          margin-top: 15px;
+          letter-spacing: 1px;
         }
 
         .window-title-fixed {
           font-family: 'Prata', serif;
-          font-size: 0.85rem;
+          font-size: 0.95rem;
+          font-weight: 700;
           color: var(--colorbutton);
           opacity: 1;
           white-space: nowrap;
-          flex-shrink: 0;
           z-index: 1;
+          writing-mode: vertical-rl;
+          transform: rotate(180deg);
+          margin-bottom: auto;
+          margin-top: 10px;
+          letter-spacing: 1px;
         }
 
         .window-title-content {
           flex: 1;
           display: flex;
-          justify-content: center;
+          flex-direction: column;
+          justify-content: flex-start;
           align-items: center;
-          height: 100%;
-          margin: 0 15px;
+          width: 100%;
+          margin: 15px 0;
           z-index: 10;
-          min-width: 0;
+          min-height: 0;
         }
 
         .window-title-box {
           display: flex;
+          flex-direction: column;
           align-items: center;
-          justify-content: center;
-          gap: 8px;
-          padding: 2px 12px;
-          background: rgba(255, 255, 255, 0.06);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          border-radius: 0;
+          justify-content: flex-start;
+          gap: 12px;
+          padding: 12px 2px;
+          background: rgba(255, 250, 205, 0.12);
+          border: 1px solid rgba(255, 250, 205, 0.2);
+          border-radius: 20px;
           transition: all 0.2s;
-          width: 100%;
-          max-width: 600px;
-          height: 28px;
+          width: 28px;
+          height: auto;
+          max-height: 100%;
         }
 
         .window-title-box.clickable {
@@ -364,8 +376,8 @@ export default function WindowFrame({
         }
 
         .window-title-box.clickable:hover {
-          background: rgba(255, 255, 255, 0.12);
-          border-color: rgba(255, 250, 205, 0.5);
+          background: rgba(255, 250, 205, 0.2);
+          border-color: rgba(255, 250, 205, 0.4);
         }
 
         .window-title-text {
@@ -373,6 +385,8 @@ export default function WindowFrame({
           font-size: 0.85rem;
           color: var(--colorbutton);
           opacity: 1;
+          writing-mode: vertical-rl;
+          transform: rotate(180deg) translateZ(0);
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -384,16 +398,20 @@ export default function WindowFrame({
         }
 
         .window-search-active {
-          width: 100%;
-          position: relative;
+          position: absolute;
+          right: 42px;
+          top: 0;
+          width: calc(100cqw - 60px);
           display: flex;
           align-items: center;
           gap: 8px;
-          background: var(--colortab);
-          border: 1px solid rgba(255, 250, 205, 0.6);
-          border-radius: 0;
-          padding: 2px 10px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+          background: rgba(15, 15, 15, 0.98);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 250, 205, 0.5);
+          border-radius: 20px;
+          padding: 6px 14px;
+          box-shadow: -4px 4px 20px rgba(0,0,0,0.6);
+          z-index: 100;
         }
 
         .search-icon-inside {
@@ -420,10 +438,10 @@ export default function WindowFrame({
         .search-results-dropdown {
           position: absolute;
           top: calc(100% + 5px);
-          left: -1px;
-          right: -1px;
-          background: var(--colortab);
-          border: 2px solid var(--colorborder);
+          left: 0;
+          right: 0;
+          background: #0a0a0c;
+          border: 1px solid rgba(255, 250, 205, 0.3);
           border-radius: 8px;
           z-index: 2000;
           box-shadow: 0 10px 30px rgba(0,0,0,0.6);
@@ -432,10 +450,11 @@ export default function WindowFrame({
 
         .window-controls {
           display: flex;
-          gap: 6px;
+          flex-direction: column;
+          gap: 8px;
           align-items: center;
           flex-shrink: 0;
-          margin-left: auto;
+          margin-top: auto;
           z-index: 1;
         }
 
@@ -449,7 +468,7 @@ export default function WindowFrame({
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 4px;
+          padding: 6px;
           border-radius: 4px;
         }
 
@@ -464,6 +483,7 @@ export default function WindowFrame({
 
         .pdf-page-indicator {
           display: flex;
+          flex-direction: column;
           align-items: center;
           gap: 4px;
           font-size: 11px;
@@ -476,7 +496,7 @@ export default function WindowFrame({
           background: rgba(255, 255, 255, 0.08);
           border: 1px solid rgba(255, 255, 255, 0.2);
           color: inherit;
-          width: 24px;
+          width: 28px;
           text-align: center;
           font-size: 11px;
           border-radius: 2px;
@@ -489,10 +509,10 @@ export default function WindowFrame({
         }
 
         .control-separator {
-          width: 2px;
-          height: 18px;
+          width: 18px;
+          height: 2px;
           background: var(--colorborder);
-          margin: 0 4px;
+          margin: 4px 0;
         }
 
         .window-control-btn.close-btn:hover {
