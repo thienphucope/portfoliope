@@ -57,7 +57,13 @@ export default function NoteFeed({
   const [isMounted, setIsMounted] = useState(false);
   const [libsReady, setLibsReady] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
-  const [loadedCount, setLoadedCount] = useState(0);
+  const [loadedCount, setLoadedCount] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('notefeed_loaded_count');
+      return saved ? parseInt(saved, 10) : 0;
+    }
+    return 0;
+  });
   const [engineInput, setEngineInput] = useState('');
   const [convo, setConvo] = useState([
     { role: 'assistant', content: "Present your observations. I shall render my analysis of the matter." }
@@ -153,14 +159,27 @@ End each response with a punchy, one-sentence conclusion.`;
     // Advanced Description Filtering (Logic from NoteGallery.js)
     const isSkippedLine = t =>
         !t || t.startsWith('#') || t.startsWith('>') || t.startsWith('![') ||
-        t.startsWith('|') || /(?:youtube\.com|youtu\.be)/.test(t) || /^[*_].+:[*_]?/.test(t);
+        t.startsWith('|') || /(?:youtube\.com|youtu\.be)/.test(t) || 
+        /^([A-Za-z0-9\s_-]+):(\s|$)/.test(t) || // Improved metadata detection (Key: Value)
+        (t.toLowerCase() === displayTitle.toLowerCase()); // Skip if line is just the title
+
+    // Helper to deduplicate lines and join them
+    const cleanJoin = (linesArr) => {
+      const unique = [];
+      linesArr.forEach(l => {
+        const cleaned = l.trim();
+        if (cleaned && !unique.includes(cleaned)) unique.push(cleaned);
+      });
+      return unique.join('\n\n');
+    };
 
     // 1. Try Quote first
     const quoteMatch = content.match(/^>+ ([\s\S]*?)(?:\n\n|\n(?=[^>])|$)/m);
     let rawDescription = '';
     if (quoteMatch) {
-      // Remove leading '>' from all lines to treat it as normal text
-      rawDescription = quoteMatch[0].replace(/^>+\s?/gm, '').trim(); 
+      // Remove leading '>' and deduplicate lines
+      const quoteLines = quoteMatch[0].replace(/^>+\s?/gm, '').split('\n');
+      rawDescription = cleanJoin(quoteLines);
     } else {
       // 2. Fallback to intro text block (finding first significant text)
       let i = 0;
@@ -175,7 +194,7 @@ End each response with a punchy, one-sentence conclusion.`;
           if (blockLines.length >= 3) break;
         }
         if (blockLines.length > 0) {
-          rawDescription = blockLines.join('\n\n');
+          rawDescription = cleanJoin(blockLines);
           break;
         }
         i++;
@@ -224,14 +243,18 @@ End each response with a punchy, one-sentence conclusion.`;
     
     setDisplayedCases(prev => [...prev, ...results.filter(Boolean)]);
     setLoadedCount(end);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('notefeed_loaded_count', end.toString());
+    }
     setLoading(false);
   }, [allFiles, fileRegistry, fullContentCache, loading, upsertCacheEntry, parseNote]);
 
   useEffect(() => {
     if (isMounted && libsReady && allFiles.length > 0 && displayedCases.length === 0) {
-        fetchBatch(0, BATCH_SIZE);
+        const initialEnd = loadedCount > 0 ? loadedCount : BATCH_SIZE;
+        fetchBatch(0, initialEnd);
     }
-  }, [allFiles, isMounted, libsReady, displayedCases.length, fetchBatch]);
+  }, [allFiles, isMounted, libsReady, displayedCases.length, fetchBatch, loadedCount]);
 
   useEffect(() => {
     if (displayedCases.length > 0 && !scrollRestoredRef.current) {
@@ -415,9 +438,23 @@ const scrollToSection = (id) => {
             <div className="hero-overline">Consulting Archivist · Ope Watson</div>
             <h1 className="hero-title">Case <span className="italic">Archives</span></h1>
             <p className="hero-subtitle">The digital mind palace, refined to a science.</p>
-            <button className="hero-cta" onClick={() => scrollToSection('engine')}>
-              Examine the Evidence <span className="arrow">→</span>
-            </button>
+            <div className="hero-ctas">
+              <div className="cta-path">
+                <span className="cta-label">Logic Engine</span>
+                <button className="hero-cta" onClick={() => scrollToSection('engine')}>
+                  Consult <span className="arrow">→</span>
+                </button>
+              </div>
+              
+              <div className="cta-separator"></div>
+
+              <div className="cta-path">
+                <span className="cta-label">Archive Dossier</span>
+                <button className="hero-cta" onClick={() => scrollToSection('cases')}>
+                  Observe <span className="arrow">→</span>
+                </button>
+              </div>
+            </div>
             <div className="hero-links">
               <a href="/about" className="hero-link">About</a>
               <a href="/privacy" className="hero-link">Privacy</a>
@@ -636,8 +673,23 @@ const scrollToSection = (id) => {
         .nav-item.active::before { width: 40px; background: var(--colorone); }
         .nav-label { writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); }
 
+        .hero-ctas {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 60px;
+          margin-top: 50px;
+          animation: fadeInUp 1.5s ease 0.5s both;
+        }
+        .cta-path { display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        .cta-label { 
+          font-family: var(--font-typewriter); font-size: 0.6rem; letter-spacing: 4px; 
+          text-transform: uppercase; color: var(--colorone-dim); opacity: 0.6;
+        }
+        .cta-separator { width: 1px; height: 100px; background: linear-gradient(to bottom, transparent, var(--colorone-dim), transparent); opacity: 0.3; }
+
         .hero-cta {
-          display: inline-flex; align-items: center; gap: 15px; margin-top: 40px;
+          display: inline-flex; align-items: center; gap: 15px;
           font-family: var(--font-typewriter); font-size: 0.75rem; letter-spacing: 4px; text-transform: uppercase;
           color: var(--colorone); background: transparent; border: 1px solid var(--colorone-dim);
           padding: 18px 40px; cursor: none; position: relative; overflow: hidden; transition: all 0.5s ease;
