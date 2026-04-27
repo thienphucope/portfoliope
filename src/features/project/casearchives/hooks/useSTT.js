@@ -134,7 +134,7 @@ export function useSTT({ onResult, onSilence }) {
               if (callbacks.current.onResult) callbacks.current.onResult('');
               try { recognition.abort(); } catch(err) {}
             }
-          }, 4000);
+          }, 2000);
         }
       };
       

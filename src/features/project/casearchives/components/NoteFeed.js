@@ -871,9 +871,10 @@ const scrollToSection = (id) => {
         @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 
         .case-left { display: flex; flex-direction: column; gap: 12px; min-width: 240px; }
-        .case-media-preview { width: 240px; }
-        .case-media-preview img { width: 100%; height: auto; display: block; opacity: 0.75; filter: sepia(0.2); transition: all 0.4s; border: 1px solid rgba(212,168,67,0.15); }
-        .case-item:hover .case-media-preview img { opacity: 1; filter: sepia(0); border-color: rgba(212,168,67,0.4); }
+        .case-media-preview { width: 240px; position: relative; overflow: hidden; }
+        .case-media-preview::after { content: ''; position: absolute; inset: 0; background: var(--colorone); mix-blend-mode: color; opacity: 0.85; pointer-events: none; }
+        .case-media-preview img { width: 100%; height: auto; display: block; opacity: 0.8; transition: all 0.4s; border: 1px solid rgba(212,168,67,0.15); }
+        .case-item:hover .case-media-preview img { opacity: 1; border-color: rgba(212,168,67,0.4); }
 
         .load-more-wrapper { display: flex; justify-content: center; padding: 60px 0 20px; }
         .load-more-btn {
