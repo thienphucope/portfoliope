@@ -424,15 +424,18 @@ export default function WindowFrame({
           border: none;
           color: var(--colorbutton);
           outline: none;
-          font-family: 'Inter', sans-serif;
-          font-size: 0.8rem;
+          font-family: 'Prata', serif;
+          font-size: 0.85rem;
           width: 100%;
           height: 24px;
+          letter-spacing: 0.5px;
         }
 
         .window-inline-search::placeholder {
           color: var(--colorbutton);
-          opacity: 0.5;
+          font-family: 'Prata', serif;
+          opacity: 0.6;
+          font-style: italic;
         }
 
         .search-results-dropdown {

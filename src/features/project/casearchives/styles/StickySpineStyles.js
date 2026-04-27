@@ -8,11 +8,12 @@ export default function StickySpineStyles() {
           left: 0;
           top: 50%;
           transform: translateY(-50%);
-          z-index: 2000;
+          z-index: 99999;
           width: 64px;
           background: transparent;
           cursor: default;
           height: auto;
+          pointer-events: none; /* Tránh cản trở click vào vùng khác khi chưa hover */
         }
 
         .acc-ope-container::before {
@@ -28,27 +29,19 @@ export default function StickySpineStyles() {
           pointer-events: none;
         }
 
-        /* Larger hover trigger area */
+        /* Vùng kích hoạt siêu mỏng ở mép trái */
         .sticky-spine::after {
           content: "";
           position: absolute;
           top: 0;
-          right: -20px;
+          left: 0;
           bottom: 0;
-          width: 40px;
+          width: 15px;
           pointer-events: auto;
         }
 
-        .spine-content {
-          width: 100%;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          padding: 12px 0;
-          gap: 4px;
-        }
-
         .acc-ope-container {
+          pointer-events: auto; /* Cho phép tương tác với menu khi đã mở */
           position: absolute;
           top: 50%;
           left: 0;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import { FaYoutube, FaInstagram, FaGithub, FaEnvelope, FaTwitter } from 'react-icons/fa';
 import { ensureLibsLoaded, postProcess } from '../utils/markdown';
@@ -19,7 +19,7 @@ const CaseItem = ({ caseData, onLinkClick }) => {
   return (
     <div className="case-item reveal">
       <div className="case-left">
-        <span className="case-year">{caseData.year || '2025'}</span>
+        <span className="case-date">{caseData.formattedDate}</span>
         {mediaSrc && (
           <div className="case-media-preview">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -52,6 +52,14 @@ export default function NoteFeed({
   onLinkClick,
   upsertCacheEntry
 }) {
+  const sortedFiles = useMemo(() => {
+    return [...allFiles].sort((a, b) => {
+      const dateA = fullContentCache[a.id]?.date ? new Date(fullContentCache[a.id].date).getTime() : 0;
+      const dateB = fullContentCache[b.id]?.date ? new Date(fullContentCache[b.id].date).getTime() : 0;
+      return dateB - dateA; // Newest first
+    });
+  }, [allFiles, fullContentCache]);
+
   const [displayedCases, setDisplayedCases] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -143,7 +151,7 @@ End each response with a punchy, one-sentence conclusion.`;
     return items;
   };
 
-  const parseNote = useCallback((content, fileName, fileId) => {
+  const parseNote = useCallback((content, fileName, fileId, fileDate) => {
     const lines = content.split('\n');
     const displayTitle = fileName.split('/').pop().replace(/\.md$/, '');
     
@@ -183,10 +191,10 @@ End each response with a punchy, one-sentence conclusion.`;
     } else {
       // 2. Fallback to intro text block (finding first significant text)
       let i = 0;
+      let blockLines = [];
       while (i < lines.length) {
         let trimmed = lines[i].trim();
         while (i < lines.length && isSkippedLine(trimmed)) { i++; if (lines[i]) trimmed = lines[i].trim(); }
-        const blockLines = [];
         while (i < lines.length && !isSkippedLine(trimmed)) {
           blockLines.push(trimmed);
           i++;
@@ -205,38 +213,56 @@ End each response with a punchy, one-sentence conclusion.`;
 
     // Word clamping (40 words)
     const words = rawDescription.split(/\s+/);
-    if (words.length > 40) {
-      rawDescription = words.slice(0, 40).join(' ') + '...';
-    }
+    const finalDescription = words.length > 40 ? words.slice(0, 40).join(' ') + '...' : rawDescription;
 
-    const descriptionHtml = window.marked ? window.marked.parse(rawDescription) : rawDescription;
+    const descriptionHtml = window.marked ? window.marked.parse(finalDescription) : finalDescription;
+
+    // Handle Year/Date
+    let formattedDate = 'January 1, 2025';
+    let year = '2025';
+    if (fileDate) {
+      const d = new Date(fileDate);
+      if (!isNaN(d.getTime())) {
+        year = d.getFullYear().toString();
+        formattedDate = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      }
+    }
 
     return { 
       id: fileId, 
       displayTitle,
       author, tag, links,
       descriptionHtml, 
-      year: '2025' 
+      year,
+      formattedDate
     };
   }, []);
 
   const fetchBatch = useCallback(async (start, end) => {
     if (loading) return;
     setLoading(true);
-    const slice = allFiles.slice(start, end);
+    const slice = sortedFiles.slice(start, end);
     const results = await Promise.all(slice.map(async (file) => {
-      let content = fullContentCache[file.id]?.raw;
+      let cacheEntry = fullContentCache[file.id];
+      let content = cacheEntry?.raw;
+      let date = cacheEntry?.date;
+      
       if (!content) {
         try {
           const url = fileRegistry[file.id.toLowerCase()] || fileRegistry[file.id.toLowerCase() + '.md'];
           if (!url) return null;
           const res = await fetch(url);
           content = await res.text();
-          upsertCacheEntry(file.id, content);
+          // Note: When fetching client-side individually, we don't have the commit date easily
+          // unless we add another API call, but we can try to get it from headers.
+          const lastMod = res.headers.get('Last-Modified');
+          date = lastMod ? new Date(lastMod).toISOString() : null;
+          upsertCacheEntry(file.id, content, null, date);
         } catch (e) { return null; }
       }
+      
       if (!content) return null;
-      const note = parseNote(content, file.name, file.id);
+      const note = parseNote(content, file.name, file.id, date);
       const firstMedia = extractMedia(content)[0] || null;
       return { ...note, media: firstMedia };
     }));
@@ -247,14 +273,14 @@ End each response with a punchy, one-sentence conclusion.`;
       sessionStorage.setItem('notefeed_loaded_count', end.toString());
     }
     setLoading(false);
-  }, [allFiles, fileRegistry, fullContentCache, loading, upsertCacheEntry, parseNote]);
+  }, [sortedFiles, fileRegistry, fullContentCache, loading, upsertCacheEntry, parseNote]);
 
   useEffect(() => {
-    if (isMounted && libsReady && allFiles.length > 0 && displayedCases.length === 0) {
+    if (isMounted && libsReady && sortedFiles.length > 0 && displayedCases.length === 0) {
         const initialEnd = loadedCount > 0 ? loadedCount : BATCH_SIZE;
         fetchBatch(0, initialEnd);
     }
-  }, [allFiles, isMounted, libsReady, displayedCases.length, fetchBatch, loadedCount]);
+  }, [sortedFiles, isMounted, libsReady, displayedCases.length, fetchBatch, loadedCount]);
 
   useEffect(() => {
     if (displayedCases.length > 0 && !scrollRestoredRef.current) {
@@ -553,7 +579,7 @@ const scrollToSection = (id) => {
         <footer className="footer" id="contact">
           <div className="footer-container reveal">
             <div className="footer-address">
-              <span className="street">222B Baker Street</span>
+              <span className="street">223B Baker Street</span>
               London, NW1 6XE<br />
               United Kingdom
               <div className="footer-socials">
@@ -899,7 +925,7 @@ const scrollToSection = (id) => {
           border: 1px solid var(--colorone);
           transform: rotate(45deg);
         }
-        .case-year { font-family: var(--font-typewriter); color: var(--colorone); font-size: 1.2rem; font-weight: 700; letter-spacing: 3px; }
+        .case-date { font-family: var(--font-typewriter); color: var(--colorone); font-size: 1.1rem; font-weight: 700; letter-spacing: 1px; }
         .case-info { cursor: pointer; flex: 1; }
         .case-info h3 { font-family: var(--font-display); font-size: clamp(2rem, 6vw, 4.5rem); margin: 0 0 0.75rem 0; transition: all 0.4s; line-height: 1.1; color: var(--parchment); }
         .case-info:hover h3 { color: var(--colorone); transform: translateX(1.25rem); }

@@ -51,18 +51,24 @@ export default function TabPanel({
                   if (bottom !== isAtBottom) setIsAtBottom(bottom);
                 }}
               >
-                <BlockEditor
-                  content={content}
-                  fileName={fileName}
-                  onLinkClick={handleLinkClick}
-                  onSaveFile={handleSaveFile}
-                  isEditing={tab.type === 'editor' ? isEditing : false}
-                  readOnly={tab.type === 'static'}
-                  onToggleEditing={handleToggleEditMode}
-                  onSaveRef={saveHandlerRef}
-                  fileRegistry={fileRegistry.current}
-                  reader={reader}
-                />
+                {fileName === tab.id ? (
+                  <BlockEditor
+                    content={content}
+                    fileName={fileName}
+                    onLinkClick={handleLinkClick}
+                    onSaveFile={handleSaveFile}
+                    isEditing={tab.type === 'editor' ? isEditing : false}
+                    readOnly={tab.type === 'static'}
+                    onToggleEditing={handleToggleEditMode}
+                    onSaveRef={saveHandlerRef}
+                    fileRegistry={fileRegistry.current}
+                    reader={reader}
+                  />
+                ) : (
+                  <div className="loading-placeholder" style={{ padding: '2rem', opacity: 0.5 }}>
+                    Loading...
+                  </div>
+                )}
               </article>
             </main>
           </div>

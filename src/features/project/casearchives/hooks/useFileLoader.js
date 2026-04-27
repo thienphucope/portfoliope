@@ -19,24 +19,41 @@ export function useFileLoader({
 
   const loadFile = useCallback(
     async (path, name, serverPath = null, historyMode = 'push', activate = true) => {
-      if (activate) {
-        setActiveTab(serverPath);
-        if (setActiveOverlay) setActiveOverlay(null);
+      // 1. Calculate repoKey early to clear content or load from cache
+      let repoKey = serverPath;
+      if (!repoKey && path) {
+        try {
+          const urlParts = new URL(path, window.location.origin).pathname.split('/').slice(1);
+          repoKey = decodeURIComponent(urlParts.slice(3).join('/'));
+        } catch (e) {
+          repoKey = name;
+        }
+      } else if (!repoKey) {
+        repoKey = name;
       }
 
-      let repoKey;
+      if (activate) {
+        setActiveTab(repoKey);
+        if (setActiveOverlay) setActiveOverlay(null);
+        
+        // Immediate feedback: Load from cache if available, otherwise clear content
+        const cached = serverRawCache.current[repoKey];
+        if (cached) {
+          applyFileContent(repoKey, cached);
+        } else {
+          // Clear old content immediately to avoid glitching previous note content
+          applyFileContent(repoKey, ''); 
+        }
+      }
+
       let newContent = '';
 
       if (!path) {
         // Local-only file (newly created, never saved)
-        repoKey = serverPath || name;
         newContent = `# ${name.replace('.md', '')}\n*author: <author>*\n*tag: [[Dash Board]]*\n*links:*\n`;
         applyFileContent(repoKey, newContent);
       } else {
         try {
-          const urlParts = new URL(path, window.location.origin).pathname.split('/').slice(1);
-          repoKey = serverPath || decodeURIComponent(urlParts.slice(3).join('/'));
-
           // Always read from server cache on tab open/click.
           const apiRes = await fetch('/api/cases', {
             method: 'POST',
@@ -59,7 +76,6 @@ export function useFileLoader({
           }
         } catch (e) {
           console.error('Error loading file:', e);
-          repoKey = serverPath || name;
           applyFileContent(repoKey, '# Error\nFailed to load.');
         }
       }

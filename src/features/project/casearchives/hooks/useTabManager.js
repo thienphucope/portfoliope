@@ -97,9 +97,8 @@ export function useTabManager({
         lastActiveNote.current = activeTab;
       }
 
-      setActiveTab(tab.id);
-
       if (tab.type === 'static') {
+        setActiveTab(tab.id);
         applyFileContent(tab.id, tab.content);
         const cleanPath = tab.id.replace('system::', '');
         window.history.pushState({ repoKey: tab.id }, '', `/project/casearchives/${cleanPath}`);
@@ -109,6 +108,7 @@ export function useTabManager({
         if (openedF?.fileData?.path) {
           loadFile(openedF.fileData.path, openedF.fileData.name, tab.id, 'push');
         } else {
+          setActiveTab(tab.id);
           applyFileContent(tab.id, `# ${tab.title}\nLoading...`);
         }
       }

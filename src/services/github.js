@@ -111,6 +111,26 @@ export async function getFileFromGithub(path) {
   }
 }
 
+export async function getFileDate(path) {
+  if (!GITHUB_TOKEN) return null;
+  const headers = buildHeaders(false);
+  // Get the latest commit for this file to get the last modified date
+  const url = `https://api.github.com/repos/${GITHUB_REPO}/commits?path=${path}&per_page=1`;
+  try {
+    const resp = await fetch(url, { headers, cache: 'no-store' });
+    if (resp.ok) {
+      const commits = await resp.json();
+      if (commits && commits.length > 0) {
+        return commits[0].commit.committer.date; // ISO 8601 format
+      }
+    }
+    return null;
+  } catch (e) {
+    console.error(`❌ [GitHub] Error fetching date for ${path}:`, e.message);
+    return null;
+  }
+}
+
 // ─── HELPER: save to github ──────────────────────────────────────────────────
 
 export async function saveToGithub(path, content, create = false, sha = null) {

@@ -1,6 +1,7 @@
 import { 
   getGithubCasesTree, 
-  getFileFromGithub 
+  getFileFromGithub,
+  getFileDate
 } from './github';
 import { marked } from 'marked';
 
@@ -10,6 +11,7 @@ let serverRegistryCache = {};
 let serverRawCache = {};
 let serverHtmlCache = {};
 let serverShaCache = {};
+let serverDateCache = {};
 let serverGraphCache = { nodes: [], links: [] };
 let cacheHydratedAt = 0;
 
@@ -96,16 +98,25 @@ export async function hydrateServerCache(force = false) {
   const nextRaw = {};
   const nextHtml = {};
   const nextSha = {};
+  const nextDate = {};
   
-  // Fetch contents in parallel
+  // Fetch contents and dates in parallel
   await Promise.all(
     fileRepoPaths.map(async (repoPath) => {
-      const fileData = await getFileFromGithub(repoPath);
-      if (!fileData?.ok) return;
-      const raw = decodeContent(fileData.content);
-      nextRaw[repoPath] = raw;
-      nextHtml[repoPath] = marked.parse(raw || '');
-      if (fileData.sha) nextSha[repoPath] = fileData.sha;
+      const [fileData, date] = await Promise.all([
+        getFileFromGithub(repoPath),
+        getFileDate(repoPath)
+      ]);
+      
+      if (fileData?.ok) {
+        const raw = decodeContent(fileData.content);
+        nextRaw[repoPath] = raw;
+        nextHtml[repoPath] = marked.parse(raw || '');
+        if (fileData.sha) nextSha[repoPath] = fileData.sha;
+      }
+      if (date) {
+        nextDate[repoPath] = date;
+      }
     })
   );
 
@@ -114,6 +125,7 @@ export async function hydrateServerCache(force = false) {
   serverRawCache = nextRaw;
   serverHtmlCache = nextHtml;
   serverShaCache = nextSha;
+  serverDateCache = nextDate;
   serverGraphCache = buildGraphFromRaw(nextRaw);
   cacheHydratedAt = Date.now();
 
@@ -126,6 +138,7 @@ export function getCacheSnapshot() {
     contentCache[key] = {
       raw,
       html: serverHtmlCache[key] || null,
+      date: serverDateCache[key] || null,
       fetchedAt: cacheHydratedAt,
     };
   }
@@ -135,6 +148,7 @@ export function getCacheSnapshot() {
     rawCache: serverRawCache,
     htmlCache: serverHtmlCache,
     shaCache: serverShaCache,
+    dateCache: serverDateCache,
     contentCache,
     graph: serverGraphCache,
     hydratedAt: cacheHydratedAt,
@@ -145,6 +159,7 @@ export function updateFileInCache(path, content, sha, html) {
   serverRawCache[path] = content;
   serverHtmlCache[path] = html || (typeof window === 'undefined' ? marked.parse(content) : content);
   if (sha) serverShaCache[path] = sha;
+  serverDateCache[path] = new Date().toISOString(); // Update to now on save
   serverGraphCache = buildGraphFromRaw(serverRawCache);
 }
 
