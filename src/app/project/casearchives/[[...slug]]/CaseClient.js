@@ -537,7 +537,6 @@ export default function CaseClient({ serverHydratedData = null }) {
                     key={winId} 
                     className="window-frame-wrapper" 
                     style={isMax ? {} : { flex: flexValue, height: '100%', transition: 'flex 0.4s ease' }}
-                    onClick={() => setFocusedWindow('editor')}
                   >
                     <WindowFrame
                       id={winId}
@@ -562,6 +561,7 @@ export default function CaseClient({ serverHydratedData = null }) {
                           loadFile(githubUrl, f.name, f.id, 'push', true);
                         }
                       }}
+                      onBarClick={() => setFocusedWindow('editor')}
                     >
                       {activeTabPanel}
                     </WindowFrame>
