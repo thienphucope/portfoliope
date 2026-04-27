@@ -107,6 +107,7 @@ End each response with a punchy, one-sentence conclusion.`;
   const scrollRef = useRef(null);
   const engineHistoryRef = useRef(null);
   const scrollRestoredRef = useRef(false);
+  const loadingRef = useRef(false);
 
   useEffect(() => {
     if (engineHistoryRef.current) {
@@ -239,7 +240,8 @@ End each response with a punchy, one-sentence conclusion.`;
   }, []);
 
   const fetchBatch = useCallback(async (start, end) => {
-    if (loading) return;
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     setLoading(true);
     const slice = sortedFiles.slice(start, end);
     const results = await Promise.all(slice.map(async (file) => {
@@ -273,7 +275,8 @@ End each response with a punchy, one-sentence conclusion.`;
       sessionStorage.setItem('notefeed_loaded_count', end.toString());
     }
     setLoading(false);
-  }, [sortedFiles, fileRegistry, fullContentCache, loading, upsertCacheEntry, parseNote]);
+    loadingRef.current = false;
+  }, [sortedFiles, fileRegistry, fullContentCache, upsertCacheEntry, parseNote]);
 
   useEffect(() => {
     if (isMounted && libsReady && sortedFiles.length > 0 && displayedCases.length === 0) {

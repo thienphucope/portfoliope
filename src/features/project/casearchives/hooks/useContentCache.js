@@ -33,6 +33,7 @@ export function useContentCache({ serverRawCache }) {
         raw,
         html: html ?? prev?.[fileId]?.html ?? null,
         fetchedAt,
+        date: prev?.[fileId]?.date,
       },
     }));
   }, [serverRawCache]);
