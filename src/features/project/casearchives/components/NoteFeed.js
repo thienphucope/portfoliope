@@ -624,7 +624,7 @@ const scrollToSection = (id) => {
           position: fixed !important;
           inset: 0 !important;
           width: 100vw !important;
-          height: 100vh !important;
+          height: 100dvh !important;
           background: var(--void) !important;
           color: var(--parchment);
           font-family: var(--font-body);
@@ -679,7 +679,7 @@ const scrollToSection = (id) => {
 
         /* Sections */
         section { position: relative; z-index: 20; padding: 120px 40px; width: 100%; box-sizing: border-box; }
-        .hero { height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; }
+        .hero { height: 100dvh; display: flex; align-items: center; justify-content: center; text-align: center; }
         .nav-mind-palace {
           position: fixed; top: 30px; right: 30px; z-index: 10000000;
           display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
@@ -978,8 +978,10 @@ const scrollToSection = (id) => {
 
         @media (max-width: 1024px) {
           section { padding: 6rem 0.25rem; }
-          .hero { height: auto; min-height: 100vh; padding: 5rem 1rem; }
+          .hero { height: auto; min-height: 100dvh; padding: 5rem 1rem; }
           .nav-mind-palace { display: none; }
+          .hero-ctas { flex-direction: column; gap: 30px; margin-top: 30px; }
+          .cta-separator { width: 100px; height: 1px; background: linear-gradient(to right, transparent, var(--colorone-dim), transparent); }
           .nav-label { writing-mode: horizontal-tb; transform: none; font-size: 0.7rem; letter-spacing: 1px; }
           .nav-item::before { display: none; }
           .nav-item { padding: 0.5rem; border: none; background: transparent; flex: 1; text-align: center; max-width: 110px; }
