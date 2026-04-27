@@ -29,19 +29,19 @@ const CaseItem = ({ caseData, onLinkClick }) => {
           </div>
         )}
       </div>
-      <div className="case-info" onClick={() => onLinkClick(caseData.id)}>
-        <h3 className="case-title-main">{caseData.displayTitle}</h3>
+      <div className="case-info">
+        <h3 className="case-title-main" onClick={() => onLinkClick(caseData.id)}>{caseData.displayTitle}</h3>
         <div className="case-metadata">
           {caseData.author && <span className="meta-item"><strong>Author:</strong> {caseData.author}</span>}
           {caseData.tag && <span className="meta-item"><strong>Tag:</strong> {caseData.tag}</span>}
           {caseData.links && <span className="meta-item"><strong>Links:</strong> {caseData.links}</span>}
         </div>
-        <div 
+        <div
           ref={contentRef}
           className="case-desc-compiled markdown-content"
-          dangerouslySetInnerHTML={{ __html: caseData.descriptionHtml }} 
+          dangerouslySetInnerHTML={{ __html: caseData.descriptionHtml }}
         />
-        <span className="case-status solved">Examine Dossier</span>
+        <span className="case-status solved" onClick={() => onLinkClick(caseData.id)}>Examine Dossier</span>
       </div>
     </div>
   );
@@ -1090,9 +1090,9 @@ const scrollToSection = (id) => {
           transform: rotate(45deg);
         }
         .case-date { font-family: var(--font-typewriter); color: var(--colorone); font-size: 1.1rem; font-weight: 700; letter-spacing: 1px; }
-        .case-info { cursor: pointer; flex: 1; }
-        .case-info h3 { font-family: var(--font-display); font-size: clamp(2rem, 6vw, 4.5rem); margin: 0 0 0.75rem 0; transition: all 0.4s; line-height: 1.1; color: var(--parchment); }
-        .case-info:hover h3 { color: var(--colorone); transform: translateX(1.25rem); }
+        .case-info { cursor: default; flex: 1; }
+        .case-info h3 { font-family: var(--font-display); font-size: clamp(2rem, 6vw, 4.5rem); margin: 0 0 0.75rem 0; transition: all 0.4s; line-height: 1.1; color: var(--parchment); cursor: pointer; }
+        .case-info h3:hover { color: var(--colorone); transform: translateX(1.25rem); }
         
         .case-desc-compiled { 
           color: rgba(244, 232, 193, 0.85); 
@@ -1120,7 +1120,8 @@ const scrollToSection = (id) => {
         }
         .meta-item strong { color: var(--colorone-dim); font-weight: 400; }
 
-        .case-status { font-family: var(--font-typewriter); font-size: 0.9rem; color: var(--colorone-dim); border: 1px solid var(--colorone-dim); padding: 0.625rem 1.875rem; text-transform: uppercase; letter-spacing: 5px; transition: all 0.3s; }
+        .case-status { font-family: var(--font-typewriter); font-size: 0.9rem; color: var(--colorone-dim); border: 1px solid var(--colorone-dim); padding: 0.625rem 1.875rem; text-transform: uppercase; letter-spacing: 5px; transition: all 0.3s; cursor: pointer; }
+        .case-status:hover { color: var(--colorone); border-color: var(--colorone); }
 
         /* Animations */
         .reveal { opacity: 0; transform: translateY(3.75rem); transition: all 1.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
