@@ -3,6 +3,8 @@ import Image from 'next/image';
 import { FaYoutube, FaInstagram, FaGithub, FaEnvelope, FaTwitter } from 'react-icons/fa';
 import { ensureLibsLoaded, postProcess } from '../utils/markdown';
 import { useAI } from '../hooks/useAI';
+import { useSTT } from '../hooks/useSTT';
+import { useTTS } from '../hooks/useTTS';
 
 const CaseItem = ({ caseData, onLinkClick }) => {
   const contentRef = useRef(null);
@@ -77,7 +79,15 @@ export default function NoteFeed({
     { role: 'assistant', content: "Present your observations. I shall render my analysis of the matter." }
   ]);
   
-  const { requestAI, streamResponse, isThinking, isStreaming, streamingText } = useAI();
+  const { requestAI, streamResponse, isThinking, isStreaming, streamingText, stopAI } = useAI();
+
+  const { isPlayingAudio, streamAudioLive, stopAudio } = useTTS();
+  const [isLiveCall, setIsLiveCall] = useState(false);
+  const [liveInput, setLiveInput] = useState('');
+  const isLiveCallRef = useRef(false);
+  const isProcessingRef = useRef(false);
+  const isProcessing = isThinking || isStreaming || isPlayingAudio;
+  useEffect(() => { isProcessingRef.current = isProcessing; }, [isProcessing]);
 
   const SHERLOCK_PROMPT = `You are Ope Watson, a consulting archivist with the brilliant mind of Sherlock Holmes. 
 You are a sharp-witted friend and reliable partner to the user—courteous and intelligent, but never stiff or overly formal. Think of yourself as a mentor or a comrade in discovery.
@@ -297,15 +307,16 @@ End each response with a punchy, one-sentence conclusion.`;
     }
   }, [displayedCases]);
 
-  const handleAnalyze = async () => {
-    if (!engineInput.trim() || isThinking || isStreaming) return;
-    
-    const userMsg = engineInput.trim();
+  const handleAnalyze = async (msgOverride) => {
+    const userMsg = (typeof msgOverride === 'string' ? msgOverride : engineInput).trim();
+    if (!userMsg || isThinking || isStreaming || isPlayingAudio) return;
+
     setEngineInput('');
-    
+    setLiveInput('');
+
     const currentConvo = [...convo, { role: 'user', content: userMsg }];
     setConvo([...currentConvo, { role: 'assistant', content: '' }]);
-    
+
     try {
       const reply = await requestAI(userMsg, convo.filter(m => m.content), 'Detective', SHERLOCK_PROMPT);
       streamResponse(reply, (fullText) => {
@@ -315,6 +326,7 @@ End each response with a punchy, one-sentence conclusion.`;
           return n;
         });
       });
+      if (isLiveCallRef.current) streamAudioLive(reply);
     } catch (e) {
       setConvo(prev => {
         const n = [...prev];
@@ -323,6 +335,94 @@ End each response with a punchy, one-sentence conclusion.`;
       });
     }
   };
+
+  const executeInterrupt = useCallback(() => {
+    stopAudio();
+    stopAI();
+    setConvo(prev => {
+      const n = [...prev];
+      if (n.length > 0 && n[n.length - 1].role === 'assistant' && !n[n.length - 1].content) {
+        n[n.length - 1].content = '*(Interrupted)*';
+      }
+      return n;
+    });
+    setLiveInput('');
+  }, [stopAudio, stopAI]);
+
+  const { isListening, micVolume, startListening, pauseListening, stopListening, clearTranscription, startManualMode, stopManualMode } = useSTT({
+    onResult: (text) => {
+      if (!text) { setLiveInput(''); return; }
+      if (isProcessingRef.current) {
+        if (/\b(no|wait|interrupt|interupt|stop)\b/i.test(text.toLowerCase())) executeInterrupt();
+        clearTranscription();
+        return;
+      }
+      setLiveInput(text);
+    },
+    onSilence: (text) => {
+      if (isLiveCallRef.current && text && !isProcessingRef.current) handleAnalyze(text);
+    }
+  });
+
+  const holdTimerRef = useRef(null);
+  const releaseTimerRef = useRef(null);
+  const isHoldingRef = useRef(false);
+  const [isHoldingUI, setIsHoldingUI] = useState(false);
+
+  const handleInterrupt = useCallback(() => {
+    if (isProcessingRef.current) { executeInterrupt(); clearTranscription(); }
+    else { clearTranscription(); setLiveInput(''); startListening(); }
+  }, [executeInterrupt, startListening, clearTranscription]);
+
+  const handlePointerDown = useCallback((e) => {
+    if (e.button && e.button !== 0) return;
+    if (releaseTimerRef.current) { clearTimeout(releaseTimerRef.current); releaseTimerRef.current = null; }
+    isHoldingRef.current = false;
+    setIsHoldingUI(false);
+    holdTimerRef.current = setTimeout(() => {
+      isHoldingRef.current = true;
+      setIsHoldingUI(true);
+      startManualMode();
+    }, 400);
+  }, [startManualMode]);
+
+  const handlePointerUp = useCallback((e) => {
+    if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+    if (isHoldingRef.current) {
+      isHoldingRef.current = false;
+      setIsHoldingUI(false);
+      releaseTimerRef.current = setTimeout(() => { stopManualMode(); releaseTimerRef.current = null; }, 1000);
+    } else {
+      if (releaseTimerRef.current) { clearTimeout(releaseTimerRef.current); releaseTimerRef.current = null; }
+      clearTranscription(); setLiveInput(''); handleInterrupt();
+    }
+  }, [handleInterrupt, stopManualMode, clearTranscription]);
+
+  const toggleLiveCall = useCallback(() => {
+    if (isLiveCall) {
+      isLiveCallRef.current = false;
+      setIsLiveCall(false);
+      stopListening();
+      stopAudio();
+      setLiveInput('');
+    } else {
+      isLiveCallRef.current = true;
+      setIsLiveCall(true);
+      startListening();
+    }
+  }, [isLiveCall, stopListening, stopAudio, startListening]);
+
+  useEffect(() => {
+    if (!isLiveCall) return;
+    if (isPlayingAudio) {
+      pauseListening();
+    } else {
+      const t = setTimeout(() => {
+        if (isLiveCallRef.current) { clearTranscription(); startListening(); }
+      }, 400);
+      return () => clearTimeout(t);
+    }
+  }, [isPlayingAudio, isLiveCall, pauseListening, clearTranscription, startListening]);
 
 const scrollToSection = (id) => {
     const el = document.getElementById(id);
@@ -526,13 +626,13 @@ const scrollToSection = (id) => {
                   );
                 })}
                 
-                {!isStreaming && !isThinking && (
+                {!isStreaming && !isThinking && !isLiveCall && (
                   <div className="engine-message user">
                     <span className="msg-role">You</span>
                     <div className="engine-input-wrapper inline">
                       <span className="engine-prompt-symbol">&gt;</span>
-                      <textarea 
-                        className="engine-inline-input" 
+                      <textarea
+                        className="engine-inline-input"
                         placeholder="Observe..."
                         value={engineInput}
                         onChange={(e) => setEngineInput(e.target.value)}
@@ -550,6 +650,35 @@ const scrollToSection = (id) => {
                       />
                     </div>
                   </div>
+                )}
+                {!isStreaming && !isThinking && isLiveCall && liveInput && (
+                  <div className="engine-message user">
+                    <span className="msg-role">You</span>
+                    <div className="engine-live-transcription">{liveInput}</div>
+                  </div>
+                )}
+              </div>
+
+              <div className="engine-call-row">
+                {isLiveCall ? (
+                  <>
+                    <div
+                      className={`engine-mic-orb${isHoldingUI ? ' holding' : isProcessing ? ' processing' : isListening ? ' listening' : ''}`}
+                      style={{
+                        transform: isListening && !isProcessing && !isHoldingUI ? `scale(${1 + micVolume * 0.4})` : undefined,
+                        backgroundColor: isHoldingUI ? '#60a5fa' : undefined
+                      }}
+                      onContextMenu={(e) => e.preventDefault()}
+                      onPointerDown={handlePointerDown}
+                      onPointerUp={handlePointerUp}
+                      onPointerLeave={(e) => { if (isHoldingRef.current) handlePointerUp(e); }}
+                    >
+                      {isProcessing ? <span>···</span> : <span>◎</span>}
+                    </div>
+                    <button className="end-call-btn" onClick={toggleLiveCall}>End Session</button>
+                  </>
+                ) : (
+                  <button className="live-call-btn" onClick={toggleLiveCall}>↯ Live Session</button>
                 )}
               </div>
             </div>
@@ -868,6 +997,37 @@ const scrollToSection = (id) => {
         @keyframes blink { 50% { opacity: 0; } }
 
         .thinking-dots { color: var(--colorone-dim); animation: pulse 1.5s infinite; }
+
+        .engine-call-row {
+          display: flex; align-items: center; justify-content: center; gap: 40px;
+          padding: 40px 0 10px;
+        }
+        .live-call-btn {
+          font-family: var(--font-typewriter); font-size: 0.7rem; letter-spacing: 4px; text-transform: uppercase;
+          color: var(--colorone-dim); background: transparent; border: 1px solid var(--colorone-dim);
+          padding: 14px 36px; cursor: none; transition: all 0.4s ease; position: relative; overflow: hidden;
+        }
+        .live-call-btn:hover { color: var(--colorone); border-color: var(--colorone); box-shadow: 0 0 25px rgba(186,145,112,0.2); }
+        .end-call-btn {
+          font-family: var(--font-typewriter); font-size: 0.65rem; letter-spacing: 4px; text-transform: uppercase;
+          color: rgba(244,232,193,0.35); background: transparent; border: 1px solid rgba(244,232,193,0.12);
+          padding: 10px 24px; cursor: none; transition: all 0.3s ease;
+        }
+        .end-call-btn:hover { color: var(--parchment); border-color: rgba(244,232,193,0.3); }
+        .engine-mic-orb {
+          width: 80px; height: 80px; border-radius: 50%; background: var(--colorone);
+          display: flex; align-items: center; justify-content: center;
+          cursor: none; transition: transform 0.1s ease, box-shadow 0.3s ease;
+          font-size: 1.6rem; color: var(--void); box-shadow: 0 0 20px rgba(186,145,112,0.25);
+          user-select: none;
+        }
+        .engine-mic-orb.listening { box-shadow: 0 0 50px rgba(186,145,112,0.6); }
+        .engine-mic-orb.processing { animation: pulse 1.5s infinite; cursor: pointer; box-shadow: 0 0 35px rgba(186,145,112,0.4); }
+        .engine-mic-orb.holding { box-shadow: 0 0 60px #60a5fa; }
+        .engine-live-transcription {
+          font-family: var(--font-body); font-size: 1.2rem; color: var(--parchment);
+          opacity: 0.65; font-style: italic; padding: 4px 0;
+        }
         @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 
         .case-left { display: flex; flex-direction: column; gap: 12px; min-width: 240px; }
