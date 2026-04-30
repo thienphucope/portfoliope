@@ -31,7 +31,8 @@ export function useTTS() {
   const audioContextRef = useRef(null);
   const activeSourcesRef = useRef([]);
 
-  const detectLanguage = (text) => /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i.test(text) ? 'vi' : 'en';
+  // const detectLanguage = (text) => /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i.test(text) ? 'vi' : 'en';
+  const detectLanguage = () => 'en'; // backend chưa hỗ trợ vi
 
   // Stop currently playing audio via audio context stream
   const stopAudio = useCallback(() => {

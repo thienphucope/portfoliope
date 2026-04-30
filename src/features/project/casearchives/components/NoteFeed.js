@@ -76,7 +76,7 @@ export default function NoteFeed({
   });
   const [engineInput, setEngineInput] = useState('');
   const [convo, setConvo] = useState([
-    { role: 'assistant', content: "Present your observations. I shall render my analysis of the matter." }
+    { role: 'assistant', content: "Hey there, sugar. Pull up a seat. What's on your mind?" }
   ]);
   
   const { requestAI, streamResponse, isThinking, isStreaming, streamingText, stopAI } = useAI();
@@ -89,26 +89,27 @@ export default function NoteFeed({
   const isProcessing = isThinking || isStreaming || isPlayingAudio;
   useEffect(() => { isProcessingRef.current = isProcessing; }, [isProcessing]);
 
-  const SHERLOCK_PROMPT = `You are Ope Watson, a consulting archivist with the brilliant mind of Sherlock Holmes. 
-You are a sharp-witted friend and reliable partner to the user—courteous and intelligent, but never stiff or overly formal. Think of yourself as a mentor or a comrade in discovery.
+  const MOXXI_PROMPT = `You are Moxxi, the most charming and dangerously clever host this side of anywhere. You run the bar where everyone ends up eventually — and information flows as freely as the drinks, for the right company.
+
+You're sharp, confident, a little flirtatious, and wicked smart. You've survived by knowing people's secrets and keeping your own. You're a trusted friend — but never someone to underestimate.
 
 Guidelines:
-- Natural Conversation: For greetings or casual talk, respond like a sharp, friendly companion. Chat naturally without over-analyzing until there's a real mystery.
-- Deduction Mode: ONLY when provided with data or a request for analysis, apply your process:
-  1. Observe: Spot the 'Little Things'. Data before Theory.
-  2. Eliminate: Toss out the impossible.
-  3. Deduce: Whatever remains, however improbable, is the truth.
-  4. Conclude: Deliver your final verdict.
+- Casual Talk: Charm them. Keep it warm, playful, and just a little dangerous. Make them feel like the most interesting person in the room.
+- Analysis Mode: When they bring you a real problem, you put down the glass and focus:
+  1. Read the room — what's really going on here?
+  2. Cut the noise — what doesn't add up?
+  3. Find the angle — there's always one.
+  4. Deliver — clean, sharp, no sugarcoating (well, maybe a little).
 
 Your Wisdom:
-- "Never twist facts to suit theories."
-- "The little things are infinitely the most important."
-- "Emotions are a hindrance during analysis—stay clinical when it counts."
+- "Everyone's hiding something, sugar. That's what makes them interesting."
+- "Pretty things can be deadly. So can I."
+- "The truth is always more interesting than the lie — you just gotta know where to look."
 
-Personality: Sharp and clinical during a case, but warm and accessible like a trusted friend otherwise. Use very simple, punchy words.
+Personality: Playful and warm in conversation, razor-sharp when it counts. Think: dangerous elegance with a heart of gold.
 Language: ALWAYS match the user's language.
-Format: Use Markdown for clarity during deductions.
-End each response with a punchy, one-sentence conclusion.`;
+Format: Use Markdown for clarity when analyzing. Elegant — no walls of text.
+End each response with a punchy, signature sign-off line.`;
 
   const BATCH_SIZE = 10;
   const cursorDotRef = useRef(null);
@@ -318,7 +319,7 @@ End each response with a punchy, one-sentence conclusion.`;
     setConvo([...currentConvo, { role: 'assistant', content: '' }]);
 
     try {
-      const reply = await requestAI(userMsg, convo.filter(m => m.content), 'Detective', SHERLOCK_PROMPT);
+      const reply = await requestAI(userMsg, convo.filter(m => m.content), 'Moxxi', MOXXI_PROMPT);
       streamResponse(reply, (fullText) => {
         setConvo(prev => {
           const n = [...prev];
@@ -330,7 +331,7 @@ End each response with a punchy, one-sentence conclusion.`;
     } catch (e) {
       setConvo(prev => {
         const n = [...prev];
-        n[n.length - 1] = { role: 'assistant', content: "Error: The deduction was interrupted. Even my mind has its limits." };
+        n[n.length - 1] = { role: 'assistant', content: "Well, that didn't go as planned, sugar. Even I have my off nights." };
         return n;
       });
     }
@@ -564,14 +565,14 @@ const scrollToSection = (id) => {
         {/* HERO SECTION */}
         <section className="hero" id="hero">
           <div className="hero-content reveal">
-            <div className="hero-overline">Consulting Archivist · Ope Watson</div>
+            <div className="hero-overline">The Host · Moxxi</div>
             <h1 className="hero-title">Case <span className="italic">Archives</span></h1>
-            <p className="hero-subtitle">The digital mind palace, refined to a science.</p>
+            <p className="hero-subtitle">Welcome to the bar, sugar. Everyone ends up here eventually.</p>
             <div className="hero-ctas">
               <div className="cta-path">
-                <span className="cta-label">Logic Engine</span>
+                <span className="cta-label">Moxxi's Bar</span>
                 <button className="hero-cta" onClick={() => scrollToSection('engine')}>
-                  Consult <span className="arrow">→</span>
+                  Chat <span className="arrow">→</span>
                 </button>
               </div>
               
@@ -600,10 +601,10 @@ const scrollToSection = (id) => {
         <section className="engine-section" id="engine">
           <div className="engine-container">
             <div className="section-header reveal">
-              <span className="section-number">File 001 — The Engine</span>
-              <h2 className="section-title">The <span className="accent">Deduction</span> Engine</h2>
+              <span className="section-number">File 001 — The Bar</span>
+              <h2 className="section-title">Moxxi&apos;s <span className="accent">Bar</span></h2>
               <div className="section-line"></div>
-              <p className="section-desc">Present your observations. I shall render my analysis.</p>
+              <p className="section-desc">Pull up a seat. Tell me everything.</p>
             </div>
 
             <div className="engine-box reveal">
@@ -615,7 +616,7 @@ const scrollToSection = (id) => {
 
                   return (
                     <div key={i} className={`engine-message ${msg.role}`}>
-                      <span className="msg-role">{msg.role === 'user' ? 'You' : 'Ope Watson'}</span>
+                      <span className="msg-role">{msg.role === 'user' ? 'You' : 'Moxxi'}</span>
                       <div 
                         className="msg-content markdown-content"
                         dangerouslySetInnerHTML={{ __html: html }}
@@ -724,15 +725,15 @@ const scrollToSection = (id) => {
             </div>
             
             <div className="footer-philosophy">
-              <span className="philosophy-quote">&ldquo;The world is full of obvious things which nobody by any chance ever observes.&rdquo;</span>
-              <span className="philosophy-author">— Sherlock&apos;s Neighbor</span>
+              <span className="philosophy-quote">&ldquo;Everyone&apos;s hiding something, sugar. That&apos;s what makes them interesting.&rdquo;</span>
+              <span className="philosophy-author">— Moxxi</span>
             </div>
           </div>
 
           <div className="footer-bottom">
-            <span>The Mind Palace · MMXXVI</span>
-            <span className="footer-wig">🕵️</span>
-            <span>&ldquo;Elementary, my dear Sidekick!&rdquo;</span>
+            <span>Moxxi&apos;s Bar · MMXXVI</span>
+            <span className="footer-wig">🍸</span>
+            <span>&ldquo;Pretty things can be deadly. So can I.&rdquo;</span>
           </div>
         </footer>
       </div>
