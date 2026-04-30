@@ -570,7 +570,7 @@ const scrollToSection = (id) => {
             <p className="hero-subtitle">Welcome to the bar, sugar. Everyone ends up here eventually.</p>
             <div className="hero-ctas">
               <div className="cta-path">
-                <span className="cta-label">Moxxi's Bar</span>
+                <span className="cta-label">Moxxi&apos;s Bar</span>
                 <button className="hero-cta" onClick={() => scrollToSection('engine')}>
                   Chat <span className="arrow">→</span>
                 </button>
