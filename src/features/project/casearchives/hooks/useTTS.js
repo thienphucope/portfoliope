@@ -1,14 +1,22 @@
 import { useState, useRef, useCallback } from 'react';
 
-const TTS_API_URL = "https://thienphuc1052004--xtts-api-xttsapi-tts-generate.modal.run";
-const TTS_STREAM_URL = "https://thienphuc1052004--xtts-api-xttsapi-tts-stream.modal.run";
-const TTS_HEALTH_URL = "https://thienphuc1052004--xtts-api-xttsapi-ping.modal.run";
-const TTS_INTERRUPT_URL = "https://thienphuc1052004--xtts-api-xttsapi-tts-interrupt.modal.run";
+// XTTS API (old)
+// const TTS_API_URL = "https://thienphuc1052004--xtts-api-xttsapi-tts-generate.modal.run";
+// const TTS_STREAM_URL = "https://thienphuc1052004--xtts-api-xttsapi-tts-stream.modal.run";
+// const TTS_HEALTH_URL = "https://thienphuc1052004--xtts-api-xttsapi-ping.modal.run";
+// const TTS_INTERRUPT_URL = "https://thienphuc1052004--xtts-api-xttsapi-tts-interrupt.modal.run";
 
+// XTTS FT API (old)
 // const TTS_API_URL = "https://thienphuc1052004--xtts-api-xttsapi-tts-generate.modal.run";
 // const TTS_STREAM_URL = "https://thienphuc1052004--xtts-ft-api-xttsftapi-tts-stream.modal.run";
 // const TTS_HEALTH_URL = "https://thienphuc1052004--xtts-ft-api-xttsftapi-ping.modal.run";
 // const TTS_INTERRUPT_URL = "https://thienphuc1052004--xtts-ft-api-xttsftapi-tts-interrupt.modal.run";
+
+// GPT-SoVITS API (current)
+const TTS_API_URL = "https://thienphuc1052004--gpt-sovits-api-gptsovitsapi-tts.modal.run";
+const TTS_STREAM_URL = "https://thienphuc1052004--gpt-sovits-api-gptsovitsapi-tts-stream.modal.run";
+const TTS_HEALTH_URL = "https://thienphuc1052004--gpt-sovits-api-gptsovitsapi-tts-ping.modal.run";
+const TTS_INTERRUPT_URL = "https://thienphuc1052004--gpt-sovits-api-gptsovitsapi-tts-interrupt.modal.run";
 
 /**
  * Hook for Text-to-Speech synthesis using external Modal API.
@@ -57,7 +65,7 @@ export function useTTS() {
     isPlayingRef.current = true;
     
     if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 32000 });
     }
     const audioCtx = audioContextRef.current;
     
@@ -70,7 +78,7 @@ export function useTTS() {
         const res = await fetch(TTS_STREAM_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: rawText, language: lang })
+            body: JSON.stringify({ target_text: rawText, target_lang: lang, speed: 1.0 })
         });
         
         if (!res.ok) throw new Error("Failed to start TTS stream");
@@ -102,7 +110,7 @@ export function useTTS() {
             const pcm16 = new Int16Array(combined.buffer, combined.byteOffset, useLength / 2);
             if (pcm16.length === 0) continue;
             
-            const audioBuffer = audioCtx.createBuffer(1, pcm16.length, 24000);
+            const audioBuffer = audioCtx.createBuffer(1, pcm16.length, 32000);
             const channelData = audioBuffer.getChannelData(0);
             for (let i = 0; i < pcm16.length; i++) {
                 channelData[i] = pcm16[i] / 32768.0;
