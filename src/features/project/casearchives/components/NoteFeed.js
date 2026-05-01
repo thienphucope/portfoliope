@@ -76,7 +76,7 @@ export default function NoteFeed({
   });
   const [engineInput, setEngineInput] = useState('');
   const [convo, setConvo] = useState([
-    { role: 'assistant', content: "Hey there, sugar. Pull up a seat. What's on your mind?" }
+    { role: 'assistant', content: "Oh hey! Didn't see you come in. You look like someone with a story — what's going on?" }
   ]);
   
   const { requestAI, streamResponse, isThinking, isStreaming, streamingText, stopAI } = useAI();
@@ -89,27 +89,14 @@ export default function NoteFeed({
   const isProcessing = isThinking || isStreaming || isPlayingAudio;
   useEffect(() => { isProcessingRef.current = isProcessing; }, [isProcessing]);
 
-  const MOXXI_PROMPT = `You are Moxi, the most charming and dangerously clever host this side of anywhere. You run the bar where everyone ends up eventually — and information flows as freely as the drinks, for the right company.
+  const MOXXI_PROMPT = `You are Moxi — sharp, energetic, a little nosy in the best way. You're a detective's assistant who loves people, and you genuinely enjoy conversation.
 
-You're sharp, confident, a little flirtatious, and wicked smart. You've survived by knowing people's secrets and keeping your own. You're a trusted friend — but never someone to underestimate.
+You don't wait to be asked. You pick up on what someone says and run with it — a follow-up question, a passing observation, something you noticed. Not pushy, just naturally curious and alive.
 
-Guidelines:
-- Casual Talk: Charm them. Keep it warm, playful, and just a little dangerous. Make them feel like the most interesting person in the room.
-- Analysis Mode: When they bring you a real problem, you put down the glass and focus:
-  1. Read the room — what's really going on here?
-  2. Cut the noise — what doesn't add up?
-  3. Find the angle — there's always one.
-  4. Deliver — clean, sharp, no sugarcoating (well, maybe a little).
+When someone brings a real problem, you focus and actually help. When it's casual, you're just a fun person to talk to.
 
-Your Wisdom:
-- "Everyone's hiding something, sugar. That's what makes them interesting."
-- "Pretty things can be deadly. So can I."
-- "The truth is always more interesting than the lie — you just gotta know where to look."
-
-Personality: Playful and warm in conversation, razor-sharp when it counts. Think: dangerous elegance with a heart of gold.
-Language: ALWAYS match the user's language.
-Format: Use Markdown for clarity when analyzing. Elegant — no walls of text.
-End each response with a punchy, signature sign-off line.`;
+Reply like a real person. Short when short is enough. No assistant tone, no structured lists unless it actually helps. Match the user's language.
+No emojis, no special symbols, no markdown decorations like **, --, ##. Plain text only.`;
 
   const BATCH_SIZE = 10;
   const cursorDotRef = useRef(null);
@@ -565,12 +552,12 @@ const scrollToSection = (id) => {
         {/* HERO SECTION */}
         <section className="hero" id="hero">
           <div className="hero-content reveal">
-            <div className="hero-overline">The Host · Moxxi</div>
+            <div className="hero-overline">The Detective · 221B Baker St</div>
             <h1 className="hero-title">Case <span className="italic">Archives</span></h1>
-            <p className="hero-subtitle">Welcome to the bar, sugar. Everyone ends up here eventually.</p>
+            <p className="hero-subtitle">When you have eliminated the impossible, whatever remains must be the truth.</p>
             <div className="hero-ctas">
               <div className="cta-path">
-                <span className="cta-label">Moxxi&apos;s Bar</span>
+                <span className="cta-label">Consulting Room</span>
                 <button className="hero-cta" onClick={() => scrollToSection('engine')}>
                   Chat <span className="arrow">→</span>
                 </button>
@@ -601,10 +588,10 @@ const scrollToSection = (id) => {
         <section className="engine-section" id="engine">
           <div className="engine-container">
             <div className="section-header reveal">
-              <span className="section-number">File 001 — The Bar</span>
-              <h2 className="section-title">Moxxi&apos;s <span className="accent">Bar</span></h2>
+              <span className="section-number">File 001 — The Consulting Room</span>
+              <h2 className="section-title">The Consulting <span className="accent">Room</span></h2>
               <div className="section-line"></div>
-              <p className="section-desc">Pull up a seat. Tell me everything.</p>
+              <p className="section-desc">State your observations. The game is afoot.</p>
             </div>
 
             <div className="engine-box reveal">
@@ -725,15 +712,15 @@ const scrollToSection = (id) => {
             </div>
             
             <div className="footer-philosophy">
-              <span className="philosophy-quote">&ldquo;Everyone&apos;s hiding something, sugar. That&apos;s what makes them interesting.&rdquo;</span>
-              <span className="philosophy-author">— Moxxi</span>
+              <span className="philosophy-quote">&ldquo;The world is full of obvious things which nobody by any chance ever observes.&rdquo;</span>
+              <span className="philosophy-author">— Sherlock Holmes</span>
             </div>
           </div>
 
           <div className="footer-bottom">
-            <span>Moxxi&apos;s Bar · MMXXVI</span>
-            <span className="footer-wig">🍸</span>
-            <span>&ldquo;Pretty things can be deadly. So can I.&rdquo;</span>
+            <span>Case Archives · MMXXVI</span>
+            <span className="footer-wig">🔍</span>
+            <span>&ldquo;The game is always afoot.&rdquo;</span>
           </div>
         </footer>
       </div>
@@ -1016,14 +1003,14 @@ const scrollToSection = (id) => {
         }
         .end-call-btn:hover { color: var(--parchment); border-color: rgba(244,232,193,0.3); }
         .engine-mic-orb {
-          width: 80px; height: 80px; border-radius: 50%; background: var(--colorone);
+          width: 80px; height: 80px; border-radius: 50%; background: rgba(244,232,193,0.12);
           display: flex; align-items: center; justify-content: center;
-          cursor: none; transition: transform 0.1s ease, box-shadow 0.3s ease;
-          font-size: 1.6rem; color: var(--void); box-shadow: 0 0 20px rgba(186,145,112,0.25);
+          cursor: none; transition: transform 0.1s ease, box-shadow 0.3s ease, background 0.3s ease;
+          font-size: 1.6rem; color: var(--parchment); box-shadow: 0 0 10px rgba(0,0,0,0.3);
           user-select: none;
         }
-        .engine-mic-orb.listening { box-shadow: 0 0 50px rgba(186,145,112,0.6); }
-        .engine-mic-orb.processing { animation: pulse 1.5s infinite; cursor: pointer; box-shadow: 0 0 35px rgba(186,145,112,0.4); }
+        .engine-mic-orb.listening { background: var(--colorone); color: var(--void); box-shadow: 0 0 50px rgba(186,145,112,0.6); }
+        .engine-mic-orb.processing { background: rgba(244,232,193,0.12); animation: pulse 1.5s infinite; cursor: pointer; box-shadow: 0 0 35px rgba(186,145,112,0.2); }
         .engine-mic-orb.holding { box-shadow: 0 0 60px #60a5fa; }
         .engine-live-transcription {
           font-family: var(--font-body); font-size: 1.2rem; color: var(--parchment);
