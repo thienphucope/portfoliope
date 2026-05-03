@@ -5,12 +5,7 @@ const nextConfig = {
     return [
       {
         source: '/:path*',
-        has: [
-          {
-            type: 'host',
-            value: 'opewatson.org',
-          },
-        ],
+        has: [{ type: 'host', value: 'opewatson.org' }],
         destination: 'https://opewatson.com/:path*',
         permanent: true,
       },

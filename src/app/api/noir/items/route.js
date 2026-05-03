@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   try {
     const displayDir = join(process.cwd(), 'public', 'display');
-    const dataPath = join(process.cwd(), 'src', 'features', 'me', 'noirboard', 'utils', 'boardData.json');
+    const dataPath = join(process.cwd(), 'src', 'features', 'noirboard', 'utils', 'boardData.json');
     
     // 1. Scan directory for images
     const files = await readdir(displayDir);

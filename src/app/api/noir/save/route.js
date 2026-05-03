@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 export async function POST(request) {
   try {
     const { type, items, config } = await request.json();
-    const dataPath = join(process.cwd(), 'src', 'features', 'me', 'noirboard', 'utils', 'boardData.json');
+    const dataPath = join(process.cwd(), 'src', 'features', 'noirboard', 'utils', 'boardData.json');
     
     // 1. Read existing data
     let currentData = { items: [], config: {} };
