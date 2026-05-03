@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { FaYoutube, FaInstagram, FaGithub, FaEnvelope, FaTwitter } from 'react-icons/fa';
 import { ensureLibsLoaded, postProcess } from '../utils/markdown';
 
@@ -406,18 +407,18 @@ const scrollToSection = (id) => {
             <div className="hero-ctas">
               <div className="cta-path">
                 <span className="cta-label">Ask Watson</span>
-                <a className="hero-cta" href="/chat">
+                <Link className="hero-cta" href="/chat">
                   Consult <span className="arrow">→</span>
-                </a>
+                </Link>
               </div>
 
               <div className="cta-separator"></div>
 
               <div className="cta-path">
                 <span className="cta-label">Evidence Board</span>
-                <a className="hero-cta" href="/noirboard">
+                <Link className="hero-cta" href="/noirboard">
                   Inspect <span className="arrow">→</span>
-                </a>
+                </Link>
               </div>
 
               <div className="cta-separator"></div>
@@ -430,9 +431,9 @@ const scrollToSection = (id) => {
               </div>
             </div>
             <div className="hero-links">
-              <a href="/about" className="hero-link">About Watson</a>
-              <a href="/privacy" className="hero-link">Privacy Notes</a>
-              <a href="/terms" className="hero-link">Terms of Inquiry</a>
+              <Link href="/about" className="hero-link">About Watson</Link>
+              <Link href="/privacy" className="hero-link">Privacy Notes</Link>
+              <Link href="/terms" className="hero-link">Terms of Inquiry</Link>
             </div>
             <div className="scroll-indicator">
               <span>Scroll to Cases</span>
