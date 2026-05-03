@@ -28,7 +28,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 /* -------------------------- Tunable constants ----------------------------- */
 
 const SILENCE_MS            = 2000;   // quiet time before flushing utterance
-const MIN_FLUSH_WORDS       = 3;      // ignore micro-flushes (noise)
+const MIN_FLUSH_WORDS       = 1;      // ignore micro-flushes (noise)
 const WATCHDOG_MS           = 20000;  // no audio this long → recreate object
 const RESTART_DELAY_DESKTOP = 50;
 const RESTART_DELAY_MOBILE  = 200;

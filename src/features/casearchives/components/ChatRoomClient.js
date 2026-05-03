@@ -47,7 +47,7 @@ export default function ChatRoomClient() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [convo, streamingText]);
+  });
 
   const handleAnalyze = async (msgOverride) => {
     const userMsg = (typeof msgOverride === 'string' ? msgOverride : engineInput).trim();
@@ -137,10 +137,11 @@ export default function ChatRoomClient() {
   }, [handleInterrupt, stopManualMode, clearTranscription]);
 
   const startLiveCall = useCallback(() => {
+    executeInterrupt();
     isLiveCallRef.current = true;
     setIsLiveCall(true);
     startListening();
-  }, [startListening]);
+  }, [startListening, executeInterrupt]);
 
   const endLiveCall = useCallback(() => {
     isLiveCallRef.current = false;
@@ -420,17 +421,26 @@ export default function ChatRoomClient() {
         .bubble-content {
           font-family: var(--font-body);
           font-size: 1.2rem;
-          color: var(--parchment);
+          color: #ffffff;
           line-height: 1.6;
         }
         
         .message-row.user .bubble-content {
-          color: rgba(244, 232, 193, 0.85);
+          color: rgba(255, 255, 255, 0.9);
         }
 
         .message-row.assistant .bubble-content { font-style: italic; }
         .bubble-content p { margin: 0 0 12px 0; }
         .bubble-content p:last-child { margin-bottom: 0; }
+        .bubble-content a {
+          color: var(--colorone);
+          text-decoration-color: rgba(186, 145, 112, 0.55);
+          text-underline-offset: 3px;
+        }
+        .bubble-content a:hover {
+          color: #d6ad8a;
+          text-decoration-color: currentColor;
+        }
 
         .streaming-cursor {
           display: inline-block;

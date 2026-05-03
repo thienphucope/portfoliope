@@ -400,42 +400,42 @@ const scrollToSection = (id) => {
         {/* HERO SECTION */}
         <section className="hero" id="hero">
           <div className="hero-content reveal">
-            <div className="hero-overline">The Detective · 221B Baker St</div>
-            <h1 className="hero-title">Case <span className="italic">Archives</span></h1>
+            <div className="hero-overline">Case Archives - Sherlock Holmes inspired</div>
+            <h1 className="hero-title">Ope <span className="italic">Watson</span></h1>
             <p className="hero-subtitle">When you have eliminated the impossible, whatever remains must be the truth.</p>
             <div className="hero-ctas">
               <div className="cta-path">
-                <span className="cta-label">Consulting Room</span>
+                <span className="cta-label">Ask Watson</span>
                 <a className="hero-cta" href="/chat">
-                  Chat <span className="arrow">→</span>
+                  Consult <span className="arrow">→</span>
                 </a>
               </div>
 
               <div className="cta-separator"></div>
 
               <div className="cta-path">
-                <span className="cta-label">Noir Board</span>
+                <span className="cta-label">Evidence Board</span>
                 <a className="hero-cta" href="/noirboard">
-                  Board <span className="arrow">→</span>
+                  Inspect <span className="arrow">→</span>
                 </a>
               </div>
 
               <div className="cta-separator"></div>
 
               <div className="cta-path">
-                <span className="cta-label">Archive Dossier</span>
+                <span className="cta-label">Case Dossier</span>
                 <button className="hero-cta" onClick={() => scrollToSection('cases')}>
-                  Observe <span className="arrow">→</span>
+                  Browse <span className="arrow">→</span>
                 </button>
               </div>
             </div>
             <div className="hero-links">
-              <a href="/about" className="hero-link">About</a>
-              <a href="/privacy" className="hero-link">Privacy</a>
-              <a href="/terms" className="hero-link">Terms</a>
+              <a href="/about" className="hero-link">About Watson</a>
+              <a href="/privacy" className="hero-link">Privacy Notes</a>
+              <a href="/terms" className="hero-link">Terms of Inquiry</a>
             </div>
             <div className="scroll-indicator">
-              <span>Scroll to Observe</span>
+              <span>Scroll to Cases</span>
               <div className="scroll-line"></div>
             </div>
           </div>
@@ -486,7 +486,7 @@ const scrollToSection = (id) => {
           </div>
 
           <div className="footer-bottom">
-            <span>Case Archives · MMXXVI</span>
+            <span>Ope Watson · MMXXVI</span>
             <span className="footer-wig">🔍</span>
             <span>&ldquo;The game is always afoot.&rdquo;</span>
           </div>
@@ -591,7 +591,7 @@ const scrollToSection = (id) => {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 60px;
+          gap: 36px;
           margin-top: 50px;
           animation: fadeInUp 1.5s ease 0.5s both;
         }
@@ -781,7 +781,7 @@ const scrollToSection = (id) => {
           section { padding: 6rem 0.25rem; }
           .hero { height: auto; min-height: 100dvh; padding: 5rem 1rem; }
           .nav-mind-palace { display: none; }
-          .hero-ctas { flex-direction: column; gap: 30px; margin-top: 30px; }
+          .hero-ctas { flex-direction: column; gap: 20px; margin-top: 30px; }
           .cta-separator { width: 100px; height: 1px; background: linear-gradient(to right, transparent, var(--colorone-dim), transparent); }
           .nav-label { writing-mode: horizontal-tb; transform: none; font-size: 0.7rem; letter-spacing: 1px; }
           .nav-item::before { display: none; }
