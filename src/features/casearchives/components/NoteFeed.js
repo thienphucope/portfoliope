@@ -779,7 +779,7 @@ const scrollToSection = (id) => {
         .footer-wig { font-size: 1.5rem; opacity: 0.6; }
 
         @media (max-width: 1024px) {
-          section { padding: 6rem 0.25rem; }
+          section { padding: 4rem 0.25rem; }
           .hero { height: auto; min-height: 100dvh; padding: 5rem 1rem; }
           .nav-mind-palace { display: none; }
           .hero-ctas { flex-direction: column; gap: 20px; margin-top: 30px; }
@@ -789,7 +789,7 @@ const scrollToSection = (id) => {
           .nav-item { padding: 0.5rem; border: none; background: transparent; flex: 1; text-align: center; max-width: 110px; }
           .nav-item.active { background: transparent; color: var(--colorone); font-weight: bold; border-bottom: 2px solid var(--colorone); }
 
-          .case-item { flex-direction: column; gap: 2rem; padding: 4rem 0.75rem; }
+          .case-item { flex-direction: column; gap: 1.5rem; padding: 3rem 0.75rem; }
           .cases-timeline { padding-left: 1.5rem; padding-right: 0.5rem; }
           .case-item::after { left: -1.875rem; top: 4.125rem; width: 0.5rem; height: 0.5rem; }
           .case-left { min-width: auto; }
@@ -801,13 +801,23 @@ const scrollToSection = (id) => {
         }
 
         @media (max-width: 480px) {
-          section { padding: 5rem 0.15rem; }
-          .hero-title { font-size: 2.6rem; }
-          .hero-subtitle { font-size: 1rem; }
-          .nav-item { padding: 0.5rem 0.15rem; }
-          .nav-label { font-size: 0.6rem; }
+          section { padding: 2.5rem 0.15rem; }
+          .hero-title { font-size: 2.2rem; }
+          .hero-subtitle { font-size: 0.95rem; margin-top: 15px; }
+          .hero-ctas { gap: 15px; margin-top: 25px; }
+          .hero-cta { padding: 14px 30px; font-size: 0.65rem; }
+          .cta-separator { width: 60px; }
+          .nav-item { padding: 0.4rem 0.1rem; }
+          .nav-label { font-size: 0.55rem; }
           .cases-timeline { padding-left: 1.25rem; }
-          .case-item::after { left: -1.5rem; }
+          .cases-timeline::before { left: 0.75rem; }
+          .case-item { padding: 2rem 0.5rem; gap: 1rem; }
+          .case-item::after { left: -0.75rem; top: 2.125rem; }
+          .case-info h3 { font-size: 1.5rem; }
+          .case-status { padding: 0.5rem 1.25rem; font-size: 0.75rem; }
+          .footer { padding: 40px 20px 20px; }
+          .footer-container { flex-direction: column; gap: 2rem; text-align: center; align-items: center; }
+          .footer-philosophy { text-align: center; }
         }
 
       `}</style>

@@ -1,0 +1,5 @@
+- [Oxford English Dictionary (TXT)](https://raw.githubusercontent.com/sujithps/Dictionary/refs/heads/master/Oxford%20English%20Dictionary.txt)
+- [Words CEFR Dataset (CSV)](https://github.com/Maximax67/Words-CEFR-Dataset/blob/main/datasets/word_list_cefr.csv)
+- [10,000 English Words CERF Labelled (Kaggle)](https://www.kaggle.com/datasets/nezahatkk/10-000-english-words-cerf-labelled)
+- [Free Dictionary API](https://dictionaryapi.dev/)
+- [Unsplash Photo: Brown and white city buildings](https://unsplash.com/photos/brown-and-white-city-buildings-_mn9oGqeWRA)

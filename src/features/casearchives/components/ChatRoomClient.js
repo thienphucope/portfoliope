@@ -326,19 +326,19 @@ export default function ChatRoomClient() {
           gap: 4px;
         }
         .chat-name {
-          font-family: var(--font-display);
-          font-size: 1.4rem;
-          font-style: italic;
-          color: var(--colorone);
-          letter-spacing: 1px;
+          font-family: var(--font-typewriter);
+          font-size: 0.65rem;
+          color: rgba(196, 180, 138, 0.55);
+          letter-spacing: 3px;
+          text-transform: uppercase;
         }
         .chat-overline {
           font-family: var(--font-typewriter);
-          font-size: 0.7rem;
-          letter-spacing: 4px;
+          font-size: 0.85rem;
+          letter-spacing: 4.5px;
           text-transform: uppercase;
-          color: var(--colorone-dim);
-          opacity: 0.8;
+          color: var(--colorone);
+          opacity: 0.95;
         }
         
         .presence-status {
@@ -495,8 +495,10 @@ export default function ChatRoomClient() {
           resize: none;
           max-height: 120px;
           overflow-y: auto;
+          scrollbar-width: none;
           opacity: 0.9;
         }
+        .chat-input::-webkit-scrollbar { display: none; }
         .chat-input::placeholder { color: rgba(244, 232, 193, 0.2); font-style: italic; }
         .chat-input:disabled { opacity: 0.4; }
 
@@ -570,8 +572,8 @@ export default function ChatRoomClient() {
         /* Responsive */
         @media (max-width: 768px) {
           .chat-header { padding: 16px 20px; }
-          .chat-name { font-size: 1.2rem; }
-          .chat-overline { font-size: 0.6rem; letter-spacing: 2px; }
+          .chat-name { font-size: 0.6rem; }
+          .chat-overline { font-size: 0.75rem; letter-spacing: 2px; }
           .messages-area { padding: 24px 16px 12px; }
           .message-bubble { max-width: 95%; font-size: 1.1rem; }
           .input-area { padding: 16px; }
