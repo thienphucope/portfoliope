@@ -2,12 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Fingerprint } from 'lucide-react';
 
-/**
- * A "packaged" hook that handles both the click logic and the UI rendering for fingerprint effects.
- * @param {string} color - The color of the fingerprints.
- * @returns {JSX.Element} The rendered fingerprint elements.
- */
-export default function useFingerprints(color = 'var(--colorone)') {
+export default function FingerprintEffect({ color = 'var(--colorone)' }) {
   const [fingerprints, setFingerprints] = useState([]);
 
   useEffect(() => {

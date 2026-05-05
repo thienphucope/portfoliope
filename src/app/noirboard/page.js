@@ -1,5 +1,5 @@
-import NoirboardClient from '@/features/noirboard/NoirboardClient';
+import BulletinBoard from '@/features/noirboard/components/BulletinBoard';
 
 export default function NoirboardPage() {
-  return <NoirboardClient />;
+  return <BulletinBoard />;
 }

@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { Footprints } from 'lucide-react';
 import Link from 'next/link';
 
-import useSpotlight from '@/features/about/hooks/useSpotlight';
+import useSpotlight from '@/hooks/useSpotlight';
 
 export default function Hero() {
   const [displayText, setDisplayText] = useState("");
