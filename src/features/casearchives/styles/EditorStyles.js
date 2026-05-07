@@ -154,6 +154,46 @@ export default function EditorStyles() {
           outline: none;
         }
 
+        /* ── RAW MODE EDITOR ──────────────────────────────────────────────── */
+        .raw-mode-editor {
+          flex: 1;
+          width: 100%;
+          background: transparent;
+          border: none;
+          border-top: 1px solid rgba(255, 250, 205, 0.1);
+          color: var(--colortext-markdown);
+          font-family: monospace;
+          font-size: 13px;
+          line-height: 1.7;
+          padding: 16px 4px;
+          resize: none;
+          outline: none;
+          caret-color: var(--accent);
+          box-sizing: border-box;
+          white-space: pre-wrap;
+          overflow-wrap: break-word;
+        }
+
+        /* ── TABLE EDITOR ─────────────────────────────────────────────────── */
+        .table-editor { width: 100%; border-collapse: collapse; margin: 0; }
+        .table-editor th, .table-editor td {
+          border: 1px solid rgba(255, 250, 205, 0.2);
+          padding: 6px 10px;
+          min-width: 60px;
+          max-width: 25vw;
+          white-space: normal;
+          overflow-wrap: break-word;
+          word-break: break-word;
+          outline: none;
+          color: var(--colortext-markdown);
+          caret-color: var(--accent);
+        }
+        .table-editor th { font-weight: 700; color: #fff; background: rgba(255, 250, 205, 0.05); }
+        .table-editor th:focus, .table-editor td:focus {
+          background: rgba(255, 250, 205, 0.08);
+          border-color: rgba(255, 250, 205, 0.4);
+        }
+
         .status-msg { opacity:.4; font-family:'Inter',sans-serif; font-size:13px; padding:20px 0; }
 
         /* ── SLASH MENU ─────────────────────────────────────────────────────── */

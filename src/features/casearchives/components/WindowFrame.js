@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { Maximize2, Minimize2, X, Zap, Save, Pencil, Eye, MessageSquare, Plus, Loader2, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight, Upload, Search, Pin, PinOff, Network, FileText } from 'lucide-react';
+import { Maximize2, Minimize2, X, Zap, Save, Pencil, Eye, Code2, MessageSquare, Plus, Loader2, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight, Upload, Search, Network, FileText } from 'lucide-react';
 
 /**
  * WindowFrame component that provides a title bar, borders, and window controls
@@ -17,7 +17,7 @@ export default function WindowFrame({
   onSave,
   saveStatus = 'idle',
   onToggleEdit,
-  isEditing = false,
+  editMode = 'view',
   onComment,
   onNewNote,
   pdfState = null,
@@ -31,8 +31,6 @@ export default function WindowFrame({
   children,
   isMobile,
   isHidden = false,
-  isPinned = false,
-  onTogglePin,
   onBarClick,
   onToggleGraph,
   onTogglePdf,
@@ -205,36 +203,40 @@ export default function WindowFrame({
           {/* Editor Specific Controls */}
           {id === 'editor' && (
             <>
-              <button className="window-control-btn" onClick={onNewNote} title="New Note">
-                <Plus size={16} />
-              </button>
-              <button className="window-control-btn" onClick={onComment} title="Add Comment">
-                <MessageSquare size={16} />
-              </button>
-              <button
-                className={`window-control-btn ${isEditing ? 'active-mode' : ''}`}
-                onClick={onToggleEdit}
-                title={isEditing ? "Switch to Read Mode" : "Switch to Edit Mode"}
-              >
-                {isEditing ? <Eye size={16} /> : <Pencil size={16} />}
-              </button>
-              <button
-                className={`window-control-btn save-btn ${saveStatus !== 'idle' ? 'status-' + saveStatus : ''}`}
-                onClick={onSave}
-                disabled={saveStatus === 'saving'}
-                title="Save Changes"
-              >
-                {saveStatus === 'saving' ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : saveStatus === 'saved' ? (
-                  <CheckCircle2 size={16} color="#4caf50" />
-                ) : saveStatus === 'error' ? (
-                  <AlertCircle size={16} color="#f44336" />
-                ) : (
-                  <Save size={16} />
-                )}
-              </button>
-              <div className="control-separator" />
+              {!isGraphActive && !isPdfActive && (
+                <>
+                  <button className="window-control-btn" onClick={onNewNote} title="New Note">
+                    <Plus size={16} />
+                  </button>
+                  <button className="window-control-btn" onClick={onComment} title="Add Comment">
+                    <MessageSquare size={16} />
+                  </button>
+                  <button
+                    className={`window-control-btn ${editMode !== 'view' ? 'active-mode' : ''}`}
+                    onClick={onToggleEdit}
+                    title={editMode === 'view' ? "Inline Edit" : editMode === 'inline' ? "Raw Edit" : "View Mode"}
+                  >
+                    {editMode === 'view' ? <Pencil size={16} /> : editMode === 'inline' ? <Code2 size={16} /> : <Eye size={16} />}
+                  </button>
+                  <button
+                    className={`window-control-btn save-btn ${saveStatus !== 'idle' ? 'status-' + saveStatus : ''}`}
+                    onClick={onSave}
+                    disabled={saveStatus === 'saving'}
+                    title="Save Changes"
+                  >
+                    {saveStatus === 'saving' ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : saveStatus === 'saved' ? (
+                      <CheckCircle2 size={16} color="#4caf50" />
+                    ) : saveStatus === 'error' ? (
+                      <AlertCircle size={16} color="#f44336" />
+                    ) : (
+                      <Save size={16} />
+                    )}
+                  </button>
+                  <div className="control-separator" />
+                </>
+              )}
               <button className={`window-control-btn ${isGraphActive ? 'active-mode' : ''}`} onClick={onToggleGraph} title="Graph View">
                 <Network size={16} />
               </button>

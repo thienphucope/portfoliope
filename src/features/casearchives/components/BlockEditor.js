@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
 import { ensureLibsLoaded, postProcess, fitHeading } from '../utils/markdown';
 import { useAI } from '@/hooks/useAI';
-import { useBlockNavigation } from '../hooks/useBlockNavigation';
 import { mkBlock, cursorToEnd, getLineClass, SLASH_COMMANDS } from '../utils/editor';
+import EditorStyles from '../styles/EditorStyles';
+import MarkdownStyles from '../styles/MarkdownStyles';
 
 import { X, ChevronLeft, ChevronRight, Volume2, VolumeX, FileText, Upload, Plus, Minus } from 'lucide-react';
 
@@ -508,10 +509,73 @@ export const RawTextEditor = ({ block, onSave, onDeactivate, onCreateAfter, onNa
   );
 };
 
+// ─── TABLE EDITOR ─────────────────────────────────────────────────────────────
+
+const TableEditor = ({ block, onSave, onDeactivate }) => {
+  const tableRef = useRef(null);
+
+  const { headers, rows } = useMemo(() => {
+    const lines = block.raw.trim().split('\n').filter(l => l.trim().includes('|'));
+    if (lines.length < 2) return { headers: [], rows: [] };
+    const parseRow = (line) => line.split('|').slice(1, -1).map(c => c.trim());
+    return { headers: parseRow(lines[0]), rows: lines.slice(2).map(parseRow) };
+  }, [block.raw]);
+
+  const serializeTable = useCallback(() => {
+    const table = tableRef.current;
+    if (!table) return block.raw;
+    const allRows = Array.from(table.querySelectorAll('tr'));
+    if (!allRows.length) return block.raw;
+    const hdrs = Array.from(allRows[0].querySelectorAll('th')).map(c => c.textContent.trim());
+    const bodyRows = allRows.slice(1).map(tr => Array.from(tr.querySelectorAll('td')).map(c => c.textContent.trim()));
+    const widths = hdrs.map((h, i) => Math.max(h.length, ...bodyRows.map(r => (r[i] || '').length), 3));
+    const pad = (s, w) => s.padEnd(w, ' ');
+    const toMd = (cells) => '| ' + hdrs.map((_, i) => pad(cells[i] || '', widths[i])).join(' | ') + ' |';
+    return [toMd(hdrs), '| ' + widths.map(w => '-'.repeat(w)).join(' | ') + ' |', ...bodyRows.map(toMd)].join('\n');
+  }, [block.raw]);
+
+  const handleBlur = useCallback((e) => {
+    if (tableRef.current?.contains(e.relatedTarget)) return;
+    onSave(serializeTable());
+    onDeactivate();
+  }, [onSave, onDeactivate, serializeTable]);
+
+  if (!headers.length) {
+    return <CodeRawEditor block={block} onSave={onSave} onDeactivate={onDeactivate} onNavigate={() => {}} />;
+  }
+
+  return (
+    <div className="table-container">
+      <table ref={tableRef} className="table-editor active-block" onBlur={handleBlur}>
+        <thead>
+          <tr>
+            {headers.map((h, i) => (
+              <th key={i} contentEditable suppressContentEditableWarning
+                onKeyDown={e => { if (e.key === 'Escape') e.target.blur(); }}
+              >{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, ri) => (
+            <tr key={ri}>
+              {headers.map((_, ci) => (
+                <td key={ci} contentEditable suppressContentEditableWarning
+                  onKeyDown={e => { if (e.key === 'Escape') e.target.blur(); }}
+                >{row[ci] || ''}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
 // ─── ACTIVE BLOCK ─────────────────────────────────────────────────────────────
 
-export const ActiveBlock = ({ block, onSave, onDeactivate, onCreateAfter, onNavigate, cursorPosition }) => {
-  if (block.type === 'code' || block.type === 'table') {
+export const ActiveBlock = ({ block, onSave, onDeactivate, onCreateAfter, onNavigate, cursorPosition, isInlineMode }) => {
+  if (block.type === 'code' || (block.type === 'table' && !isInlineMode)) {
     return (
       <CodeRawEditor
         block={block}
@@ -521,6 +585,9 @@ export const ActiveBlock = ({ block, onSave, onDeactivate, onCreateAfter, onNavi
         cursorPosition={cursorPosition}
       />
     );
+  }
+  if (block.type === 'table') {
+    return <TableEditor block={block} onSave={onSave} onDeactivate={onDeactivate} />;
   }
   return (
     <RawTextEditor
@@ -536,16 +603,53 @@ export const ActiveBlock = ({ block, onSave, onDeactivate, onCreateAfter, onNavi
 
 // ─── BLOCK EDITOR ─────────────────────────────────────────────────────────────
 
-const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, onToggleEditing, onSaveRef, fileRegistry = {}, reader }) => {
+const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, editMode = 'view', onToggleEditing, onSaveRef, fileRegistry = {}, reader }) => {
   const [blocks, setBlocks]       = useState([]);
   const [libsReady, setLibsReady] = useState(false);
   const [readingBlockIndex, setReadingBlockIndex] = useState(-1);
   const isAutoReadingRef = useRef(false);
   const readingIndexRef = useRef(-1);
+  const isEditing = editMode !== 'view';
+  const rawValueRef = useRef('');
+  const rawTextAreaRef = useRef(null);
+  const prevEditModeRef = useRef(editMode);
 
   useEffect(() => { ensureLibsLoaded().then(() => setLibsReady(true)); }, []);
 
-  const { activeBlockIndex, setActive, cursorPos, setCursorPos, createBlockAfter, navigateBlock } = useBlockNavigation({ blocks, setBlocks });
+  useEffect(() => {
+    const handleClick = (e) => {
+      const container = e.target.closest('.video-container');
+      if (!container) return;
+      container.classList.add('active');
+      const deactivate = () => {
+        container.classList.remove('active');
+        document.removeEventListener('wheel', deactivate);
+      };
+      document.addEventListener('wheel', deactivate, { passive: true, once: true });
+    };
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, []);
+
+  const [activeBlockIndex, setActive] = useState(null);
+  const [cursorPos, setCursorPos] = useState('end');
+
+  const createBlockAfter = useCallback((index) => {
+    const fresh = { id: `b${Date.now()}${Math.random().toString(36).slice(2, 6)}`, raw: '', type: 'paragraph' };
+    setBlocks(prev => { const n = [...prev]; n.splice(index + 1, 0, fresh); return n; });
+    setActive(index + 1);
+  }, [setBlocks]);
+
+  const navigateBlock = useCallback((index, direction, deleteBlock = false) => {
+    if (deleteBlock) {
+      setBlocks(prev => { if (prev.length <= 1) return prev; const n = [...prev]; n.splice(index, 1); return n; });
+      setCursorPos('end');
+      setActive(Math.max(0, index - 1));
+      return;
+    }
+    if (direction === 'up' && index > 0) { setCursorPos('end'); setActive(index - 1); }
+    if (direction === 'down' && index < blocks.length - 1) { setCursorPos('start'); setActive(index + 1); }
+  }, [blocks.length, setBlocks]);
 
   useEffect(() => {
     if (!libsReady || !window.marked || !fileName) return;
@@ -635,18 +739,59 @@ const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, on
   const blocksRef = useRef(blocks);
   useEffect(() => { blocksRef.current = blocks; }, [blocks]);
 
+  useLayoutEffect(() => {
+    if (editMode !== 'raw' || !rawTextAreaRef.current) return;
+    const raw = blocksRef.current.map(b => b.raw).join('\n\n');
+    rawTextAreaRef.current.value = raw;
+    rawValueRef.current = raw;
+  }, [editMode]);
+
+  useEffect(() => {
+    const prev = prevEditModeRef.current;
+    prevEditModeRef.current = editMode;
+    if (prev !== 'raw' || editMode === 'raw') return;
+    const raw = rawValueRef.current;
+    if (!raw || !window.marked) return;
+    const tokens = window.marked.lexer(raw);
+    const newBlocks = tokens.filter(t => t.type !== 'space').map(t => mkBlock(t.raw.trimEnd(), t.type));
+    setBlocks(newBlocks.length > 0 ? newBlocks : [mkBlock('', 'paragraph')]);
+  }, [editMode]);
+
   useEffect(() => {
     if (onSaveRef) {
       onSaveRef.current = async () => {
-        const raw = blocksRef.current.map(b => b.raw).join('\n\n');
+        const raw = editMode === 'raw'
+          ? (rawValueRef.current || blocksRef.current.map(b => b.raw).join('\n\n'))
+          : blocksRef.current.map(b => b.raw).join('\n\n');
         await onSaveFile(raw);
       };
     }
-  }, [onSaveRef, onSaveFile]);
+  }, [onSaveRef, onSaveFile, editMode]);
 
   if (!libsReady) return <div className="status-msg">Booting Vault Engine…</div>;
 
+  if (editMode === 'raw') {
+    return (
+      <>
+        <EditorStyles />
+        <MarkdownStyles />
+        <div className="block-editor" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <TitleBlock fileName={fileName} reader={reader} onDoubleClick={() => {}} isReading={false} />
+          <textarea
+            ref={rawTextAreaRef}
+            className="raw-mode-editor"
+            spellCheck={false}
+            onInput={(e) => { rawValueRef.current = e.target.value; }}
+          />
+        </div>
+      </>
+    );
+  }
+
   return (
+    <>
+    <EditorStyles />
+    <MarkdownStyles />
     <div className="block-editor">
       <TitleBlock fileName={fileName} reader={reader} onDoubleClick={() => startReadingFrom(-1)} isReading={isPlaying && readingBlockIndex === -1} />
       {blocks.map((block, index) => {
@@ -673,6 +818,7 @@ const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, on
                 onCreateAfter={() => createBlockAfter(index)}
                 onNavigate={(dir, del) => navigateBlock(index, dir, del)}
                 cursorPosition={cursorPos}
+                isInlineMode={editMode === 'inline'}
               />
             )}
           </div>
@@ -692,6 +838,7 @@ const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, isEditing, on
         }
       `}</style>
     </div>
+    </>
   );
 };
 

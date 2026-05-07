@@ -30,21 +30,6 @@ export const configureMarked = () => {
 
   const renderer = new window.marked.Renderer();
 
-  renderer.table = (token) => {
-    const headerHtml = token.header.map(cell => {
-      const align = cell.align ? ` style="text-align:${cell.align}"` : '';
-      return `<th${align}>${window.marked.parseInline(cell.text)}</th>`;
-    }).join('');
-    const bodyHtml = token.rows.map(row => {
-      const rowContent = row.map(cell => {
-        const align = cell.align ? ` style="text-align:${cell.align}"` : '';
-        return `<td${align}>${window.marked.parseInline(cell.text)}</td>`;
-      }).join('');
-      return `<tr>${rowContent}</tr>`;
-    }).join('');
-    return `<div class="table-container"><table><thead><tr>${headerHtml}</tr></thead><tbody>${bodyHtml}</tbody></table></div>`;
-  };
-
   renderer.code = (token) => {
     const lang = token.lang || 'text';
     const code = token.text;
@@ -205,6 +190,14 @@ export const fitHeading = (el, maxSize = 500) => {
 
 export const postProcess = (el) => {
   if (!el) return;
+  el.querySelectorAll('table:not(.table-editor)').forEach(table => {
+    if (!table.closest('.table-container')) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'table-container';
+      table.parentNode.insertBefore(wrapper, table);
+      wrapper.appendChild(table);
+    }
+  });
   if (window.renderMathInElement) {
     window.renderMathInElement(el, {
       delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }],

@@ -127,7 +127,6 @@ export function useFileMutations({
     [fileName, saveOneFile]
   );
 
-  /** Called by FloatingActions save button — delegates to BlockEditor's save ref */
   const handleSidebarSave = useCallback(async () => {
     if (!saveHandlerRef.current) return;
     setSaveStatus('saving');

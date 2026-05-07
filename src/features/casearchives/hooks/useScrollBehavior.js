@@ -10,39 +10,13 @@ const OVERLAY_TABS = new Set(['chat', 'pdf']);
  * - Tab-change → smooth animated horizontal scroll to target tab
  * - Mobile header show/hide on scroll
  */
-export function useScrollBehavior({ appShellRef, tabs, setShowHeader, setShowFunctionBall }) {
+export function useScrollBehavior({ appShellRef, tabs }) {
   const isTabScrolling      = useRef(false);
   const tabAnimId           = useRef(null);
   const targetScrollX       = useRef(null);
   const isWheelScrollingX   = useRef(false);
   const verticalScrollTargets = useRef(new Map());
   const isWheelScrollingY   = useRef(new Map());
-
-  // ─── Mobile header visibility ──────────────────────────────────────────────
-
-  useEffect(() => {
-    const handleGlobalScroll = (e) => {
-      if (window.innerWidth > 1024) return;
-      const target = e.target;
-      if (!target || (!target.scrollTop && target !== document.documentElement)) return;
-
-      const currentScrollY = target.scrollTop || window.scrollY;
-      const diff = currentScrollY - (target._lastScrollY || 0);
-
-      if (diff > 10 && currentScrollY > 100) {
-        setShowHeader(false);
-        if (setShowFunctionBall) setShowFunctionBall(false);
-      } else if (diff < -10) {
-        setShowHeader(true);
-        if (setShowFunctionBall) setShowFunctionBall(true);
-      }
-
-      target._lastScrollY = currentScrollY;
-    };
-
-    window.addEventListener('scroll', handleGlobalScroll, true);
-    return () => window.removeEventListener('scroll', handleGlobalScroll, true);
-  }, [setShowHeader, setShowFunctionBall]);
 
   // ─── Scroll to specific tab ────────────────────────────────────────────────
 

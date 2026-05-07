@@ -1,4 +1,5 @@
 import React from 'react';
+import PromptStyles from '../styles/PromptStyles';
 
 /**
  * Modal overlay components for user interactions in the case vault, handling
@@ -15,6 +16,7 @@ export default function PromptOverlays({
 }) {
   return (
     <>
+      <PromptStyles />
       {passPrompt && (
         <div className="pass-overlay" onClick={() => { passPrompt.reject(new Error('cancelled')); setPassPrompt(null); }}>
           <div className="pass-modal" onClick={e => e.stopPropagation()}>
