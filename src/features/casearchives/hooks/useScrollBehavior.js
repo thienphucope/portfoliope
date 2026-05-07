@@ -180,5 +180,11 @@ export function useScrollBehavior({ appShellRef, tabs }) {
     return () => { if (shell) shell.removeEventListener('wheel', handleWheel); };
   }, [appShellRef]);
 
-  return { scrollToTab };
+  const resetScroll = useCallback((el) => {
+    if (!el) return;
+    verticalScrollTargets.current.delete(el);
+    isWheelScrollingY.current.set(el, false);
+  }, []);
+
+  return { scrollToTab, resetScroll };
 }

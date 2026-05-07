@@ -115,6 +115,8 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
   const [editPass, setEditPass] = useState(() => { try { return sessionStorage.getItem('vault_edit_pass') || ''; } catch { return ''; } });
   const appShellRef  = useRef(null);
   const sessionIdRef = useRef(Math.random().toString(36).substring(2, 15));
+  const scrollPosMap = useRef({});
+  const markdownContainerRef = useRef(null);
   const serverGraphRef = useRef(serverHydratedData?.graph || { nodes: [], links: [] });
 
   const applyFileContent = useCallback((repoKey, newContent) => {
@@ -193,7 +195,7 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
     return base;
   }, [allFiles, fileTree.length]);
 
-  const { scrollToTab } = useScrollBehavior({ appShellRef, tabs });
+  const { scrollToTab, resetScroll } = useScrollBehavior({ appShellRef, tabs });
   useEffect(() => { if (activeTab && !activeOverlay) scrollToTab(activeTab); }, [activeTab, activeOverlay, scrollToTab]);
 
   useEffect(() => {
@@ -226,6 +228,12 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
     };
     const t = setTimeout(checkBottom, 400); return () => clearTimeout(t);
   }, [content, activeTab, activeOverlay, tabs.length]);
+
+  useEffect(() => {
+    if (!fileName || !markdownContainerRef.current) return;
+    const saved = scrollPosMap.current[fileName] || 0;
+    markdownContainerRef.current.scrollTop = saved;
+  }, [fileName, contentKey]);
 
   useEffect(() => {
     if (window.location.pathname === '/' && !window.history.state) window.history.replaceState({ isRoot: true }, '', '/');
@@ -275,7 +283,7 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
   const activeTabPanel = useMemo(() => {
     const activeT = tabs.find(t => t.id === activeTab); if (!activeT) return null;
     return (
-      <article className="markdown-container" style={{ flex: 1, overflowY: editMode === 'raw' ? 'hidden' : 'auto', overflowX: 'hidden', ...(editMode === 'raw' && { display: 'flex', flexDirection: 'column' }) }} onScroll={(e) => { const t = e.target; const bottom = t.scrollHeight - t.scrollTop <= t.clientHeight + 100; if (bottom !== isAtBottom) setIsAtBottom(bottom); }}>
+      <article ref={markdownContainerRef} className="markdown-container" style={{ flex: 1, overflowY: editMode === 'raw' ? 'hidden' : 'auto', overflowX: 'hidden', ...(editMode === 'raw' && { display: 'flex', flexDirection: 'column' }) }} onScroll={(e) => { const t = e.target; if (fileName) scrollPosMap.current[fileName] = t.scrollTop; const bottom = t.scrollHeight - t.scrollTop <= t.clientHeight + 100; if (bottom !== isAtBottom) setIsAtBottom(bottom); }}>
         <div className="note-content-wrapper" style={editMode === 'raw' ? { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 } : undefined}>
           {fileName === activeT.id ? (
             <BlockEditor content={content} fileName={fileName} onLinkClick={handleLinkClick} onSaveFile={handleSaveFile} editMode={activeT.type === 'editor' ? editMode : 'view'} readOnly={activeT.type === 'static'} onToggleEditing={handleCycleEditMode} onSaveRef={saveHandlerRef} fileRegistry={fileRegistry.current} reader={augmentedReader} />
