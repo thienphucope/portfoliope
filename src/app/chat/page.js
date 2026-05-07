@@ -1,4 +1,4 @@
-import ChatRoomClient from '@/features/casearchives/components/ChatRoomClient';
+import ChatRoom from '@/features/chatroom/ChatRoom';
 
 export const metadata = {
   title: 'The Consulting Room',
@@ -6,5 +6,5 @@ export const metadata = {
 };
 
 export default function ChatPage() {
-  return <ChatRoomClient />;
+  return <ChatRoom />;
 }

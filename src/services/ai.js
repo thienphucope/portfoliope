@@ -25,7 +25,7 @@ const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY || '';
 const HUGGINGFACE_MODEL   = process.env.HUGGINGFACE_MODEL || 'meta-llama/Llama-3.1-8B-Instruct';
 
 const RAG_API_URL         = process.env.RAG_API_URL || 'https://rag-backend-zh2e.onrender.com/rag';
-const SYSTEM_INSTRUCTION  = process.env.SYSTEM_INSTRUCTION || 'You are a helpful assistant.';
+const SYSTEM_INSTRUCTION  = process.env.MOXXI_PROMPT || 'You are a helpful assistant.';
 
 // ─── Circuit breaker ─────────────────────────────────────────────────────────
 const CIRCUIT_THRESHOLD = 3;

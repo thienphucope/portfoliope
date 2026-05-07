@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { Maximize2, Minimize2, X, Zap, Save, Pencil, Eye, MessageSquare, Plus, Loader2, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight, Upload, Search, Pin, PinOff } from 'lucide-react';
+import { Maximize2, Minimize2, X, Zap, Save, Pencil, Eye, MessageSquare, Plus, Loader2, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight, Upload, Search, Pin, PinOff, Network, FileText } from 'lucide-react';
 
 /**
  * WindowFrame component that provides a title bar, borders, and window controls
@@ -34,6 +34,12 @@ export default function WindowFrame({
   isPinned = false,
   onTogglePin,
   onBarClick,
+  onToggleGraph,
+  onTogglePdf,
+  onToggleChat,
+  isGraphActive = false,
+  isPdfActive = false,
+  isChatActive = false,
 }) {
   const [localPageInput, setLocalPageInput] = React.useState('');
   const [isSearchOpen, setIsSearchOpen] = React.useState(false);
@@ -69,21 +75,13 @@ export default function WindowFrame({
   }, [isSearchOpen]);
 
   const filteredFiles = React.useMemo(() => {
-    let results = [];
-    if (!searchTerm) {
-      results = id === 'graph' ? allFiles.filter(f => f.type === 'tag') : allFiles;
-    } else {
-      const lower = searchTerm.toLowerCase();
-      results = allFiles.filter(f => 
-        f.name.toLowerCase().includes(lower) || 
-        (f.id && f.id.toLowerCase().includes(lower))
-      );
-      if (id === 'graph') {
-        results = results.filter(f => f.type === 'tag');
-      }
-    }
-    return [...results].sort((a, b) => a.name.localeCompare(b.name));
-  }, [allFiles, searchTerm, id]);
+    if (!searchTerm) return [...allFiles].sort((a, b) => a.name.localeCompare(b.name));
+    const lower = searchTerm.toLowerCase();
+    return [...allFiles.filter(f =>
+      f.name.toLowerCase().includes(lower) ||
+      (f.id && f.id.toLowerCase().includes(lower))
+    )].sort((a, b) => a.name.localeCompare(b.name));
+  }, [allFiles, searchTerm]);
 
   if (isMobile) return <>{children}</>;
 
@@ -111,7 +109,7 @@ export default function WindowFrame({
                   <input 
                     autoFocus
                     type="text" 
-                    placeholder={id === 'graph' ? "Search tags..." : "Search notes..."} 
+                    placeholder="Search notes & tags..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     onKeyDown={(e) => {
@@ -164,7 +162,7 @@ export default function WindowFrame({
 
         <div className="window-controls">
           {/* PDF Specific Controls */}
-          {id === 'pdf' && pdfState && (
+          {(id === 'pdf' || (id === 'editor' && isPdfActive)) && pdfState && (
             <>
               <button className="window-control-btn" onClick={onPdfUpload} title="Upload PDF">
                 <Upload size={16} />
@@ -213,16 +211,16 @@ export default function WindowFrame({
               <button className="window-control-btn" onClick={onComment} title="Add Comment">
                 <MessageSquare size={16} />
               </button>
-              <button 
-                className={`window-control-btn ${isEditing ? 'active-mode' : ''}`} 
-                onClick={onToggleEdit} 
+              <button
+                className={`window-control-btn ${isEditing ? 'active-mode' : ''}`}
+                onClick={onToggleEdit}
                 title={isEditing ? "Switch to Read Mode" : "Switch to Edit Mode"}
               >
                 {isEditing ? <Eye size={16} /> : <Pencil size={16} />}
               </button>
-              <button 
-                className={`window-control-btn save-btn ${saveStatus !== 'idle' ? 'status-' + saveStatus : ''}`} 
-                onClick={onSave} 
+              <button
+                className={`window-control-btn save-btn ${saveStatus !== 'idle' ? 'status-' + saveStatus : ''}`}
+                onClick={onSave}
                 disabled={saveStatus === 'saving'}
                 title="Save Changes"
               >
@@ -237,10 +235,20 @@ export default function WindowFrame({
                 )}
               </button>
               <div className="control-separator" />
+              <button className={`window-control-btn ${isGraphActive ? 'active-mode' : ''}`} onClick={onToggleGraph} title="Graph View">
+                <Network size={16} />
+              </button>
+              <button className={`window-control-btn ${isPdfActive ? 'active-mode' : ''}`} onClick={onTogglePdf} title="PDF Reader">
+                <FileText size={16} />
+              </button>
+              <button className={`window-control-btn ${isChatActive ? 'active-mode' : ''}`} onClick={onToggleChat} title="AI Chat">
+                <MessageSquare size={16} />
+              </button>
+              <div className="control-separator" />
             </>
           )}
 
-          {onLiveCall && id === 'chat' && (
+          {onLiveCall && (id === 'chat' || (id === 'editor' && isChatActive)) && (
             <button 
               className={`window-control-btn call-live-btn ${isLiveCallActive ? 'active-call' : ''}`} 
               onClick={(e) => { e.stopPropagation(); onLiveCall(); }}

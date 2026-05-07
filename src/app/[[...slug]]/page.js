@@ -1,8 +1,8 @@
-import CaseClient from '@/features/casearchives/CaseArchivesClient';
+import CaseClient from '@/features/casearchives/CaseArchives';
+import NoteFeed from '@/features/notefeed/NoteFeed';
 import { hydrateServerCache } from '@/services/caseProvider';
 
 export default async function CasePage({ params }) {
-  // Fetch GitHub data using the shared service
   let githubData = null;
   try {
     githubData = await hydrateServerCache(false);
@@ -10,7 +10,9 @@ export default async function CasePage({ params }) {
     console.error("Failed to hydrate server cache in CasePage:", e);
   }
 
-  // Use GitHub data for SEO rendering
+  const slug = (await params)?.slug;
+  const isRoot = !slug || slug.length === 0;
+
   const seoArticles = githubData ? Object.entries(githubData.rawCache).map(([path, raw]) => ({
     id: path,
     name: path.split('/').pop(),
@@ -20,30 +22,19 @@ export default async function CasePage({ params }) {
 
   return (
     <main>
-      {/* SEO Content for AdSense - Hidden from users but visible to crawlers */}
-      <div 
-        style={{ 
-          display: 'none', 
-          visibility: 'hidden', 
-          height: 0, 
-          overflow: 'hidden' 
-        }} 
-        aria-hidden="true"
-      >
+      <div style={{ display: 'none', visibility: 'hidden', height: 0, overflow: 'hidden' }} aria-hidden="true">
         {seoArticles.map(f => (
           <article key={f.id} id={`seo-${f.id}`}>
             <h2>{f.name}</h2>
-            <div dangerouslySetInnerHTML={{ 
-              __html: f.html || f.content 
-            }} />
+            <div dangerouslySetInnerHTML={{ __html: f.html || f.content }} />
           </article>
         ))}
       </div>
 
-      {/* Pass only hydrated GitHub data to Client Component */}
-      <CaseClient 
-        serverHydratedData={githubData}
-      />
+      {isRoot
+        ? <NoteFeed serverData={githubData} />
+        : <CaseClient serverHydratedData={githubData} />
+      }
     </main>
   );
 }

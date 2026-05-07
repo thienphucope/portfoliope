@@ -270,8 +270,15 @@ export default function TabPanelStyles() {
         }
 
         .window-frame .markdown-container {
-          max-width: 100%;
+          max-width: 100% !important;
+          width: 100% !important;
           padding: 10px;
+        }
+
+        .window-frame .note-content-wrapper {
+          max-width: 50vw;
+          width: 100%;
+          margin: 0 auto;
         }
 
         .window-content > div {
@@ -284,7 +291,7 @@ export default function TabPanelStyles() {
         .window-frame .pdf-container,
         .window-frame .file-list {
           height: 100% !important;
-          width: 100% !important;
+          width: 100%;
         }
 
         /* Title in Panel */
@@ -345,6 +352,17 @@ export default function TabPanelStyles() {
         }
         .main-content::-webkit-scrollbar-thumb:hover {
           background-color: rgba(255, 255, 255, 0.4);
+        }
+
+        @media (max-width: 768px) {
+          .window-title-bar,
+          .window-controls {
+            display: none !important;
+          }
+
+          .window-frame .note-content-wrapper {
+            max-width: 100%;
+          }
         }
     `}</style>
   );

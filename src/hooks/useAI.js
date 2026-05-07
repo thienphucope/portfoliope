@@ -1,14 +1,10 @@
 import { useState, useCallback, useRef } from 'react';
 
-/**
- * Hook for client-side AI request and streaming response.
- * Interacts with /api/cases which uses src/services/ai.js.
- */
 export function useAI() {
   const [isThinking, setIsThinking] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingText, setStreamingText] = useState('');
-  
+
   const abortControllerRef = useRef(null);
   const streamTimerRef = useRef(null);
 
@@ -26,21 +22,21 @@ export function useAI() {
   }, []);
 
   const requestAI = useCallback(async (query, history = [], username = 'User', systemInstruction) => {
-    stopAI(); // Dừng request cũ nếu có
-    
+    stopAI();
+
     setIsThinking(true);
     setStreamingText('');
-    
+
     abortControllerRef.current = new AbortController();
-    
+
     try {
       const res = await fetch('/api/cases', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          action: 'ai', 
-          query, 
-          history, 
+        body: JSON.stringify({
+          action: 'ai',
+          query,
+          history,
           username,
           systemInstruction
         }),

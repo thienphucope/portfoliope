@@ -3,15 +3,9 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { ArrowLeft } from 'lucide-react';
 import BlockEditor from '@/features/casearchives/components/BlockEditor';
 import VaultStyles from '@/features/casearchives/styles/VaultStyles';
-import StickySpine from '@/features/casearchives/components/StickySpine';
-import FunctionBall from '@/features/casearchives/components/FunctionBall';
 import PromptOverlays from '@/features/casearchives/components/PromptOverlays';
-import TabPanel from '@/features/casearchives/components/TabPanel';
-import ChatOverlay from '@/features/casearchives/components/ChatOverlay';
-import PDFOverlay from '@/features/casearchives/components/PDFOverlay';
 import WindowFrame from '@/features/casearchives/components/WindowFrame';
 import dynamic from 'next/dynamic';
-import NoteFeed from '@/features/casearchives/components/NoteFeed';
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
 import { useFileRegistry }     from '@/features/casearchives/hooks/useFileRegistry';
@@ -34,75 +28,6 @@ import { useGraphData } from '@/features/casearchives/hooks/useGraphData';
 
 const GraphView = dynamic(() => import('@/features/casearchives/components/GraphView'), { ssr: false });
 
-// ─── Graph Window Wrapper ───────────────────────────────────────────────────
-const GraphWindowWrapper = ({
-  winId, title, isMaximized, isHidden, toggleMaximize, closeWindow,
-  winContent, isLiveCallActive, chatRef, pdfState, pdfRef,
-  allFiles, fileRegistry, loadFile, graphFiles, fullContentCache, setZoomToNodeId,
-  isPinned, onTogglePin, onBarClick
-}) => {
-  const { nodes: graphNodes } = useGraphData({ allFiles: graphFiles, fullContentCache });
-  
-  const handleSelect = (f) => {
-    if (f.type === 'tag') {
-      setZoomToNodeId(f.id);
-    } else {
-      const githubUrl = fileRegistry.current[f.id.toLowerCase()] || fileRegistry.current[f.id.toLowerCase() + '.md'];
-      if (githubUrl) loadFile(githubUrl, f.name, f.id, 'push', true);
-      setZoomToNodeId(f.id);
-    }
-  };
-
-  return (
-    <WindowFrame 
-      id={winId} 
-      title={title} 
-      isMaximized={isMaximized} 
-      isHidden={isHidden} 
-      onToggleMaximize={toggleMaximize} 
-      onClose={closeWindow} 
-      onLiveCall={winId === 'chat' ? () => chatRef.current?.toggleLiveCall() : null} 
-      isLiveCallActive={winId === 'chat' ? isLiveCallActive : false} 
-      pdfState={winId === 'pdf' ? pdfState : null} 
-      onPdfPrev={() => pdfRef.current?.prevPage()} 
-      onPdfNext={() => pdfRef.current?.nextPage()} 
-      onPdfUpload={() => pdfRef.current?.upload()} 
-      onPdfToggleFit={() => pdfRef.current?.toggleFit()} 
-      onPdfPageJump={(p) => pdfRef.current?.setPage(p)} 
-      isMobile={false}
-      isPinned={isPinned}
-      onTogglePin={onTogglePin}
-      allFiles={winId === 'graph' ? graphNodes : (winId === 'editor' ? allFiles : [])}
-      onSelectFile={handleSelect}
-      onBarClick={onBarClick}
-    >
-      {winContent}
-    </WindowFrame>
-  );
-};
-
-// ─── Mobile Graph Overlay ─────────────────────────────────────────────────────
-const GraphOverlay = ({ isOpen, graphFiles, activeTab, loadFile, fileRegistry }) => {
-  if (!isOpen) return null;
-  return (
-    <div className={`acc-panel open tab-graph`} data-tab-id="graph">
-      <div className="acc-content" onClick={(e) => e.stopPropagation()}>
-        <div className="acc-body">
-          <GraphView 
-            allFiles={graphFiles} 
-            onSelectFile={(path, name, id) => {
-              const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md'];
-              if (githubUrl) {
-                loadFile(githubUrl, name, id, 'push', true);
-              }
-            }}
-            activeNodeId={activeTab}
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // ─── Spritz Overlay Component ────────────────────────────────────────────────
 const SpritzOverlay = ({ text, isPlaying, isPaused, playbackRate }) => {
@@ -138,7 +63,7 @@ const SpritzOverlay = ({ text, isPlaying, isPaused, playbackRate }) => {
 
 // ─── MAIN VAULT ───────────────────────────────────────────────────────────────
 const PDFViewer = dynamic(() => import('@/features/casearchives/components/PDFViewer'), { ssr: false });
-const Chat = dynamic(() => import('@/features/casearchives/components/Chat'), { ssr: false });
+const ChatRoom = dynamic(() => import('@/features/chatroom/ChatRoom'), { ssr: false });
 
 export default function CaseClient({ serverHydratedData = null }) {
   const reader = useReader();
@@ -185,6 +110,7 @@ export default function CaseClient({ serverHydratedData = null }) {
     setOpenWindows([]);
     setMaximizedWindow(null);
     setActiveTab(null);
+    setEditorView('note');
     window.history.replaceState({}, '', '/');
   }, []);
 
@@ -218,19 +144,13 @@ export default function CaseClient({ serverHydratedData = null }) {
 
   const [showHeader,         setShowHeader]          = useState(true);
   const [showFunctionBall,   setShowFunctionBall]    = useState(true);
-  const [isFooterExpanded,   setIsFooterExpanded]    = useState(false);
   const [isAtBottom,         setIsAtBottom]          = useState(false);
   const [searchTerm,         setSearchTerm]          = useState('');
   const [showSearch,         setShowSearch]          = useState(false);
   const [viewMode,           setViewMode]            = useState('graph'); 
-  const [isMobile,           setIsMobile]            = useState(false);
+  const isMobile = false;
   const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
-    checkMobile(); window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  const [editorView,         setEditorView]          = useState('note');
 
   const [editPass, setEditPass] = useState(() => { try { return sessionStorage.getItem('vault_edit_pass') || ''; } catch { return ''; } });
   const appShellRef  = useRef(null);
@@ -343,19 +263,17 @@ export default function CaseClient({ serverHydratedData = null }) {
       const forceTab = isCaseRoot ? null : ((cleanTarget === 'chat' || cleanTarget === 'pdf' || cleanTarget === 'graph') ? cleanTarget : null);
       const lowerTarget = cleanTarget.toLowerCase(); const actualRepo = repoPathMap[lowerTarget] || repoPathMap[lowerTarget + '.md'];
       const githubUrl = fileRegistry.current[lowerTarget] || fileRegistry.current[lowerTarget + '.md'];
-      setTimeout(() => {
-        if (forceTab) {
-          const defRepo = repoPathMap[cleanDefault.toLowerCase()] || repoPathMap[cleanDefault.toLowerCase() + '.md'];
-          const defUrl = fileRegistry.current[cleanDefault.toLowerCase()] || fileRegistry.current[cleanDefault.toLowerCase() + '.md'];
-          if (defRepo && defUrl) loadFile(defUrl, defRepo.split('/').pop(), defRepo, 'replace', isCaseRoot);
-          if (!isMobile) toggleWindow(forceTab); else setActiveOverlay(forceTab);
-        } else if (actualRepo && githubUrl && !isCaseRoot) { loadFile(githubUrl, actualRepo.split('/').pop(), actualRepo, 'replace', true); }
-        else if (!isCaseRoot) {
-          const defRepo = repoPathMap[cleanDefault.toLowerCase()] || repoPathMap[cleanDefault.toLowerCase() + '.md'];
-          const defUrl = fileRegistry.current[cleanDefault.toLowerCase()] || fileRegistry.current[cleanDefault.toLowerCase() + '.md'];
-          if (defRepo && defUrl) loadFile(defUrl, defRepo.split('/').pop(), defRepo, 'replace', true);
-        }
-      }, 300);
+      if (forceTab) {
+        const defRepo = repoPathMap[cleanDefault.toLowerCase()] || repoPathMap[cleanDefault.toLowerCase() + '.md'];
+        const defUrl = fileRegistry.current[cleanDefault.toLowerCase()] || fileRegistry.current[cleanDefault.toLowerCase() + '.md'];
+        if (defRepo && defUrl) loadFile(defUrl, defRepo.split('/').pop(), defRepo, 'replace', isCaseRoot);
+        if (!isMobile) toggleWindow(forceTab); else setActiveOverlay(forceTab);
+      } else if (actualRepo && githubUrl && !isCaseRoot) { loadFile(githubUrl, actualRepo.split('/').pop(), actualRepo, 'replace', true); }
+      else if (!isCaseRoot) {
+        const defRepo = repoPathMap[cleanDefault.toLowerCase()] || repoPathMap[cleanDefault.toLowerCase() + '.md'];
+        const defUrl = fileRegistry.current[cleanDefault.toLowerCase()] || fileRegistry.current[cleanDefault.toLowerCase() + '.md'];
+        if (defRepo && defUrl) loadFile(defUrl, defRepo.split('/').pop(), defRepo, 'replace', true);
+      }
     };
     if (serverHydratedData) initialize(serverHydratedData);
     else {
@@ -373,92 +291,27 @@ export default function CaseClient({ serverHydratedData = null }) {
   const contentCacheRef = useRef(fullContentCache);
   contentCacheRef.current = fullContentCache; // sync during render, no effect needed
   const graphFiles = useMemo(() => allFiles.map((f) => ({ ...f, fetchedContent: contentCacheRef.current[f.id]?.raw || '' })), [allFiles]);
-
-  const activeTabIndex = tabs.findIndex((t) => t.id === activeTab);
-  const nextTabForActive = tabs.slice(activeTabIndex + 1).find((t) => t.type === 'editor' || t.type === 'static');
-  const prevTabForActive = activeTabIndex > 0 ? [...tabs.slice(0, activeTabIndex)].reverse().find((t) => t.type === 'editor' || t.type === 'static') : null;
-  const showReadMore = isAtBottom && !isFooterExpanded && nextTabForActive && !activeOverlay;
+  const { nodes: graphNodes } = useGraphData({ allFiles: graphFiles, fullContentCache });
 
   const activeTabPanel = useMemo(() => {
     const activeT = tabs.find(t => t.id === activeTab); if (!activeT) return null;
     return (
-      <TabPanel key={activeT.id} tab={activeT} activeTab={activeTab} handleTabClick={handleTabClick} handleLinkClick={handleLinkClick} isEditing={isEditing} handleToggleEditMode={handleToggleEditMode} saveStatus={saveStatus} handleSidebarSave={handleSidebarSave} fileName={fileName} content={content} handleSaveFile={handleSaveFile} saveHandlerRef={saveHandlerRef} fileRegistry={fileRegistry} isAtBottom={isAtBottom} setIsAtBottom={setIsAtBottom} reader={augmentedReader} />
+      <article className="markdown-container" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }} onScroll={(e) => { const t = e.target; const bottom = t.scrollHeight - t.scrollTop <= t.clientHeight + 100; if (bottom !== isAtBottom) setIsAtBottom(bottom); }}>
+        <div className="note-content-wrapper">
+          {fileName === activeT.id ? (
+            <BlockEditor content={content} fileName={fileName} onLinkClick={handleLinkClick} onSaveFile={handleSaveFile} isEditing={activeT.type === 'editor' ? isEditing : false} readOnly={activeT.type === 'static'} onToggleEditing={handleToggleEditMode} onSaveRef={saveHandlerRef} fileRegistry={fileRegistry.current} reader={augmentedReader} />
+          ) : (
+            <div className="loading-placeholder" style={{ padding: '2rem', opacity: 0.5 }}>Loading...</div>
+          )}
+        </div>
+      </article>
     );
-  }, [activeTab, tabs, handleTabClick, handleLinkClick, isEditing, handleToggleEditMode, saveStatus, handleSidebarSave, fileName, content, handleSaveFile, saveHandlerRef, fileRegistry, isAtBottom, augmentedReader]);
+  }, [activeTab, tabs, isEditing, handleToggleEditMode, fileName, content, handleSaveFile, saveHandlerRef, fileRegistry, isAtBottom, augmentedReader, handleLinkClick]);
 
   const resizer = useWindowResizer();
 
-  const visibleLeft = useMemo(() =>
-    ['graph', 'pdf'].filter(id => openWindows.includes(id) && maximizedWindow !== id),
-    [openWindows, maximizedWindow]
-  );
-  
-  const visibleRight = useMemo(() =>
-    ['chat'].filter(id => openWindows.includes(id) && maximizedWindow !== id),
-    [openWindows, maximizedWindow]
-  );
-
-  const hasEditor = openWindows.includes('editor') && maximizedWindow !== 'editor';
-
   const [focusedWindow, setFocusedWindow] = useState(null);
-
-  const renderSecondaryWindow = (winId, isMax = false) => {
-    let title = ''; let winContent = null;
-
-    if (winId === 'chat') {
-      title = 'AI Chat Vault';
-      winContent = <div className="chat-container"><Chat ref={chatRef} isEmbedded={true} onLinkClick={handleLinkClick} onLiveCallChange={setIsLiveCallActive} /></div>;
-    } else if (winId === 'pdf') {
-      title = 'PDF Reader';
-      winContent = <div className="pdf-container"><PDFViewer ref={pdfRef} onClose={() => closeWindow('pdf')} reader={augmentedReader} isOpen={true} onStateChange={handlePdfStateChange} initialFile={lastPdfStateRef.current.file} initialPage={lastPdfStateRef.current.pageNumber} initialFitMode={lastPdfStateRef.current.fitMode} /></div>;
-    }
-    else if (winId === 'graph') {
-      const activeFile = graphFiles.find(f => f.id === activeTab);
-      let displayTag = 'Graph View';
-      if (activeFile && activeFile.fetchedContent) {
-        const tagMatch = activeFile.fetchedContent.match(/tag:\s*#?([^\n\r,]+)/i);
-        if (tagMatch && tagMatch[1]) {
-          displayTag = `#${tagMatch[1].trim()}`;
-        }
-      }
-      title = displayTag;
-      winContent = <GraphView
-        allFiles={graphFiles}
-        onSelectFile={(path, name, id) => {
-          const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md'];
-          if (githubUrl) loadFile(githubUrl, name, id, 'push', true);
-        }}
-        activeNodeId={activeTab}
-        zoomToNodeId={zoomToNodeId}
-        onZoomComplete={() => setZoomToNodeId(null)}
-      />;
-    }
-    
-    return (
-      <GraphWindowWrapper
-        winId={winId}
-        title={title}
-        isMaximized={isMax}
-        isHidden={false}
-        toggleMaximize={toggleMaximize}
-        closeWindow={closeWindow}
-        winContent={winContent}
-        isLiveCallActive={isLiveCallActive}
-        chatRef={chatRef}
-        pdfState={pdfState}
-        pdfRef={pdfRef}
-        allFiles={allFiles}
-        fileRegistry={fileRegistry}
-        loadFile={loadFile}
-        graphFiles={graphFiles}
-        fullContentCache={fullContentCache}
-        setZoomToNodeId={setZoomToNodeId}
-        isPinned={pinnedWindows.includes(winId)}
-        onTogglePin={togglePin}
-        onBarClick={winId === 'chat' ? () => setFocusedWindow('chat') : (winId === 'graph' || winId === 'pdf' ? () => setFocusedWindow(null) : null)}
-      />
-    );
-  };
+  const isChatOpen = openWindows.includes('chat');
 
   return (
     <div className={['accordion-app', !isMobile ? 'pc-layout' : '', activeTab || activeOverlay ? 'has-active' : '', activeOverlay === 'chat' ? 'chat-active' : '', activeOverlay === 'pdf' ? 'pdf-active' : '', activeOverlay === 'graph' ? 'graph-active' : '', !isMobile && openWindows.length === 0 ? 'feed-active' : ''].join(' ')} ref={appShellRef}>
@@ -466,78 +319,41 @@ export default function CaseClient({ serverHydratedData = null }) {
       <div className="video-overlay" />
       <SpritzOverlay text={reader.currentText} isPlaying={reader.isPlaying} isPaused={reader.isPaused} playbackRate={reader.playbackRate} />
 
-      {!isMobile ? (
-        <>
-          <StickySpine showHeader={showHeader} activeTab={activeTab} activeOverlay={activeOverlay} handleCreateNewNote={handleCreateNewNote} setActiveOverlay={(id) => {
-            if (typeof id === 'function') {
-              const result = id(activeOverlay);
-              if (!result) return;
-              if (result === 'editor') {
-                if (openWindows.includes('editor')) {
-                  closeEditorWindow();
-                } else {
-                  const rawDefault = process.env.NEXT_PUBLIC_DEFAULT_VAULT_FILE || '';
-                  const cleanDefault = rawDefault.replace(/\.md$/, '').toLowerCase();
-                  const defaultFile = allFiles.find(f => f.name.replace('.md', '').toLowerCase() === cleanDefault);
-                  if (defaultFile) loadFile(defaultFile.path, defaultFile.name, defaultFile.id, 'push', true);
-                  else toggleWindow('editor');
-                }
-              } else {
-                toggleWindow(result);
-              }
-            } else {
-              if (id) toggleWindow(id);
-            }
-          }} setActiveTab={setActiveTab} openWindows={openWindows} />
-          
-          {openWindows.length === 0 && (
-            <NoteFeed 
-              allFiles={allFiles} 
-              fileRegistry={fileRegistry.current} 
-              fullContentCache={fullContentCache} 
-              onLinkClick={handleLinkClick}
-              reader={augmentedReader}
-              upsertCacheEntry={upsertCacheEntry}
-            />
-          )}
-
+      <>
           {openWindows.length > 0 && !maximizedWindow && (
             <div onClick={closeAllWindows} style={{ position: 'absolute', inset: 0, zIndex: 9 }} />
           )}
 
           {openWindows.length > 0 && (
             <div className={`windows-container ${maximizedWindow ? 'has-maximized' : ''} ${openWindows.includes('editor') ? 'has-editor' : ''} ${openWindows.length > (openWindows.includes('editor') ? 1 : 0) ? 'has-others' : ''} ${resizer.isDragging ? 'dragging' : ''}`} style={{ width: '100vw', height: '100vh', margin: 0, display: 'flex', flexDirection: 'row' }}>
-              
-              {/* LEFT COLUMN: GRAPH & PDF */}
-              {visibleLeft.length > 0 && !maximizedWindow && (
-                <div 
-                  className="secondary-windows-left" 
-                  style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}
-                >
-                  {visibleLeft.map((winId) => (
-                    <div key={winId} className="window-frame-wrapper" style={{ flex: 1, height: '100%' }}>
-                      {renderSecondaryWindow(winId)}
-                    </div>
-                  ))}
-                </div>
-              )}
 
-              {/* EDITOR WINDOW (CENTER) */}
+              {/* EDITOR WINDOW */}
               {everOpened.filter(winId => winId === 'editor').map((winId) => {
                 const isMax = maximizedWindow === winId;
                 const isOpen = openWindows.includes(winId);
-                const isHidden = !isOpen || (maximizedWindow && !isMax);
-                if (isHidden && !isMax) return null;
-                
+                if ((!isOpen || (maximizedWindow && !isMax)) && !isMax) return null;
+
                 const tabTitle = tabs.find(t => t.id === activeTab)?.title || 'Note';
-                const flexValue = focusedWindow === 'editor' ? 2 : 1;
-                
+                const mainContent = editorView === 'graph'
+                  ? <GraphView allFiles={graphFiles} onSelectFile={(path, name, id) => { const githubUrl = fileRegistry.current[id.toLowerCase()] || fileRegistry.current[id.toLowerCase() + '.md']; if (githubUrl) loadFile(githubUrl, name, id, 'push', true); }} activeNodeId={activeTab} zoomToNodeId={zoomToNodeId} onZoomComplete={() => setZoomToNodeId(null)} />
+                  : editorView === 'pdf'
+                    ? <div className="pdf-container"><PDFViewer ref={pdfRef} onClose={() => setEditorView('note')} reader={augmentedReader} isOpen={true} onStateChange={handlePdfStateChange} initialFile={lastPdfStateRef.current.file} initialPage={lastPdfStateRef.current.pageNumber} initialFitMode={lastPdfStateRef.current.fitMode} /></div>
+                    : activeTabPanel;
+                const editorContent = (
+                  <div style={{ display: 'flex', height: '100%', width: '100%' }}>
+                    <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}>{mainContent}</div>
+                    {isChatOpen && (
+                      <div style={{ width: '50%', flexShrink: 0, borderLeft: '1px solid var(--colorborder)', height: '100%', overflow: 'hidden' }}>
+                        <div className="chat-container" style={{ height: '100%' }}>
+                          <ChatRoom ref={chatRef} isEmbedded={true} onLinkClick={handleLinkClick} onLiveCallChange={setIsLiveCallActive} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+
                 return (
-                  <div 
-                    key={winId} 
-                    className="window-frame-wrapper" 
-                    style={isMax ? {} : { flex: flexValue, height: '100%', transition: 'flex 0.4s ease' }}
-                  >
+                  <div key={winId} className="window-frame-wrapper" style={isMax ? {} : { flex: focusedWindow === 'editor' ? 2 : 1, height: '100%', transition: 'flex 0.4s ease' }}>
                     <WindowFrame
                       id={winId}
                       title={`Case Archives - ${tabTitle}`}
@@ -554,66 +370,37 @@ export default function CaseClient({ serverHydratedData = null }) {
                       isMobile={false}
                       isPinned={pinnedWindows.includes(winId)}
                       onTogglePin={togglePin}
-                      allFiles={allFiles}
+                      allFiles={graphNodes}
                       onSelectFile={(f) => {
+                        if (f.type === 'tag') { setEditorView('graph'); setZoomToNodeId(f.id); return; }
                         const githubUrl = fileRegistry.current[f.id.toLowerCase()] || fileRegistry.current[f.id.toLowerCase() + '.md'];
-                        if (githubUrl) {
-                          loadFile(githubUrl, f.name, f.id, 'push', true);
-                        }
+                        if (githubUrl) loadFile(githubUrl, f.name, f.id, 'push', true);
                       }}
                       onBarClick={() => setFocusedWindow('editor')}
+                      onLiveCall={isChatOpen ? () => chatRef.current?.toggleLiveCall() : null}
+                      isLiveCallActive={isLiveCallActive}
+                      pdfState={editorView === 'pdf' ? pdfState : null}
+                      onPdfPrev={() => pdfRef.current?.prevPage()}
+                      onPdfNext={() => pdfRef.current?.nextPage()}
+                      onPdfUpload={() => pdfRef.current?.upload()}
+                      onPdfToggleFit={() => pdfRef.current?.toggleFit()}
+                      onPdfPageJump={(p) => pdfRef.current?.setPage(p)}
+                      isGraphActive={editorView === 'graph'}
+                      isPdfActive={editorView === 'pdf'}
+                      isChatActive={openWindows.includes('chat')}
+                      onToggleGraph={() => setEditorView(v => v === 'graph' ? 'note' : 'graph')}
+                      onTogglePdf={() => setEditorView(v => v === 'pdf' ? 'note' : 'pdf')}
+                      onToggleChat={() => toggleWindow('chat')}
                     >
-                      {activeTabPanel}
+                      {editorContent}
                     </WindowFrame>
                   </div>
                 );
               })}
 
-              {/* RIGHT COLUMN: CHAT */}
-              {visibleRight.length > 0 && !maximizedWindow && (
-                <div 
-                  className="secondary-windows-right" 
-                  style={{ flex: focusedWindow === 'chat' ? 2 : 1, display: 'flex', flexDirection: 'column', height: '100%', transition: 'flex 0.4s ease' }}
-                >
-                  {visibleRight.map((winId) => (
-                    <div key={winId} className="window-frame-wrapper" style={{ flex: 1, height: '100%' }}>
-                      {renderSecondaryWindow(winId)}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* MAXIMIZED VIEW (COVERS ALL) */}
-              {maximizedWindow && maximizedWindow !== 'editor' && (
-                <div className="maximized-window-container" style={{ position: 'fixed', inset: 0, zIndex: 100 }}>
-                  {renderSecondaryWindow(maximizedWindow, true)}
-                </div>
-              )}
             </div>
           )}
         </>
-      ) : (
-        <>
-          {!activeTab && !activeOverlay ? (
-            <NoteFeed
-              allFiles={allFiles}
-              fileRegistry={fileRegistry.current}
-              fullContentCache={fullContentCache}
-              onLinkClick={handleLinkClick}
-              reader={augmentedReader}
-              upsertCacheEntry={upsertCacheEntry}
-            />
-          ) : (
-            <>
-              <FunctionBall isFooterExpanded={isFooterExpanded} setIsFooterExpanded={setIsFooterExpanded} showReadMore={showReadMore} showFunctionBall={showFunctionBall} isAtBottom={isAtBottom} activeOverlay={activeOverlay} setActiveOverlay={setActiveOverlay} handleCreateNewNote={handleCreateNewNote} fileName={fileName} handleAppendComment={handleAppendComment} handleTabClick={handleTabClick} nextTabForActive={nextTabForActive} prevTabForActive={prevTabForActive} isEditing={isEditing} handleToggleEditMode={handleToggleEditMode} saveStatus={saveStatus} handleSidebarSave={handleSidebarSave} activeTabType={tabs.find(t => t.id === activeTab)?.type} activeTabObj={tabs.find(t => t.id === activeTab)} />
-              <GraphOverlay isOpen={activeOverlay === 'graph'} graphFiles={graphFiles} activeTab={activeTab} loadFile={loadFile} fileRegistry={fileRegistry} />
-              <ChatOverlay isOpen={activeOverlay === 'chat'} handleLinkClick={handleLinkClick} reader={augmentedReader} />
-              <PDFOverlay isOpen={activeOverlay === 'pdf'} setActiveOverlay={setActiveOverlay} reader={augmentedReader} onStateChange={handlePdfStateChange} initialFile={lastPdfStateRef.current.file} initialPage={lastPdfStateRef.current.pageNumber} initialFitMode={lastPdfStateRef.current.fitMode} />
-              {tabs.filter(t => t.type === 'editor' || t.type === 'static').map(tab => ( <TabPanel key={tab.id} tab={tab} activeTab={activeTab} handleTabClick={handleTabClick} handleLinkClick={handleLinkClick} isEditing={isEditing} handleToggleEditMode={handleToggleEditMode} saveStatus={saveStatus} handleSidebarSave={handleSidebarSave} fileName={fileName} content={content} handleSaveFile={handleSaveFile} saveHandlerRef={saveHandlerRef} fileRegistry={fileRegistry} isAtBottom={isAtBottom} setIsAtBottom={setIsAtBottom} reader={augmentedReader} /> ))}
-            </>
-          )}
-        </>
-      )}
 
       {(pendingReadConfirm || reader.isPlaying) && (
         <div className="global-reader-bar" onClick={(e) => e.stopPropagation()} style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 10000, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(16px)', borderRadius: '40px', padding: '8px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '18px', border: '1px solid var(--colorbutton, #FFFACD)', boxShadow: '0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(255,250,205,0.2)', animation: 'fadeInDown 0.3s ease-out', color: 'white', transition: 'all 0.3s ease' }}>

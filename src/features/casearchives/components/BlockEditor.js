@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { ensureLibsLoaded, postProcess, fitHeading } from '../utils/markdown';
-import { useAI } from '../hooks/useAI';
+import { useAI } from '@/hooks/useAI';
 import { useBlockNavigation } from '../hooks/useBlockNavigation';
 import { mkBlock, cursorToEnd, getLineClass, SLASH_COMMANDS } from '../utils/editor';
 

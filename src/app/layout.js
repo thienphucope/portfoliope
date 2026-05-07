@@ -2,7 +2,6 @@ import "@fontsource-variable/roboto";
 import "@fontsource-variable/roboto-mono";
 import "@fontsource/zen-kaku-gothic-new";
 import "./globals.css";
-import Chat from '../features/casearchives/components/Chat';
 import { Analytics } from '@vercel/analytics/react';
 
 export const metadata = {
@@ -20,7 +19,6 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         {children}
-        <Chat />
       </body>
       <Analytics />
     </html>
