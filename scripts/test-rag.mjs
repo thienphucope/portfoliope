@@ -71,6 +71,6 @@ async function testSearch(query) {
   }
 }
 
-testSearch("height weight");
+testSearch("birthplace ope");
 
 // node --env-file=.env scripts/test-rag.mjs

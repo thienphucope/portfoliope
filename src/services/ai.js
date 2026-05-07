@@ -3,9 +3,10 @@
 import { availableTools, executeToolCall } from './aitool.js';
 
 // ─── Static config ────────────────────────────────────────────────────────────
-const TEMPERATURE       = 0.7;
-const MAX_TOKENS        = 8192;
-const MAX_TOKENS_SMALL  = 2048; // for providers with lower limits
+const TEMPERATURE      = 0.7;
+const MAX_TOKENS       = 8192;
+const MAX_TOKENS_SMALL = 2048;
+const MAX_TOOL_TURNS   = 3;
 
 // ─── Keys & models from env ───────────────────────────────────────────────────
 const XAI_API_KEY         = process.env.XAI_API_KEY || '';
@@ -26,8 +27,8 @@ const OPEN_ROUTER_MODEL   = process.env.OPEN_ROUTER_MODEL || 'openai/gpt-4o-mini
 const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY || '';
 const HUGGINGFACE_MODEL   = process.env.HUGGINGFACE_MODEL || 'meta-llama/Llama-3.1-8B-Instruct';
 
-const RAG_API_URL         = process.env.RAG_API_URL || 'https://rag-backend-zh2e.onrender.com/rag';
-const SYSTEM_INSTRUCTION  = process.env.MOXXI_PROMPT || 'You are a helpful assistant.';
+const RAG_API_URL        = process.env.RAG_API_URL || 'https://rag-backend-zh2e.onrender.com/rag';
+const SYSTEM_INSTRUCTION = process.env.MOXXI_PROMPT || 'You are a helpful assistant.';
 
 // ─── Circuit breaker ─────────────────────────────────────────────────────────
 const CIRCUIT_THRESHOLD = 3;
@@ -51,8 +52,6 @@ function recordSuccess(name) {
 }
 
 // ─── Normalize ────────────────────────────────────────────────────────────────
-// Standard internal format: { messages: [{role, content}], system, username }
-
 function normalize({ query, history, username, systemInstruction }) {
   if (!query) throw new Error('Missing query');
   return {
@@ -65,59 +64,41 @@ function normalize({ query, history, username, systemInstruction }) {
   };
 }
 
-// ─── Providers ────────────────────────────────────────────────────────────────
+// ─── Shared OpenAI-compatible tool loop ──────────────────────────────────────
+// Grok, OpenRouter, HuggingFace đều dùng OpenAI chat completions format
+async function runOpenAIToolLoop(url, headers, buildBody, { messages, system }) {
+  let currentMessages = [{ role: 'system', content: system }, ...messages];
 
-async function callGrok({ messages, system }) {
-  let currentMessages = messages.map(({ role, content }) => ({
-    role: role === 'assistant' ? 'assistant' : 'user',
-    content,
-  }));
-  
-  for (let i = 0; i < 3; i++) {
-    const res = await fetch("https://api.x.ai/v1/chat/completions", {
+  for (let i = 0; i < MAX_TOOL_TURNS; i++) {
+    const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${XAI_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: XAI_MODEL,
-        messages: [{ role: 'system', content: system }, ...currentMessages],
-        tools: availableTools,
-        temperature: TEMPERATURE,
-        max_tokens: MAX_TOKENS,
-        stream: false,
-      }),
+      headers: { 'Content-Type': 'application/json', ...headers },
+      body: JSON.stringify(buildBody(currentMessages)),
     });
-    
-    if (!res.ok) throw new Error(`Grok ${res.status}: ${await res.text()}`);
-    const data = await res.json();
-    const message = data.choices?.[0]?.message;
+    if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
+    const message = (await res.json()).choices?.[0]?.message;
 
     if (message?.tool_calls?.length > 0) {
       currentMessages.push(message);
-      
-      for (const toolCall of message.tool_calls) {
-        const result = await executeToolCall(toolCall.function.name, toolCall.function.arguments);
-        currentMessages.push({
-          role: 'tool',
-          tool_call_id: toolCall.id,
-          name: toolCall.function.name,
-          content: JSON.stringify(result)
-        });
+      for (const tc of message.tool_calls) {
+        const result = await executeToolCall(tc.function.name, tc.function.arguments);
+        currentMessages.push({ role: 'tool', tool_call_id: tc.id, name: tc.function.name, content: JSON.stringify(result) });
       }
       continue;
     }
-    
     return message?.content || null;
   }
-  throw new Error("Grok: Vượt quá số lần gọi tool liên tiếp cho phép (3 lần).");
+  throw new Error("Vượt quá số lần gọi tool liên tiếp cho phép.");
 }
 
+// ─── Providers ────────────────────────────────────────────────────────────────
+
 async function callGemini({ messages, system }) {
-  // Map OpenAI tools format to Gemini tools format
   const geminiTools = [{
     functionDeclarations: availableTools.map(t => ({
       name: t.function.name,
       description: t.function.description,
-      parameters: t.function.parameters
+      parameters: t.function.parameters,
     }))
   }];
 
@@ -126,7 +107,7 @@ async function callGemini({ messages, system }) {
     parts: [{ text: content }],
   }));
 
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < MAX_TOOL_TURNS; i++) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
     const res = await fetch(url, {
       method: 'POST',
@@ -137,40 +118,75 @@ async function callGemini({ messages, system }) {
         tools: geminiTools,
       }),
     });
-    
     if (!res.ok) throw new Error(`Gemini ${res.status}: ${await res.text()}`);
     const data = await res.json();
-    
+
     const candidate = data.candidates?.[0];
     if (!candidate) return null;
-    
+
     const parts = candidate.content?.parts || [];
     const functionCalls = parts.filter(p => p.functionCall);
-    
+
     if (functionCalls.length > 0) {
-      currentContents.push(candidate.content); // Lưu lại yêu cầu từ model
-      
+      currentContents.push(candidate.content);
       const functionResponses = [];
       for (const call of functionCalls) {
         const result = await executeToolCall(call.functionCall.name, call.functionCall.args);
-        functionResponses.push({
-          functionResponse: {
-            name: call.functionCall.name,
-            response: result
-          }
-        });
+        functionResponses.push({ functionResponse: { name: call.functionCall.name, response: result } });
       }
-      
-      currentContents.push({
-        role: 'user',
-        parts: functionResponses
-      });
+      currentContents.push({ role: 'user', parts: functionResponses });
       continue;
     }
-    
     return parts.find(p => p.text)?.text || null;
   }
-  throw new Error("Gemini: Vượt quá số lần gọi tool liên tiếp cho phép (3 lần).");
+  throw new Error("Gemini: Vượt quá số lần gọi tool liên tiếp cho phép.");
+}
+
+async function callGrok(ctx) {
+  return runOpenAIToolLoop(
+    "https://api.x.ai/v1/chat/completions",
+    { 'Authorization': `Bearer ${XAI_API_KEY}` },
+    (msgs) => ({ model: XAI_MODEL, messages: msgs, tools: availableTools, temperature: TEMPERATURE, max_tokens: MAX_TOKENS, stream: false }),
+    ctx
+  );
+}
+
+async function callAnthropic({ messages, system }) {
+  const anthropicTools = availableTools.map(t => ({
+    name: t.function.name,
+    description: t.function.description,
+    input_schema: t.function.parameters,
+  }));
+
+  let currentMessages = [...messages];
+
+  for (let i = 0; i < MAX_TOOL_TURNS; i++) {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: 'POST',
+      headers: {
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ model: ANTHROPIC_MODEL, system, messages: currentMessages, max_tokens: MAX_TOKENS, tools: anthropicTools }),
+    });
+    if (!res.ok) throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
+    const data = await res.json();
+
+    const toolUseBlocks = data.content.filter(b => b.type === 'tool_use');
+    if (toolUseBlocks.length > 0) {
+      currentMessages.push({ role: 'assistant', content: data.content });
+      const toolResults = [];
+      for (const block of toolUseBlocks) {
+        const result = await executeToolCall(block.name, block.input);
+        toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: typeof result === 'string' ? result : JSON.stringify(result) });
+      }
+      currentMessages.push({ role: 'user', content: toolResults });
+      continue;
+    }
+    return data.content.find(b => b.type === 'text')?.text || null;
+  }
+  throw new Error("Anthropic: Vượt quá số lần gọi tool liên tiếp cho phép.");
 }
 
 async function callSeaLion({ messages, system }) {
@@ -185,157 +201,25 @@ async function callSeaLion({ messages, system }) {
     }),
   });
   if (!res.ok) throw new Error(`SEA-LION ${res.status}: ${await res.text()}`);
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content || null;
+  return (await res.json()).choices?.[0]?.message?.content || null;
 }
 
-async function callAnthropic({ messages, system }) {
-  // Map OpenAI tools to Anthropic format
-  const anthropicTools = availableTools.map(t => ({
-    name: t.function.name,
-    description: t.function.description,
-    input_schema: t.function.parameters
-  }));
-
-  let currentMessages = messages.map(({ role, content }) => ({
-    role: role === 'assistant' ? 'assistant' : 'user',
-    content,
-  }));
-
-  for (let i = 0; i < 3; i++) {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: 'POST',
-      headers: {
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: ANTHROPIC_MODEL,
-        system,
-        messages: currentMessages,
-        max_tokens: MAX_TOKENS,
-        tools: anthropicTools,
-      }),
-    });
-
-    if (!res.ok) throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
-    const data = await res.json();
-    
-    const toolUseBlocks = data.content.filter(b => b.type === 'tool_use');
-    
-    if (toolUseBlocks.length > 0) {
-      currentMessages.push({ role: 'assistant', content: data.content });
-      
-      let toolResults = [];
-      for (const block of toolUseBlocks) {
-        const result = await executeToolCall(block.name, block.input);
-        toolResults.push({
-          type: 'tool_result',
-          tool_use_id: block.id,
-          content: typeof result === 'string' ? result : JSON.stringify(result)
-        });
-      }
-      
-      currentMessages.push({ role: 'user', content: toolResults });
-      continue;
-    }
-    
-    const textBlock = data.content.find(b => b.type === 'text');
-    return textBlock?.text || null;
-  }
-  throw new Error("Anthropic: Vượt quá số lần gọi tool liên tiếp cho phép (3 lần).");
+async function callOpenRouter(ctx) {
+  return runOpenAIToolLoop(
+    "https://openrouter.ai/api/v1/chat/completions",
+    { 'Authorization': `Bearer ${OPEN_ROUTER_API_KEY}` },
+    (msgs) => ({ model: OPEN_ROUTER_MODEL, messages: msgs, tools: availableTools, temperature: TEMPERATURE, max_tokens: MAX_TOKENS }),
+    ctx
+  );
 }
 
-async function callOpenRouter({ messages, system }) {
-  let currentMessages = [{ role: 'system', content: system }, ...messages];
-  
-  // Vòng lặp cho phép AI gọi tool tối đa 3 lần liên tiếp
-  for (let i = 0; i < 3; i++) {
-    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPEN_ROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: OPEN_ROUTER_MODEL,
-        messages: currentMessages,
-        temperature: TEMPERATURE,
-        max_tokens: MAX_TOKENS,
-        tools: availableTools,
-      }),
-    });
-    
-    if (!res.ok) throw new Error(`OpenRouter ${res.status}: ${await res.text()}`);
-    const data = await res.json();
-    const message = data.choices?.[0]?.message;
-    
-    // Nếu AI yêu cầu gọi tool
-    if (message?.tool_calls?.length > 0) {
-      currentMessages.push(message); // Lưu lại yêu cầu gọi tool của AI
-      
-      // Thực thi từng tool
-      for (const toolCall of message.tool_calls) {
-        const result = await executeToolCall(toolCall.function.name, toolCall.function.arguments);
-        currentMessages.push({
-          role: 'tool',
-          tool_call_id: toolCall.id,
-          name: toolCall.function.name,
-          content: JSON.stringify(result)
-        });
-      }
-      continue; // Chạy lại vòng lặp để gửi kết quả tool cho AI
-    }
-    
-    // Nếu AI trả về text bình thường
-    return message?.content || null;
-  }
-  
-  throw new Error("OpenRouter: Vượt quá số lần gọi tool liên tiếp cho phép (3 lần).");
-}
-
-async function callHuggingFace({ messages, system }) {
-  let currentMessages = [{ role: 'system', content: system }, ...messages];
-  
-  for (let i = 0; i < 3; i++) {
-    const res = await fetch("https://api-inference.huggingface.co/v1/chat/completions", {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${HUGGINGFACE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: HUGGINGFACE_MODEL,
-        messages: currentMessages,
-        temperature: TEMPERATURE,
-        max_tokens: MAX_TOKENS_SMALL,
-        tools: availableTools,
-      }),
-    });
-    
-    if (!res.ok) throw new Error(`HuggingFace ${res.status}: ${await res.text()}`);
-    const data = await res.json();
-    const message = data.choices?.[0]?.message;
-    
-    if (message?.tool_calls?.length > 0) {
-      currentMessages.push(message);
-      
-      for (const toolCall of message.tool_calls) {
-        const result = await executeToolCall(toolCall.function.name, toolCall.function.arguments);
-        currentMessages.push({
-          role: 'tool',
-          tool_call_id: toolCall.id,
-          name: toolCall.function.name,
-          content: JSON.stringify(result)
-        });
-      }
-      continue;
-    }
-    
-    return message?.content || null;
-  }
-  throw new Error("HuggingFace: Vượt quá số lần gọi tool liên tiếp cho phép (3 lần).");
+async function callHuggingFace(ctx) {
+  return runOpenAIToolLoop(
+    "https://api-inference.huggingface.co/v1/chat/completions",
+    { 'Authorization': `Bearer ${HUGGINGFACE_API_KEY}` },
+    (msgs) => ({ model: HUGGINGFACE_MODEL, messages: msgs, tools: availableTools, temperature: TEMPERATURE, max_tokens: MAX_TOKENS_SMALL }),
+    ctx
+  );
 }
 
 async function callRag({ messages, username }) {
@@ -346,15 +230,14 @@ async function callRag({ messages, username }) {
     body: JSON.stringify({ username, query }),
   });
   if (!res.ok) throw new Error(`RAG ${res.status}`);
-  const data = await res.json();
-  return data.response || null;
+  return (await res.json()).response || null;
 }
 
 // ─── Proxy ────────────────────────────────────────────────────────────────────
 
 const PROVIDERS = [
-  { name: 'Grok',        fn: callGrok,        enabled: () => !!XAI_API_KEY },
   { name: 'Gemini',      fn: callGemini,      enabled: () => !!GEMINI_API_KEY },
+  { name: 'Grok',        fn: callGrok,        enabled: () => !!XAI_API_KEY },
   { name: 'SEA-LION',    fn: callSeaLion,     enabled: () => !!SEA_LION_API_KEY },
   { name: 'Anthropic',   fn: callAnthropic,   enabled: () => !!ANTHROPIC_API_KEY },
   { name: 'OpenRouter',  fn: callOpenRouter,  enabled: () => !!OPEN_ROUTER_API_KEY },
@@ -367,14 +250,8 @@ export async function handleAiRequest(rawInput) {
   console.log(`🤖 [AI] Query: "${(rawInput.query || '').slice(0, 50)}..."`);
 
   for (const { name, fn, enabled } of PROVIDERS) {
-    if (!enabled()) {
-      console.log(`⏭️ [${name}] Skipped (no API key).`);
-      continue;
-    }
-    if (isOpen(name)) {
-      console.log(`🔴 [${name}] Circuit open, skipping.`);
-      continue;
-    }
+    if (!enabled()) { console.log(`⏭️ [${name}] Skipped (no API key).`); continue; }
+    if (isOpen(name)) { console.log(`🔴 [${name}] Circuit open, skipping.`); continue; }
     console.log(`📡 [${name}] Attempting...`);
     try {
       const text = await fn(normalized);

@@ -70,15 +70,77 @@ export default function ChatRoomStyles({ isEmbedded }) {
         opacity: 0.95;
       }
 
-      .presence-status {
+      .voice-header-btn {
         font-family: var(--font-typewriter);
         font-size: 0.8rem;
         letter-spacing: 2px;
+        background: transparent;
+        border: none;
         color: var(--colorone-dim);
+        cursor: pointer;
+        transition: color 0.3s;
+        padding: 4px 0;
       }
-      .presence-status.active {
-        color: var(--colorone);
-        animation: blink 1.5s infinite;
+      .voice-header-btn:hover:not(:disabled) { color: var(--colorone); }
+      .voice-header-btn.active { color: var(--colorone); animation: blink 1.5s infinite; }
+      .voice-header-btn:disabled { opacity: 0.3; cursor: default; }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .features-wrap {
+        position: relative;
+      }
+      .features-panel {
+        position: absolute;
+        top: calc(100% + 12px);
+        right: 0;
+        width: 260px;
+        background: rgba(10, 10, 12, 0.98);
+        border: 1px dashed rgba(186, 145, 112, 0.4);
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        z-index: 100;
+      }
+      .features-title {
+        font-family: var(--font-typewriter);
+        font-size: 0.65rem;
+        letter-spacing: 2px;
+        color: var(--colorone-dim);
+        margin-bottom: 10px;
+        display: block;
+      }
+      .feature-item {
+        background: transparent;
+        border: none;
+        text-align: left;
+        cursor: pointer;
+        padding: 10px 0;
+        border-bottom: 1px dashed rgba(186, 145, 112, 0.15);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        transition: background 0.2s;
+      }
+      .feature-item:last-child { border-bottom: none; }
+      .feature-item:hover .feature-label { color: var(--colorone); }
+      .feature-label {
+        font-family: var(--font-typewriter);
+        font-size: 0.75rem;
+        letter-spacing: 2px;
+        color: var(--colorone-dim);
+        transition: color 0.2s;
+      }
+      .feature-sub {
+        font-family: var(--font-typewriter);
+        font-size: 0.65rem;
+        color: rgba(186, 145, 112, 0.35);
+        letter-spacing: 1px;
+        font-style: italic;
       }
 
       .messages-area {

@@ -17,6 +17,7 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
   const [liveInput, setLiveInput] = useState('');
   const [isLiveCall, setIsLiveCall] = useState(false);
   const [isHoldingUI, setIsHoldingUI] = useState(false);
+  const [showFeatures, setShowFeatures] = useState(false);
 
   const messagesEndRef = useRef(null);
   const isLiveCallRef = useRef(false);
@@ -34,6 +35,17 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
 
   useEffect(() => {
     setIsMounted(true);
+    const saved = localStorage.getItem('moxxi_chat_history');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setConvo(parsed);
+        }
+      } catch (e) {
+        console.error('Failed to load chat history:', e);
+      }
+    }
     ensureLibsLoaded().then(() => setLibsReady(true));
   }, []);
 
@@ -44,6 +56,13 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   });
+
+  useEffect(() => {
+    if (isMounted && convo.length > 1) {
+      const toSave = convo.slice(-20);
+      localStorage.setItem('moxxi_chat_history', JSON.stringify(toSave));
+    }
+  }, [convo, isMounted]);
 
   const handleAnalyze = async (msgOverride) => {
     const userMsg = (typeof msgOverride === 'string' ? msgOverride : engineInput).trim();
@@ -173,11 +192,60 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
     <div className="chat-shell" style={isEmbedded ? { position: 'relative', height: '100%', width: '100%' } : {}}>
       <div className="chat-header">
         <div className="header-copy">
-          <span className="chat-name">MOXXI</span>
           <span className="chat-overline">CASE FILE // INQUIRY OPEN</span>
+          <span className="chat-name">MOXXI</span>
         </div>
-        <div className={`presence-status${isProcessing ? ' active' : ''}`}>
-          [{isProcessing ? 'WORKING...' : 'READY'}]
+        <div className="header-actions">
+          <button
+            className={`voice-header-btn${isLiveCall ? ' active' : ''}`}
+            onClick={isLiveCall ? endLiveCall : startLiveCall}
+            disabled={isProcessing && !isLiveCall}
+          >
+            {isLiveCall ? '[ LIVE ]' : '[ VOICE ]'}
+          </button>
+          <div className="features-wrap">
+            <button
+              className={`voice-header-btn${showFeatures ? ' active' : ''}`}
+              onClick={() => setShowFeatures(f => !f)}
+            >
+              [ ≡ ]
+            </button>
+            {showFeatures && (
+              <div className="features-panel">
+                <span className="features-title">// SERVICES AVAILABLE</span>
+                {[
+                  {
+                    label: 'EVIDENCE ROOM',
+                    sub: "Name a title. She'll dig up a link.",
+                    fill: 'Find me a book: ',
+                  },
+                  {
+                    label: 'THE LEDGER',
+                    sub: "Numbers don't lie. She'll crunch them.",
+                    fill: 'Calculate: ',
+                  },
+                  {
+                    label: 'PERSONAL DOSSIER',
+                    sub: "Ope's file. Everything she knows about him.",
+                    fill: 'Tell me about Ope — ',
+                  },
+                ].map(({ label, sub, fill }) => (
+                  <button
+                    key={label}
+                    className="feature-item"
+                    onClick={() => {
+                      if (fill) setEngineInput(fill);
+                      setShowFeatures(false);
+                      if (fill) textareaRef.current?.focus();
+                    }}
+                  >
+                    <span className="feature-label">[ {label} ]</span>
+                    <span className="feature-sub">{sub}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -238,9 +306,6 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
         ) : (
           <div className="text-controls">
             <div className="textarea-row">
-              <button className="composer-tool" onClick={startLiveCall} aria-label="Start voice recording" title="Start voice recording">
-                [ VOICE ]
-              </button>
               <textarea
                 ref={textareaRef}
                 className="chat-input"
