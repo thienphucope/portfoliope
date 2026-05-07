@@ -237,12 +237,12 @@ async function callRag({ messages, username }) {
 
 const PROVIDERS = [
   { name: 'Gemini',      fn: callGemini,      enabled: () => !!GEMINI_API_KEY },
-  { name: 'Grok',        fn: callGrok,        enabled: () => !!XAI_API_KEY },
-  { name: 'SEA-LION',    fn: callSeaLion,     enabled: () => !!SEA_LION_API_KEY },
-  { name: 'Anthropic',   fn: callAnthropic,   enabled: () => !!ANTHROPIC_API_KEY },
-  { name: 'OpenRouter',  fn: callOpenRouter,  enabled: () => !!OPEN_ROUTER_API_KEY },
-  { name: 'HuggingFace', fn: callHuggingFace, enabled: () => !!HUGGINGFACE_API_KEY },
-  { name: 'RAG',         fn: callRag,         enabled: () => true },
+  { name: 'Grok',        fn: callGrok,        enabled: () => false },
+  { name: 'SEA-LION',    fn: callSeaLion,     enabled: () => false },
+  { name: 'Anthropic',   fn: callAnthropic,   enabled: () => false },
+  { name: 'OpenRouter',  fn: callOpenRouter,  enabled: () => false },
+  { name: 'HuggingFace', fn: callHuggingFace, enabled: () => false },
+  { name: 'RAG',         fn: callRag,         enabled: () => false },
 ];
 
 export async function handleAiRequest(rawInput) {
