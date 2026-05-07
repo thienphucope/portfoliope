@@ -96,7 +96,6 @@ async function runOpenAIToolLoop(url, headers, buildBody, { messages, system }) 
 async function callGemini({ messages, system }) {
   const geminiTools = [
     {
-      google_search: {},
       functionDeclarations: availableTools.map(t => ({
         name: t.function.name,
         description: t.function.description,
