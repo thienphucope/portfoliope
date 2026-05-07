@@ -11,13 +11,12 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
   const [isMounted, setIsMounted] = useState(false);
   const [libsReady, setLibsReady] = useState(false);
   const [convo, setConvo] = useState([
-    { role: 'assistant', content: "Oh hey! Didn't see you come in. You look like someone with a story - what's going on?" }
+    { role: 'assistant', content: "Oh hey. Didn't hear you come in.\n\nTake a seat. I've got a few tricks up my sleeve — I can search the web for anything current, hunt down books and PDFs by title, crunch numbers without breaking a nail, and I've got a whole dossier on Ope if you're curious about him. Just say the word." }
   ]);
   const [engineInput, setEngineInput] = useState('');
   const [liveInput, setLiveInput] = useState('');
   const [isLiveCall, setIsLiveCall] = useState(false);
   const [isHoldingUI, setIsHoldingUI] = useState(false);
-  const [showFeatures, setShowFeatures] = useState(false);
 
   const messagesEndRef = useRef(null);
   const isLiveCallRef = useRef(false);
@@ -203,49 +202,17 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
           >
             {isLiveCall ? '[ LIVE ]' : '[ VOICE ]'}
           </button>
-          <div className="features-wrap">
-            <button
-              className={`voice-header-btn${showFeatures ? ' active' : ''}`}
-              onClick={() => setShowFeatures(f => !f)}
-            >
-              [ ≡ ]
-            </button>
-            {showFeatures && (
-              <div className="features-panel">
-                <span className="features-title">// SERVICES AVAILABLE</span>
-                {[
-                  {
-                    label: 'EVIDENCE ROOM',
-                    sub: "Name a title. She'll dig up a link.",
-                    fill: 'Find me a book: ',
-                  },
-                  {
-                    label: 'THE LEDGER',
-                    sub: "Numbers don't lie. She'll crunch them.",
-                    fill: 'Calculate: ',
-                  },
-                  {
-                    label: 'PERSONAL DOSSIER',
-                    sub: "Ope's file. Everything she knows about him.",
-                    fill: 'Tell me about Ope — ',
-                  },
-                ].map(({ label, sub, fill }) => (
-                  <button
-                    key={label}
-                    className="feature-item"
-                    onClick={() => {
-                      if (fill) setEngineInput(fill);
-                      setShowFeatures(false);
-                      if (fill) textareaRef.current?.focus();
-                    }}
-                  >
-                    <span className="feature-label">[ {label} ]</span>
-                    <span className="feature-sub">{sub}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <button
+            className="voice-header-btn"
+            onClick={() => {
+              if (isLiveCall) endLiveCall();
+              setConvo([{ role: 'assistant', content: "Oh hey. Didn't hear you come in.\n\nTake a seat. I've got a few tricks up my sleeve — I can search the web for anything current, hunt down books and PDFs by title, crunch numbers without breaking a nail, and I've got a whole dossier on Ope if you're curious about him. Just say the word." }]);
+              localStorage.removeItem('moxxi_chat_history');
+            }}
+            disabled={isProcessing}
+          >
+            [ NEW ]
+          </button>
         </div>
       </div>
 

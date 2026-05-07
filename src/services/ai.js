@@ -94,13 +94,16 @@ async function runOpenAIToolLoop(url, headers, buildBody, { messages, system }) 
 // ─── Providers ────────────────────────────────────────────────────────────────
 
 async function callGemini({ messages, system }) {
-  const geminiTools = [{
-    functionDeclarations: availableTools.map(t => ({
-      name: t.function.name,
-      description: t.function.description,
-      parameters: t.function.parameters,
-    }))
-  }];
+  const geminiTools = [
+    {
+      google_search: {},
+      functionDeclarations: availableTools.map(t => ({
+        name: t.function.name,
+        description: t.function.description,
+        parameters: t.function.parameters,
+      })),
+    }
+  ];
 
   let currentContents = messages.map(({ role, content }) => ({
     role: role === 'user' ? 'user' : 'model',
@@ -142,13 +145,64 @@ async function callGemini({ messages, system }) {
   throw new Error("Gemini: Vượt quá số lần gọi tool liên tiếp cho phép.");
 }
 
-async function callGrok(ctx) {
-  return runOpenAIToolLoop(
-    "https://api.x.ai/v1/chat/completions",
-    { 'Authorization': `Bearer ${XAI_API_KEY}` },
-    (msgs) => ({ model: XAI_MODEL, messages: msgs, tools: availableTools, temperature: TEMPERATURE, max_tokens: MAX_TOKENS, stream: false }),
-    ctx
-  );
+async function callGrok({ messages, system }) {
+  const grokTools = [
+    { type: "web_search" },
+    { type: "x_search" },
+    ...availableTools.map(t => ({
+      type: "function",
+      name: t.function.name,
+      description: t.function.description,
+      parameters: t.function.parameters,
+    })),
+  ];
+
+  let currentInput = messages.map(({ role, content }) => ({
+    role: role === 'user' ? 'user' : 'assistant',
+    content,
+  }));
+
+  for (let i = 0; i < MAX_TOOL_TURNS; i++) {
+    const res = await fetch("https://api.x.ai/v1/responses", {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${XAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: XAI_MODEL,
+        input: currentInput,
+        instructions: system,
+        tools: grokTools,
+        temperature: TEMPERATURE,
+        max_output_tokens: MAX_TOKENS,
+        stream: false,
+      }),
+    });
+    if (!res.ok) throw new Error(`Grok ${res.status}: ${await res.text()}`);
+    const data = await res.json();
+
+    const output = data.output || [];
+    const functionCalls = output.filter(item => item.type === 'function_call');
+
+    if (functionCalls.length > 0) {
+      for (const fc of functionCalls) currentInput.push(fc);
+      for (const fc of functionCalls) {
+        const result = await executeToolCall(fc.name, fc.arguments);
+        currentInput.push({
+          type: 'function_call_output',
+          call_id: fc.call_id,
+          output: typeof result === 'string' ? result : JSON.stringify(result),
+        });
+      }
+      continue;
+    }
+
+    const message = output.find(item => item.type === 'message');
+    const textBlock = message?.content?.find(b => b.type === 'output_text' || b.type === 'text');
+    return textBlock?.text || null;
+  }
+  throw new Error("Grok: Vượt quá số lần gọi tool liên tiếp cho phép.");
 }
 
 async function callAnthropic({ messages, system }) {
@@ -237,7 +291,7 @@ async function callRag({ messages, username }) {
 
 const PROVIDERS = [
   { name: 'Gemini',      fn: callGemini,      enabled: () => !!GEMINI_API_KEY },
-  { name: 'Grok',        fn: callGrok,        enabled: () => false },
+  { name: 'Grok',        fn: callGrok,        enabled: () => !!XAI_API_KEY },
   { name: 'SEA-LION',    fn: callSeaLion,     enabled: () => false },
   { name: 'Anthropic',   fn: callAnthropic,   enabled: () => false },
   { name: 'OpenRouter',  fn: callOpenRouter,  enabled: () => false },

@@ -70,7 +70,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
         opacity: 0.95;
       }
 
-      .voice-header-btn {
+.voice-header-btn {
         font-family: var(--font-typewriter);
         font-size: 0.8rem;
         letter-spacing: 2px;
