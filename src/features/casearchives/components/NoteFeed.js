@@ -401,39 +401,36 @@ const scrollToSection = (id) => {
         {/* HERO SECTION */}
         <section className="hero" id="hero">
           <div className="hero-content reveal">
-            <div className="hero-overline">Case Archives - Sherlock Holmes inspired</div>
-            <h1 className="hero-title">Ope <span className="italic">Watson</span></h1>
-            <p className="hero-subtitle">When you have eliminated the impossible, whatever remains must be the truth.</p>
+            <div className="hero-overline">by Ope watson</div>
+            <h1 className="hero-title">Case <span className="italic">Archives</span></h1>
+            <p className="hero-subtitle">You see, but you do not observe. — Sherlock Holmes inspired</p>
             <div className="hero-ctas">
               <div className="cta-path">
-                <span className="cta-label">Ask Watson</span>
                 <Link className="hero-cta" href="/chat">
-                  Consult <span className="arrow">→</span>
+                  Ask Sidekick <span className="arrow">→</span>
                 </Link>
               </div>
 
               <div className="cta-separator"></div>
 
               <div className="cta-path">
-                <span className="cta-label">Evidence Board</span>
                 <Link className="hero-cta" href="/noirboard">
-                  Inspect <span className="arrow">→</span>
+                  Inspect Board <span className="arrow">→</span>
                 </Link>
               </div>
 
               <div className="cta-separator"></div>
 
               <div className="cta-path">
-                <span className="cta-label">Case Dossier</span>
                 <button className="hero-cta" onClick={() => scrollToSection('cases')}>
-                  Browse <span className="arrow">→</span>
+                  Browse Cases <span className="arrow">→</span>
                 </button>
               </div>
             </div>
             <div className="hero-links">
-              <Link href="/about" className="hero-link">About Watson</Link>
-              <Link href="/privacy" className="hero-link">Privacy Notes</Link>
-              <Link href="/terms" className="hero-link">Terms of Inquiry</Link>
+              <Link href="/about" className="hero-link">About</Link>
+              <Link href="/privacy" className="hero-link">Privacy</Link>
+              <Link href="/terms" className="hero-link">Terms</Link>
             </div>
             <div className="scroll-indicator">
               <span>Scroll to Cases</span>
@@ -489,7 +486,7 @@ const scrollToSection = (id) => {
           <div className="footer-bottom">
             <span>Ope Watson · MMXXVI</span>
             <span className="footer-wig">🔍</span>
-            <span>&ldquo;The game is always afoot.&rdquo;</span>
+            <span>&ldquo;Elementary, my dear Watson.&rdquo;</span>
           </div>
         </footer>
       </div>
@@ -570,7 +567,7 @@ const scrollToSection = (id) => {
         section { position: relative; z-index: 20; padding: 120px 40px; width: 100%; box-sizing: border-box; }
         .hero { height: 100dvh; display: flex; align-items: center; justify-content: center; text-align: center; }
         .nav-mind-palace {
-          position: fixed; top: 30px; right: 30px; z-index: 10000000;
+          position: fixed; top: 50%; right: 30px; transform: translateY(-50%); z-index: 10000000;
           display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
         }
         .nav-item {
@@ -620,7 +617,7 @@ const scrollToSection = (id) => {
         .hero-cta .arrow { transition: transform 0.3s ease; }
         .hero-cta:hover .arrow { transform: translateX(5px); }
 
-        .hero-overline { font-family: var(--font-typewriter); color: var(--colorone-dim); letter-spacing: 8px; text-transform: uppercase; margin-bottom: 30px; }
+        .hero-overline { font-family: var(--font-typewriter); color: var(--colorone-dim); letter-spacing: clamp(2px, 0.5vw, 8px); text-transform: uppercase; margin-bottom: 30px; font-size: clamp(0.6rem, 1.5vw, 0.75rem); }
         .hero-title { font-family: var(--font-display); font-size: clamp(3rem, 12vw, 8rem); font-weight: 900; margin: 0; line-height: 1; }
         .hero-title .italic { font-style: italic; font-weight: 400; color: var(--colorone); }
         .hero-subtitle { font-family: var(--font-display); font-style: italic; color: var(--parchment-dark); font-size: clamp(1.2rem, 4vw, 2.5rem); margin-top: 20px; }
@@ -711,7 +708,7 @@ const scrollToSection = (id) => {
         .case-item {
           display: flex;
           gap: 3rem;
-          padding: 6.25rem 0;
+          padding: 3rem 0;
           border-bottom: 1px solid rgba(212, 168, 67, 0.1);
           position: relative;
         }

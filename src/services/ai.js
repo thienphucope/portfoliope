@@ -1,182 +1,252 @@
 // src/services/ai.js
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
-const XAI_API_KEY = process.env.XAI_API_KEY || '';
-const SEA_LION_API_KEY = process.env.SEA_LION_API_KEY || '';
-const RAG_API_URL = "https://rag-backend-zh2e.onrender.com/rag";
-const SYSTEM_INSTRUCTION = process.env.SYSTEM_INSTRUCTION || " ";
+// ─── Static config ────────────────────────────────────────────────────────────
+const TEMPERATURE       = 0.7;
+const MAX_TOKENS        = 8192;
+const MAX_TOKENS_SMALL  = 2048; // for providers with lower limits
 
-export async function handleAiRequest({ query, history, username, systemInstruction: customInstruction }) {
+// ─── Keys & models from env ───────────────────────────────────────────────────
+const XAI_API_KEY         = process.env.XAI_API_KEY || '';
+const XAI_MODEL           = process.env.XAI_MODEL || 'grok-4-1-fast';
+
+const GEMINI_API_KEY      = process.env.GEMINI_API_KEY || '';
+const GEMINI_MODEL        = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+
+const SEA_LION_API_KEY    = process.env.SEA_LION_API_KEY || '';
+const SEA_LION_MODEL      = process.env.SEA_LION_MODEL || 'aisingapore/Gemma-SEA-LION-v4-27B-IT';
+
+const ANTHROPIC_API_KEY   = process.env.ANTHROPIC_API_KEY || '';
+const ANTHROPIC_MODEL     = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6';
+
+const OPEN_ROUTER_API_KEY = process.env.OPEN_ROUTER_API_KEY || '';
+const OPEN_ROUTER_MODEL   = process.env.OPEN_ROUTER_MODEL || 'openai/gpt-4o-mini';
+
+const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY || '';
+const HUGGINGFACE_MODEL   = process.env.HUGGINGFACE_MODEL || 'meta-llama/Llama-3.1-8B-Instruct';
+
+const RAG_API_URL         = process.env.RAG_API_URL || 'https://rag-backend-zh2e.onrender.com/rag';
+const SYSTEM_INSTRUCTION  = process.env.SYSTEM_INSTRUCTION || 'You are a helpful assistant.';
+
+// ─── Circuit breaker ─────────────────────────────────────────────────────────
+const CIRCUIT_THRESHOLD = 3;
+const CIRCUIT_RESET_MS  = 60_000;
+const failures = new Map();
+
+function isOpen(name) {
+  const f = failures.get(name);
+  if (!f) return false;
+  if (Date.now() > f.until) { failures.delete(name); return false; }
+  return f.count >= CIRCUIT_THRESHOLD;
+}
+
+function recordFailure(name) {
+  const f = failures.get(name) || { count: 0, until: 0 };
+  failures.set(name, { count: f.count + 1, until: Date.now() + CIRCUIT_RESET_MS });
+}
+
+function recordSuccess(name) {
+  failures.delete(name);
+}
+
+// ─── Normalize ────────────────────────────────────────────────────────────────
+// Standard internal format: { messages: [{role, content}], system, username }
+
+function normalize({ query, history, username, systemInstruction }) {
   if (!query) throw new Error('Missing query');
-  console.log(`🤖 [AI Action] Request received. Query: "${query.slice(0, 50)}..."`);
+  return {
+    messages: [
+      ...(history || []).map(({ role, content }) => ({ role, content })),
+      { role: 'user', content: query },
+    ],
+    system: systemInstruction || SYSTEM_INSTRUCTION,
+    username: username || 'AI_Assistant',
+  };
+}
 
-  const systemInstruction = customInstruction || SYSTEM_INSTRUCTION;
+// ─── Providers ────────────────────────────────────────────────────────────────
 
-  // 1a. Try Grok (xAI) first
-  if (XAI_API_KEY) {
-    console.log(`📡 [AI Action] Attempting Grok (grok-4-1-fast) via Responses API...`);
-    try {
-      const grokResp = await fetch("https://api.x.ai/v1/responses", {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${XAI_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: "grok-4-1-fast",
-          input: [
-            ...(history || []).map(m => ({
-              role: m.role === 'user' ? 'user' : 'assistant',
-              content: m.content
-            })),
-            { role: "user", content: query }
-          ],
-          instructions: systemInstruction || "You are a helpful assistant.",
-          tools: [
-            { type: "web_search" },
-            { type: "x_search" },
-            { type: "file_search", vector_store_ids: ["collection_06dd3ffc-16df-4db5-9eef-ff869f21d5e5"] }
-          ],
-          temperature: 0.7,
-          max_output_tokens: 8192,
-          stream: false
-        }),
-      });
-
-      if (!grokResp.ok) {
-        const errorBody = await grokResp.text();
-        console.error(`Grok Responses error ${grokResp.status}: ${errorBody}`);
-        throw new Error(`Grok failed: ${grokResp.status}`);
-      }
-
-      const data = await grokResp.json();
-      let text = "";
-      for (const item of data.output || []) {
-        if (item.type === "message") {
-          for (const block of item.content || []) {
-            if (block.type === "output_text") {
-              text = block.text;
-              break;
-            }
-          }
-        }
-        if (text) break;
-      }
-
-      if (text) {
-        console.log(`✅ [AI Action] Grok responded successfully.`);
-        return { response: text };
-      } else {
-        console.warn(`⚠️ [AI Action] Grok returned empty output_text`);
-      }
-    } catch (e) {
-      console.warn("❌ [AI Action] Grok failed, falling back to Gemini:", e.message);
+async function callGrok({ messages, system }) {
+  const res = await fetch("https://api.x.ai/v1/responses", {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${XAI_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: XAI_MODEL,
+      input: messages.map(({ role, content }) => ({
+        role: role === 'assistant' ? 'assistant' : 'user',
+        content,
+      })),
+      instructions: system,
+      tools: [
+        { type: "web_search" },
+        { type: "x_search" },
+        { type: "file_search", vector_store_ids: ["collection_06dd3ffc-16df-4db5-9eef-ff869f21d5e5"] },
+      ],
+      temperature: TEMPERATURE,
+      max_output_tokens: MAX_TOKENS,
+      stream: false,
+    }),
+  });
+  if (!res.ok) throw new Error(`Grok ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  for (const item of data.output || []) {
+    if (item.type !== 'message') continue;
+    for (const block of item.content || []) {
+      if (block.type === 'output_text' && block.text) return block.text;
     }
-  } else {
-    console.log(`⏭️ [AI Action] Skipping Grok (XAI_API_KEY not set).`);
   }
+  return null;
+}
 
-  // 1b. Fallback to Gemini
-  if (GEMINI_API_KEY) {
-    console.log(`📡 [AI Action] Attempting Gemini (gemini-2.5-flash)...`);
-    try {
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-      const contents = [
-        { role: 'user', parts: [{ text: systemInstruction }] },
-        ...(history || []).map(m => ({
-          role: m.role === 'user' ? 'user' : 'model',
-          parts: [{ text: m.content }]
+async function callGemini({ messages, system }) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [
+        { role: 'user', parts: [{ text: system }] },
+        ...messages.map(({ role, content }) => ({
+          role: role === 'user' ? 'user' : 'model',
+          parts: [{ text: content }],
         })),
-        { role: 'user', parts: [{ text: query }] }
-      ];
+      ],
+      tools: [{ google_search: {} }],
+    }),
+  });
+  if (!res.ok) throw new Error(`Gemini ${res.status}`);
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
+}
 
-      const geminiResp = await fetch(geminiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents, tools: [{ google_search: {} }] }),
-      });
+async function callSeaLion({ messages, system }) {
+  const res = await fetch("https://api.sea-lion.ai/v1/chat/completions", {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${SEA_LION_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: SEA_LION_MODEL,
+      messages: [{ role: 'system', content: system }, ...messages],
+      temperature: TEMPERATURE,
+      max_completion_tokens: MAX_TOKENS_SMALL,
+    }),
+  });
+  if (!res.ok) throw new Error(`SEA-LION ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || null;
+}
 
-      if (geminiResp.ok) {
-        const data = await geminiResp.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text) {
-          console.log(`✅ [AI Action] Gemini responded successfully.`);
-          return { response: text };
-        }
-      } else {
-        console.warn(`⚠️ [AI Action] Gemini returned status ${geminiResp.status}`);
-      }
-    } catch (e) {
-      console.warn("❌ [AI Action] Gemini failed, falling back to RAG:", e.message);
+async function callAnthropic({ messages, system }) {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: 'POST',
+    headers: {
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: ANTHROPIC_MODEL,
+      system,
+      messages: messages.map(({ role, content }) => ({
+        role: role === 'assistant' ? 'assistant' : 'user',
+        content,
+      })),
+      max_tokens: MAX_TOKENS,
+    }),
+  });
+  if (!res.ok) throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  return data.content?.[0]?.text || null;
+}
+
+async function callOpenRouter({ messages, system }) {
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${OPEN_ROUTER_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: OPEN_ROUTER_MODEL,
+      messages: [{ role: 'system', content: system }, ...messages],
+      temperature: TEMPERATURE,
+      max_tokens: MAX_TOKENS,
+    }),
+  });
+  if (!res.ok) throw new Error(`OpenRouter ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || null;
+}
+
+async function callHuggingFace({ messages, system }) {
+  const res = await fetch("https://api-inference.huggingface.co/v1/chat/completions", {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${HUGGINGFACE_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: HUGGINGFACE_MODEL,
+      messages: [{ role: 'system', content: system }, ...messages],
+      temperature: TEMPERATURE,
+      max_tokens: MAX_TOKENS_SMALL,
+    }),
+  });
+  if (!res.ok) throw new Error(`HuggingFace ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || null;
+}
+
+async function callRag({ messages, username }) {
+  const query = messages.at(-1)?.content || '';
+  const res = await fetch(RAG_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, query }),
+  });
+  if (!res.ok) throw new Error(`RAG ${res.status}`);
+  const data = await res.json();
+  return data.response || null;
+}
+
+// ─── Proxy ────────────────────────────────────────────────────────────────────
+
+const PROVIDERS = [
+  { name: 'Grok',        fn: callGrok,        enabled: () => !!XAI_API_KEY },
+  { name: 'Gemini',      fn: callGemini,      enabled: () => !!GEMINI_API_KEY },
+  { name: 'SEA-LION',    fn: callSeaLion,     enabled: () => !!SEA_LION_API_KEY },
+  { name: 'Anthropic',   fn: callAnthropic,   enabled: () => !!ANTHROPIC_API_KEY },
+  { name: 'OpenRouter',  fn: callOpenRouter,  enabled: () => !!OPEN_ROUTER_API_KEY },
+  { name: 'HuggingFace', fn: callHuggingFace, enabled: () => !!HUGGINGFACE_API_KEY },
+  { name: 'RAG',         fn: callRag,         enabled: () => true },
+];
+
+export async function handleAiRequest(rawInput) {
+  const normalized = normalize(rawInput);
+  console.log(`🤖 [AI] Query: "${(rawInput.query || '').slice(0, 50)}..."`);
+
+  for (const { name, fn, enabled } of PROVIDERS) {
+    if (!enabled()) {
+      console.log(`⏭️ [${name}] Skipped (no API key).`);
+      continue;
     }
-  } else {
-    console.log(`⏭️ [AI Action] Skipping Gemini (GEMINI_API_KEY not set).`);
-  }
-
-  // 1c. Fallback to SEA-LION (AI Singapore)
-  if (SEA_LION_API_KEY) {
-    console.log(`📡 [AI Action] Attempting SEA-LION (aisingapore/Gemma-SEA-LION-v4-27B-IT)...`);
+    if (isOpen(name)) {
+      console.log(`🔴 [${name}] Circuit open, skipping.`);
+      continue;
+    }
+    console.log(`📡 [${name}] Attempting...`);
     try {
-      const seaLionResp = await fetch("https://api.sea-lion.ai/v1/chat/completions", {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${SEA_LION_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: "aisingapore/Gemma-SEA-LION-v4-27B-IT",
-          messages: [
-            { role: "system", content: systemInstruction || "You are a helpful assistant." },
-            ...(history || []).map(m => ({
-              role: m.role === 'user' ? 'user' : 'assistant',
-              content: m.content
-            })),
-            { role: "user", content: query }
-          ],
-          temperature: 0.7,
-          max_completion_tokens: 2048,
-        }),
-      });
-
-      if (seaLionResp.ok) {
-        const data = await seaLionResp.json();
-        const text = data.choices?.[0]?.message?.content;
-        if (text) {
-          console.log(`✅ [AI Action] SEA-LION responded successfully.`);
-          return { response: text };
-        }
-      } else {
-        const errorBody = await seaLionResp.text();
-        console.warn(`⚠️ [AI Action] SEA-LION returned status ${seaLionResp.status}: ${errorBody}`);
+      const text = await fn(normalized);
+      if (text) {
+        console.log(`✅ [${name}] Success.`);
+        recordSuccess(name);
+        return { response: text, provider: name };
       }
+      console.warn(`⚠️ [${name}] Empty response.`);
+      recordFailure(name);
     } catch (e) {
-      console.warn("❌ [AI Action] SEA-LION failed, falling back to RAG:", e.message);
+      console.warn(`❌ [${name}] Failed:`, e.message);
+      recordFailure(name);
     }
-  } else {
-    console.log(`⏭️ [AI Action] Skipping SEA-LION (SEA_LION_API_KEY not set).`);
   }
 
-  // 1d. Final Fallback: RAG
-  console.log(`📡 [AI Action] Attempting RAG fallback...`);
-  try {
-    const ragResp = await fetch(RAG_API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: username || 'AI_Assistant', query }),
-    });
-    if (ragResp.ok) {
-      const data = await ragResp.json();
-      if (data.response) {
-        console.log(`✅ [AI Action] RAG responded successfully.`);
-        return { response: data.response };
-      }
-    } else {
-      console.warn(`⚠️ [AI Action] RAG returned status ${ragResp.status}`);
-    }
-  } catch (e) {
-    console.warn("❌ [AI Action] RAG failed:", e.message);
-  }
-
-  console.error(`💀 [AI Action] All AI services failed.`);
   throw new Error('All AI services failed');
 }
