@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { useAI } from '@/hooks/useAI';
+import { MOXXI_DISPLAY_NAME, MOXXI_GREETING, MOXXI_ERROR_MSG } from '@/configs/ai';
 import { useSTT } from '@/hooks/useSTT';
 import { useTTS } from '@/hooks/useTTS';
 import { ensureLibsLoaded } from '@/features/casearchives/utils/markdown';
@@ -11,8 +12,9 @@ import ChatRoomStyles from './styles/ChatRoomStyles';
 const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick, onLiveCallChange }, ref) {
   const [isMounted, setIsMounted] = useState(false);
   const [libsReady, setLibsReady] = useState(false);
+  const [username, setUsername] = useState('');
   const [convo, setConvo] = useState([
-    { role: 'assistant', content: "Oh hey. Didn't hear you come in.\n\nTake a seat. I've got a few tricks up my sleeve — I can search the web for anything current, hunt down books and PDFs by title, crunch numbers without breaking a nail, and I've got a whole dossier on Ope if you're curious about him. Just say the word." }
+    { role: 'assistant', content: MOXXI_GREETING }
   ]);
   const [engineInput, setEngineInput] = useState('');
   const [liveInput, setLiveInput] = useState('');
@@ -40,6 +42,8 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
 
   useEffect(() => {
     setIsMounted(true);
+    const savedName = localStorage.getItem('moxxi_username');
+    if (savedName) setUsername(savedName);
     const saved = localStorage.getItem('moxxi_chat_history');
     if (saved) {
       try {
@@ -69,6 +73,19 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
     }
   }, [convo, isMounted]);
 
+  const buildGreeting = (name) =>
+    name ? MOXXI_GREETING.replace('Oh hey.', `Oh hey ${name}.`) : MOXXI_GREETING;
+
+  const handleUsernameSubmit = (name) => {
+    const trimmed = name.trim();
+    localStorage.setItem('moxxi_username', trimmed);
+    setConvo(prev => {
+      const updated = [...prev];
+      updated[0] = { role: 'assistant', content: buildGreeting(trimmed) };
+      return updated;
+    });
+  };
+
   const handleAnalyze = async (msgOverride) => {
     const raw = (typeof msgOverride === 'string' ? msgOverride : engineInput).trim();
     if (!raw || isThinking || isStreaming || isPlayingAudio) return;
@@ -85,7 +102,7 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
     setConvo([...currentConvo, { role: 'assistant', content: '' }]);
 
     try {
-      const reply = await requestAI(userMsg, convo.filter(m => m.content), 'Moxxi', undefined, provider);
+      const reply = await requestAI(userMsg, convo.filter(m => m.content), undefined, undefined, provider);
       streamResponse(reply, (fullText) => {
         setConvo(prev => {
           const n = [...prev];
@@ -97,7 +114,7 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
     } catch (e) {
       setConvo(prev => {
         const n = [...prev];
-        n[n.length - 1] = { role: 'assistant', content: "Well, that didn't go as planned, sugar. Even I have my off nights." };
+        n[n.length - 1] = { role: 'assistant', content: MOXXI_ERROR_MSG };
         return n;
       });
     }
@@ -202,9 +219,19 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
       <div className="chat-header">
         <div className="header-copy">
           <span className="chat-overline">CASE FILE // INQUIRY OPEN</span>
-          <span className="chat-name">MOXXI</span>
+          <span className="chat-name">{MOXXI_DISPLAY_NAME}</span>
         </div>
         <div className="header-actions">
+          <input
+            className="username-input"
+            type="text"
+            placeholder="your name..."
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.target.blur(); handleUsernameSubmit(e.target.value); } }}
+            onBlur={(e) => handleUsernameSubmit(e.target.value)}
+            maxLength={30}
+          />
           <button
             className={`voice-header-btn${isLiveCall ? ' active' : ''}`}
             onClick={isLiveCall ? endLiveCall : startLiveCall}
@@ -216,7 +243,7 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
             className="voice-header-btn"
             onClick={() => {
               if (isLiveCall) endLiveCall();
-              setConvo([{ role: 'assistant', content: "Oh hey. Didn't hear you come in.\n\nTake a seat. I've got a few tricks up my sleeve — I can search the web for anything current, hunt down books and PDFs by title, crunch numbers without breaking a nail, and I've got a whole dossier on Ope if you're curious about him. Just say the word." }]);
+              setConvo([{ role: 'assistant', content: buildGreeting(username) }]);
               localStorage.removeItem('moxxi_chat_history');
             }}
             disabled={isProcessing}
@@ -236,7 +263,7 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
             return (
               <div key={i} className={`message-row ${msg.role}`}>
                 <div className="message-bubble">
-                  <span className="bubble-name">{msg.role === 'assistant' ? 'MOXXI' : 'SUBJECT (YOU)'}</span>
+                  <span className="bubble-name">{msg.role === 'assistant' ? MOXXI_DISPLAY_NAME : 'SUBJECT (YOU)'}</span>
                   <div
                     className="bubble-content markdown-content"
                     dangerouslySetInnerHTML={{ __html: html }}
@@ -266,7 +293,7 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
         {isLiveCall ? (
           <div className="live-controls">
             <div className="live-copy">
-              <span className="live-title">{isProcessing ? 'MOXXI IS RESPONDING...' : isHoldingUI ? 'RECORDING MANUAL INPUT' : 'LISTENING TO SUBJECT...'}</span>
+              <span className="live-title">{isProcessing ? `${MOXXI_DISPLAY_NAME} IS RESPONDING...` : isHoldingUI ? 'RECORDING MANUAL INPUT' : 'LISTENING TO SUBJECT...'}</span>
               <span className="live-subtitle">{isProcessing ? '[ TAP TO INTERRUPT ]' : '[ TAP TO RESET / HOLD TO RETAIN ]'}</span>
             </div>
             <button

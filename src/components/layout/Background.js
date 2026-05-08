@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef } from 'react';
+import { BACKGROUND_VIDEO } from '@/configs/media';
 
 export default function Background() {
   const bgPlayerRef = useRef(null);
@@ -9,8 +10,8 @@ export default function Background() {
     const initPlayer = () => {
       if (!window.YT?.Player || bgPlayerRef.current || !bgPlayerDivRef.current) return;
       bgPlayerRef.current = new window.YT.Player(bgPlayerDivRef.current, {
-        videoId: '305Uc8i5RJM',
-        playerVars: { autoplay: 1, mute: 1, controls: 0, showinfo: 0, modestbranding: 1, rel: 0, iv_load_policy: 3, disablekb: 1, start: 50, end: 118 },
+        videoId: BACKGROUND_VIDEO.videoId,
+        playerVars: { autoplay: 1, mute: 1, controls: 0, showinfo: 0, modestbranding: 1, rel: 0, iv_load_policy: 3, disablekb: 1, start: BACKGROUND_VIDEO.start, end: BACKGROUND_VIDEO.end },
         events: {
           onReady: (e) => { e.target.mute(); if (e.target.setPlaybackQuality) e.target.setPlaybackQuality('small'); e.target.playVideo(); },
           onStateChange: (e) => { if (e.data === window.YT.PlayerState.ENDED) { e.target.seekTo(50); e.target.playVideo(); } },

@@ -29,6 +29,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
         display: flex;
         flex-direction: column;
       }
+      ${isEmbedded ? '.chat-shell { position: relative; flex: 1; min-height: 0; }' : ''}
 
       .chat-shell::after {
         content: "";
@@ -61,6 +62,20 @@ export default function ChatRoomStyles({ isEmbedded }) {
         letter-spacing: 3px;
         text-transform: uppercase;
       }
+      .username-input {
+        font-family: var(--font-typewriter);
+        font-size: 0.6rem;
+        letter-spacing: 2px;
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid rgba(196, 180, 138, 0.25);
+        color: rgba(196, 180, 138, 0.7);
+        outline: none;
+        width: 100px;
+        padding: 2px 0;
+      }
+      .username-input::placeholder { color: rgba(196, 180, 138, 0.3); }
+      .username-input:focus { border-bottom-color: rgba(196, 180, 138, 0.6); color: rgba(196, 180, 138, 0.9); }
       .chat-overline {
         font-family: var(--font-typewriter);
         font-size: 0.85rem;
@@ -145,6 +160,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
 
       .messages-area {
         flex: 1;
+        min-height: 0;
         overflow-y: auto;
         padding: 32px 24px 16px;
         display: flex;

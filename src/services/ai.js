@@ -2,11 +2,12 @@
 
 import { Ollama } from 'ollama';
 import { availableTools, executeToolCall } from './aitool.js';
+import { MOXXI_SYSTEM_PROMPT } from '@/configs/ai';
 
 // ─── Static config ────────────────────────────────────────────────────────────
 const TEMPERATURE      = 0.7;
-const MAX_TOKENS       = 8192;
-const MAX_TOKENS_SMALL = 2048;
+const MAX_TOKENS       = 1024;
+const MAX_TOKENS_SMALL = 512;
 const MAX_TOOL_TURNS   = 3;
 
 // ─── Keys & models from env ───────────────────────────────────────────────────
@@ -37,7 +38,7 @@ const ollamaClient = new Ollama({
 });
 
 const RAG_API_URL        = process.env.RAG_API_URL || 'https://rag-backend-zh2e.onrender.com/rag';
-const SYSTEM_INSTRUCTION = process.env.MOXXI_PROMPT || 'You are a helpful assistant.';
+const SYSTEM_INSTRUCTION = MOXXI_SYSTEM_PROMPT;
 
 // ─── Circuit breaker ─────────────────────────────────────────────────────────
 const CIRCUIT_THRESHOLD = 3;

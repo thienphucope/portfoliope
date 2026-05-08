@@ -1,6 +1,7 @@
 "use client";
 import { FaYoutube, FaInstagram, FaGithub, FaEnvelope, FaTwitter } from 'react-icons/fa';
 import { useState } from 'react';
+import { SOCIAL_LINKS } from '@/configs/social';
 
 export default function Footer() {
   const [hoverKeys, setHoverKeys] = useState({});
@@ -29,23 +30,23 @@ export default function Footer() {
       </div>
       <div className="order-2 lg:order-2 flex gap-4 z-20">
         <div className="social-icon" onMouseEnter={() => handleMouseEnter('youtube')}>
-          <a href="https://www.youtube.com/watch?v=zqcrDCynF8k" target="_blank" rel="noopener noreferrer"><FaYoutube className="text-[var(--colorone)] text-2xl md:text-3xl hover:text-white transition-colors" /></a>
+          <a href={SOCIAL_LINKS.youtube} target="_blank" rel="noopener noreferrer"><FaYoutube className="text-[var(--colorone)] text-2xl md:text-3xl hover:text-white transition-colors" /></a>
           <span key={hoverKeys['youtube']} className={`social-label ${hoverKeys['youtube'] ? 'animating' : ''}`}>theres</span>
         </div>
         <div className="social-icon" onMouseEnter={() => handleMouseEnter('instagram')}>
-          <a href="https://www.instagram.com/t22felton/" target="_blank" rel="noopener noreferrer"><FaInstagram className="text-[var(--colorone)] text-2xl md:text-3xl hover:text-white transition-colors" /></a>
+          <a href={SOCIAL_LINKS.instagram} target="_blank" rel="noopener noreferrer"><FaInstagram className="text-[var(--colorone)] text-2xl md:text-3xl hover:text-white transition-colors" /></a>
           <span key={hoverKeys['instagram']} className={`social-label ${hoverKeys['instagram'] ? 'animating' : ''}`}>nothing</span>
         </div>
         <div className="social-icon" onMouseEnter={() => handleMouseEnter('github')}>
-          <a href="https://github.com/thienphucope" target="_blank" rel="noopener noreferrer"><FaGithub className="text-[var(--colorone)] text-2xl md:text-3xl hover:text-white transition-colors" /></a>
+          <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer"><FaGithub className="text-[var(--colorone)] text-2xl md:text-3xl hover:text-white transition-colors" /></a>
           <span key={hoverKeys['github']} className={`social-label ${hoverKeys['github'] ? 'animating' : ''}`}>about</span>
         </div>
         <div className="social-icon" onMouseEnter={() => handleMouseEnter('email')}>
-          <a href="https://mail.google.com/mail/?view=cm&fs=1&to=thienphucmain1052004@gmail.com" target="_blank" rel="noopener noreferrer"><FaEnvelope className="text-[var(--colorone)] text-2xl md:text-3xl hover:text-white transition-colors" /></a>
+          <a href={SOCIAL_LINKS.email} target="_blank" rel="noopener noreferrer"><FaEnvelope className="text-[var(--colorone)] text-2xl md:text-3xl hover:text-white transition-colors" /></a>
           <span key={hoverKeys['email']} className={`social-label ${hoverKeys['email'] ? 'animating' : ''}`}>me</span>
         </div>
         <div className="social-icon" onMouseEnter={() => handleMouseEnter('twitter')}>
-          <a href="https://x.com/a" target="_blank" rel="noopener noreferrer"><FaTwitter className="text-[var(--colorone)] text-2xl md:text-3xl hover:text-white transition-colors" /></a>
+          <a href={SOCIAL_LINKS.twitter} target="_blank" rel="noopener noreferrer"><FaTwitter className="text-[var(--colorone)] text-2xl md:text-3xl hover:text-white transition-colors" /></a>
           <span key={hoverKeys['twitter']} className={`social-label ${hoverKeys['twitter'] ? 'animating' : ''}`}>here!</span>
         </div>
       </div>

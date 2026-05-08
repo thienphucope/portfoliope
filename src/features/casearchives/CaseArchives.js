@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { DEFAULT_VAULT_FILE } from '@/configs/vault';
 import { ArrowLeft } from 'lucide-react';
 import BlockEditor from '@/features/casearchives/components/BlockEditor';
 import BaseStyles from '@/features/casearchives/styles/BaseStyles';
@@ -240,7 +241,7 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
     const initialize = (data) => {
       const repoPathMap = buildRegistry(data.tree); setFileTree(data.tree); initializeFromServer(data.contentCache || {}, data.rawCache || {});
       const pathParts = window.location.pathname.split('/').filter(Boolean);
-      const rawDefault = process.env.NEXT_PUBLIC_DEFAULT_VAULT_FILE || 'chat';
+      const rawDefault = DEFAULT_VAULT_FILE;
       const cleanDefault = rawDefault.replace(/\.md$/, '');
       const isCaseRoot = pathParts.length === 0;
       let targetSlug = cleanDefault; if (pathParts.length > 0) targetSlug = decodeURIComponent(pathParts.join('/'));
@@ -321,8 +322,8 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
                   <div style={{ display: 'flex', height: '100%', width: '100%' }}>
                     <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}>{mainContent}</div>
                     {isChatOpen && (
-                      <div style={{ width: '50%', flexShrink: 0, borderLeft: '1px solid var(--colorborder)', height: '100%', overflow: 'hidden' }}>
-                        <div className="chat-container" style={{ height: '100%' }}>
+                      <div style={{ width: '50%', flexShrink: 0, borderLeft: '1px solid var(--colorborder)', height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                        <div className="chat-container" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
                           <ChatRoom ref={chatRef} isEmbedded={true} onLinkClick={handleLinkClick} onLiveCallChange={setIsLiveCallActive} />
                         </div>
                       </div>

@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { MUSIC_PLAYER } from '@/configs/media';
 
 export default function Header() {
   const pathname = usePathname();
@@ -22,10 +23,10 @@ export default function Header() {
     const initPlayer = () => {
       if (!window.YT?.Player || playerRef.current || !musicPlayerDivRef.current) return;
       playerRef.current = new window.YT.Player(musicPlayerDivRef.current, {
-        height: '0', width: '0', videoId: 'QUDwL_0UsPY',
-        playerVars: { autoplay: 1, loop: 1, playlist: 'QUDwL_0UsPY', controls: 0, showinfo: 0, modestbranding: 1 },
+        height: '0', width: '0', videoId: MUSIC_PLAYER.videoId,
+        playerVars: { autoplay: 1, loop: 1, playlist: MUSIC_PLAYER.videoId, controls: 0, showinfo: 0, modestbranding: 1 },
         events: {
-          onReady: (e) => { e.target.setVolume(30); e.target.playVideo(); },
+          onReady: (e) => { e.target.setVolume(MUSIC_PLAYER.volume); e.target.playVideo(); },
           onStateChange: (e) => {
             if (e.data === window.YT.PlayerState.PLAYING) {
               setIsPlaying(true);
@@ -90,7 +91,7 @@ export default function Header() {
         @keyframes flyOut { 0% { opacity: 0; transform: translateY(-50%) translateX(0); } 100% { opacity: 1; transform: translateY(-50%) translateX(40px); } }
         @keyframes flyIn { 0% { opacity: 1; transform: translateY(-50%) translateX(40px); } 100% { opacity: 0; transform: translateY(-50%) translateX(0); } }
         @keyframes flyOutStayIn { 0% { opacity: 0; transform: translateY(-50%) translateX(0); } 9% { opacity: 1; transform: translateY(-50%) translateX(40px); } 91% { opacity: 1; transform: translateY(-50%) translateX(40px); } 100% { opacity: 0; transform: translateY(-50%) translateX(0); } }
-        .disk { width: 48px; height: 48px; border: 2px solid var(--colorone); border-radius: 50%; background-image: url('/blackcat.jpg'); background-size: cover; background-position: center; animation: rotate 10s linear infinite; }
+        .disk { width: 48px; height: 48px; border: 2px solid var(--colorone); border-radius: 50%; background-image: url('${MUSIC_PLAYER.diskImage}'); background-size: cover; background-position: center; animation: rotate 10s linear infinite; }
         .disk.paused { animation-play-state: paused; }
         .title-fly-out { position: absolute; top: 50%; left: 50%; transform: translateY(-50%); color: var(--colorone); font-size: 1rem; font-weight: bold; font-style: italic; white-space: nowrap; opacity: 0; pointer-events: none; }
         .title-fly-out.fly-out { animation: flyOut 0.5s forwards; }

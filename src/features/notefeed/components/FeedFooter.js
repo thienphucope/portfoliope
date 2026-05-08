@@ -1,4 +1,5 @@
 import { FaYoutube, FaInstagram, FaGithub, FaEnvelope, FaTwitter } from 'react-icons/fa';
+import { SOCIAL_LINKS } from '@/configs/social';
 
 export default function FeedFooter() {
   return (
@@ -9,11 +10,11 @@ export default function FeedFooter() {
           London, NW1 6XE<br />
           United Kingdom
           <div className="footer-socials">
-            <a href="https://github.com/thienphucope"                                          target="_blank" rel="noopener noreferrer"><FaGithub /></a>
-            <a href="https://www.instagram.com/t22felton/"                                     target="_blank" rel="noopener noreferrer"><FaInstagram /></a>
-            <a href="https://x.com/a"                                                          target="_blank" rel="noopener noreferrer"><FaTwitter /></a>
-            <a href="https://www.youtube.com/watch?v=zqcrDCynF8k"                             target="_blank" rel="noopener noreferrer"><FaYoutube /></a>
-            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=thienphucmain1052004@gmail.com" target="_blank" rel="noopener noreferrer"><FaEnvelope /></a>
+            <a href={SOCIAL_LINKS.github}    target="_blank" rel="noopener noreferrer"><FaGithub /></a>
+            <a href={SOCIAL_LINKS.instagram} target="_blank" rel="noopener noreferrer"><FaInstagram /></a>
+            <a href={SOCIAL_LINKS.twitter}   target="_blank" rel="noopener noreferrer"><FaTwitter /></a>
+            <a href={SOCIAL_LINKS.youtube}   target="_blank" rel="noopener noreferrer"><FaYoutube /></a>
+            <a href={SOCIAL_LINKS.email}     target="_blank" rel="noopener noreferrer"><FaEnvelope /></a>
           </div>
         </div>
         <div className="footer-philosophy">
