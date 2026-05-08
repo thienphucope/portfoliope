@@ -40,12 +40,12 @@ export async function POST(request) {
   let body;
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
 
-  const { action, path, newPath, content, create = false, comment = false, password, sha, sessionId, query, history, username, systemInstruction } = body;
+  const { action, path, newPath, content, create = false, comment = false, password, sha, sessionId, query, history, username, systemInstruction, provider } = body;
 
   // 1. Handle AI requests
   if (action === 'ai') {
     try {
-      const result = await handleAiRequest({ query, history, username, systemInstruction });
+      const result = await handleAiRequest({ query, history, username, systemInstruction, provider });
       return NextResponse.json(result);
     } catch (e) {
       return NextResponse.json({ error: e.message }, { status: 500 });

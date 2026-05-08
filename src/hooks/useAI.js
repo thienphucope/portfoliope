@@ -21,7 +21,7 @@ export function useAI() {
     setIsStreaming(false);
   }, []);
 
-  const requestAI = useCallback(async (query, history = [], username = 'User', systemInstruction) => {
+  const requestAI = useCallback(async (query, history = [], username = 'User', systemInstruction, provider) => {
     stopAI();
 
     setIsThinking(true);
@@ -38,7 +38,8 @@ export function useAI() {
           query,
           history,
           username,
-          systemInstruction
+          systemInstruction,
+          provider
         }),
         signal: abortControllerRef.current.signal
       });

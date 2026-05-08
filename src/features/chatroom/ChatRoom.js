@@ -64,18 +64,22 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
   }, [convo, isMounted]);
 
   const handleAnalyze = async (msgOverride) => {
-    const userMsg = (typeof msgOverride === 'string' ? msgOverride : engineInput).trim();
-    if (!userMsg || isThinking || isStreaming || isPlayingAudio) return;
+    const raw = (typeof msgOverride === 'string' ? msgOverride : engineInput).trim();
+    if (!raw || isThinking || isStreaming || isPlayingAudio) return;
+
+    const slashMatch = raw.match(/^\/(\w+)\s+([\s\S]+)$/);
+    const provider = slashMatch ? slashMatch[1] : undefined;
+    const userMsg = slashMatch ? slashMatch[2].trim() : raw;
 
     setEngineInput('');
     setLiveInput('');
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
 
-    const currentConvo = [...convo, { role: 'user', content: userMsg }];
+    const currentConvo = [...convo, { role: 'user', content: raw }];
     setConvo([...currentConvo, { role: 'assistant', content: '' }]);
 
     try {
-      const reply = await requestAI(userMsg, convo.filter(m => m.content), 'Moxxi');
+      const reply = await requestAI(userMsg, convo.filter(m => m.content), 'Moxxi', undefined, provider);
       streamResponse(reply, (fullText) => {
         setConvo(prev => {
           const n = [...prev];

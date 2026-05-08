@@ -1,5 +1,6 @@
 // src/services/ai.js
 
+import { Ollama } from 'ollama';
 import { availableTools, executeToolCall } from './aitool.js';
 
 // ─── Static config ────────────────────────────────────────────────────────────
@@ -26,6 +27,14 @@ const OPEN_ROUTER_MODEL   = process.env.OPEN_ROUTER_MODEL || 'openai/gpt-4o-mini
 
 const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY || '';
 const HUGGINGFACE_MODEL   = process.env.HUGGINGFACE_MODEL || 'meta-llama/Llama-3.1-8B-Instruct';
+
+const OLLAMA_API_KEY      = process.env.OLLAMA_API_KEY || '';
+const OLLAMA_MODEL        = process.env.OLLAMA_MODEL || 'gpt-oss:120b';
+
+const ollamaClient = new Ollama({
+  host: 'https://ollama.com',
+  headers: { Authorization: `Bearer ${OLLAMA_API_KEY}` },
+});
 
 const RAG_API_URL        = process.env.RAG_API_URL || 'https://rag-backend-zh2e.onrender.com/rag';
 const SYSTEM_INSTRUCTION = process.env.MOXXI_PROMPT || 'You are a helpful assistant.';
@@ -79,7 +88,9 @@ async function runOpenAIToolLoop(url, headers, buildBody, { messages, system }) 
     const message = (await res.json()).choices?.[0]?.message;
 
     if (message?.tool_calls?.length > 0) {
-      currentMessages.push(message);
+      const assistantMsg = { role: 'assistant', tool_calls: message.tool_calls };
+      if (message.content) assistantMsg.content = message.content;
+      currentMessages.push(assistantMsg);
       for (const tc of message.tool_calls) {
         const result = await executeToolCall(tc.function.name, tc.function.arguments);
         currentMessages.push({ role: 'tool', tool_call_id: tc.id, name: tc.function.name, content: JSON.stringify(result) });
@@ -242,19 +253,13 @@ async function callAnthropic({ messages, system }) {
   throw new Error("Anthropic: Vượt quá số lần gọi tool liên tiếp cho phép.");
 }
 
-async function callSeaLion({ messages, system }) {
-  const res = await fetch("https://api.sea-lion.ai/v1/chat/completions", {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${SEA_LION_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: SEA_LION_MODEL,
-      messages: [{ role: 'system', content: system }, ...messages],
-      temperature: TEMPERATURE,
-      max_completion_tokens: MAX_TOKENS_SMALL,
-    }),
-  });
-  if (!res.ok) throw new Error(`SEA-LION ${res.status}: ${await res.text()}`);
-  return (await res.json()).choices?.[0]?.message?.content || null;
+async function callSeaLion(ctx) {
+  return runOpenAIToolLoop(
+    "https://api.sea-lion.ai/v1/chat/completions",
+    { 'Authorization': `Bearer ${SEA_LION_API_KEY}` },
+    (msgs) => ({ model: SEA_LION_MODEL, messages: msgs, tools: availableTools, temperature: TEMPERATURE, max_tokens: MAX_TOKENS_SMALL }),
+    ctx
+  );
 }
 
 async function callOpenRouter(ctx) {
@@ -268,11 +273,37 @@ async function callOpenRouter(ctx) {
 
 async function callHuggingFace(ctx) {
   return runOpenAIToolLoop(
-    "https://api-inference.huggingface.co/v1/chat/completions",
+    "https://router.huggingface.co/v1/chat/completions",
     { 'Authorization': `Bearer ${HUGGINGFACE_API_KEY}` },
     (msgs) => ({ model: HUGGINGFACE_MODEL, messages: msgs, tools: availableTools, temperature: TEMPERATURE, max_tokens: MAX_TOKENS_SMALL }),
     ctx
   );
+}
+
+async function callOllama({ messages, system }) {
+  let currentMessages = [{ role: 'system', content: system }, ...messages];
+
+  for (let i = 0; i < MAX_TOOL_TURNS; i++) {
+    const response = await ollamaClient.chat({
+      model: OLLAMA_MODEL,
+      messages: currentMessages,
+      tools: availableTools,
+      stream: false,
+    });
+
+    const message = response.message;
+
+    if (message.tool_calls?.length > 0) {
+      currentMessages.push(message);
+      for (const tc of message.tool_calls) {
+        const result = await executeToolCall(tc.function.name, tc.function.arguments);
+        currentMessages.push({ role: 'tool', content: JSON.stringify(result) });
+      }
+      continue;
+    }
+    return message.content || null;
+  }
+  throw new Error("Ollama: Vượt quá số lần gọi tool liên tiếp cho phép.");
 }
 
 async function callRag({ messages, username }) {
@@ -290,11 +321,12 @@ async function callRag({ messages, username }) {
 
 const PROVIDERS = [
   { name: 'Gemini',      fn: callGemini,      enabled: () => !!GEMINI_API_KEY },
-  { name: 'Grok',        fn: callGrok,        enabled: () => !!XAI_API_KEY },
-  { name: 'SEA-LION',    fn: callSeaLion,     enabled: () => false },
+  { name: 'HuggingFace', fn: callHuggingFace, enabled: () => !!HUGGINGFACE_API_KEY },
+  { name: 'Ollama',      fn: callOllama,      enabled: () => !!OLLAMA_API_KEY },
+  { name: 'OpenRouter',  fn: callOpenRouter,  enabled: () => !!OPEN_ROUTER_API_KEY },
+  { name: 'SEALION',     fn: callSeaLion,     enabled: () => !!SEA_LION_API_KEY },
+  { name: 'Grok',        fn: callGrok,        enabled: () => false },
   { name: 'Anthropic',   fn: callAnthropic,   enabled: () => false },
-  { name: 'OpenRouter',  fn: callOpenRouter,  enabled: () => false },
-  { name: 'HuggingFace', fn: callHuggingFace, enabled: () => false },
   { name: 'RAG',         fn: callRag,         enabled: () => false },
 ];
 
@@ -302,7 +334,14 @@ export async function handleAiRequest(rawInput) {
   const normalized = normalize(rawInput);
   console.log(`🤖 [AI] Query: "${(rawInput.query || '').slice(0, 50)}..."`);
 
-  for (const { name, fn, enabled } of PROVIDERS) {
+  const targetName = rawInput.provider?.toLowerCase();
+  const providers = targetName
+    ? PROVIDERS.filter(p => p.name.toLowerCase() === targetName)
+    : PROVIDERS;
+
+  if (targetName && providers.length === 0) throw new Error(`Provider "${rawInput.provider}" không tồn tại.`);
+
+  for (const { name, fn, enabled } of providers) {
     if (!enabled()) { console.log(`⏭️ [${name}] Skipped (no API key).`); continue; }
     if (isOpen(name)) { console.log(`🔴 [${name}] Circuit open, skipping.`); continue; }
     console.log(`📡 [${name}] Attempting...`);
@@ -321,5 +360,5 @@ export async function handleAiRequest(rawInput) {
     }
   }
 
-  throw new Error('All AI services failed');
+  throw new Error(targetName ? `Provider "${rawInput.provider}" failed.` : 'All AI services failed');
 }

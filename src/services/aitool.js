@@ -2,14 +2,17 @@
 import { calculator, calculatorSchema } from './calculatortool.js';
 import { ragSearch, ragSearchSchema } from './ragtool.js';
 import { bookGet, bookGetSchema } from './booktool.js';
+import { webSearch, webSearchSchema, webFetch, webFetchSchema } from './searchtool.js';
 
 const toolsFunctions = {
   calculator,
   rag_search: ragSearch,
   book_get: bookGet,
+  ollama_web_search: webSearch,
+  ollama_web_fetch: webFetch,
 };
 
-export const availableTools = [calculatorSchema, ragSearchSchema, bookGetSchema];
+export const availableTools = [calculatorSchema, ragSearchSchema, bookGetSchema, webSearchSchema, webFetchSchema];
 
 export async function executeToolCall(toolName, args) {
   console.log(`🛠️ [Tool] AI gọi tool: ${toolName}`, args);
