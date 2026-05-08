@@ -5,6 +5,7 @@ import { useAI } from '@/hooks/useAI';
 import { useSTT } from '@/hooks/useSTT';
 import { useTTS } from '@/hooks/useTTS';
 import { ensureLibsLoaded } from '@/features/casearchives/utils/markdown';
+import { getRandomThinkingWord } from './constants/thinkingWords';
 import ChatRoomStyles from './styles/ChatRoomStyles';
 
 const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick, onLiveCallChange }, ref) {
@@ -17,6 +18,7 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
   const [liveInput, setLiveInput] = useState('');
   const [isLiveCall, setIsLiveCall] = useState(false);
   const [isHoldingUI, setIsHoldingUI] = useState(false);
+  const [thinkingWord, setThinkingWord] = useState('');
 
   const messagesEndRef = useRef(null);
   const isLiveCallRef = useRef(false);
@@ -31,6 +33,10 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
 
   const isProcessing = isThinking || isStreaming || isPlayingAudio;
   useEffect(() => { isProcessingRef.current = isProcessing; }, [isProcessing]);
+
+  useEffect(() => {
+    if (isThinking) setThinkingWord(getRandomThinkingWord());
+  }, [isThinking]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -237,7 +243,7 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
                     onClick={onLinkClick}
                   />
                   {isLast && isStreaming && <span className="streaming-cursor" />}
-                  {isLast && isThinking && !isStreaming && <span className="thinking-dots">...</span>}
+                  {isLast && isThinking && !isStreaming && <span className="thinking-dots">{thinkingWord}...</span>}
                 </div>
               </div>
             );
