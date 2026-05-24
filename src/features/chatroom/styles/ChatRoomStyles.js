@@ -20,6 +20,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
       .chat-shell {
         position: fixed;
         inset: 0;
+        height: 100dvh;
         background: var(--void);
         background-image:
           radial-gradient(circle at 10% 20%, rgba(186, 145, 112, 0.05), transparent 40rem),
@@ -44,7 +45,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 20px 32px;
+        padding: 20px 16px;
         border-bottom: 1px dashed rgba(186, 145, 112, 0.3);
         background: rgba(10, 10, 12, 0.95);
         position: relative;
@@ -83,11 +84,13 @@ export default function ChatRoomStyles({ isEmbedded }) {
         text-transform: uppercase;
         color: var(--colorone);
         opacity: 0.95;
+        font-weight: 700;
       }
 
 .voice-header-btn {
         font-family: var(--font-typewriter);
         font-size: 0.8rem;
+        font-weight: 700;
         letter-spacing: 2px;
         background: transparent;
         border: none;
@@ -176,7 +179,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
       .messages-list {
         flex: 1;
         overflow-y: auto;
-        padding: 24px 32px;
+        padding: 24px 16px;
         display: flex;
         flex-direction: column;
         gap: 32px;
@@ -235,6 +238,29 @@ export default function ChatRoomStyles({ isEmbedded }) {
       .bubble-content ul, .bubble-content ol { padding-left: 20px; margin: 6px 0; }
       .bubble-content li { margin-bottom: 4px; }
 
+      .suggest-prompts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 20px;
+      }
+      .suggest-btn {
+        font-family: var(--font-typewriter);
+        font-size: 0.7rem;
+        letter-spacing: 2px;
+        background: transparent;
+        border: 1px dashed rgba(186, 145, 112, 0.35);
+        color: var(--colorone-dim);
+        padding: 6px 12px;
+        cursor: pointer;
+        transition: color 0.2s, border-color 0.2s, background 0.2s;
+      }
+      .suggest-btn:hover {
+        color: var(--colorone);
+        border-color: var(--colorone);
+        background: rgba(186, 145, 112, 0.05);
+      }
+
       .live-transcription {
         margin-top: 12px;
         font-family: var(--font-typewriter);
@@ -264,7 +290,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
 
       .input-area {
         flex-shrink: 0;
-        padding: 24px 32px;
+        padding: 16px;
         border-top: 1px dashed rgba(186, 145, 112, 0.3);
         background: rgba(10, 10, 12, 0.95);
         position: relative;

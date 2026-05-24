@@ -35,9 +35,16 @@ export default function NoteFeedStyles() {
         display: flex;
         align-items: flex-start;
         padding: 32px 24px;
-        overflow: hidden;
+        overflow-y: auto;
+        overflow-x: hidden;
         box-sizing: border-box;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(186,145,112,0.2) transparent;
       }
+      .nf-hero::-webkit-scrollbar { width: 3px; }
+      .nf-hero::-webkit-scrollbar-track { background: transparent; }
+      .nf-hero::-webkit-scrollbar-thumb { background: rgba(186,145,112,0.2); }
+      .nf-hero::-webkit-scrollbar-thumb:hover { background: rgba(186,145,112,0.4); }
 
       .nf-hero-content {
         display: flex;
@@ -57,6 +64,9 @@ export default function NoteFeedStyles() {
   align-items: center;
   width: 100%;
   overflow: hidden;
+  border: 1px dashed rgba(186, 145, 112, 0.4);
+  background: rgba(186, 145, 112, 0.1);
+  padding-block: 12px;
 }
 
 .nf-title-row {
@@ -65,6 +75,10 @@ export default function NoteFeedStyles() {
   justify-content: center;
   gap: 8px;
   white-space: nowrap;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--nf-accent);
+  text-transform: uppercase;
 }
 
 .nf-title-img {
@@ -81,21 +95,21 @@ export default function NoteFeedStyles() {
   font-weight: 400;
   color: var(--nf-accent);
   white-space: nowrap;
+  text-transform: uppercase;
 }
 
       .nf-social-divider {
-        width: 40px;
-        height: 1px;
+        width: 80px;
+        height: 2px;
         background: var(--nf-accent-dim);
-        margin: 12px auto;
-        opacity: 0.4;
+        margin: 6px auto;
+        opacity: 0.5;
       }
 
       .nf-socials {
         display: flex;
-        justify-content: center;
-        gap: 24px;
-        font-size: 1.4rem;
+        flex-direction: column;
+        gap: 0;
       }
 
       .nf-socials a {
@@ -104,15 +118,105 @@ export default function NoteFeedStyles() {
         text-decoration: none;
         display: flex;
         align-items: center;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--nf-border);
+      }
+      .nf-socials a:first-child { border-top: 1px solid var(--nf-border); }
+      .nf-socials a:hover { color: var(--nf-accent); }
+
+      .nf-social-icon { font-size: 0.95rem; flex-shrink: 0; }
+
+      .nf-social-label {
+        font-family: var(--nf-font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 1px;
       }
 
-      .nf-socials a:hover { color: var(--nf-accent); }
+      .nf-social-desc {
+        opacity: 0.45;
+        font-size: 0.65rem;
+      }
 
       .nf-hero-divider {
         width: 100%;
         height: 1px;
         background: var(--nf-border);
         margin-top: 32px;
+      }
+
+      /* ── TTS Section ── */
+      .nf-tts-section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .nf-tts-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .nf-tts-label {
+        font-family: var(--nf-font-mono);
+        font-size: 0.6rem;
+        letter-spacing: 3px;
+        color: var(--nf-accent);
+        opacity: 0.7;
+      }
+
+      .nf-tts-input {
+        background: transparent;
+        border: 1px solid var(--nf-border);
+        color: var(--nf-txt);
+        font-family: var(--nf-font-body);
+        font-size: 0.85rem;
+        line-height: 1.5;
+        padding: 10px 12px;
+        resize: none;
+        outline: none;
+        width: 100%;
+        box-sizing: border-box;
+        transition: border-color 0.2s;
+      }
+      .nf-tts-input::placeholder { color: var(--nf-txt-dim); opacity: 0.5; }
+      .nf-tts-input:focus { border-color: var(--nf-accent-dim); }
+      .nf-tts-input:disabled { opacity: 0.5; }
+      .nf-tts-input { scrollbar-width: thin; scrollbar-color: rgba(186,145,112,0.2) transparent; }
+      .nf-tts-input::-webkit-scrollbar { width: 3px; }
+      .nf-tts-input::-webkit-scrollbar-track { background: transparent; }
+      .nf-tts-input::-webkit-scrollbar-thumb { background: rgba(186,145,112,0.2); border-radius: 0; }
+      .nf-tts-input::-webkit-scrollbar-thumb:hover { background: rgba(186,145,112,0.4); }
+
+      .nf-tts-btn {
+        align-self: flex-start;
+        background: none;
+        border: none;
+        color: var(--nf-txt-dim);
+        font-family: var(--nf-font-mono);
+        font-size: 0.6rem;
+        letter-spacing: 2px;
+        padding: 8px 16px;
+        cursor: pointer;
+        transition: border-color 0.2s, color 0.2s;
+      }
+      .nf-tts-btn:hover:not(:disabled) { border-color: var(--nf-accent-dim); color: var(--nf-accent); }
+      .nf-tts-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+      .nf-tts-btn.loading { color: var(--nf-accent); border-color: var(--nf-accent-dim); opacity: 0.7; }
+
+      .nf-tts-error {
+        font-family: var(--nf-font-mono);
+        font-size: 0.6rem;
+        color: #c07070;
+        margin: 0;
+        letter-spacing: 0.5px;
+      }
+
+      .nf-tts-audio {
+        width: 100%;
+        filter: invert(1) sepia(1) saturate(0.5) hue-rotate(180deg);
+        opacity: 0.8;
       }
 
       /* ── Sidekick (right pane) ── */
@@ -317,7 +421,7 @@ export default function NoteFeedStyles() {
         .nf-sidekick {
           flex: none;
           width: 100%;
-          height: 480px;
+          height: 100dvh;
           border-left: none;
           border-top: 1px solid var(--nf-border);
         }
@@ -331,7 +435,7 @@ export default function NoteFeedStyles() {
         .nf-feed { padding: 28px 18px 40px; }
         .nf-ctas { flex-direction: column; }
         .nf-footer { flex-direction: column; gap: 8px; text-align: center; }
-        .nf-sidekick { height: 420px; }
+        .nf-sidekick { height: 100dvh; }
       }
     `}</style>
   );

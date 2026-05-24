@@ -79,7 +79,7 @@ function normalize({ query, history, username, systemInstruction }) {
 
 // ─── Shared OpenAI-compatible tool loop ──────────────────────────────────────
 // Grok, OpenRouter, HuggingFace đều dùng OpenAI chat completions format
-async function runOpenAIToolLoop(url, headers, buildBody, { messages, system }) {
+async function runOpenAIToolLoop(url, headers, buildBody, { messages, system }, toolCalls) {
   let currentMessages = [{ role: 'system', content: system }, ...messages];
 
   for (let i = 0; i < MAX_TOOL_TURNS; i++) {
@@ -98,6 +98,7 @@ async function runOpenAIToolLoop(url, headers, buildBody, { messages, system }) 
       currentMessages.push(assistantMsg);
       for (const tc of message.tool_calls) {
         const result = await executeToolCall(tc.function.name, tc.function.arguments);
+        toolCalls.push({ name: tc.function.name, args: tc.function.arguments });
         currentMessages.push({ role: 'tool', tool_call_id: tc.id, name: tc.function.name, content: JSON.stringify(result) });
       }
       continue;
@@ -109,7 +110,7 @@ async function runOpenAIToolLoop(url, headers, buildBody, { messages, system }) 
 
 // ─── Providers ────────────────────────────────────────────────────────────────
 
-async function callGemini({ messages, system }) {
+async function callGemini({ messages, system }, toolCalls) {
   const geminiTools = [
     {
       functionDeclarations: availableTools.map(t => ({
@@ -150,6 +151,7 @@ async function callGemini({ messages, system }) {
       const functionResponses = [];
       for (const call of functionCalls) {
         const result = await executeToolCall(call.functionCall.name, call.functionCall.args);
+        toolCalls.push({ name: call.functionCall.name, args: call.functionCall.args });
         functionResponses.push({ functionResponse: { name: call.functionCall.name, response: result } });
       }
       currentContents.push({ role: 'user', parts: functionResponses });
@@ -160,7 +162,7 @@ async function callGemini({ messages, system }) {
   throw new Error("Gemini: Vượt quá số lần gọi tool liên tiếp cho phép.");
 }
 
-async function callGrok({ messages, system }) {
+async function callGrok({ messages, system }, toolCalls) {
   const grokTools = [
     { type: "web_search" },
     { type: "x_search" },
@@ -204,6 +206,7 @@ async function callGrok({ messages, system }) {
       for (const fc of functionCalls) currentInput.push(fc);
       for (const fc of functionCalls) {
         const result = await executeToolCall(fc.name, fc.arguments);
+        toolCalls.push({ name: fc.name, args: fc.arguments });
         currentInput.push({
           type: 'function_call_output',
           call_id: fc.call_id,
@@ -220,7 +223,7 @@ async function callGrok({ messages, system }) {
   throw new Error("Grok: Vượt quá số lần gọi tool liên tiếp cho phép.");
 }
 
-async function callAnthropic({ messages, system }) {
+async function callAnthropic({ messages, system }, toolCalls) {
   const anthropicTools = availableTools.map(t => ({
     name: t.function.name,
     description: t.function.description,
@@ -248,6 +251,7 @@ async function callAnthropic({ messages, system }) {
       const toolResults = [];
       for (const block of toolUseBlocks) {
         const result = await executeToolCall(block.name, block.input);
+        toolCalls.push({ name: block.name, args: block.input });
         toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: typeof result === 'string' ? result : JSON.stringify(result) });
       }
       currentMessages.push({ role: 'user', content: toolResults });
@@ -258,43 +262,43 @@ async function callAnthropic({ messages, system }) {
   throw new Error("Anthropic: Vượt quá số lần gọi tool liên tiếp cho phép.");
 }
 
-async function callSeaLion(ctx) {
+async function callSeaLion(ctx, toolCalls) {
   return runOpenAIToolLoop(
     "https://api.sea-lion.ai/v1/chat/completions",
     { 'Authorization': `Bearer ${SEA_LION_API_KEY}` },
     (msgs) => ({ model: SEA_LION_MODEL, messages: msgs, tools: availableTools, temperature: TEMPERATURE, max_tokens: MAX_TOKENS_SMALL }),
-    ctx
+    ctx, toolCalls
   );
 }
 
-async function callOpenRouter(ctx) {
+async function callOpenRouter(ctx, toolCalls) {
   return runOpenAIToolLoop(
     "https://openrouter.ai/api/v1/chat/completions",
     { 'Authorization': `Bearer ${OPEN_ROUTER_API_KEY}` },
     (msgs) => ({ model: OPEN_ROUTER_MODEL, messages: msgs, tools: availableTools, temperature: TEMPERATURE, max_tokens: MAX_TOKENS }),
-    ctx
+    ctx, toolCalls
   );
 }
 
-async function callHuggingFace(ctx) {
+async function callHuggingFace(ctx, toolCalls) {
   return runOpenAIToolLoop(
     "https://router.huggingface.co/v1/chat/completions",
     { 'Authorization': `Bearer ${HUGGINGFACE_API_KEY}` },
     (msgs) => ({ model: HUGGINGFACE_MODEL, messages: msgs, tools: availableTools, temperature: TEMPERATURE, max_tokens: MAX_TOKENS_SMALL }),
-    ctx
+    ctx, toolCalls
   );
 }
 
-async function callOpenCode(ctx) {
+async function callOpenCode(ctx, toolCalls) {
   return runOpenAIToolLoop(
     "https://opencode.ai/zen/go/v1/chat/completions",
     { 'Authorization': `Bearer ${OPENCODE_API_KEY}` },
     (msgs) => ({ model: OPENCODE_MODEL, messages: msgs, tools: availableTools, temperature: TEMPERATURE, max_tokens: MAX_TOKENS }),
-    ctx
+    ctx, toolCalls
   );
 }
 
-async function callOllama({ messages, system }) {
+async function callOllama({ messages, system }, toolCalls) {
   let currentMessages = [{ role: 'system', content: system }, ...messages];
 
   for (let i = 0; i < MAX_TOOL_TURNS; i++) {
@@ -311,6 +315,7 @@ async function callOllama({ messages, system }) {
       currentMessages.push(message);
       for (const tc of message.tool_calls) {
         const result = await executeToolCall(tc.function.name, tc.function.arguments);
+        toolCalls.push({ name: tc.function.name, args: tc.function.arguments });
         currentMessages.push({ role: 'tool', content: JSON.stringify(result) });
       }
       continue;
@@ -345,7 +350,7 @@ const PROVIDERS = [
   { name: 'RAG',         fn: callRag,         enabled: () => false },
 ];
 
-export async function handleAiRequest(rawInput) {
+export async function handleAiRequest(rawInput, onToolCall = () => {}) {
   const normalized = normalize(rawInput);
   console.log(`🤖 [AI] Query: "${(rawInput.query || '').slice(0, 50)}..."`);
 
@@ -361,11 +366,16 @@ export async function handleAiRequest(rawInput) {
     if (isOpen(name)) { console.log(`🔴 [${name}] Circuit open, skipping.`); continue; }
     console.log(`📡 [${name}] Attempting...`);
     try {
-      const text = await fn(normalized);
+      const toolCalls = [];
+      toolCalls.push = function(item) {
+        Array.prototype.push.call(this, item);
+        onToolCall(item);
+      };
+      const text = await fn(normalized, toolCalls);
       if (text) {
         console.log(`✅ [${name}] Success.`);
         recordSuccess(name);
-        return { response: text, provider: name };
+        return { response: text, provider: name, toolCalls: [...toolCalls] };
       }
       console.warn(`⚠️ [${name}] Empty response.`);
       recordFailure(name);

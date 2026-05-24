@@ -32,10 +32,22 @@ export async function POST(request) {
 
   const { query, history, systemInstruction, provider } = body;
 
-  try {
-    const result = await handleAiRequest({ query, history, systemInstruction, provider });
-    return NextResponse.json(result);
-  } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
-  }
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send = (obj) => controller.enqueue(encoder.encode(JSON.stringify(obj) + '\n'));
+      try {
+        const result = await handleAiRequest(
+          { query, history, systemInstruction, provider },
+          (tc) => send({ type: 'tool_call', name: tc.name, args: tc.args })
+        );
+        send({ type: 'done', response: result.response, provider: result.provider });
+      } catch (e) {
+        send({ type: 'error', error: e.message });
+      }
+      controller.close();
+    }
+  });
+
+  return new Response(stream, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
 }

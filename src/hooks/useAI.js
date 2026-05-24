@@ -4,9 +4,11 @@ export function useAI() {
   const [isThinking, setIsThinking] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingText, setStreamingText] = useState('');
+  const [liveToolCalls, setLiveToolCalls] = useState([]);
 
   const abortControllerRef = useRef(null);
   const streamTimerRef = useRef(null);
+  const liveToolCallsRef = useRef([]);
 
   const stopAI = useCallback(() => {
     if (abortControllerRef.current) {
@@ -26,6 +28,8 @@ export function useAI() {
 
     setIsThinking(true);
     setStreamingText('');
+    setLiveToolCalls([]);
+    liveToolCallsRef.current = [];
 
     abortControllerRef.current = new AbortController();
 
@@ -33,24 +37,40 @@ export function useAI() {
       const res = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'ai',
-          query,
-          history,
-          username,
-          systemInstruction,
-          provider
-        }),
+        body: JSON.stringify({ action: 'ai', query, history, username, systemInstruction, provider }),
         signal: abortControllerRef.current.signal
       });
 
       if (!res.ok) throw new Error('AI request failed');
-      const data = await res.json();
-      return data.response || '';
-    } catch (err) {
-      if (err.name === 'AbortError') {
-        throw new Error('Aborted');
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          const event = JSON.parse(line);
+          if (event.type === 'tool_call') {
+            const tc = { name: event.name, args: event.args };
+            liveToolCallsRef.current = [...liveToolCallsRef.current, tc];
+            setLiveToolCalls([...liveToolCallsRef.current]);
+          } else if (event.type === 'done') {
+            return { text: event.response || '', toolCalls: liveToolCallsRef.current };
+          } else if (event.type === 'error') {
+            throw new Error(event.error);
+          }
+        }
       }
+
+      return { text: '', toolCalls: liveToolCallsRef.current };
+    } catch (err) {
+      if (err.name === 'AbortError') throw new Error('Aborted');
       throw err;
     } finally {
       if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
@@ -61,22 +81,8 @@ export function useAI() {
   }, [stopAI]);
 
   const streamResponse = useCallback((fullText, onComplete) => {
-    setIsStreaming(true);
-    let i = 0;
-    streamTimerRef.current = setInterval(() => {
-      if (i < fullText.length) {
-        // Increase chunk size to type faster
-        i = Math.min(i + 4, fullText.length);
-        setStreamingText(fullText.slice(0, i));
-      } else {
-        clearInterval(streamTimerRef.current);
-        streamTimerRef.current = null;
-        setIsStreaming(false);
-        if (onComplete) onComplete(fullText);
-      }
-    }, 5);
-    return () => stopAI();
-  }, [stopAI]);
+    if (onComplete) onComplete(fullText);
+  }, []);
 
   return {
     isThinking,
@@ -85,6 +91,7 @@ export function useAI() {
     setIsStreaming,
     streamingText,
     setStreamingText,
+    liveToolCalls,
     requestAI,
     streamResponse,
     stopAI

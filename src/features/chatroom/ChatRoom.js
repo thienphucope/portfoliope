@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { useAI } from '@/hooks/useAI';
-import { MOXXI_DISPLAY_NAME, MOXXI_GREETING, MOXXI_ERROR_MSG } from '@/configs/ai';
+import { MOXXI_DISPLAY_NAME, MOXXI_GREETING, MOXXI_ERROR_MSG, SUGGESTED_PROMPTS } from '@/configs/ai';
 import { useSTT } from '@/hooks/useSTT';
 import { useTTS } from '@/hooks/useTTS';
 import { ensureLibsLoaded } from '@/features/casearchives/utils/markdown';
@@ -27,7 +27,7 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
   const isHoldingRef = useRef(false);
   const textareaRef = useRef(null);
 
-  const { requestAI, streamResponse, isThinking, isStreaming, streamingText, stopAI } = useAI();
+  const { requestAI, streamResponse, isThinking, isStreaming, streamingText, stopAI, liveToolCalls } = useAI();
   const { isPlayingAudio, streamAudioLive, stopAudio } = useTTS();
 
   const isProcessing = isThinking || isStreaming || isPlayingAudio;
@@ -90,11 +90,11 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
     setConvo([...currentConvo, { role: 'assistant', content: '' }]);
 
     try {
-      const reply = await requestAI(userMsg, convo.filter(m => m.content), undefined, undefined, provider);
+      const { text: reply, toolCalls } = await requestAI(userMsg, convo.filter(m => m.content), undefined, undefined, provider);
       streamResponse(reply, (fullText) => {
         setConvo(prev => {
           const n = [...prev];
-          n[n.length - 1] = { role: 'assistant', content: fullText };
+          n[n.length - 1] = { role: 'assistant', content: fullText, toolCalls };
           return n;
         });
       });
@@ -215,7 +215,7 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
               onClick={isLiveCall ? endLiveCall : startLiveCall}
               disabled={isProcessing && !isLiveCall}
             >
-              {isEmbedded ? (isLiveCall ? '[L]' : '[V]') : (isLiveCall ? '[ LIVE ]' : '[ VOICE ]')}
+              {isLiveCall ? '[ LIVE ]' : '[ VOICE ]'}
             </button>
             <button
               className="voice-header-btn"
@@ -226,7 +226,7 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
               }}
               disabled={isProcessing}
             >
-              {isEmbedded ? '[N]' : '[ NEW ]'}
+              {'[ NEW ]'}
             </button>
           </div>
         </div>
@@ -253,6 +253,23 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
                 const content = (isLast && isStreaming) ? streamingText : (msg.content || '');
                 return (
                   <div key={i} className={isLast ? "chat-response" : "history-entry"}>
+                    {(() => {
+                      const displayToolCalls = isLast && (isThinking || isStreaming) ? liveToolCalls : (msg.toolCalls || []);
+                      if (!displayToolCalls.length) return null;
+                      return (
+                        <div style={{ fontFamily: 'var(--font-typewriter)', fontSize: '0.75rem', color: 'var(--colorone)', marginBottom: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0' }}>
+                          {displayToolCalls.map((tc, ti) => {
+                            const args = typeof tc.args === 'string' ? tc.args : Object.entries(tc.args || {}).map(([k, v]) => `${k}: "${v}"`).join(', ');
+                            return (
+                              <span key={ti} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                {ti > 0 && <span style={{ opacity: 0.3, lineHeight: '1.4' }}>|</span>}
+                                <span>{tc.name}{args ? ` — ${args}` : ''}</span>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
                     <div
                       className="bubble-content html-content"
                       dangerouslySetInnerHTML={{ __html: cleanHtml(content) }}
@@ -277,6 +294,13 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
                           <div className="live-transcription">{liveInput}</div>
                         )}
                       </>
+                    )}
+                    {i === 0 && convo.length === 1 && !isProcessing && (
+                      <div className="suggest-prompts">
+                        {SUGGESTED_PROMPTS.map((p, pi) => (
+                          <button key={pi} className="suggest-btn" onClick={() => handleAnalyze(p)}>{p}</button>
+                        ))}
+                      </div>
                     )}
                   </div>
                 );

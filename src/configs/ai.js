@@ -133,6 +133,13 @@ export const MOXXI_GREETING = `
 
 export const MOXXI_ERROR_MSG = "Well, that's a smudge on the record. Something went wrong, but I'll get to the bottom of it.";
 
+export const SUGGESTED_PROMPTS = [
+  'What projects has he worked on?',
+  'What are his skills and areas of expertise?',
+  'Tell me about his background and experience.',
+  'How can I get in contact with him?',
+];
+
 // ─── Model Config ────────────────────────────────────────────────────────────
 export const TEMPERATURE      = 0.7;
 export const MAX_TOKENS       = 8096;
