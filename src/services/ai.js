@@ -2,13 +2,13 @@
 
 import { Ollama } from 'ollama';
 import { availableTools, executeToolCall } from './aitool.js';
-import { MOXXI_SYSTEM_PROMPT } from '@/configs/ai';
-
-// ─── Static config ────────────────────────────────────────────────────────────
-const TEMPERATURE      = 0.7;
-const MAX_TOKENS       = 1024;
-const MAX_TOKENS_SMALL = 512;
-const MAX_TOOL_TURNS   = 3;
+import { 
+  MOXXI_SYSTEM_PROMPT, 
+  TEMPERATURE, 
+  MAX_TOKENS, 
+  MAX_TOKENS_SMALL, 
+  MAX_TOOL_TURNS 
+} from '@/configs/ai';
 
 // ─── Keys & models from env ───────────────────────────────────────────────────
 const XAI_API_KEY         = process.env.XAI_API_KEY || '';
@@ -28,6 +28,9 @@ const OPEN_ROUTER_MODEL   = process.env.OPEN_ROUTER_MODEL || 'openai/gpt-4o-mini
 
 const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY || '';
 const HUGGINGFACE_MODEL   = process.env.HUGGINGFACE_MODEL || 'meta-llama/Llama-3.1-8B-Instruct';
+
+const OPENCODE_API_KEY    = process.env.OPENCODE_API_KEY || '';
+const OPENCODE_MODEL      = process.env.OPENCODE_MODEL || 'deepseek-v4-flash';
 
 const OLLAMA_API_KEY      = process.env.OLLAMA_API_KEY || '';
 const OLLAMA_MODEL        = process.env.OLLAMA_MODEL || 'gpt-oss:120b';
@@ -91,6 +94,7 @@ async function runOpenAIToolLoop(url, headers, buildBody, { messages, system }) 
     if (message?.tool_calls?.length > 0) {
       const assistantMsg = { role: 'assistant', tool_calls: message.tool_calls };
       if (message.content) assistantMsg.content = message.content;
+      if (message.reasoning_content) assistantMsg.reasoning_content = message.reasoning_content;
       currentMessages.push(assistantMsg);
       for (const tc of message.tool_calls) {
         const result = await executeToolCall(tc.function.name, tc.function.arguments);
@@ -281,6 +285,15 @@ async function callHuggingFace(ctx) {
   );
 }
 
+async function callOpenCode(ctx) {
+  return runOpenAIToolLoop(
+    "https://opencode.ai/zen/go/v1/chat/completions",
+    { 'Authorization': `Bearer ${OPENCODE_API_KEY}` },
+    (msgs) => ({ model: OPENCODE_MODEL, messages: msgs, tools: availableTools, temperature: TEMPERATURE, max_tokens: MAX_TOKENS }),
+    ctx
+  );
+}
+
 async function callOllama({ messages, system }) {
   let currentMessages = [{ role: 'system', content: system }, ...messages];
 
@@ -321,9 +334,10 @@ async function callRag({ messages, username }) {
 // ─── Proxy ────────────────────────────────────────────────────────────────────
 
 const PROVIDERS = [
+  { name: 'OpenCode',    fn: callOpenCode,    enabled: () => !!OPENCODE_API_KEY },
+  { name: 'Ollama',      fn: callOllama,      enabled: () => !!OLLAMA_API_KEY },
   { name: 'Gemini',      fn: callGemini,      enabled: () => !!GEMINI_API_KEY },
   { name: 'HuggingFace', fn: callHuggingFace, enabled: () => !!HUGGINGFACE_API_KEY },
-  { name: 'Ollama',      fn: callOllama,      enabled: () => !!OLLAMA_API_KEY },
   { name: 'OpenRouter',  fn: callOpenRouter,  enabled: () => !!OPEN_ROUTER_API_KEY },
   { name: 'SEALION',     fn: callSeaLion,     enabled: () => !!SEA_LION_API_KEY },
   { name: 'Grok',        fn: callGrok,        enabled: () => false },

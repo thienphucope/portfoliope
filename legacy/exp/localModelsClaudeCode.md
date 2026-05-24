@@ -26,5 +26,5 @@ claude
 $env:ANTHROPIC_BASE_URL="http://localhost:8080"
 $env:ANTHROPIC_AUTH_TOKEN="llamacpp"
 $env:ANTHROPIC_API_KEY=""
-$env:ANTHROPIC_MODEL="D:\LLM\Qwen3.6-35B-A3B-UD-IQ3_XXS.gguf"
+$env:ANTHROPIC_MODEL="gemma"
 claude

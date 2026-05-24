@@ -16,26 +16,21 @@ export default function CaseItem({ caseData, onLinkClick }) {
     : null;
 
   return (
-    <div className="case-item reveal">
-      <div className="case-left">
-        <span className="case-date">{caseData.formattedDate}</span>
-        {mediaSrc && (
-          <div className="case-media-preview">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={mediaSrc} alt="" />
-          </div>
-        )}
-      </div>
-      <div className="case-info">
-        <h3 className="case-title-main" onClick={() => onLinkClick(caseData.id)}>{caseData.displayTitle}</h3>
-        <div className="case-metadata">
-          {caseData.author && <span className="meta-item"><strong>Author:</strong> {caseData.author}</span>}
-          {caseData.tag    && <span className="meta-item"><strong>Tag:</strong> {caseData.tag}</span>}
-          {caseData.links  && <span className="meta-item"><strong>Links:</strong> {caseData.links}</span>}
+    <div className="nf-case reveal">
+      {mediaSrc && (
+        <div className="nf-case-img" onClick={() => onLinkClick(caseData.id)}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={mediaSrc} alt="" />
         </div>
-        <div ref={contentRef} className="case-desc-compiled markdown-content" dangerouslySetInnerHTML={{ __html: caseData.descriptionHtml }} />
-        <span className="case-status solved" onClick={() => onLinkClick(caseData.id)}>Examine Dossier</span>
+      )}
+      <div className="nf-case-meta">
+        <span className="nf-case-date">{caseData.formattedDate}</span>
+        {caseData.tag    && <span className="nf-case-tag">{caseData.tag}</span>}
+        {caseData.author && <span className="nf-case-author">{caseData.author}</span>}
       </div>
+      <h3 className="nf-case-title" onClick={() => onLinkClick(caseData.id)}>{caseData.displayTitle}</h3>
+      <div ref={contentRef} className="nf-case-excerpt markdown-content" dangerouslySetInnerHTML={{ __html: caseData.descriptionHtml }} />
+      <button className="nf-case-read" onClick={() => onLinkClick(caseData.id)}>→ Examine Dossier</button>
     </div>
   );
 }

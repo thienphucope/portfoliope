@@ -65,7 +65,9 @@ export function useAI() {
     let i = 0;
     streamTimerRef.current = setInterval(() => {
       if (i < fullText.length) {
-        setStreamingText(fullText.slice(0, ++i));
+        // Increase chunk size to type faster
+        i = Math.min(i + 4, fullText.length);
+        setStreamingText(fullText.slice(0, i));
       } else {
         clearInterval(streamTimerRef.current);
         streamTimerRef.current = null;

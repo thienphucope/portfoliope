@@ -6,13 +6,11 @@ import { MOXXI_DISPLAY_NAME, MOXXI_GREETING, MOXXI_ERROR_MSG } from '@/configs/a
 import { useSTT } from '@/hooks/useSTT';
 import { useTTS } from '@/hooks/useTTS';
 import { ensureLibsLoaded } from '@/features/casearchives/utils/markdown';
-import { getRandomThinkingWord } from './constants/thinkingWords';
 import ChatRoomStyles from './styles/ChatRoomStyles';
 
 const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick, onLiveCallChange }, ref) {
   const [isMounted, setIsMounted] = useState(false);
   const [libsReady, setLibsReady] = useState(false);
-  const [username, setUsername] = useState('');
   const [convo, setConvo] = useState([
     { role: 'assistant', content: MOXXI_GREETING }
   ]);
@@ -20,7 +18,6 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
   const [liveInput, setLiveInput] = useState('');
   const [isLiveCall, setIsLiveCall] = useState(false);
   const [isHoldingUI, setIsHoldingUI] = useState(false);
-  const [thinkingWord, setThinkingWord] = useState('');
 
   const messagesEndRef = useRef(null);
   const isLiveCallRef = useRef(false);
@@ -37,20 +34,15 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
   useEffect(() => { isProcessingRef.current = isProcessing; }, [isProcessing]);
 
   useEffect(() => {
-    if (isThinking) setThinkingWord(getRandomThinkingWord());
-  }, [isThinking]);
-
-  useEffect(() => {
     setIsMounted(true);
-    const savedName = localStorage.getItem('moxxi_username');
-    if (savedName) setUsername(savedName);
+    if (!localStorage.getItem('moxxi_device_id')) {
+      localStorage.setItem('moxxi_device_id', crypto.randomUUID());
+    }
     const saved = localStorage.getItem('moxxi_chat_history');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setConvo(parsed);
-        }
+        if (Array.isArray(parsed) && parsed.length > 0) setConvo(parsed);
       } catch (e) {
         console.error('Failed to load chat history:', e);
       }
@@ -62,9 +54,17 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
     if (onLiveCallChange) onLiveCallChange(isLiveCall);
   }, [isLiveCall, onLiveCallChange]);
 
+  // Keep track of convo length to only scroll on new messages
+  const prevConvoLenRef = useRef(convo.length);
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  });
+    // Only scroll if AI is streaming OR if a new message was added to the conversation.
+    // This prevents scrolling on every keystroke in the textarea.
+    if (isStreaming || convo.length !== prevConvoLenRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: isStreaming ? 'auto' : 'smooth' });
+      prevConvoLenRef.current = convo.length;
+    }
+  }, [convo.length, streamingText, isStreaming]);
 
   useEffect(() => {
     if (isMounted && convo.length > 1) {
@@ -73,18 +73,6 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
     }
   }, [convo, isMounted]);
 
-  const buildGreeting = (name) =>
-    name ? MOXXI_GREETING.replace('Oh hey.', `Oh hey ${name}.`) : MOXXI_GREETING;
-
-  const handleUsernameSubmit = (name) => {
-    const trimmed = name.trim();
-    localStorage.setItem('moxxi_username', trimmed);
-    setConvo(prev => {
-      const updated = [...prev];
-      updated[0] = { role: 'assistant', content: buildGreeting(trimmed) };
-      return updated;
-    });
-  };
 
   const handleAnalyze = async (msgOverride) => {
     const raw = (typeof msgOverride === 'string' ? msgOverride : engineInput).trim();
@@ -218,75 +206,85 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
     <div className="chat-shell" style={isEmbedded ? { position: 'relative', height: '100%', width: '100%' } : {}}>
       <div className="chat-header">
         <div className="header-copy">
-          <span className="chat-overline">CASE FILE // INQUIRY OPEN</span>
-          <span className="chat-name">{MOXXI_DISPLAY_NAME}</span>
+          <span className="chat-overline">Dispatch</span>
         </div>
         <div className="header-actions">
-          <input
-            className="username-input"
-            type="text"
-            placeholder="your name..."
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') { e.target.blur(); handleUsernameSubmit(e.target.value); } }}
-            onBlur={(e) => handleUsernameSubmit(e.target.value)}
-            maxLength={30}
-          />
-          <button
-            className={`voice-header-btn${isLiveCall ? ' active' : ''}`}
-            onClick={isLiveCall ? endLiveCall : startLiveCall}
-            disabled={isProcessing && !isLiveCall}
-          >
-            {isLiveCall ? '[ LIVE ]' : '[ VOICE ]'}
-          </button>
-          <button
-            className="voice-header-btn"
-            onClick={() => {
-              if (isLiveCall) endLiveCall();
-              setConvo([{ role: 'assistant', content: buildGreeting(username) }]);
-              localStorage.removeItem('moxxi_chat_history');
-            }}
-            disabled={isProcessing}
-          >
-            [ NEW ]
-          </button>
+          <div className="header-btn-group">
+            <button
+              className={`voice-header-btn${isLiveCall ? ' active' : ''}`}
+              onClick={isLiveCall ? endLiveCall : startLiveCall}
+              disabled={isProcessing && !isLiveCall}
+            >
+              {isEmbedded ? (isLiveCall ? '[L]' : '[V]') : (isLiveCall ? '[ LIVE ]' : '[ VOICE ]')}
+            </button>
+            <button
+              className="voice-header-btn"
+              onClick={() => {
+                if (isLiveCall) endLiveCall();
+                setConvo([{ role: 'assistant', content: MOXXI_GREETING }]);
+                localStorage.removeItem('moxxi_chat_history');
+              }}
+              disabled={isProcessing}
+            >
+              {isEmbedded ? '[N]' : '[ NEW ]'}
+            </button>
+          </div>
         </div>
       </div>
 
       <div className="messages-area">
-        <div className="messages-inner">
-          {convo.map((msg, i) => {
-            const isLast = i === convo.length - 1;
-            const content = isLast && isStreaming ? streamingText : msg.content;
-            const html = libsReady && window.marked ? window.marked.parse(content || '') : (content || '');
+        {(() => {
+          const assistantMsgs = convo.filter(m => m.role === 'assistant');
 
-            return (
-              <div key={i} className={`message-row ${msg.role}`}>
-                <div className="message-bubble">
-                  <span className="bubble-name">{msg.role === 'assistant' ? MOXXI_DISPLAY_NAME : 'SUBJECT (YOU)'}</span>
-                  <div
-                    className="bubble-content markdown-content"
-                    dangerouslySetInnerHTML={{ __html: html }}
-                    onClick={onLinkClick}
-                  />
-                  {isLast && isStreaming && <span className="streaming-cursor" />}
-                  {isLast && isThinking && !isStreaming && <span className="thinking-dots">{thinkingWord}...</span>}
-                </div>
-              </div>
-            );
-          })}
+          // Clean up any accidental markdown code blocks the AI might slip in despite the prompt
+          const cleanHtml = (txt) => {
+            if (!txt) return '';
+            let cleaned = txt;
+            // Remove ```html or ```text wrapping
+            cleaned = cleaned.replace(/^```[a-z]*\n?/i, '');
+            cleaned = cleaned.replace(/\n?```$/i, '');
+            return cleaned.trim();
+          };
 
-          {isLiveCall && liveInput && (
-            <div className="message-row user">
-              <div className="message-bubble transcribing">
-                <span className="bubble-name">TRANSCRIPTION (LIVE)</span>
-                <div className="bubble-content">{liveInput}</div>
-              </div>
+          return (
+            <div className="messages-list">
+              {assistantMsgs.map((msg, i) => {
+                const isLast = i === assistantMsgs.length - 1;
+                const content = (isLast && isStreaming) ? streamingText : (msg.content || '');
+                return (
+                  <div key={i} className={isLast ? "chat-response" : "history-entry"}>
+                    <div
+                      className="bubble-content html-content"
+                      dangerouslySetInnerHTML={{ __html: cleanHtml(content) }}
+                      onClick={(e) => { 
+                        const a = e.target.closest('a[href]'); 
+                        if (a && onLinkClick) {
+                          const href = a.getAttribute('href');
+                          // Allow normal browser behavior for external links
+                          if (href.startsWith('http://') || href.startsWith('https://')) {
+                            return;
+                          }
+                          e.preventDefault(); 
+                          onLinkClick(href); 
+                        } 
+                      }}
+                    />
+                    {isLast && (
+                      <>
+                        {isStreaming && <span className="streaming-cursor" />}
+                        {isThinking && !isStreaming && <span className="thinking-dots">...</span>}
+                        {isLiveCall && liveInput && (
+                          <div className="live-transcription">{liveInput}</div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+              <div ref={messagesEndRef} />
             </div>
-          )}
-
-          <div ref={messagesEndRef} />
-        </div>
+          );
+        })()}
       </div>
 
       <div className="input-area">
