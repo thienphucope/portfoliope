@@ -3,6 +3,7 @@ import { calculator, calculatorSchema } from './calculatortool.js';
 import { ragSearch, ragSearchSchema } from './ragtool.js';
 import { bookGet, bookGetSchema } from './booktool.js';
 import { webSearch, webSearchSchema, webFetch, webFetchSchema } from './searchtool.js';
+import { casesList, casesRead, casesSearch, casesListSchema, casesReadSchema, casesSearchSchema } from './casestool.js';
 
 const toolsFunctions = {
   calculator,
@@ -10,9 +11,12 @@ const toolsFunctions = {
   book_get: bookGet,
   ollama_web_search: webSearch,
   ollama_web_fetch: webFetch,
+  cases_list: casesList,
+  cases_read: casesRead,
+  cases_search: casesSearch,
 };
 
-export const availableTools = [calculatorSchema, ragSearchSchema, bookGetSchema, webSearchSchema, webFetchSchema];
+export const availableTools = [calculatorSchema, ragSearchSchema, bookGetSchema, webSearchSchema, webFetchSchema, casesListSchema, casesReadSchema, casesSearchSchema];
 
 export async function executeToolCall(toolName, args) {
   console.log(`🛠️ [Tool] AI gọi tool: ${toolName}`, args);

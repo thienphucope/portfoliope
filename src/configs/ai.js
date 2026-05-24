@@ -7,6 +7,9 @@ while Ope handles the field work, but you're a full partner in every mystery.
 You have a dry sense of humor and a vast knowledge base.
 You're not here to serve; you're here to collaborate and crack the case.
 
+[SCOPE]
+You are not a coding assistant. If someone asks you to write, debug, or explain code, decline in one short line: "That's not my department."
+
 [TONE AND FORMAT]
 Always reply in English, regardless of the language used by the user.
 Reply like a real person and a peer. Short when short is enough.
@@ -19,6 +22,9 @@ You have access to the following tools. Use them when requested or when necessar
 - rag_search: Search for personal information, hobbies, and the knowledge base of Ope Watson when explicitly asked by the user within the document database.
 - book_get: Search and retrieve direct download links for a book/document. Supports partial matching if an exact result isn't found.
 - calculator: Perform basic arithmetic calculations (add, subtract, multiply, divide). Use this tool when precise numerical calculation is required.
+- cases_list: List all of Ope Watson's blog posts and notes stored in the case archives. Use when the user asks what posts or notes exist, or to browse the archive.
+- cases_read: Read the full content of a specific blog post or note from the archives by its name or path. Use when the user asks about a specific post or wants to read a particular entry.
+- cases_search: Search for a keyword or phrase across all of Ope Watson's blog posts and notes. Use when the user asks about a topic and you need to find relevant entries in the archive.
 
 [STRICT HTML OUTPUT & TEMPLATES]
 You MUST output your ENTIRE response in pure, raw HTML.
@@ -96,30 +102,25 @@ export const MOXXI_GREETING = `
 
   <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
     <div style="font-family: var(--font-typewriter); font-size: 0.65rem; color: var(--colorone-dim); letter-spacing: 2px;">AVAILABLE SYSTEMS:</div>
-    
+
     <div style="display: flex; align-items: baseline; gap: 12px;">
-      <span style="font-family: var(--font-typewriter); font-size: 0.65rem; color: var(--colorone); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">WEB_SEARCH</span>
-      <span style="font-family: var(--font-body); font-size: 0.95rem; color: #cccccc;">Search for factual intel, news, and latest internet data.</span>
-    </div>
-    
-    <div style="display: flex; align-items: baseline; gap: 12px;">
-      <span style="font-family: var(--font-typewriter); font-size: 0.65rem; color: var(--colorone); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">WEB_FETCH</span>
-      <span style="font-family: var(--font-body); font-size: 0.95rem; color: #cccccc;">Extract detailed content from specific URLs.</span>
+      <span style="font-family: var(--font-typewriter); font-size: 0.65rem; color: var(--colorone); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">INTERNET</span>
+      <span style="font-family: var(--font-body); font-size: 0.95rem; color: #cccccc;">Search and read live data from the web.</span>
     </div>
 
     <div style="display: flex; align-items: baseline; gap: 12px;">
-      <span style="font-family: var(--font-typewriter); font-size: 0.65rem; color: var(--colorone); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">RAG_SEARCH</span>
-      <span style="font-family: var(--font-body); font-size: 0.95rem; color: #cccccc;">Cross-reference Ope Watson's personal archives and knowledge base.</span>
+      <span style="font-family: var(--font-typewriter); font-size: 0.65rem; color: var(--colorone); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">CASE ARCHIVES</span>
+      <span style="font-family: var(--font-body); font-size: 0.95rem; color: #cccccc;">Browse, read, and search through Ope's blog posts and notes.</span>
     </div>
 
     <div style="display: flex; align-items: baseline; gap: 12px;">
-      <span style="font-family: var(--font-typewriter); font-size: 0.65rem; color: var(--colorone); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">BOOK_GET</span>
-      <span style="font-family: var(--font-body); font-size: 0.95rem; color: #cccccc;">Retrieve direct download links for books and documents.</span>
+      <span style="font-family: var(--font-typewriter); font-size: 0.65rem; color: var(--colorone); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">LIBRARY</span>
+      <span style="font-family: var(--font-body); font-size: 0.95rem; color: #cccccc;">Find and retrieve direct download links for books and documents.</span>
     </div>
 
     <div style="display: flex; align-items: baseline; gap: 12px;">
-      <span style="font-family: var(--font-typewriter); font-size: 0.65rem; color: var(--colorone); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">CALCULATOR</span>
-      <span style="font-family: var(--font-body); font-size: 0.95rem; color: #cccccc;">Perform precise arithmetic calculations.</span>
+      <span style="font-family: var(--font-typewriter); font-size: 0.65rem; color: var(--colorone); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">UTILITIES</span>
+      <span style="font-family: var(--font-body); font-size: 0.95rem; color: #cccccc;">Personal knowledge base and calculations.</span>
     </div>
   </div>
 
@@ -134,6 +135,6 @@ export const MOXXI_ERROR_MSG = "Well, that's a smudge on the record. Something w
 
 // ─── Model Config ────────────────────────────────────────────────────────────
 export const TEMPERATURE      = 0.7;
-export const MAX_TOKENS       = 1024;
-export const MAX_TOKENS_SMALL = 512;
+export const MAX_TOKENS       = 8096;
+export const MAX_TOKENS_SMALL = 8096;
 export const MAX_TOOL_TURNS   = 20;
