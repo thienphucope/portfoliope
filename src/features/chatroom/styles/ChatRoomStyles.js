@@ -441,12 +441,12 @@ export default function ChatRoomStyles({ isEmbedded }) {
       ` : ''}
 
       @media (max-width: 768px) {
-        .chat-header { padding: 12px 16px; flex-wrap: wrap; gap: 10px; }
-        .header-copy { width: 100%; }
+        .chat-header { padding: 12px 16px; flex-wrap: nowrap; gap: 8px; }
+        .header-copy { min-width: 0; flex-shrink: 1; }
         .chat-name { font-size: 0.55rem; letter-spacing: 2px; }
-        .chat-overline { font-size: 0.7rem; letter-spacing: 2px; }
-        .header-actions { width: 100%; justify-content: space-between; gap: 8px; }
-        .header-btn-group { gap: 10px; }
+        .chat-overline { font-size: 0.7rem; letter-spacing: 2px; white-space: nowrap; }
+        .header-actions { flex-shrink: 0; gap: 8px; }
+        .header-btn-group { gap: 8px; white-space: nowrap; }
         .username-input { width: 70px; flex: 1; max-width: 110px; font-size: 0.55rem; }
         .voice-header-btn { font-size: 0.7rem; letter-spacing: 1px; }
         
