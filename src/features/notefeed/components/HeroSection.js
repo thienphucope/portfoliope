@@ -8,6 +8,7 @@ const TTS_URL = "https://thienphuc1052004--gpt-sovits-api-gptsovitsapi-tts.modal
 
 export default function HeroSection() {
   const containerRef = useRef(null);
+  const titleFrameRef = useRef(null);
   const opeRef = useRef(null);
   const watsonRef = useRef(null);
 
@@ -47,7 +48,7 @@ export default function HeroSection() {
 
   useEffect(() => {
     const fit = () => {
-      const container = containerRef.current;
+      const container = titleFrameRef.current || containerRef.current;
       if (!container) return;
       const w = container.offsetWidth;
 
@@ -65,7 +66,8 @@ export default function HeroSection() {
     };
 
     const ro = new ResizeObserver(fit);
-    if (containerRef.current) ro.observe(containerRef.current);
+    const target = titleFrameRef.current || containerRef.current;
+    if (target) ro.observe(target);
     
     // Recalculate once the image loads to include its physical width
     const imgs = containerRef.current?.querySelectorAll('img') || [];
@@ -81,17 +83,20 @@ export default function HeroSection() {
 
   return (
     <div className="nf-hero-content" ref={containerRef}>
-      <h1 className="nf-title">
-        <span className="nf-title-row" ref={opeRef}>
-          Ope
-          <Link href="/noirboard" target="_blank" rel="noopener noreferrer">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="nf-title-img" src="/ope.png" alt="Inspect Board" />
-          </Link>
-        </span>
-        <span className="nf-italic" ref={watsonRef}>Watson</span>
-      </h1>
-      <div className="nf-social-divider" />
+      <div className="nf-title-frame" ref={titleFrameRef}>
+        <span className="nf-corner-dot nf-corner-dot-tr" />
+        <span className="nf-corner-dot nf-corner-dot-bl" />
+        <h1 className="nf-title">
+          <span className="nf-title-row" ref={opeRef}>
+            Ope
+            <Link href="/noirboard" target="_blank" rel="noopener noreferrer">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img className="nf-title-img" src="/ope.png" alt="Inspect Board" />
+            </Link>
+          </span>
+          <span className="nf-italic" ref={watsonRef}>Watson</span>
+        </h1>
+      </div>
       <div className="nf-socials">
         <a href={SOCIAL_LINKS.github}  target="_blank" rel="noopener noreferrer">
           <FaGithub className="nf-social-icon" />
@@ -106,7 +111,6 @@ export default function HeroSection() {
           <span className="nf-social-label">Email <span className="nf-social-desc">— email me</span></span>
         </a>
       </div>
-      <div className="nf-social-divider" />
       <div className="nf-tts-section">
         <div className="nf-tts-header">
           <div className="nf-tts-label">VOICE DEMO</div>

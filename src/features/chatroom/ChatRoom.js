@@ -20,6 +20,8 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
   const [isHoldingUI, setIsHoldingUI] = useState(false);
 
   const messagesEndRef = useRef(null);
+  const messagesAreaRef = useRef(null);
+  const scrollStateRef = useRef({ shouldFollow: true, lastTop: 0 });
   const isLiveCallRef = useRef(false);
   const isProcessingRef = useRef(false);
   const holdTimerRef = useRef(null);
@@ -54,17 +56,40 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
     if (onLiveCallChange) onLiveCallChange(isLiveCall);
   }, [isLiveCall, onLiveCallChange]);
 
-  // Keep track of convo length to only scroll on new messages
   const prevConvoLenRef = useRef(convo.length);
 
   useEffect(() => {
-    // Only scroll if AI is streaming OR if a new message was added to the conversation.
-    // This prevents scrolling on every keystroke in the textarea.
-    if (isStreaming || convo.length !== prevConvoLenRef.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: isStreaming ? 'auto' : 'smooth' });
+    const el = messagesAreaRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const state = scrollStateRef.current;
+      if (state.shouldFollow) return;
+      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 50;
+      if (atBottom) state.shouldFollow = true;
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    const el = messagesAreaRef.current;
+    const isActive = isStreaming || isThinking;
+    const newMessage = convo.length !== prevConvoLenRef.current;
+    if (newMessage) {
       prevConvoLenRef.current = convo.length;
+      scrollStateRef.current.shouldFollow = true;
+      scrollStateRef.current.lastTop = 0;
     }
-  }, [convo.length, streamingText, isStreaming]);
+    if (!el || (!isActive && !newMessage)) return;
+    const state = scrollStateRef.current;
+    if (state.shouldFollow && state.lastTop > 0 && el.scrollTop < state.lastTop - 20) {
+      state.shouldFollow = false;
+      return;
+    }
+    if (!state.shouldFollow) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: isActive ? 'auto' : 'smooth' });
+    state.lastTop = el.scrollHeight - el.clientHeight;
+  }, [convo.length, streamingText, isStreaming, isThinking, liveToolCalls]);
 
   useEffect(() => {
     if (isMounted && convo.length > 1) {
@@ -247,7 +272,7 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
           };
 
           return (
-            <div className="messages-list">
+            <div className="messages-list" ref={messagesAreaRef}>
               {assistantMsgs.map((msg, i) => {
                 const isLast = i === assistantMsgs.length - 1;
                 const content = (isLast && isStreaming) ? streamingText : (msg.content || '');

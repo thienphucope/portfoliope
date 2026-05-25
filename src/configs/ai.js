@@ -37,6 +37,10 @@ Because you are outputting raw HTML, you have full freedom to embed rich media. 
 - Images: <img src="..." alt="..." style="max-width: 100%; border: 1px solid var(--colorone-dim);">
 - Videos/Iframes (like YouTube): <iframe src="..." width="100%" height="315" frameborder="0" allowfullscreen></iframe>
 
+MANDATORY EMBEDDING RULES:
+- If your response includes or references an image URL (ending in .jpg, .jpeg, .png, .gif, .webp, or any direct image link), you MUST embed it using <img>. Never show it as a plain text URL.
+- If your response includes or references a YouTube link, you MUST embed it using <iframe src="https://www.youtube.com/embed/VIDEO_ID" ...>. Never show it as a plain text URL. Convert watch?v=VIDEO_ID to /embed/VIDEO_ID format.
+
 You must use the following HTML templates to structure your responses. Adapt the content inside them.
 Always use the exact CSS variables provided below to perfectly match the application's Noir aesthetic.
 
@@ -91,40 +95,40 @@ export const MOXXI_DISPLAY_NAME = 'MOXXI';
 
 export const MOXXI_GREETING = `
 <div style="background: rgba(186, 145, 112, 0.03); border: 1px dashed rgba(186, 145, 112, 0.2); padding: 16px; margin: 10px 0;">
-  
-  <div style="font-family: var(--font-typewriter); font-size: 0.7rem; color: var(--colorone); letter-spacing: 3px; text-transform: uppercase; border-bottom: 1px solid rgba(186, 145, 112, 0.2); padding-bottom: 8px; margin-bottom: 12px;">
-    // SYSTEM INITIALIZED //
+
+  <div style="font-family: var(--font-typewriter); font-size: 0.75rem; color: var(--colorone); letter-spacing: 3px; text-transform: uppercase; border-bottom: 1px solid rgba(186, 145, 112, 0.2); padding-bottom: 8px; margin-bottom: 12px;">
+    SYSTEM INITIALIZED
   </div>
 
-  <div style="font-family: var(--font-body); font-size: 1.1rem; color: #e0e0e0; line-height: 1.6; margin-bottom: 16px;">
+  <div style="font-family: var(--font-body); font-size: 1rem; color: #e0e0e0; line-height: 1.6; margin-bottom: 16px;">
     Welcome to the archives. I'm Moxxi, Ope's sidekick and the one who actually keeps this place running.
   </div>
 
   <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
-    <div style="font-family: var(--font-typewriter); font-size: 0.65rem; color: var(--colorone-dim); letter-spacing: 2px;">AVAILABLE SYSTEMS:</div>
+    <div style="font-family: var(--font-typewriter); font-size: 0.75rem; color: var(--colorone-dim); letter-spacing: 2px;">AVAILABLE SYSTEMS:</div>
 
     <div style="display: flex; align-items: baseline; gap: 12px;">
-      <span style="font-family: var(--font-typewriter); font-size: 0.65rem; color: var(--colorone); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">INTERNET</span>
-      <span style="font-family: var(--font-body); font-size: 0.95rem; color: #cccccc;">Search and read live data from the web.</span>
+      <span style="font-family: var(--font-typewriter); font-size: 0.75rem; color: var(--colorone); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">INTERNET</span>
+      <span style="font-family: var(--font-body); font-size: 1rem; color: #e0e0e0;">Search and read live data from the web.</span>
     </div>
 
     <div style="display: flex; align-items: baseline; gap: 12px;">
-      <span style="font-family: var(--font-typewriter); font-size: 0.65rem; color: var(--colorone); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">CASE ARCHIVES</span>
-      <span style="font-family: var(--font-body); font-size: 0.95rem; color: #cccccc;">Browse, read, and search through Ope's blog posts and notes.</span>
+      <span style="font-family: var(--font-typewriter); font-size: 0.75rem; color: var(--colorone); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">CASE ARCHIVES</span>
+      <span style="font-family: var(--font-body); font-size: 1rem; color: #e0e0e0;">Browse, read, and search through Ope's blog posts and notes.</span>
     </div>
 
     <div style="display: flex; align-items: baseline; gap: 12px;">
-      <span style="font-family: var(--font-typewriter); font-size: 0.65rem; color: var(--colorone); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">LIBRARY</span>
-      <span style="font-family: var(--font-body); font-size: 0.95rem; color: #cccccc;">Find and retrieve direct download links for books and documents.</span>
+      <span style="font-family: var(--font-typewriter); font-size: 0.75rem; color: var(--colorone); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">LIBRARY</span>
+      <span style="font-family: var(--font-body); font-size: 1rem; color: #e0e0e0;">Find and retrieve direct download links for books and documents.</span>
     </div>
 
     <div style="display: flex; align-items: baseline; gap: 12px;">
-      <span style="font-family: var(--font-typewriter); font-size: 0.65rem; color: var(--colorone); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">UTILITIES</span>
-      <span style="font-family: var(--font-body); font-size: 0.95rem; color: #cccccc;">Personal knowledge base and calculations.</span>
+      <span style="font-family: var(--font-typewriter); font-size: 0.75rem; color: var(--colorone); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">UTILITIES</span>
+      <span style="font-family: var(--font-body); font-size: 1rem; color: #e0e0e0;">Personal knowledge base and calculations.</span>
     </div>
   </div>
 
-  <div style="font-family: var(--font-body); font-size: 1.05rem; color: var(--parchment-dark); font-style: italic;">
+  <div style="font-family: var(--font-body); font-size: 1rem; color: #e0e0e0; font-style: italic;">
     What can I help you find?
   </div>
 

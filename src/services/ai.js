@@ -78,39 +78,93 @@ function normalize({ query, history, username, systemInstruction }) {
 }
 
 // ─── Shared OpenAI-compatible tool loop ──────────────────────────────────────
-// Grok, OpenRouter, HuggingFace đều dùng OpenAI chat completions format
-async function runOpenAIToolLoop(url, headers, buildBody, { messages, system }, toolCalls) {
+async function runOpenAIToolLoop(url, headers, buildBody, { messages, system }, toolCalls, onToken) {
   let currentMessages = [{ role: 'system', content: system }, ...messages];
 
   for (let i = 0; i < MAX_TOOL_TURNS; i++) {
+    const streaming = !!onToken;
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...headers },
-      body: JSON.stringify(buildBody(currentMessages)),
+      body: JSON.stringify({ ...buildBody(currentMessages), ...(streaming ? { stream: true } : {}) }),
     });
     if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
-    const message = (await res.json()).choices?.[0]?.message;
 
-    if (message?.tool_calls?.length > 0) {
-      const assistantMsg = { role: 'assistant', tool_calls: message.tool_calls };
-      if (message.content) assistantMsg.content = message.content;
-      if (message.reasoning_content) assistantMsg.reasoning_content = message.reasoning_content;
+    if (!streaming) {
+      const message = (await res.json()).choices?.[0]?.message;
+      if (message?.tool_calls?.length > 0) {
+        const assistantMsg = { role: 'assistant', tool_calls: message.tool_calls };
+        if (message.content) assistantMsg.content = message.content;
+        if (message.reasoning_content) assistantMsg.reasoning_content = message.reasoning_content;
+        currentMessages.push(assistantMsg);
+        for (const tc of message.tool_calls) {
+          const result = await executeToolCall(tc.function.name, tc.function.arguments);
+          toolCalls.push({ name: tc.function.name, args: tc.function.arguments });
+          currentMessages.push({ role: 'tool', tool_call_id: tc.id, name: tc.function.name, content: JSON.stringify(result) });
+        }
+        continue;
+      }
+      return message?.content || null;
+    }
+
+    // SSE streaming path
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let sseBuffer = '';
+    let accContent = '';
+    let accReasoning = '';
+    const accTCMap = {};
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      sseBuffer += decoder.decode(value, { stream: true });
+      const lines = sseBuffer.split('\n');
+      sseBuffer = lines.pop();
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed === 'data: [DONE]') continue;
+        const jsonStr = trimmed.startsWith('data: ') ? trimmed.slice(6) : trimmed;
+        let parsed;
+        try { parsed = JSON.parse(jsonStr); } catch { continue; }
+        const delta = parsed.choices?.[0]?.delta;
+        if (!delta) continue;
+        if (delta.reasoning_content) accReasoning += delta.reasoning_content;
+        if (delta.content) { accContent += delta.content; onToken(delta.content); }
+        if (delta.tool_calls) {
+          for (const tc of delta.tool_calls) {
+            const idx = tc.index ?? 0;
+            if (!accTCMap[idx]) accTCMap[idx] = { id: '', name: '', arguments: '' };
+            if (tc.id) accTCMap[idx].id = tc.id;
+            if (tc.function?.name) accTCMap[idx].name += tc.function.name;
+            if (tc.function?.arguments) accTCMap[idx].arguments += tc.function.arguments;
+          }
+        }
+      }
+    }
+
+    const pendingTCs = Object.values(accTCMap).filter(tc => tc.name);
+    if (pendingTCs.length > 0) {
+      const openaiTCs = pendingTCs.map(tc => ({ id: tc.id, type: 'function', function: { name: tc.name, arguments: tc.arguments } }));
+      const assistantMsg = { role: 'assistant', tool_calls: openaiTCs };
+      if (accContent) assistantMsg.content = accContent;
+      if (accReasoning) assistantMsg.reasoning_content = accReasoning;
       currentMessages.push(assistantMsg);
-      for (const tc of message.tool_calls) {
+      for (const tc of openaiTCs) {
         const result = await executeToolCall(tc.function.name, tc.function.arguments);
         toolCalls.push({ name: tc.function.name, args: tc.function.arguments });
         currentMessages.push({ role: 'tool', tool_call_id: tc.id, name: tc.function.name, content: JSON.stringify(result) });
       }
       continue;
     }
-    return message?.content || null;
+    return accContent || null;
   }
   throw new Error("Vượt quá số lần gọi tool liên tiếp cho phép.");
 }
 
 // ─── Providers ────────────────────────────────────────────────────────────────
 
-async function callGemini({ messages, system }, toolCalls) {
+async function callGemini({ messages, system }, toolCalls, onToken) {
   const geminiTools = [
     {
       functionDeclarations: availableTools.map(t => ({
@@ -126,30 +180,74 @@ async function callGemini({ messages, system }, toolCalls) {
     parts: [{ text: content }],
   }));
 
+  const requestBody = {
+    systemInstruction: { parts: [{ text: system }] },
+    tools: geminiTools,
+  };
+
   for (let i = 0; i < MAX_TOOL_TURNS; i++) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+    const streaming = !!onToken;
+    const path = streaming
+      ? `streamGenerateContent?key=${GEMINI_API_KEY}&alt=sse`
+      : `generateContent?key=${GEMINI_API_KEY}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:${path}`;
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: system }] },
-        contents: currentContents,
-        tools: geminiTools,
-      }),
+      body: JSON.stringify({ ...requestBody, contents: currentContents }),
     });
     if (!res.ok) throw new Error(`Gemini ${res.status}: ${await res.text()}`);
-    const data = await res.json();
 
-    const candidate = data.candidates?.[0];
-    if (!candidate) return null;
+    if (!streaming) {
+      const data = await res.json();
+      const candidate = data.candidates?.[0];
+      if (!candidate) return null;
+      const parts = candidate.content?.parts || [];
+      const functionCalls = parts.filter(p => p.functionCall);
+      if (functionCalls.length > 0) {
+        currentContents.push(candidate.content);
+        const functionResponses = [];
+        for (const call of functionCalls) {
+          const result = await executeToolCall(call.functionCall.name, call.functionCall.args);
+          toolCalls.push({ name: call.functionCall.name, args: call.functionCall.args });
+          functionResponses.push({ functionResponse: { name: call.functionCall.name, response: result } });
+        }
+        currentContents.push({ role: 'user', parts: functionResponses });
+        continue;
+      }
+      return parts.find(p => p.text)?.text || null;
+    }
 
-    const parts = candidate.content?.parts || [];
-    const functionCalls = parts.filter(p => p.functionCall);
+    // SSE streaming path
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let sseBuffer = '';
+    let accText = '';
+    const pendingFnCalls = [];
 
-    if (functionCalls.length > 0) {
-      currentContents.push(candidate.content);
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      sseBuffer += decoder.decode(value, { stream: true });
+      const lines = sseBuffer.split('\n');
+      sseBuffer = lines.pop();
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        const jsonStr = trimmed.startsWith('data: ') ? trimmed.slice(6) : trimmed;
+        let parsed;
+        try { parsed = JSON.parse(jsonStr); } catch { continue; }
+        for (const part of parsed.candidates?.[0]?.content?.parts || []) {
+          if (part.text) { accText += part.text; onToken(part.text); }
+          if (part.functionCall) pendingFnCalls.push(part);
+        }
+      }
+    }
+
+    if (pendingFnCalls.length > 0) {
+      currentContents.push({ role: 'model', parts: pendingFnCalls });
       const functionResponses = [];
-      for (const call of functionCalls) {
+      for (const call of pendingFnCalls) {
         const result = await executeToolCall(call.functionCall.name, call.functionCall.args);
         toolCalls.push({ name: call.functionCall.name, args: call.functionCall.args });
         functionResponses.push({ functionResponse: { name: call.functionCall.name, response: result } });
@@ -157,12 +255,12 @@ async function callGemini({ messages, system }, toolCalls) {
       currentContents.push({ role: 'user', parts: functionResponses });
       continue;
     }
-    return parts.find(p => p.text)?.text || null;
+    return accText || null;
   }
   throw new Error("Gemini: Vượt quá số lần gọi tool liên tiếp cho phép.");
 }
 
-async function callGrok({ messages, system }, toolCalls) {
+async function callGrok({ messages, system }, toolCalls, _onToken) {
   const grokTools = [
     { type: "web_search" },
     { type: "x_search" },
@@ -223,7 +321,7 @@ async function callGrok({ messages, system }, toolCalls) {
   throw new Error("Grok: Vượt quá số lần gọi tool liên tiếp cho phép.");
 }
 
-async function callAnthropic({ messages, system }, toolCalls) {
+async function callAnthropic({ messages, system }, toolCalls, _onToken) {
   const anthropicTools = availableTools.map(t => ({
     name: t.function.name,
     description: t.function.description,
@@ -262,70 +360,91 @@ async function callAnthropic({ messages, system }, toolCalls) {
   throw new Error("Anthropic: Vượt quá số lần gọi tool liên tiếp cho phép.");
 }
 
-async function callSeaLion(ctx, toolCalls) {
+async function callSeaLion(ctx, toolCalls, onToken) {
   return runOpenAIToolLoop(
     "https://api.sea-lion.ai/v1/chat/completions",
     { 'Authorization': `Bearer ${SEA_LION_API_KEY}` },
     (msgs) => ({ model: SEA_LION_MODEL, messages: msgs, tools: availableTools, temperature: TEMPERATURE, max_tokens: MAX_TOKENS_SMALL }),
-    ctx, toolCalls
+    ctx, toolCalls, onToken
   );
 }
 
-async function callOpenRouter(ctx, toolCalls) {
+async function callOpenRouter(ctx, toolCalls, onToken) {
   return runOpenAIToolLoop(
     "https://openrouter.ai/api/v1/chat/completions",
     { 'Authorization': `Bearer ${OPEN_ROUTER_API_KEY}` },
     (msgs) => ({ model: OPEN_ROUTER_MODEL, messages: msgs, tools: availableTools, temperature: TEMPERATURE, max_tokens: MAX_TOKENS }),
-    ctx, toolCalls
+    ctx, toolCalls, onToken
   );
 }
 
-async function callHuggingFace(ctx, toolCalls) {
+async function callHuggingFace(ctx, toolCalls, onToken) {
   return runOpenAIToolLoop(
     "https://router.huggingface.co/v1/chat/completions",
     { 'Authorization': `Bearer ${HUGGINGFACE_API_KEY}` },
     (msgs) => ({ model: HUGGINGFACE_MODEL, messages: msgs, tools: availableTools, temperature: TEMPERATURE, max_tokens: MAX_TOKENS_SMALL }),
-    ctx, toolCalls
+    ctx, toolCalls, onToken
   );
 }
 
-async function callOpenCode(ctx, toolCalls) {
+async function callOpenCode(ctx, toolCalls, onToken) {
   return runOpenAIToolLoop(
     "https://opencode.ai/zen/go/v1/chat/completions",
     { 'Authorization': `Bearer ${OPENCODE_API_KEY}` },
     (msgs) => ({ model: OPENCODE_MODEL, messages: msgs, tools: availableTools, temperature: TEMPERATURE, max_tokens: MAX_TOKENS }),
-    ctx, toolCalls
+    ctx, toolCalls, onToken
   );
 }
 
-async function callOllama({ messages, system }, toolCalls) {
+async function callOllama({ messages, system }, toolCalls, onToken) {
   let currentMessages = [{ role: 'system', content: system }, ...messages];
 
   for (let i = 0; i < MAX_TOOL_TURNS; i++) {
+    const streaming = !!onToken;
     const response = await ollamaClient.chat({
       model: OLLAMA_MODEL,
       messages: currentMessages,
       tools: availableTools,
-      stream: false,
+      stream: streaming,
     });
 
-    const message = response.message;
+    if (!streaming) {
+      const message = response.message;
+      if (message.tool_calls?.length > 0) {
+        currentMessages.push(message);
+        for (const tc of message.tool_calls) {
+          const result = await executeToolCall(tc.function.name, tc.function.arguments);
+          toolCalls.push({ name: tc.function.name, args: tc.function.arguments });
+          currentMessages.push({ role: 'tool', content: JSON.stringify(result) });
+        }
+        continue;
+      }
+      return message.content || null;
+    }
 
-    if (message.tool_calls?.length > 0) {
-      currentMessages.push(message);
-      for (const tc of message.tool_calls) {
+    // Streaming path
+    let accContent = '';
+    let finalMessage = null;
+    for await (const chunk of response) {
+      if (chunk.message?.content) { accContent += chunk.message.content; onToken(chunk.message.content); }
+      if (chunk.done) finalMessage = chunk.message;
+    }
+
+    if (finalMessage?.tool_calls?.length > 0) {
+      currentMessages.push(finalMessage);
+      for (const tc of finalMessage.tool_calls) {
         const result = await executeToolCall(tc.function.name, tc.function.arguments);
         toolCalls.push({ name: tc.function.name, args: tc.function.arguments });
         currentMessages.push({ role: 'tool', content: JSON.stringify(result) });
       }
       continue;
     }
-    return message.content || null;
+    return accContent || null;
   }
   throw new Error("Ollama: Vượt quá số lần gọi tool liên tiếp cho phép.");
 }
 
-async function callRag({ messages, username }) {
+async function callRag({ messages, username }, _toolCalls, _onToken) {
   const query = messages.at(-1)?.content || '';
   const res = await fetch(RAG_API_URL, {
     method: 'POST',
@@ -350,7 +469,7 @@ const PROVIDERS = [
   { name: 'RAG',         fn: callRag,         enabled: () => false },
 ];
 
-export async function handleAiRequest(rawInput, onToolCall = () => {}) {
+export async function handleAiRequest(rawInput, onToolCall = () => {}, onToken = null) {
   const normalized = normalize(rawInput);
   console.log(`🤖 [AI] Query: "${(rawInput.query || '').slice(0, 50)}..."`);
 
@@ -371,7 +490,7 @@ export async function handleAiRequest(rawInput, onToolCall = () => {}) {
         Array.prototype.push.call(this, item);
         onToolCall(item);
       };
-      const text = await fn(normalized, toolCalls);
+      const text = await fn(normalized, toolCalls, onToken);
       if (text) {
         console.log(`✅ [${name}] Success.`);
         recordSuccess(name);

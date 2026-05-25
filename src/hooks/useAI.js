@@ -33,6 +33,8 @@ export function useAI() {
 
     abortControllerRef.current = new AbortController();
 
+    let completed = false;
+
     try {
       const res = await fetch('/api/ai', {
         method: 'POST',
@@ -46,6 +48,8 @@ export function useAI() {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
+      let accText = '';
+      let streamingStarted = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -60,27 +64,38 @@ export function useAI() {
             const tc = { name: event.name, args: event.args };
             liveToolCallsRef.current = [...liveToolCallsRef.current, tc];
             setLiveToolCalls([...liveToolCallsRef.current]);
+          } else if (event.type === 'text_delta') {
+            if (!streamingStarted) {
+              streamingStarted = true;
+              setIsThinking(false);
+              setIsStreaming(true);
+            }
+            accText += event.text;
+            setStreamingText(prev => prev + event.text);
           } else if (event.type === 'done') {
-            return { text: event.response || '', toolCalls: liveToolCallsRef.current };
+            completed = true;
+            return { text: accText || event.response || '', toolCalls: liveToolCallsRef.current };
           } else if (event.type === 'error') {
             throw new Error(event.error);
           }
         }
       }
 
-      return { text: '', toolCalls: liveToolCallsRef.current };
+      completed = true;
+      return { text: accText, toolCalls: liveToolCallsRef.current };
     } catch (err) {
       if (err.name === 'AbortError') throw new Error('Aborted');
       throw err;
     } finally {
-      if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
-        setIsThinking(false);
-        abortControllerRef.current = null;
-      }
+      setIsThinking(false);
+      if (!completed) setIsStreaming(false);
+      abortControllerRef.current = null;
     }
   }, [stopAI]);
 
   const streamResponse = useCallback((fullText, onComplete) => {
+    setIsStreaming(false);
+    setStreamingText('');
     if (onComplete) onComplete(fullText);
   }, []);
 

@@ -37,9 +37,11 @@ export async function POST(request) {
     async start(controller) {
       const send = (obj) => controller.enqueue(encoder.encode(JSON.stringify(obj) + '\n'));
       try {
+        const onToken = (chunk) => send({ type: 'text_delta', text: chunk });
         const result = await handleAiRequest(
           { query, history, systemInstruction, provider },
-          (tc) => send({ type: 'tool_call', name: tc.name, args: tc.args })
+          (tc) => send({ type: 'tool_call', name: tc.name, args: tc.args }),
+          onToken
         );
         send({ type: 'done', response: result.response, provider: result.provider });
       } catch (e) {

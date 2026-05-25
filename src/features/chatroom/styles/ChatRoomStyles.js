@@ -58,7 +58,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
       }
       .chat-name {
         font-family: var(--font-typewriter);
-        font-size: 0.65rem;
+        font-size: 0.75rem;
         color: rgba(196, 180, 138, 0.55);
         letter-spacing: 3px;
         text-transform: uppercase;
@@ -89,7 +89,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
 
 .voice-header-btn {
         font-family: var(--font-typewriter);
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         font-weight: 700;
         letter-spacing: 2px;
         background: transparent;
@@ -131,7 +131,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
       }
       .features-title {
         font-family: var(--font-typewriter);
-        font-size: 0.65rem;
+        font-size: 0.75rem;
         letter-spacing: 2px;
         color: var(--colorone-dim);
         margin-bottom: 10px;
@@ -160,7 +160,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
       }
       .feature-sub {
         font-family: var(--font-typewriter);
-        font-size: 0.65rem;
+        font-size: 0.75rem;
         color: rgba(186, 145, 112, 0.35);
         letter-spacing: 1px;
         font-style: italic;
@@ -201,7 +201,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
 
       .bubble-content {
         font-family: var(--font-body);
-        font-size: 1.1rem;
+        font-size: 1rem;
         color: #e0e0e0;
         line-height: 1.65;
       }
@@ -246,7 +246,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
       }
       .suggest-btn {
         font-family: var(--font-typewriter);
-        font-size: 0.7rem;
+        font-size: 0.75rem;
         letter-spacing: 2px;
         background: transparent;
         border: 1px dashed rgba(186, 145, 112, 0.35);
@@ -264,7 +264,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
       .live-transcription {
         margin-top: 12px;
         font-family: var(--font-typewriter);
-        font-size: 0.7rem;
+        font-size: 0.75rem;
         color: var(--colorone-dim);
         opacity: 0.6;
         letter-spacing: 1px;
@@ -331,7 +331,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
 
       .composer-tool, .send-btn {
         font-family: var(--font-typewriter);
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         letter-spacing: 2px;
         background: transparent;
         border: none;
@@ -364,21 +364,21 @@ export default function ChatRoomStyles({ isEmbedded }) {
 
       .live-title {
         font-family: var(--font-display);
-        font-size: 1.1rem;
+        font-size: 1rem;
         color: var(--colorone);
         font-style: italic;
       }
 
       .live-subtitle {
         font-family: var(--font-typewriter);
-        font-size: 0.7rem;
+        font-size: 0.75rem;
         letter-spacing: 2px;
         color: rgba(244, 232, 193, 0.4);
       }
 
       .mic-btn, .end-btn {
         font-family: var(--font-typewriter);
-        font-size: 0.9rem;
+        font-size: 0.75rem;
         letter-spacing: 2px;
         background: transparent;
         border: none;

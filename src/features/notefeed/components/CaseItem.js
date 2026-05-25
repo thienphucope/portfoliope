@@ -30,7 +30,7 @@ export default function CaseItem({ caseData, onLinkClick }) {
       </div>
       <h3 className="nf-case-title" onClick={() => onLinkClick(caseData.id)}>{caseData.displayTitle}</h3>
       <div ref={contentRef} className="nf-case-excerpt markdown-content" dangerouslySetInnerHTML={{ __html: caseData.descriptionHtml }} />
-      <button className="nf-case-read" onClick={() => onLinkClick(caseData.id)}>→ Examine Dossier</button>
+      <button className="nf-case-read" onClick={() => onLinkClick(caseData.id)}>[ examine dossier ]</button>
     </div>
   );
 }
