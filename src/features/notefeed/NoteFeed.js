@@ -15,6 +15,7 @@ export default function NoteFeed({ onLinkClick, serverData }) {
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
   const [libsReady, setLibsReady] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const feedRef = useRef(null);
 
   useEffect(() => {
@@ -24,7 +25,7 @@ export default function NoteFeed({ onLinkClick, serverData }) {
 
   const { allFiles, fileRegistry, fullContentCache, upsertCacheEntry } = useBootstrapData(serverData);
   const { displayedCases, loading, loadedCount, fetchBatch, totalCount } = useFetchBatch({
-    allFiles, fileRegistry, fullContentCache, upsertCacheEntry, isMounted, libsReady,
+    allFiles, fileRegistry, fullContentCache, upsertCacheEntry, isMounted, libsReady, searchTerm,
   });
   useFeedEffects({ isMounted, displayedCases, libsReady, feedRef });
 
@@ -57,6 +58,8 @@ export default function NoteFeed({ onLinkClick, serverData }) {
           totalCount={totalCount}
           loading={loading}
           onLoadMore={() => fetchBatch(loadedCount, loadedCount + BATCH_SIZE)}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
         />
         <FeedFooter />
       </main>

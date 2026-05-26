@@ -266,6 +266,64 @@ export default function NoteFeedStyles() {
       }
       .nf-feed::-webkit-scrollbar { display: none; }
 
+      /* ── Cases Header ── */
+      .nf-cases-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 12px;
+      }
+
+      .nf-cases-label {
+        font-family: var(--nf-font-mono);
+        font-size: 0.75rem;
+        letter-spacing: 3px;
+        color: var(--nf-accent);
+      }
+
+      /* ── Search Bar ── */
+      .nf-search-container {
+        margin-bottom: 24px;
+        position: relative;
+      }
+
+      .nf-search-input {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--nf-border);
+        color: var(--nf-txt);
+        font-family: var(--nf-font-mono);
+        font-size: 0.85rem;
+        padding: 12px 16px;
+        outline: none;
+        box-sizing: border-box;
+        transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      .nf-search-input:focus {
+        border-color: var(--nf-accent);
+        background: rgba(255, 255, 255, 0.04);
+        box-shadow: 0 0 8px rgba(186, 145, 112, 0.15);
+      }
+
+      .nf-search-input::placeholder {
+        color: var(--nf-txt-dim);
+        opacity: 0.4;
+      }
+
+      .nf-no-cases {
+        padding: 40px 0;
+        text-align: center;
+        font-family: var(--nf-font-mono);
+        font-size: 0.85rem;
+        letter-spacing: 2px;
+        color: var(--nf-txt-dim);
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--nf-border);
+      }
+
       /* ── Cases ── */
       .nf-cases { padding-bottom: 48px; }
 

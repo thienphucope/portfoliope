@@ -124,7 +124,7 @@ export default function HeroSection() {
         </div>
         <textarea
           className="nf-tts-input"
-          placeholder="Enter English text to synthesize voice using GPT-SoVITS fine-tuned model (Moxxi)"
+          placeholder="enter english text to synthesize voice using gpt-sovits fine-tuned model (moxxi)"
           value={ttsText}
           onChange={(e) => setTtsText(e.target.value)}
           rows={3}

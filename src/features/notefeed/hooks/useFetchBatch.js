@@ -4,7 +4,7 @@ import { extractMedia } from '../utils/mediaExtractor';
 
 export const BATCH_SIZE = 10;
 
-export function useFetchBatch({ allFiles, fileRegistry, fullContentCache, upsertCacheEntry, isMounted, libsReady }) {
+export function useFetchBatch({ allFiles, fileRegistry, fullContentCache, upsertCacheEntry, isMounted, libsReady, searchTerm = '' }) {
   const [displayedCases, setDisplayedCases] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadedCount, setLoadedCount] = useState(() => {
@@ -16,20 +16,41 @@ export function useFetchBatch({ allFiles, fileRegistry, fullContentCache, upsert
   });
   const loadingRef = useRef(false);
 
-  const sortedFiles = useMemo(() => {
-    return [...allFiles].sort((a, b) => {
+  // Reset displayedCases and loadedCount when searchTerm changes
+  useEffect(() => {
+    setDisplayedCases([]);
+    setLoadedCount(0);
+  }, [searchTerm]);
+
+  const filteredSortedFiles = useMemo(() => {
+    const sorted = [...allFiles].sort((a, b) => {
       const dateA = fullContentCache[a.id]?.date ? new Date(fullContentCache[a.id].date).getTime() : 0;
       const dateB = fullContentCache[b.id]?.date ? new Date(fullContentCache[b.id].date).getTime() : 0;
       return dateB - dateA;
     });
-  }, [allFiles, fullContentCache]);
+
+    if (!searchTerm.trim()) return sorted;
+
+    const query = searchTerm.toLowerCase();
+    return sorted.filter((file) => {
+      const content = fullContentCache[file.id]?.raw;
+      const parsed = content ? parseNote(content, file.name, file.id, fullContentCache[file.id]?.date) : null;
+      
+      const matchTitle = file.name.toLowerCase().includes(query) || (parsed?.displayTitle && parsed.displayTitle.toLowerCase().includes(query));
+      const matchTag = parsed?.tag && parsed.tag.toLowerCase().includes(query);
+      const matchAuthor = parsed?.author && parsed.author.toLowerCase().includes(query);
+      const matchContent = content && content.toLowerCase().includes(query);
+      
+      return matchTitle || matchTag || matchAuthor || matchContent;
+    });
+  }, [allFiles, fullContentCache, searchTerm]);
 
   const fetchBatch = useCallback(async (start, end) => {
     if (loadingRef.current) return;
     loadingRef.current = true;
     setLoading(true);
 
-    const results = await Promise.all(sortedFiles.slice(start, end).map(async (file) => {
+    const results = await Promise.all(filteredSortedFiles.slice(start, end).map(async (file) => {
       let content = fullContentCache[file.id]?.raw;
       let date    = fullContentCache[file.id]?.date;
       if (!content) {
@@ -44,22 +65,28 @@ export function useFetchBatch({ allFiles, fileRegistry, fullContentCache, upsert
         } catch { return null; }
       }
       if (!content) return null;
-      if (!/tag:[^\n*]*#content(?:\s|#|\*|,|$)/i.test(content)) return null;
       return { ...parseNote(content, file.name, file.id, date), media: extractMedia(content)[0] || null };
     }));
 
-    setDisplayedCases((prev) => [...prev, ...results.filter(Boolean)]);
+    setDisplayedCases((prev) => {
+      if (start === 0) {
+        return results.filter(Boolean);
+      }
+      return [...prev, ...results.filter(Boolean)];
+    });
     setLoadedCount(end);
-    sessionStorage.setItem('notefeed_loaded_count', end.toString());
+    if (!searchTerm) {
+      sessionStorage.setItem('notefeed_loaded_count', end.toString());
+    }
     setLoading(false);
     loadingRef.current = false;
-  }, [sortedFiles, fileRegistry, fullContentCache, upsertCacheEntry]);
+  }, [filteredSortedFiles, fileRegistry, fullContentCache, upsertCacheEntry, searchTerm]);
 
   useEffect(() => {
-    if (isMounted && libsReady && sortedFiles.length > 0 && displayedCases.length === 0) {
+    if (isMounted && libsReady && filteredSortedFiles.length > 0 && displayedCases.length === 0) {
       fetchBatch(0, loadedCount > 0 ? loadedCount : BATCH_SIZE);
     }
-  }, [sortedFiles, isMounted, libsReady, displayedCases.length, fetchBatch, loadedCount]);
+  }, [filteredSortedFiles, isMounted, libsReady, displayedCases.length, fetchBatch, loadedCount]);
 
-  return { displayedCases, loading, loadedCount, fetchBatch, totalCount: allFiles.length };
+  return { displayedCases, loading, loadedCount, fetchBatch, totalCount: filteredSortedFiles.length };
 }
