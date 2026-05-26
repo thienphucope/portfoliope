@@ -15,12 +15,20 @@ export default function ThreeEditor({
   setSelectedId,
   povRef,
   onSaveItems,
-  onSavePov
+  onSavePov,
+  onAutoLayout
 }) {
   const { camera, controls, scene } = useThree();
   const lastUpdate = useRef(0);
   const isSetting = useRef(false);
   const isDragging = useRef(false);
+  
+  // Prevent Leva from teleporting items using cached values on selection change
+  const prevSelectedId = useRef(selectedId);
+  if (prevSelectedId.current !== selectedId) {
+    prevSelectedId.current = selectedId;
+    isSetting.current = true;
+  }
 
   const selectedItem = items.find(it => it.id === selectedId);
 
@@ -39,6 +47,7 @@ export default function ThreeEditor({
 
   const [, set] = useControls(() => ({
     'Editor': folder({
+      'Auto Layout': button(() => onAutoLayout()),
       'Save Items': button(() => onSaveItems()),
       'Save POV': button(() => onSavePov()),
       'Copy POV JSON': button(() => {
@@ -113,11 +122,11 @@ export default function ThreeEditor({
     if (selectedItem && editMode && !isDragging.current) {
       isSetting.current = true;
       set({
-        'Title': selectedItem.title,
+        'Title': selectedItem.title || '',
         'X': Math.round(selectedItem.x),
         'Y': Math.round(selectedItem.y),
         'Z': Math.round(selectedItem.z),
-        'Scale': selectedItem.scale,
+        'Scale': selectedItem.scale || 1.0,
         'Rotation': Math.round(selectedItem.rotation || 0)
       });
       setTimeout(() => { isSetting.current = false; }, 50);
@@ -169,7 +178,24 @@ export default function ThreeEditor({
           onMouseUp={() => { 
             isDragging.current = false;
             if(controls) controls.enabled = true;
-            onUpdateItem(selectedId, {}, true); // Commit history on drag end
+            
+            if (selectedObject) {
+              const rawX = selectedObject.position.x / SCALE_FACTOR + 1250;
+              const rawY = -selectedObject.position.y / SCALE_FACTOR + 850;
+              const rawZ = (selectedObject.position.z - 0.002) / 0.005;
+
+              const finalX = Math.max(0, Math.min(2500, Math.round(rawX)));
+              const finalY = Math.max(0, Math.min(1700, Math.round(rawY)));
+              const finalZ = Math.max(-100, Math.min(500, Math.round(rawZ)));
+
+              onUpdateItem(selectedId, { 
+                x: finalX, 
+                y: finalY, 
+                z: finalZ 
+              }, true);
+            } else {
+              onUpdateItem(selectedId, {}, true);
+            }
           }}
           onObjectChange={(e) => {
             if (isSetting.current || !isDragging.current) return;
@@ -184,16 +210,16 @@ export default function ThreeEditor({
             if (isNaN(rawX) || isNaN(rawY) || isNaN(rawZ)) return;
 
             // Clamping an toàn để item không bao giờ thoát khỏi phạm vi Board
-            // Canvas: 2500x1700, Z: layer index
             const finalX = Math.max(0, Math.min(2500, Math.round(rawX)));
             const finalY = Math.max(0, Math.min(1700, Math.round(rawY)));
             const finalZ = Math.max(-100, Math.min(500, Math.round(rawZ)));
 
-            onUpdateItem(selectedId, { 
-              x: finalX, 
-              y: finalY, 
-              z: finalZ 
-            }, false);
+            // Update UI only, don't trigger re-render on object position
+            set({
+              'X': finalX,
+              'Y': finalY,
+              'Z': finalZ
+            });
           }}
         />
       )}

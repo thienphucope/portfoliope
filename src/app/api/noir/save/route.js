@@ -7,6 +7,8 @@ export async function POST(request) {
     const { type, items, config } = await request.json();
     const dataPath = join(process.cwd(), 'src', 'features', 'noirboard', 'utils', 'boardData.json');
     
+    console.log('[NOIR SAVE] type:', type, 'items count:', items?.length, 'path:', dataPath);
+
     // 1. Read existing data
     let currentData = { items: [], config: {} };
     try {
@@ -26,6 +28,7 @@ export async function POST(request) {
     }
 
     // 3. Write back
+    console.log('[NOIR SAVE] writing', currentData.items?.length, 'items to', dataPath);
     await writeFile(dataPath, JSON.stringify(currentData, null, 2), 'utf8');
     
     return NextResponse.json({ success: true });

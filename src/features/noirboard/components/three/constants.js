@@ -7,7 +7,8 @@ export const FONTS = {
 export const SIZES = {
   sticky: [0.71, 0.75],
   newspaper: [1.25, 1.69],
-  polaroid: [0.8, 0.93]
+  polaroid: [0.8, 0.93],
+  photo: [0.9, 0.9]
 };
 
 export const STICKY_PALETTES = {

@@ -12,6 +12,7 @@ import MobileControls from './parts/MobileControls';
 import Lighting from './parts/Lighting';
 import { useItems } from '../../hooks/useItems';
 import { getItemLayout } from '../../utils/seedLayout';
+import { computeAutoLayout } from '../../utils/autoLayout';
 
 const SCALE_FACTOR = 0.01;
 
@@ -122,6 +123,12 @@ export default function ThreeBoard() {
   const [editMode, setEditMode] = useState(false);
   const povRef = useRef({ position: [0, 0, 15], target: [0, 0, 0] });
 
+  const localItemsRef = useRef([]);
+
+  useEffect(() => {
+    localItemsRef.current = localItems;
+  }, [localItems]);
+
   useEffect(() => {
     if (!loading && initialItems) {
       // Merge seeded layout as defaults if not present in saved data
@@ -145,16 +152,49 @@ export default function ThreeBoard() {
     setLocalItems(prev => prev.map(it => it.id === id ? { ...it, ...updates } : it));
   }, []);
 
-  // ... (keep handleSavePov)
+  const handleAutoLayout = useCallback(async () => {
+    const layoutMap = await computeAutoLayout(localItemsRef.current);
+    setLocalItems(prev => prev.map(it => {
+      const layout = layoutMap[it.id];
+      return layout ? { ...it, ...layout } : it;
+    }));
+  }, []);
 
-  const handleSavePov = async () => {
+  const handleSaveItems = useCallback(async () => {
+    try {
+      // Only persist fields that belong in boardData.json
+      const saveItems = localItemsRef.current.map(it => ({
+        name: it.imageUrl?.replace(/^\//, '') || it.name,
+        title: it.title,
+        scale: it.scale || 1,
+        rotation: it.rotation || 0,
+        x: Math.round(it.x),
+        y: Math.round(it.y),
+        z: Math.round(it.z)
+      }));
+      const res = await fetch('/api/noir/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'items', items: saveItems }),
+      });
+      if (res.ok) {
+        alert('Items saved successfully!');
+      } else {
+        alert('Failed to save items.');
+      }
+    } catch (e) {
+      alert('Error saving items: ' + e.message);
+    }
+  }, []);
+
+  const handleSavePov = useCallback(async () => {
     await fetch('/api/noir/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'pov', config: { pov: povRef.current } }),
     });
     alert('POV saved!');
-  };
+  }, []);
 
   const [{ ambientIntensity, useFog }] = useControls(() => ({
     'Atmosphere': {
@@ -199,8 +239,9 @@ export default function ThreeBoard() {
             selectedId={selectedId}
             setSelectedId={setSelectedId}
             povRef={povRef}
-            onSaveItems={() => console.log('Save items')}
+            onSaveItems={handleSaveItems}
             onSavePov={handleSavePov}
+            onAutoLayout={handleAutoLayout}
           />
         )}
         <Preload all />

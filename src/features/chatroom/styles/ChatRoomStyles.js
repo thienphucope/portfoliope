@@ -75,7 +75,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
         width: 100px;
         padding: 2px 0;
       }
-      .username-input::placeholder { color: rgba(196, 180, 138, 0.3); }
+      .username-input::placeholder { color: rgba(196, 180, 138, 0.3); font-style: italic; }
       .username-input:focus { border-bottom-color: rgba(196, 180, 138, 0.6); color: rgba(196, 180, 138, 0.9); }
       .chat-overline {
         font-family: var(--font-typewriter);
@@ -85,6 +85,63 @@ export default function ChatRoomStyles({ isEmbedded }) {
         color: var(--colorone);
         opacity: 0.95;
         font-weight: 700;
+      }
+
+      .info-wrap {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        position: relative;
+      }
+      .info-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 1px solid currentColor;
+        font-family: monospace;
+        font-size: 9px;
+        font-weight: bold;
+        cursor: help;
+        opacity: 0.6;
+        transition: opacity 0.2s;
+        user-select: none;
+        line-height: 1;
+        position: relative;
+        letter-spacing: normal;
+      }
+      .info-icon:hover {
+        opacity: 1;
+      }
+      .info-icon::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        top: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(10, 10, 12, 0.95);
+        color: var(--parchment);
+        border: 1px solid var(--colorone);
+        padding: 6px 10px;
+        font-family: var(--font-typewriter);
+        font-size: 0.72rem;
+        letter-spacing: 0.5px;
+        width: 180px;
+        white-space: normal;
+        word-wrap: break-word;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s ease, transform 0.15s ease;
+        z-index: 999;
+        text-transform: none;
+        font-weight: normal;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      }
+      .info-icon:hover::after {
+        opacity: 1;
+        transform: translateX(-50%) translateY(2px);
       }
 
 .voice-header-btn {

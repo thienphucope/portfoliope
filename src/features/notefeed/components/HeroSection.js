@@ -89,7 +89,7 @@ export default function HeroSection() {
         <h1 className="nf-title">
           <span className="nf-title-row" ref={opeRef}>
             Ope
-            <Link href="/noirboard" target="_blank" rel="noopener noreferrer">
+            <Link href="/noirboard" target="_blank" rel="noopener noreferrer" className="nf-title-link">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img className="nf-title-img" src="/ope.png" alt="Inspect Board" />
             </Link>
@@ -113,7 +113,10 @@ export default function HeroSection() {
       </div>
       <div className="nf-tts-section">
         <div className="nf-tts-header">
-          <div className="nf-tts-label">VOICE DEMO</div>
+          <div className="nf-tts-label info-wrap">
+            VOICE DEMO
+            <span className="info-icon" data-tooltip="Speech synthesis using a fine-tuned GPT-SoVITS model of Moxxi's voice">i</span>
+          </div>
           <button
             className={`nf-tts-btn${ttsLoading ? ' loading' : ''}`}
             onClick={handleGenerate}
@@ -124,7 +127,7 @@ export default function HeroSection() {
         </div>
         <textarea
           className="nf-tts-input"
-          placeholder="enter english text to synthesize voice using gpt-sovits fine-tuned model (moxxi)"
+          placeholder="Enter text to synthesize..."
           value={ttsText}
           onChange={(e) => setTtsText(e.target.value)}
           rows={3}

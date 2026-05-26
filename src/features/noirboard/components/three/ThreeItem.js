@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { SIZES, STICKY_PALETTES } from './constants';
 import StickyContent from './parts/StickyContent';
 import PolaroidContent from './parts/PolaroidContent';
+import PhotoContent from './parts/PhotoContent';
 import NewspaperContent from './parts/NewspaperContent';
 
 /**
@@ -182,6 +183,7 @@ function BaseThreeItem({ item, layout, scaleFactor, size, isSelected, isHovered,
       <group position={[0, 0, 0.005]}>
         {item.type === 'sticky' && <StickyContent item={item} size={size} geometry={geometry} />}
         {item.type === 'polaroid' && <PolaroidContent item={item} size={size} geometry={geometry} />}
+        {item.type === 'photo' && <PhotoContent item={item} size={size} geometry={geometry} />}
         {item.type === 'newspaper' && <NewspaperContent item={item} size={size} geometry={geometry} />}
       </group>
     </group>
@@ -214,6 +216,29 @@ function PolaroidItem(props) {
 }
 
 /**
+ * Specialized component for Photo items — image-based sizing, no polaroid padding.
+ */
+function PhotoItem(props) {
+  const { item } = props;
+  const photoTexture = useTexture(item.imageUrl || '/placeholder.jpg');
+
+  const size = useMemo(() => {
+    const s = item.scale || 1.0;
+    if (photoTexture?.image) {
+      const imgW = photoTexture.image.width;
+      const imgH = photoTexture.image.height;
+      const aspect = imgW / imgH;
+      const targetW = 0.9 * s;
+      const photoH = targetW / aspect;
+      return [targetW, photoH];
+    }
+    return [SIZES.photo[0] * s, SIZES.photo[1] * s];
+  }, [photoTexture, item.scale]);
+
+  return <BaseThreeItem {...props} size={size} />;
+}
+
+/**
  * Main dispatcher component for ThreeItems.
  * Resolves the conditional hook issue by splitting into sub-components.
  */
@@ -222,6 +247,10 @@ export default function ThreeItem(props) {
 
   if (item.type === 'polaroid') {
     return <PolaroidItem {...props} />;
+  }
+
+  if (item.type === 'photo') {
+    return <PhotoItem {...props} />;
   }
 
   const baseSize = SIZES[item.type] || [0.87, 0.87];

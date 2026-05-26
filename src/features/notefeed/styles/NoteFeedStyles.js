@@ -202,7 +202,7 @@ export default function NoteFeedStyles() {
         box-sizing: border-box;
         transition: border-color 0.2s;
       }
-      .nf-tts-input::placeholder { color: var(--nf-txt-dim); opacity: 0.5; }
+      .nf-tts-input::placeholder { color: var(--nf-txt-dim); opacity: 0.5; font-style: italic; }
       .nf-tts-input:focus { border-color: var(--nf-accent-dim); }
       .nf-tts-input:disabled { opacity: 0.5; }
       .nf-tts-input { scrollbar-width: thin; scrollbar-color: rgba(186,145,112,0.2) transparent; }
@@ -239,6 +239,63 @@ export default function NoteFeedStyles() {
         width: 100%;
         filter: invert(1) sepia(1) saturate(0.5) hue-rotate(180deg);
         opacity: 0.8;
+      }
+
+      .info-wrap {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        position: relative;
+      }
+      .info-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 1px solid currentColor;
+        font-family: monospace;
+        font-size: 9px;
+        font-weight: bold;
+        cursor: help;
+        opacity: 0.6;
+        transition: opacity 0.2s;
+        user-select: none;
+        line-height: 1;
+        position: relative;
+        letter-spacing: normal;
+      }
+      .info-icon:hover {
+        opacity: 1;
+      }
+      .info-icon::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        top: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(10, 10, 12, 0.95);
+        color: var(--nf-txt);
+        border: 1px solid var(--nf-accent);
+        padding: 6px 10px;
+        font-family: var(--nf-font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.5px;
+        width: 180px;
+        white-space: normal;
+        word-wrap: break-word;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s ease, transform 0.15s ease;
+        z-index: 999;
+        text-transform: none;
+        font-weight: normal;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      }
+      .info-icon:hover::after {
+        opacity: 1;
+        transform: translateX(-50%) translateY(2px);
       }
 
       /* ── Sidekick (right pane) ── */
@@ -311,6 +368,7 @@ export default function NoteFeedStyles() {
       .nf-search-input::placeholder {
         color: var(--nf-txt-dim);
         opacity: 0.4;
+        font-style: italic;
       }
 
       .nf-no-cases {
@@ -474,6 +532,10 @@ export default function NoteFeedStyles() {
 
       /* ── Mobile ── */
       @media (max-width: 768px) {
+        .nf-title-link {
+          pointer-events: none;
+          cursor: default;
+        }
         .nf-shell {
           position: relative;
           inset: auto;

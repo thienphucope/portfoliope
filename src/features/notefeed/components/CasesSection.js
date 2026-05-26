@@ -4,7 +4,10 @@ export default function CasesSection({ displayedCases, onLinkClick, loadedCount,
   return (
     <section className="nf-cases" id="cases">
       <div className="nf-cases-header">
-        <div className="nf-cases-label">CASE ARCHIVES</div>
+        <div className="nf-cases-label info-wrap">
+          CASE ARCHIVES
+          <span className="info-icon" data-tooltip="Searchable database of investigative case notes and evidence">i</span>
+        </div>
       </div>
       <div className="nf-search-container">
         <input

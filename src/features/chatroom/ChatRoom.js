@@ -231,7 +231,10 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
     <div className="chat-shell" style={isEmbedded ? { position: 'relative', height: '100%', width: '100%' } : {}}>
       <div className="chat-header">
         <div className="header-copy">
-          <span className="chat-overline">Dispatch</span>
+          <div className="info-wrap">
+            <span className="chat-overline">Dispatch</span>
+            <span className="info-icon" data-tooltip="Text/Voice workspace to chat with Moxxi and search documents">i</span>
+          </div>
         </div>
         <div className="header-actions">
           <div className="header-btn-group">

@@ -1,80 +1,170 @@
 {
   "items": [
     {
-      "name": "amechrist.png",
-      "title": "Ame Christ",
-      "scale": 2,
-      "rotation": 0,
-      "x": 1149,
-      "y": 911,
-      "z": 30
+      "name": "display/amechrist.png",
+      "title": "amechrist",
+      "scale": 1,
+      "rotation": 4,
+      "x": 945,
+      "y": 963,
+      "z": 10
     },
     {
-      "name": "amelia.webp",
-      "title": "Amelia",
+      "name": "display/amelia.webp",
+      "title": "amelia",
+      "scale": 1,
+      "rotation": 2,
+      "x": 1548,
+      "y": 972,
+      "z": 10
+    },
+    {
+      "name": "display/blackcat.jpg",
+      "title": "blackcat",
       "scale": 1,
       "rotation": 0,
-      "x": 1510,
-      "y": 589,
-      "z": 1
+      "x": 1078,
+      "y": 614,
+      "z": 10
     },
     {
-      "name": "channels4_profile.jpg",
-      "title": "Profile",
+      "name": "display/channels4_profile.jpg",
+      "title": "channels4_profile",
       "scale": 1,
-      "rotation": 0,
-      "x": 860,
-      "y": 888,
-      "z": 1
+      "rotation": -3,
+      "x": 1531,
+      "y": 1088,
+      "z": 10
     },
     {
-      "name": "holmesdead.avif",
-      "title": "Holmes",
+      "name": "display/christ1.png",
+      "title": "christ1",
+      "scale": 1,
+      "rotation": -1,
+      "x": 951,
+      "y": 744,
+      "z": 10
+    },
+    {
+      "name": "display/cursor.png",
+      "title": "cursor",
+      "scale": 1,
+      "rotation": 2,
+      "x": 1549,
+      "y": 727,
+      "z": 10
+    },
+    {
+      "name": "display/holmesdead.avif",
+      "title": "holmesdead",
       "scale": 2,
-      "rotation": 0,
-      "x": 837,
-      "y": 684,
-      "z": 4
+      "rotation": 2,
+      "x": 1242,
+      "y": 539,
+      "z": 10
     },
     {
-      "name": "news.png",
-      "title": "News",
+      "name": "display/news.png",
+      "title": "news",
       "scale": 5,
       "rotation": 0,
-      "x": 1203,
-      "y": 671,
-      "z": 1
+      "x": 1250,
+      "y": 850,
+      "z": 10
     },
     {
-      "name": "smallope.jpg",
-      "title": "Small Ope",
+      "name": "display/smallope.jpg",
+      "title": "smallope",
       "scale": 1,
-      "rotation": 0,
-      "x": 971,
-      "y": 878,
-      "z": 50
+      "rotation": 1,
+      "x": 1530,
+      "y": 600,
+      "z": 10
     },
     {
-      "name": "thinkingwatson.webp",
-      "title": "Thinking Watson",
+      "name": "display/thinkingwatson.webp",
+      "title": "thinkingwatson",
+      "scale": 1,
+      "rotation": -3,
+      "x": 960,
+      "y": 618,
+      "z": 10
+    },
+    {
+      "name": "display/union.jpeg",
+      "title": "union",
+      "scale": 1,
+      "rotation": -3,
+      "x": 1018,
+      "y": 1079,
+      "z": 10
+    },
+    {
+      "name": "polaroid/ope.png",
+      "title": "ope",
+      "scale": 1,
+      "rotation": -4,
+      "x": 1404,
+      "y": 1083,
+      "z": 10
+    },
+    {
+      "name": "polaroid/saba.png",
+      "title": "saba",
       "scale": 1,
       "rotation": 0,
-      "x": 1515,
-      "y": 700,
-      "z": 1
+      "x": 1408,
+      "y": 617,
+      "z": 10
+    },
+    {
+      "name": "polaroid/Watson-Amelia_pr-img_01.png",
+      "title": "Watson-Amelia_pr-img_01",
+      "scale": 1,
+      "rotation": -2,
+      "x": 1274,
+      "y": 1107,
+      "z": 10
+    },
+    {
+      "name": "polaroid/watson.png",
+      "title": "watson",
+      "scale": 1,
+      "rotation": 4,
+      "x": 1550,
+      "y": 852,
+      "z": 10
+    },
+    {
+      "name": "polaroid/watsoncrop.png",
+      "title": "watsoncrop",
+      "scale": 1,
+      "rotation": 0,
+      "x": 947,
+      "y": 867,
+      "z": 10
+    },
+    {
+      "name": "polaroid/yellowtorch.png",
+      "title": "yellowtorch",
+      "scale": 1,
+      "rotation": -2,
+      "x": 1141,
+      "y": 1099,
+      "z": 10
     }
   ],
   "config": {
     "pov": {
       "position": [
-        -0.5046720436134593,
-        1.9441919362219928,
-        8.502691454047032
+        0,
+        5.113459346207868e-16,
+        14.982422401801244
       ],
       "target": [
-        -0.6660077956692078,
-        1.5236514071650515,
-        3.523021139806393
+        0,
+        2.0518423483394852e-16,
+        9.982422401801244
       ]
     },
     "atmosphere": {}
