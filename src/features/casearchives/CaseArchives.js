@@ -267,7 +267,7 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
     else {
       (async () => {
         try {
-          const bootRes = await fetch('/api/project/casearchivess', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'bootstrap' }) });
+          const bootRes = await fetch('/api/cases', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'bootstrap' }) });
           const boot = await bootRes.json(); if (bootRes.ok && boot?.ok && Array.isArray(boot.tree)) initialize(boot);
           else setContent(`# API Error\n${boot?.error || 'Unknown'}`);
         } catch (e) { console.error('Initialization error:', e); setContent('# Connection Error\nFailed to connect to API.'); }

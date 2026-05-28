@@ -1,7 +1,6 @@
-// src/services/github.js
+import { GITHUB_REPO } from '@/configs/vault';
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN || ''; 
-const GITHUB_REPO = 'thienphucope/cases';
 
 const buildHeaders = (withJson = false) => {
   const headers = {

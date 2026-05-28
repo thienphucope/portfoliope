@@ -13,7 +13,7 @@ export function useBootstrapData(serverData) {
       setFullContentCache(serverData.contentCache || {});
       return;
     }
-    fetch('/api/project/casearchivess', {
+    fetch('/api/cases', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'bootstrap' }),
