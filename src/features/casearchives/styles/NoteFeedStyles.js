@@ -288,7 +288,11 @@ export default function NoteFeedStyles() {
       .nf-cases { padding-bottom: 48px; }
 
       .nf-mobile-only { display: none !important; }
-      .nf-case-list { display: flex; flex-direction: column; }
+      .nf-case-list {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
 
       .nf-case {
         padding: 20px 0;
