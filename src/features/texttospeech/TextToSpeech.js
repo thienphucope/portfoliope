@@ -10,9 +10,14 @@ export default function TextToSpeech() {
   const [ttsError, setTtsError] = useState(null);
   const { generateAudio } = useTTS();
 
+  const historyRef = useRef(audioHistory);
+  useEffect(() => {
+    historyRef.current = audioHistory;
+  }, [audioHistory]);
+
   useEffect(() => {
     return () => {
-      audioHistory.forEach(item => URL.revokeObjectURL(item.url));
+      historyRef.current.forEach(item => URL.revokeObjectURL(item.url));
     };
   }, []);
 
@@ -68,7 +73,7 @@ export default function TextToSpeech() {
           <div className="nf-tts-history">
             {audioHistory.map((item, i) => (
               <div key={i} className="nf-tts-history-item">
-                <p className="nf-tts-history-text">"{item.text}"</p>
+                <p className="nf-tts-history-text">&quot;{item.text}&quot;</p>
                 <audio className="nf-tts-audio" controls src={item.url} autoPlay={i === 0} />
               </div>
             ))}
