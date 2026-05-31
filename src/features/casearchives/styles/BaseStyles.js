@@ -6,7 +6,7 @@ export default function BaseStyles() {
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap');
 
         :root {
-          --bg: #0a0a0c; --txt: #e0e0e0; --accent: #ba9170;
+          --bg: var(--feature-bg); --txt: var(--md-colortext); --accent: #ba9170;
           --border: rgba(255,255,255,0.1); --code-bg: #1e1e1e;
 
         }
@@ -45,7 +45,7 @@ export default function BaseStyles() {
           z-index: -2;
           pointer-events: none;
           overflow: hidden;
-          background: black;
+          background: var(--feature-backdrop-bg);
         }
         .case-background img {
           position: absolute;
@@ -68,7 +68,7 @@ export default function BaseStyles() {
             height: 56.25vw;
           }
         }
-        .video-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; background: rgba(0, 0, 0, 0.50); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); pointer-events: none; }
+        .video-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; background: var(--feature-backdrop-overlay); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); pointer-events: none; }
     `}</style>
   );
 }

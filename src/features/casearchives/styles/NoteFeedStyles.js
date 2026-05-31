@@ -7,8 +7,6 @@ export default function NoteFeedStyles() {
         --nf-bg: #0a0a0c;
         --nf-txt: #e0e0e0;
         --nf-txt-dim: #aaaaaa;
-        --nf-accent: #ba9170;
-        --nf-accent-dim: #8a6b52;
         --nf-border: rgba(255,255,255,0.08);
         /* fonts: shared tokens in globals.css */
       }
@@ -112,17 +110,23 @@ export default function NoteFeedStyles() {
   filter: grayscale(20%);
 }
 
+.nf-title-italic {
+  font-style: italic;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
 .nf-italic {
   font-style: italic;
   font-weight: 400;
-  color: var(--nf-accent);
+  color: var(--theme);
   white-space: nowrap;
 }
 
       .nf-social-divider {
         width: 80px;
         height: 2px;
-        background: var(--nf-accent-dim);
+        background: var(--theme);
         margin: 6px auto;
         opacity: 0.5;
       }
@@ -144,7 +148,7 @@ export default function NoteFeedStyles() {
         border-bottom: 1px solid var(--nf-border);
       }
       .nf-socials a:first-child { border-top: 1px solid var(--nf-border); }
-      .nf-socials a:hover { color: var(--nf-accent); }
+      .nf-socials a:hover { color: var(--theme); }
 
       .nf-social-icon { font-size: 1.06rem; flex-shrink: 0; }
 
@@ -203,39 +207,61 @@ export default function NoteFeedStyles() {
 
       .nf-cases-label {
         font-family: var(--font-display);
-        font-size: var(--ui-text-section-header);
+        font-size: var(--ui-text-title);
         font-weight: 700;
         letter-spacing: var(--ui-letter-section-header);
-        text-transform: uppercase;
-        color: var(--nf-accent);
+        color: var(--theme);
       }
 
       /* ── Search Bar ── */
-      .nf-search-container {
+      .nf-search-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        border: 1px solid rgba(186, 145, 112, 0.2);
+        background: rgba(186, 145, 112, 0.02);
+        padding: 12px 16px;
+        transition: border-color 0.3s, background-color 0.3s;
         margin-bottom: 24px;
-        position: relative;
+      }
+      .nf-search-row:focus-within {
+        border-color: var(--theme);
+        background: rgba(186, 145, 112, 0.05);
       }
 
       .nf-search-input {
-        width: 100%;
-        background: rgba(255, 255, 255, 0.02);
-        border: 1px solid var(--nf-border);
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
         color: var(--nf-txt);
         font-family: var(--font-body);
         font-size: var(--ui-text-body);
         font-weight: 400;
         letter-spacing: normal;
-        padding: 12px 16px;
-        outline: none;
+        padding: 4px 0;
         box-sizing: border-box;
-        transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
       }
 
-      .nf-search-input:focus {
-        border-color: var(--nf-accent);
-        background: rgba(255, 255, 255, 0.04);
-        box-shadow: 0 0 8px rgba(186, 145, 112, 0.15);
+      .nf-search-btn {
+        font-family: var(--font-mono);
+        font-size: var(--ui-text-action);
+        font-weight: 700;
+        letter-spacing: var(--ui-letter-action);
+        line-height: 1;
+        text-transform: uppercase;
+        background: transparent;
+        border: none;
+        color: var(--theme);
+        cursor: pointer;
+        transition: color 0.3s;
+        padding: 8px 4px;
+        white-space: nowrap;
       }
+      .nf-search-btn:hover:not(:disabled) {
+        text-shadow: 0 0 10px rgba(186, 145, 112, 0.5);
+      }
+      .nf-search-btn:disabled { color: rgba(186, 145, 112, 0.3); cursor: default; }
 
       .nf-search-input::placeholder {
         color: currentColor;
@@ -261,6 +287,7 @@ export default function NoteFeedStyles() {
       /* ── Cases ── */
       .nf-cases { padding-bottom: 48px; }
 
+      .nf-mobile-only { display: none !important; }
       .nf-case-list { display: flex; flex-direction: column; }
 
       .nf-case {
@@ -270,16 +297,15 @@ export default function NoteFeedStyles() {
 
       .nf-case-img {
         width: 100%;
-        height: 140px;
-        overflow: hidden;
+        height: auto;
+        overflow: visible;
         cursor: pointer;
         margin-bottom: 14px;
       }
 
       .nf-case-img img {
         width: 100%;
-        height: 100%;
-        object-fit: cover;
+        height: auto;
         display: block;
         opacity: 0.75;
         transition: opacity 0.3s, filter 0.3s;
@@ -302,7 +328,7 @@ export default function NoteFeedStyles() {
       .nf-case-date {
         font-family: var(--font-mono);
         font-size: 0.82rem;
-        color: var(--nf-accent-dim);
+        color: var(--theme);
         letter-spacing: 1px;
       }
 
@@ -332,7 +358,7 @@ export default function NoteFeedStyles() {
         transition: color 0.2s;
         line-height: 1.3;
       }
-      .nf-case-title:hover { color: var(--nf-accent); }
+      .nf-case-title:hover { color: var(--theme); }
 
       .nf-case-excerpt {
         font-size: var(--ui-text-body);
@@ -352,12 +378,12 @@ export default function NoteFeedStyles() {
         letter-spacing: var(--ui-letter-action);
         line-height: 1;
         text-transform: uppercase;
-        color: var(--nf-accent-dim);
+        color: var(--theme);
         cursor: pointer;
         padding: 0;
         transition: color 0.2s;
       }
-      .nf-case-read:hover { color: var(--nf-accent); }
+      .nf-case-read:hover { color: var(--theme); }
 
       /* ── Load more ── */
       .nf-load-more {
@@ -379,14 +405,14 @@ export default function NoteFeedStyles() {
         text-align: center;
       }
       .nf-load-more:hover {
-        border-color: var(--nf-accent-dim);
-        color: var(--nf-accent);
+        border-color: var(--theme);
+        color: var(--theme);
       }
 
       /* ── Footer ── */
       .nf-footer {
         display: flex;
-        justify-content: space-between;
+        justify-content: center;
         align-items: center;
         padding: 24px 0 0;
         border-top: 1px solid var(--nf-border);
@@ -394,7 +420,7 @@ export default function NoteFeedStyles() {
         font-size: 0.82rem;
         letter-spacing: 2px;
         color: var(--nf-txt-dim);
-        text-transform: uppercase;
+        text-align: center;
       }
 
       /* ── Reveal animation ── */
@@ -408,7 +434,29 @@ export default function NoteFeedStyles() {
         transform: translateY(0);
       }
 
-      ::selection { background: var(--nf-accent); color: var(--nf-bg); }
+      ::selection { background: var(--theme); color: var(--nf-bg); }
+
+      .nf-desktop-only { display: block; height: 100%; width: 100%; }
+      .nf-mobile-only { display: none !important; }
+      .nf-block-ref-link {
+        display: block;
+        padding: 16px;
+        background: rgba(186,145,112,0.05);
+        border: 1px dashed var(--nf-border);
+        color: var(--theme);
+        font-family: var(--font-display);
+        font-size: var(--ui-text-title);
+        font-weight: 700;
+        letter-spacing: var(--ui-letter-section-header);
+        text-align: center;
+        text-decoration: none;
+        transition: border-color 0.2s, background 0.2s;
+        margin-top: 16px;
+      }
+      .nf-block-ref-link:hover {
+        border-color: var(--theme);
+        background: rgba(186,145,112,0.1);
+      }
 
       /* ── Mobile ── */
       @media (max-width: 768px) {
@@ -430,9 +478,10 @@ export default function NoteFeedStyles() {
           height: auto;
           border-right: none;
           border-bottom: 1px solid var(--nf-border);
-          padding: 56px 24px 44px;
+          padding: 56px 24px 16px;
           align-items: flex-start;
         }
+        .nf-hero-divider { display: none; }
         .nf-feed {
           height: auto;
           overflow-y: visible;
@@ -441,21 +490,23 @@ export default function NoteFeedStyles() {
         .nf-sidekick {
           flex: none;
           width: 100%;
-          height: 100dvh;
+          height: auto;
+          padding: 0 24px 24px;
           border-left: none;
-          border-top: 1px solid var(--nf-border);
+          border-top: none;
         }
+        .nf-desktop-only { display: none !important; }
+        .nf-mobile-only { display: block !important; }
         .nf-ctas { flex-direction: row; flex-wrap: wrap; gap: 10px; }
         .nf-case-title { font-size: var(--ui-text-title-mobile); }
-        .nf-case-img { height: 130px; }
       }
 
       @media (max-width: 480px) {
-        .nf-hero { padding: 44px 18px 36px; }
+        .nf-hero { padding: 44px 18px 16px; }
         .nf-feed { padding: 28px 18px 40px; }
         .nf-ctas { flex-direction: column; }
         .nf-footer { flex-direction: column; gap: 8px; text-align: center; }
-        .nf-sidekick { height: 100dvh; }
+        .nf-sidekick { height: auto; }
       }
     `}</style>
   );

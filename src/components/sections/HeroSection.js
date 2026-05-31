@@ -3,6 +3,7 @@ import { useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { FaGithub, FaEnvelope, FaDiscord } from 'react-icons/fa';
 import { SOCIAL_LINKS } from '@/configs/social';
+import FeedFooter from '@/features/casearchives/components/FeedFooter';
 
 export default function HeroSection({ children }) {
   const containerRef = useRef(null);
@@ -52,7 +53,7 @@ export default function HeroSection({ children }) {
         <span className="nf-corner-dot nf-corner-dot-bl" />
         <h1 className="nf-title">
           <span className="nf-title-row" ref={opeRef}>
-            Ope
+            <span className="nf-title-italic">Ope</span>
             <Link href="/noirboard" target="_blank" rel="noopener noreferrer" className="nf-title-link">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img className="nf-title-img" src="/ope.png" alt="Inspect Board" />
@@ -61,6 +62,7 @@ export default function HeroSection({ children }) {
           <span className="nf-italic" ref={watsonRef}>Watson</span>
         </h1>
       </div>
+      <FeedFooter />
       <div className="nf-socials">
         <a href={SOCIAL_LINKS.github}  target="_blank" rel="noopener noreferrer">
           <FaGithub className="nf-social-icon" />

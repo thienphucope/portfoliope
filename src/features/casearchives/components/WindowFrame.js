@@ -273,7 +273,7 @@ export default function WindowFrame({
         .window-frame {
           display: flex;
           flex-direction: row;
-          background: #0a0a0c;
+          background: var(--feature-bg);
           border: none;
           border-radius: 0;
           overflow: hidden;
@@ -457,7 +457,7 @@ export default function WindowFrame({
           top: calc(100% + 5px);
           left: 0;
           right: 0;
-          background: #0a0a0c;
+          background: var(--feature-bg);
           border: 1px solid rgba(255, 250, 205, 0.3);
           border-radius: 8px;
           z-index: 2000;

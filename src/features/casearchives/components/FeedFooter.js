@@ -1,8 +1,7 @@
 export default function FeedFooter() {
   return (
     <footer className="nf-footer">
-      <span>&ldquo;Elementary, my dear Watson.&rdquo;</span>
-      <span>Ope Watson · MMXXVI</span>
+      <span>&ldquo;elementary, my dear watson.&rdquo;</span>
     </footer>
   );
 }

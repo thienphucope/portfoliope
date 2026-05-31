@@ -1,9 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import cefrDict from '../utils/cefr_dict.json';
+import { useTTS } from '@/hooks/useTTS';
 
 const CEFR_LEVELS = ['none', 'a1', 'a2', 'b1', 'b2', 'c1', 'c2'];
 
 export function useReader() {
+  const { generateAudio } = useTTS();
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [cefrLevel, setCefrLevel] = useState(() => {
@@ -144,16 +146,7 @@ export function useReader() {
     for (const chunk of chunks) {
       if (signal.aborted) return false;
       
-      const response = await fetch('/api/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: chunk, voice: lang }),
-        signal,
-      });
-
-      if (!response.ok) throw new Error('TTS failed');
-
-      const blob = await response.blob();
+      const blob = await generateAudio(chunk, { provider: 'msedge', voice: lang, signal });
       if (signal.aborted) return false;
       const url = URL.createObjectURL(blob);
 

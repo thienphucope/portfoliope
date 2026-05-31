@@ -273,7 +273,7 @@ const PDFViewer = forwardRef(({ onClose, reader, isOpen, onStateChange, initialF
       <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".pdf" style={{ display: 'none' }} />
       <style dangerouslySetInnerHTML={{ __html: `
         .pdf-viewer-overlay { display: flex; flex-direction: column; position: absolute; inset: 0; height: 100%; width: 100%; color: white; background: transparent; overflow: hidden; z-index: 5; }
-        .pdf-body { flex: 1; overflow-y: auto; background: #0a0a0c; position: relative; -webkit-overflow-scrolling: touch; }
+        .pdf-body { flex: 1; overflow-y: auto; background: var(--feature-bg); position: relative; -webkit-overflow-scrolling: touch; }
         .pdf-document { display: flex; flex-direction: column; align-items: center; width: 100%; }
         .pdf-empty-container { display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; }
         .pdf-upload-empty { width: 100%; max-width: 500px; padding: 60px 30px; border: 2px dashed #222; border-radius: 16px; text-align: center; cursor: pointer; background: rgba(255, 250, 205, 0.02); }

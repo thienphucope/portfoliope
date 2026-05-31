@@ -12,7 +12,7 @@
   --background: #000000; 
   --foreground: #f0f0f0; 
   /* Theme color - single source of truth for the accent palette */
-  --theme: #ba9170;   /* trầm thêm, vẫn ấm và tự nhiên */
+  --theme: #F3D098;   /* trầm thêm, vẫn ấm và tự nhiên */
 
   /* ── Typography (single source) ── */
   --font-display: 'Playfair Display', Georgia, serif;  /* titles / headings */
@@ -22,6 +22,10 @@
   --md-size: 21px;
   --md-line: 1.8;
   --md-colortext: #e0e0e0;
+  /* Feature backgrounds */
+  --feature-bg: #0a0a0c;
+  --feature-backdrop-bg: #000000;
+  --feature-backdrop-overlay: rgba(0, 0, 0, 0.50);
   /* Shared UI typography scale */
   --ui-text-body: 1.06rem;
   --ui-text-section-header: 0.82rem;

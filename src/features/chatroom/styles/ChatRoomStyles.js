@@ -41,7 +41,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
         flex-shrink: 0;
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: center;
         padding: 20px 16px;
         border-bottom: 1px dashed rgba(186, 145, 112, 0.3);
         background: rgba(10, 10, 12, 0.95);
@@ -84,9 +84,8 @@ export default function ChatRoomStyles({ isEmbedded }) {
       .username-input:focus { border-bottom-color: rgba(196, 180, 138, 0.6); color: rgba(196, 180, 138, 0.9); }
       .chat-overline {
         font-family: var(--font-display);
-        font-size: var(--ui-text-section-header);
+        font-size: var(--ui-text-title);
         letter-spacing: var(--ui-letter-section-header);
-        text-transform: uppercase;
         color: var(--theme);
         opacity: 0.95;
         font-weight: 700;
@@ -355,7 +354,14 @@ export default function ChatRoomStyles({ isEmbedded }) {
       }
       .chat-input:disabled { opacity: 0.4; }
 
-      .composer-tool, .send-btn {
+      .textarea-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px;
+        flex-shrink: 0;
+      }
+      .action-btn {
         font-family: var(--font-mono);
         font-size: var(--ui-text-action);
         font-weight: 700;
@@ -367,12 +373,14 @@ export default function ChatRoomStyles({ isEmbedded }) {
         color: var(--colorone-dim);
         cursor: pointer;
         transition: color 0.3s;
-        padding: 8px 4px;
+        padding: 4px;
+        white-space: nowrap;
       }
-      .composer-tool:hover { color: var(--theme); }
-      .send-btn { color: var(--theme); }
-      .send-btn:hover:not(:disabled) { text-shadow: 0 0 10px rgba(186, 145, 112, 0.5); }
-      .send-btn:disabled { color: rgba(186, 145, 112, 0.3); cursor: default; }
+      .action-btn:hover:not(:disabled) { color: var(--theme); }
+      .action-btn.active { color: var(--theme); animation: blink 1.5s infinite; }
+      .action-btn.send-btn { color: var(--theme); }
+      .action-btn.send-btn:hover:not(:disabled) { text-shadow: 0 0 10px rgba(186, 145, 112, 0.5); }
+      .action-btn:disabled { color: rgba(186, 145, 112, 0.3); cursor: default; }
 
       .live-controls {
         display: flex;
@@ -484,7 +492,8 @@ export default function ChatRoomStyles({ isEmbedded }) {
         
         .input-area { padding: 12px; }
         .textarea-row { padding: 10px; flex-wrap: wrap; gap: 4px; }
-        .send-btn { order: 2; width: 100%; text-align: right; font-size: var(--ui-text-action); padding: 4px 0; }
+        .textarea-actions { order: 2; width: 100%; align-items: flex-end; flex-direction: column; gap: 8px; }
+        .action-btn { font-size: var(--ui-text-action); padding: 4px 0; }
         .chat-input { order: 1; width: 100%; flex: none; font-size: var(--ui-text-body); }
         .live-controls { flex-direction: column; gap: 16px; text-align: center; }
       }

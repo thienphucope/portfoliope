@@ -1,9 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
 
-const TTS_STREAM_URL = "https://thienphuc1052004--gpt-sovits-api-gptsovitsapi-tts-stream.modal.run";
-const TTS_HEALTH_URL = "https://thienphuc1052004--gpt-sovits-api-gptsovitsapi-tts-ping.modal.run";
-const TTS_INTERRUPT_URL = "https://thienphuc1052004--gpt-sovits-api-gptsovitsapi-tts-interrupt.modal.run";
-
 export function useTTS() {
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [ttsReady, setTtsReady] = useState(true);
@@ -18,8 +14,6 @@ export function useTTS() {
     isPlayingRef.current = false;
     setIsPlayingAudio(false);
 
-    fetch(TTS_INTERRUPT_URL, { method: 'POST' }).catch(() => {});
-
     if (audioContextRef.current) {
       if (audioContextRef.current.state === 'running') {
         audioContextRef.current.close().catch(() => {});
@@ -30,11 +24,19 @@ export function useTTS() {
       try { source.stop(); } catch(e) {}
     });
     activeSourcesRef.current = [];
+
+    return fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'interrupt' })
+    }).catch(() => {});
   }, []);
 
   const streamAudioLive = useCallback(async (text) => {
     if (!text || !ttsReady) return;
-    stopAudio();
+    if (isPlayingRef.current || activeSourcesRef.current.length > 0) {
+      await stopAudio();
+    }
     const rawText = text.trim();
     if (!rawText) return;
     const lang = detectLanguage(rawText);
@@ -52,10 +54,11 @@ export function useTTS() {
 
       if (!isPlayingRef.current || audioContextRef.current !== audioCtx) return;
 
-      const res = await fetch(TTS_STREAM_URL, {
+      const res = await fetch('/api/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ target_text: rawText, target_lang: lang, speed: 1.0 })
+        body: JSON.stringify({ action: 'stream', text: rawText, voice: lang, speed: 1.0 }),
+        cache: 'no-store'
       });
 
       if (!res.ok) throw new Error("Failed to start TTS stream");
@@ -123,9 +126,20 @@ export function useTTS() {
     }
   }, [ttsReady, stopAudio]);
 
+  const generateAudio = useCallback(async (text, { provider = 'modal', voice = 'en', signal } = {}) => {
+    const res = await fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'generate', text, provider, voice }),
+      signal
+    });
+    if (!res.ok) throw new Error('TTS failed');
+    return res.blob();
+  }, []);
+
   const checkTtsHealth = useCallback(async () => {
     try {
-      const res = await fetch(TTS_HEALTH_URL);
+      const res = await fetch('/api/tts?action=ping');
       if (res.ok) setTtsReady(true);
       else setTimeout(checkTtsHealth, 10000);
     } catch {
@@ -137,6 +151,7 @@ export function useTTS() {
     isPlayingAudio,
     ttsReady,
     streamAudioLive,
+    generateAudio,
     stopAudio,
     checkTtsHealth
   };

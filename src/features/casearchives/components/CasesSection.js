@@ -5,18 +5,24 @@ export default function CasesSection({ displayedCases, onLinkClick, loadedCount,
     <section className="nf-cases" id="cases">
       <div className="nf-cases-header">
         <div className="nf-cases-label info-wrap">
-          CASE ARCHIVES
+          Case archives
           <span className="info-icon" data-tooltip="Searchable database of investigative case notes and evidence">i</span>
         </div>
       </div>
-      <div className="nf-search-container">
+      <div className="nf-search-row">
         <input
           type="text"
           className="nf-search-input"
-          placeholder="Search evidence archives..."
+          placeholder="Search evidence..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
+        <button
+          className="nf-search-btn"
+          disabled={!searchTerm.trim() || loading}
+        >
+          {loading ? '[ ... ]' : '[ SEARCH ]'}
+        </button>
       </div>
       <div className="nf-case-list">
         {displayedCases.length > 0 ? (

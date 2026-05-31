@@ -1,4 +1,5 @@
 import modal
+import html
 import os
 import re
 import uuid
@@ -83,7 +84,10 @@ class GPTSoVITSAPI:
 
     def split_text_smart(self, text_input: str, min_words: int = 10, max_words: int = 25) -> list:
         text_input = re.sub(r'<iframe[^>]*>.*?</iframe>', '', text_input, flags=re.IGNORECASE | re.DOTALL)
-        text_input = re.sub(r'<div[^>]*>.*?</div>', '', text_input, flags=re.IGNORECASE | re.DOTALL)
+        text_input = re.sub(r'<br\s*/?>', ' ', text_input, flags=re.IGNORECASE)
+        text_input = re.sub(r'</(p|div|li|h[1-6]|section|article|blockquote)>', ' ', text_input, flags=re.IGNORECASE)
+        text_input = re.sub(r'<[^>]+>', ' ', text_input)
+        text_input = html.unescape(text_input)
         text_input = re.sub(r'```.*?```', '', text_input, flags=re.DOTALL)
         text_input = re.sub(r'!\[.*?\]\([^)]+\)', '', text_input)
         text_input = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', text_input)
@@ -94,6 +98,8 @@ class GPTSoVITSAPI:
         text_input = text_input.replace('\r', '')
         text_input = re.sub(r'\n+', '. ', text_input)
         text_input = re.sub(r'\s+', ' ', text_input).strip()
+        text_input = re.sub(r'\s+([,.!?])', r'\1', text_input)
+        text_input = text_input.lower()
 
         raw_sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', text_input) if s.strip()]
         if not raw_sentences:
@@ -146,7 +152,7 @@ class GPTSoVITSAPI:
 
         from simple_infer import run_inference
 
-        target_text = params.get("target_text")
+        target_text = (params.get("target_text") or "").lower()
         target_lang = params.get("target_lang", "en")
         prompt_lang = params.get("prompt_lang", "en")
         speed = params.get("speed", 1.0)

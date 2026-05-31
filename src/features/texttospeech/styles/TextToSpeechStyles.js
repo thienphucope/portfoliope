@@ -10,34 +10,51 @@ export default function TextToSpeechStyles() {
       .nf-tts-header {
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: center;
       }
 
       .nf-tts-label {
         font-family: var(--font-display);
-        font-size: var(--ui-text-section-header);
+        font-size: var(--ui-text-title);
         font-weight: 700;
         letter-spacing: var(--ui-letter-section-header);
-        text-transform: uppercase;
-        color: var(--nf-accent);
+        color: var(--theme);
+      }
+
+      .nf-tts-textarea-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        border: 1px solid rgba(186, 145, 112, 0.2);
+        background: rgba(186, 145, 112, 0.02);
+        padding: 16px;
+        transition: border-color 0.3s;
+      }
+      .nf-tts-textarea-row:focus-within {
+        border-color: #8a6b52;
+        background: rgba(186, 145, 112, 0.05);
       }
 
       .nf-tts-input {
+        flex: 1;
         background: transparent;
-        border: 1px solid var(--nf-border);
-        color: var(--nf-txt);
+        border: none;
+        outline: none;
+        color: var(--md-colortext);
         font-family: var(--font-body);
         font-size: var(--ui-text-body);
         font-weight: 400;
         letter-spacing: normal;
         line-height: 1.5;
-        padding: 10px 12px;
+        padding: 10px 0;
+        margin: 0;
         resize: none;
-        outline: none;
-        width: 100%;
-        box-sizing: border-box;
-        transition: border-color 0.2s;
+        max-height: 120px;
+        overflow-y: auto;
+        scrollbar-width: none;
+        opacity: 1;
       }
+      .nf-tts-input::-webkit-scrollbar { display: none; }
       .nf-tts-input::placeholder {
         color: currentColor;
         font-family: var(--font-mono);
@@ -47,32 +64,26 @@ export default function TextToSpeechStyles() {
         opacity: var(--ui-placeholder-opacity);
         font-style: normal;
       }
-      .nf-tts-input:focus { border-color: var(--nf-accent-dim); }
-      .nf-tts-input:disabled { opacity: 0.5; }
-      .nf-tts-input { scrollbar-width: thin; scrollbar-color: rgba(186,145,112,0.2) transparent; }
-      .nf-tts-input::-webkit-scrollbar { width: 3px; }
-      .nf-tts-input::-webkit-scrollbar-track { background: transparent; }
-      .nf-tts-input::-webkit-scrollbar-thumb { background: rgba(186,145,112,0.2); border-radius: 0; }
-      .nf-tts-input::-webkit-scrollbar-thumb:hover { background: rgba(186,145,112,0.4); }
+      .nf-tts-input:disabled { opacity: 0.4; }
 
       .nf-tts-btn {
-        align-self: flex-start;
-        background: none;
-        border: none;
-        color: var(--nf-txt-dim);
         font-family: var(--font-mono);
         font-size: var(--ui-text-action);
         font-weight: 700;
         letter-spacing: var(--ui-letter-action);
         line-height: 1;
         text-transform: uppercase;
-        padding: 8px 16px;
+        background: transparent;
+        border: none;
+        color: var(--theme);
         cursor: pointer;
-        transition: border-color 0.2s, color 0.2s;
+        transition: color 0.3s;
+        padding: 8px 4px;
       }
-      .nf-tts-btn:hover:not(:disabled) { border-color: var(--nf-accent-dim); color: var(--nf-accent); }
-      .nf-tts-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-      .nf-tts-btn.loading { color: var(--nf-accent); border-color: var(--nf-accent-dim); opacity: 0.7; }
+      .nf-tts-btn:hover:not(:disabled) {
+        text-shadow: 0 0 10px rgba(186, 145, 112, 0.5);
+      }
+      .nf-tts-btn:disabled { color: rgba(186, 145, 112, 0.3); cursor: default; }
 
       .nf-tts-error {
         font-family: var(--font-mono);
@@ -80,6 +91,29 @@ export default function TextToSpeechStyles() {
         color: #c07070;
         margin: 0;
         letter-spacing: 0.5px;
+      }
+
+      .nf-tts-history {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-top: 10px;
+      }
+      .nf-tts-history-item {
+        background: rgba(186, 145, 112, 0.02);
+        border: 1px dashed rgba(186, 145, 112, 0.15);
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .nf-tts-history-text {
+        font-family: var(--font-body);
+        font-size: var(--ui-text-body);
+        color: var(--md-colortext);
+        margin: 0;
+        font-style: italic;
+        opacity: 0.85;
       }
 
       .nf-tts-audio {

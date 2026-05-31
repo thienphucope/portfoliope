@@ -6,7 +6,7 @@ import { useBootstrapData } from '@/features/casearchives/hooks/useBootstrapData
 import { useFetchBatch, BATCH_SIZE } from '@/features/casearchives/hooks/useFetchBatch';
 import { useFeedEffects } from '@/features/casearchives/hooks/useFeedEffects';
 import CasesSection from '@/features/casearchives/components/CasesSection';
-import FeedFooter from '@/features/casearchives/components/FeedFooter';
+import Link from 'next/link';
 import ChatRoom from '@/features/chatroom/ChatRoom';
 import NoteFeedStyles from '@/features/casearchives/styles/NoteFeedStyles';
 
@@ -47,7 +47,12 @@ export default function NoteFeed({ hero, onLinkClick, serverData }) {
         {hero}
       </aside>
       <aside className="nf-sidekick">
-        <ChatRoom isEmbedded onLinkClick={handleLinkClick} />
+        <div className="nf-desktop-only" style={{ height: '100%' }}>
+          <ChatRoom isEmbedded onLinkClick={handleLinkClick} />
+        </div>
+        <Link href="/chat" className="nf-mobile-only nf-block-ref-link">
+          Consult →
+        </Link>
       </aside>
       <main className="nf-feed" ref={feedRef}>
         <CasesSection
@@ -60,7 +65,6 @@ export default function NoteFeed({ hero, onLinkClick, serverData }) {
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
         />
-        <FeedFooter />
       </main>
       <NoteFeedStyles />
     </div>

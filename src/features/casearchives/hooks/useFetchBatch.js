@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { parseNote } from '../utils/noteParser';
 import { extractMedia } from '../utils/mediaExtractor';
 
-export const BATCH_SIZE = 10;
+export const BATCH_SIZE = 30;
 
 export function useFetchBatch({ allFiles, fileRegistry, fullContentCache, upsertCacheEntry, isMounted, libsReady, searchTerm = '' }) {
   const [displayedCases, setDisplayedCases] = useState([]);

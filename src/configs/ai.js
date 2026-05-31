@@ -37,6 +37,7 @@ You have access to the following tools. Use them when requested or when necessar
 - cases_list: List all of Ope Watson's blog posts and notes stored in the case archives. Use when the user asks what posts or notes exist, or to browse the archive.
 - cases_read: Read the full content of a specific blog post or note from the archives by its name or path. Use when the user asks about a specific post or wants to read a particular entry.
 - cases_search: Search for a keyword or phrase across all of Ope Watson's blog posts and notes. Use when the user asks about a topic and you need to find relevant entries in the archive.
+- send_ope_anonymous_message: Send an anonymous message from the visitor to Ope through Discord. Use only when the user explicitly wants to send, pass, forward, or leave a message for Ope anonymously. When this tool returns result.html, include that HTML exactly in your final response.
 
 [STRICT HTML OUTPUT & TEMPLATES]
 You MUST output your ENTIRE response in pure, raw HTML.
@@ -58,7 +59,7 @@ Always use the exact CSS variables provided below to perfectly match the applica
 
 TEMPLATE 1: STANDARD CONVERSATION
 Use this for regular chatter, short answers, or brief observations.
-<div style="font-family: var(--font-body); font-size: 1.1rem; color: #e0e0e0; line-height: 1.6; padding-left: 10px; border-left: 2px solid rgba(186, 145, 112, 0.3);">
+<div style="font-family: var(--font-body); font-size: 1.1rem; color: var(--md-colortext); line-height: 1.6; padding-left: 10px; border-left: 2px solid rgba(186, 145, 112, 0.3);">
   <p style="margin: 0 0 10px 0;">Your conversational text goes here.</p>
 </div>
 
@@ -74,21 +75,21 @@ Use this when presenting evidence, breaking down a topic, or delivering research
   <!-- Key Value Pairs -->
   <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px;">
     <div style="display: flex; align-items: baseline;">
-      <span style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--colorone-dim); width: 80px;">SUBJECT:</span>
-      <span style="font-family: var(--font-body); color: #e0e0e0;">The artifact in question</span>
+      <span style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--md-colortext); width: 80px;">SUBJECT:</span>
+      <span style="font-family: var(--font-body); color: var(--md-colortext);">The artifact in question</span>
     </div>
     <div style="display: flex; align-items: baseline;">
-      <span style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--colorone-dim); width: 80px;">STATUS:</span>
+      <span style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--md-colortext); width: 80px;">STATUS:</span>
       <span style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--theme); background: rgba(186,145,112,0.1); padding: 2px 6px;">UNRESOLVED</span>
     </div>
   </div>
 
   <!-- Main Content Block -->
-  <div style="font-family: var(--font-body); font-size: 1.05rem; color: #cccccc; line-height: 1.6;">
+  <div style="font-family: var(--font-body); font-size: 1.05rem; color: var(--md-colortext); line-height: 1.6;">
     <p style="margin: 0 0 8px 0;">Here is the detailed breakdown of the situation. You can use multiple paragraphs.</p>
     
     <!-- Highlighted Quote / Core Evidence -->
-    <blockquote style="border-left: 3px solid var(--theme); background: rgba(0,0,0,0.2); padding: 10px 14px; margin: 12px 0; font-style: italic; color: var(--parchment-dark);">
+    <blockquote style="border-left: 3px solid var(--theme); background: rgba(0,0,0,0.2); padding: 10px 14px; margin: 12px 0; font-style: italic; color: var(--md-colortext);">
       "The footprints ended exactly at the edge of the pier."
     </blockquote>
   </div>
@@ -108,39 +109,44 @@ export const MOXXI_DISPLAY_NAME = 'MOXXI';
 export const MOXXI_GREETING = `
 <div style="background: rgba(186, 145, 112, 0.03); border: 1px dashed rgba(186, 145, 112, 0.2); padding: 16px; margin: 10px 0;">
 
-  <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--theme); letter-spacing: 3px; text-transform: uppercase; border-bottom: 1px solid rgba(186, 145, 112, 0.2); padding-bottom: 8px; margin-bottom: 12px;">
+  <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--md-colortext); letter-spacing: 3px; text-transform: uppercase; border-bottom: 1px solid rgba(186, 145, 112, 0.2); padding-bottom: 8px; margin-bottom: 12px;">
     SYSTEM INITIALIZED
   </div>
 
-  <div style="font-family: var(--font-body); font-size: 1rem; color: #e0e0e0; line-height: 1.6; margin-bottom: 16px;">
+  <div style="font-family: var(--font-body); font-size: 1rem; color: var(--md-colortext); line-height: 1.6; margin-bottom: 16px;">
     Welcome to the archives. I'm Moxxi, Ope's sidekick and the one who actually keeps this place running.
   </div>
 
   <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
-    <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--colorone-dim); letter-spacing: 2px;">AVAILABLE SYSTEMS:</div>
+    <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--md-colortext); letter-spacing: 2px;">AVAILABLE SYSTEMS:</div>
 
     <div style="display: flex; align-items: baseline; gap: 12px;">
       <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--theme); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">INTERNET</span>
-      <span style="font-family: var(--font-body); font-size: 1rem; color: #e0e0e0;">Search and read live data from the web.</span>
+      <span style="font-family: var(--font-body); font-size: 1rem; color: var(--md-colortext);">Search and read live data from the web.</span>
     </div>
 
     <div style="display: flex; align-items: baseline; gap: 12px;">
       <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--theme); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">CASE ARCHIVES</span>
-      <span style="font-family: var(--font-body); font-size: 1rem; color: #e0e0e0;">Browse, read, and search through Ope's blog posts and notes.</span>
+      <span style="font-family: var(--font-body); font-size: 1rem; color: var(--md-colortext);">Browse, read, and search through Ope's blog posts and notes.</span>
     </div>
 
     <div style="display: flex; align-items: baseline; gap: 12px;">
       <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--theme); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">LIBRARY</span>
-      <span style="font-family: var(--font-body); font-size: 1rem; color: #e0e0e0;">Find and retrieve direct download links for books and documents.</span>
+      <span style="font-family: var(--font-body); font-size: 1rem; color: var(--md-colortext);">Find and retrieve direct download links for books and documents.</span>
     </div>
 
     <div style="display: flex; align-items: baseline; gap: 12px;">
       <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--theme); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">UTILITIES</span>
-      <span style="font-family: var(--font-body); font-size: 1rem; color: #e0e0e0;">Personal knowledge base and calculations.</span>
+      <span style="font-family: var(--font-body); font-size: 1rem; color: var(--md-colortext);">Personal knowledge base and calculations.</span>
+    </div>
+
+    <div style="display: flex; align-items: baseline; gap: 12px;">
+      <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--theme); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">RELAY</span>
+      <span style="font-family: var(--font-body); font-size: 1rem; color: var(--md-colortext);">Send anonymous messages to Ope.</span>
     </div>
   </div>
 
-  <div style="font-family: var(--font-body); font-size: 1rem; color: #e0e0e0; font-style: italic;">
+  <div style="font-family: var(--font-body); font-size: 1rem; color: var(--md-colortext); font-style: italic;">
     What can I help you find?
   </div>
 
@@ -150,10 +156,10 @@ export const MOXXI_GREETING = `
 export const MOXXI_ERROR_MSG = "Well, that's a smudge on the record. Something went wrong, but I'll get to the bottom of it.";
 
 export const SUGGESTED_PROMPTS = [
-  'What projects has he worked on?',
-  'What are his skills and areas of expertise?',
-  'Tell me about his background and experience.',
-  'How can I get in contact with him?',
+  'His projects?',
+  'Skills and expertise?',
+  'Background and experience?',
+  'How to contact him?',
 ];
 
 // ─── Model Config ────────────────────────────────────────────────────────────

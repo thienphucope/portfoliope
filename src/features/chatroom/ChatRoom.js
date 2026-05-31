@@ -8,6 +8,22 @@ import { useTTS } from '@/hooks/useTTS';
 import { ensureLibsLoaded } from '@/features/casearchives/utils/markdown';
 import ChatRoomStyles from './styles/ChatRoomStyles';
 
+const extractSpeechText = (html) => {
+  if (!html) return '';
+  const withBreaks = html
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/<\/(p|div|li|h[1-6]|section|article|blockquote)>/gi, ' ');
+  const normalize = (text) => text.replace(/\s+/g, ' ').replace(/\s+([,.!?])/g, '$1').trim().toLowerCase();
+
+  if (typeof DOMParser === 'undefined') {
+    return normalize(withBreaks.replace(/<[^>]+>/g, ' '));
+  }
+
+  const doc = new DOMParser().parseFromString(withBreaks, 'text/html');
+  doc.querySelectorAll('script, style, iframe, img, video, audio').forEach(el => el.remove());
+  return normalize(doc.body.textContent || '');
+};
+
 const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick, onLiveCallChange }, ref) {
   const [isMounted, setIsMounted] = useState(false);
   const [libsReady, setLibsReady] = useState(false);
@@ -123,7 +139,10 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
           return n;
         });
       });
-      if (isLiveCallRef.current) streamAudioLive(reply);
+      if (isLiveCallRef.current) {
+        const speechText = extractSpeechText(reply);
+        if (speechText) streamAudioLive(speechText);
+      }
     } catch (e) {
       setConvo(prev => {
         const n = [...prev];
@@ -232,30 +251,8 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
       <div className="chat-header">
         <div className="header-copy">
           <div className="chat-overline info-wrap">
-            Dispatch
+            Consult
             <span className="info-icon" data-tooltip="Text/Voice workspace to chat with Moxxi and search documents">i</span>
-          </div>
-        </div>
-        <div className="header-actions">
-          <div className="header-btn-group">
-            <button
-              className={`voice-header-btn${isLiveCall ? ' active' : ''}`}
-              onClick={isLiveCall ? endLiveCall : startLiveCall}
-              disabled={isProcessing && !isLiveCall}
-            >
-              {isLiveCall ? '[ LIVE ]' : '[ VOICE ]'}
-            </button>
-            <button
-              className="voice-header-btn"
-              onClick={() => {
-                if (isLiveCall) endLiveCall();
-                setConvo([{ role: 'assistant', content: MOXXI_GREETING }]);
-                localStorage.removeItem('moxxi_chat_history');
-              }}
-              disabled={isProcessing}
-            >
-              {'[ NEW ]'}
-            </button>
           </div>
         </div>
       </div>
@@ -376,14 +373,34 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
                 }}
                 disabled={isProcessing}
               />
-              <button
-                className="send-btn"
-                onClick={handleAnalyze}
-                disabled={!engineInput.trim() || isProcessing}
-                aria-label="Send message"
-              >
-                {isProcessing ? '[ BUSY ]' : '[ SEND ]'}
-              </button>
+              <div className="textarea-actions">
+                <button
+                  className={`action-btn${isLiveCall ? ' active' : ''}`}
+                  onClick={isLiveCall ? endLiveCall : startLiveCall}
+                  disabled={isProcessing && !isLiveCall}
+                >
+                  {isLiveCall ? '[ LIVE ]' : '[ VOICE ]'}
+                </button>
+                <button
+                  className="action-btn"
+                  onClick={() => {
+                    if (isLiveCall) endLiveCall();
+                    setConvo([{ role: 'assistant', content: MOXXI_GREETING }]);
+                    localStorage.removeItem('moxxi_chat_history');
+                  }}
+                  disabled={isProcessing}
+                >
+                  {'[ NEW ]'}
+                </button>
+                <button
+                  className="action-btn send-btn"
+                  onClick={handleAnalyze}
+                  disabled={!engineInput.trim() || isProcessing}
+                  aria-label="Send message"
+                >
+                  {isProcessing ? '[ BUSY ]' : '[ SEND ]'}
+                </button>
+              </div>
             </div>
           </div>
         )}
