@@ -260,7 +260,7 @@ const PDFViewer = forwardRef(({ onClose, reader, isOpen, onStateChange, initialF
       }} style={{ cursor: file ? 'text' : 'default' }}>
         {!memoizedFile ? (
           <div className="pdf-empty-container" onClick={() => fileInputRef.current.click()} style={{ cursor: 'pointer' }}>
-            <Upload size={64} color="var(--colorbutton, #FFFACD)" style={{ opacity: 0.15 }} />
+            <Upload size={64} color="var(--theme, #FFFACD)" style={{ opacity: 0.15 }} />
           </div>
         ) : (
           <Document file={memoizedFile} onLoadSuccess={onDocumentLoadSuccess} loading={<div className="pdf-loading">Opening...</div>} className={`pdf-document fit-${fitMode}`}>
@@ -277,9 +277,9 @@ const PDFViewer = forwardRef(({ onClose, reader, isOpen, onStateChange, initialF
         .pdf-document { display: flex; flex-direction: column; align-items: center; width: 100%; }
         .pdf-empty-container { display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; }
         .pdf-upload-empty { width: 100%; max-width: 500px; padding: 60px 30px; border: 2px dashed #222; border-radius: 16px; text-align: center; cursor: pointer; background: rgba(255, 250, 205, 0.02); }
-        .pdf-text-highlight { background-color: var(--colorlink) !important; color: var(--colortab) !important; border-radius: 2px; }
+        .pdf-text-highlight { background-color: var(--theme) !important; color: var(--background) !important; border-radius: 2px; }
         .pdf-page-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,0.02); color: #444; font-size: 12px; gap: 10px; }
-        .pdf-loading-spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.1); border-top-color: var(--colorbutton); border-radius: 50%; animation: pdf-spin 1s linear infinite; }
+        .pdf-loading-spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.1); border-top-color: var(--theme); border-radius: 50%; animation: pdf-spin 1s linear infinite; }
         @keyframes pdf-spin { to { transform: rotate(360deg); } }
       `}} />
     </div>

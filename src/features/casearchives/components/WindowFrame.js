@@ -103,7 +103,7 @@ export default function WindowFrame({
             <div className="window-title-content" ref={searchRef}>
               {isSearchOpen ? (
                 <div className="window-search-active">
-                  <Search size={14} color="var(--colorbutton)" className="search-icon-inside" />
+                  <Search size={14} color="var(--theme)" className="search-icon-inside" />
                   <input 
                     autoFocus
                     type="text" 
@@ -147,7 +147,7 @@ export default function WindowFrame({
                     setSearchTerm('');
                   }}
                 >
-                  <Search size={12} color="var(--colorbutton)" className="title-search-hint" />
+                  <Search size={12} color="var(--theme)" className="title-search-hint" />
                   <span className="window-title-text">{subject}</span>
                 </div>
               )}
@@ -325,10 +325,10 @@ export default function WindowFrame({
         }
 
         .window-title-prefix {
-          font-family: 'Prata', serif;
+          font-family: var(--font-display);
           font-size: 0.85rem;
           font-weight: 700;
-          color: var(--colorbutton);
+          color: var(--theme);
           opacity: 1;
           white-space: nowrap;
           z-index: 1;
@@ -339,10 +339,10 @@ export default function WindowFrame({
         }
 
         .window-title-fixed {
-          font-family: 'Prata', serif;
+          font-family: var(--font-display);
           font-size: 0.95rem;
           font-weight: 700;
-          color: var(--colorbutton);
+          color: var(--theme);
           opacity: 1;
           white-space: nowrap;
           z-index: 1;
@@ -391,9 +391,9 @@ export default function WindowFrame({
         }
 
         .window-title-text {
-          font-family: 'Prata', serif;
+          font-family: var(--font-display);
           font-size: 0.85rem;
-          color: var(--colorbutton);
+          color: var(--theme);
           opacity: 1;
           writing-mode: vertical-rl;
           transform: rotate(180deg) translateZ(0);
@@ -403,7 +403,7 @@ export default function WindowFrame({
         }
 
         .title-search-hint {
-          stroke: var(--colorbutton);
+          stroke: var(--theme);
           opacity: 1;
         }
 
@@ -425,27 +425,31 @@ export default function WindowFrame({
         }
 
         .search-icon-inside {
-          stroke: var(--colorbutton);
+          stroke: var(--theme);
           opacity: 1;
         }
 
         .window-inline-search {
           background: transparent;
           border: none;
-          color: var(--colorbutton);
+          color: var(--theme);
           outline: none;
-          font-family: 'Prata', serif;
-          font-size: 0.85rem;
+          font-family: var(--font-body);
+          font-size: var(--ui-text-body);
+          font-weight: 400;
+          letter-spacing: normal;
           width: 100%;
           height: 24px;
-          letter-spacing: 0.5px;
         }
 
         .window-inline-search::placeholder {
-          color: var(--colorbutton);
-          font-family: 'Prata', serif;
-          opacity: 0.6;
-          font-style: italic;
+          color: currentColor;
+          font-family: var(--font-mono);
+          font-size: var(--ui-text-placeholder);
+          font-weight: 400;
+          letter-spacing: var(--ui-letter-placeholder);
+          opacity: var(--ui-placeholder-opacity);
+          font-style: normal;
         }
 
         .search-results-dropdown {
@@ -474,7 +478,7 @@ export default function WindowFrame({
         .window-control-btn {
           background: transparent;
           border: none;
-          color: var(--colorbutton);
+          color: var(--theme);
           cursor: pointer;
           opacity: 1;
           transition: all 0.2s;
@@ -501,7 +505,7 @@ export default function WindowFrame({
           gap: 4px;
           font-size: 11px;
           font-weight: 700;
-          color: var(--colorbutton);
+          color: var(--theme);
           opacity: 1;
         }
 
@@ -524,7 +528,7 @@ export default function WindowFrame({
         .control-separator {
           width: 18px;
           height: 2px;
-          background: var(--colorborder);
+          background: var(--theme);
           margin: 4px 0;
         }
 
@@ -533,7 +537,7 @@ export default function WindowFrame({
         }
 
         .window-control-btn.pin-btn.pinned {
-          color: var(--colorone, #ba9170);
+          color: var(--theme, #ba9170);
         }
 
         .animate-spin {
@@ -559,7 +563,7 @@ export default function WindowFrame({
           max-height: min(250px, 40vh);
           overflow-y: auto !important;
           scrollbar-width: thin !important;
-          scrollbar-color: var(--colorborder) transparent !important;
+          scrollbar-color: var(--theme) transparent !important;
         }
 
         .search-results::-webkit-scrollbar {
@@ -572,7 +576,7 @@ export default function WindowFrame({
         }
 
         .search-results::-webkit-scrollbar-thumb {
-          background: var(--colorborder) !important;
+          background: var(--theme) !important;
           border-radius: 10px !important;
         }
 
@@ -580,7 +584,7 @@ export default function WindowFrame({
           padding: 10px 16px;
           cursor: pointer;
           font-size: 0.85rem;
-          color: var(--colortext-markdown);
+          color: var(--md-colortext);
           transition: all 0.2s;
           border-left: 2px solid transparent;
           white-space: nowrap;
@@ -590,8 +594,8 @@ export default function WindowFrame({
 
         .search-item:hover {
           background: rgba(255, 250, 205, 0.1);
-          color: var(--colorbutton);
-          border-left-color: var(--colorbutton);
+          color: var(--theme);
+          border-left-color: var(--theme);
           padding-left: 20px;
         }
 
@@ -610,7 +614,7 @@ export default function WindowFrame({
           text-align: center;
           font-size: 0.8rem;
           opacity: 0.5;
-          color: var(--colorbutton);
+          color: var(--theme);
         }
       `}</style>
     </div>

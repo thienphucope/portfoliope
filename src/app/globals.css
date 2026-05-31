@@ -1,12 +1,7 @@
 /* -------------------------------------------------------------------------- */
 /*                                   IMPORTS                                  */
 /* -------------------------------------------------------------------------- */
-@import url('https://fonts.googleapis.com/css2?family=Fredericka+the+Great&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Old+Standard+TT:ital@0;1&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Special+Elite&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Bentham&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Prata&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap');
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
@@ -16,30 +11,28 @@
 :root {
   --background: #000000; 
   --foreground: #f0f0f0; 
-  /* Detective Gold - The primary accent color for the theme */
-  --colorone: #ba9170;   /* trầm thêm, vẫn ấm và tự nhiên */
-  /* Tab panel spine color */
-  --colortab: #0e1415;   /* tab mặc định */
-  /* Spine/Navigation bar color */
-  --colorspine: #10161a; /* sâu hơn nhưng chưa chạm tối */
-  /* Text color on spine/tabs */
-  --colortext-spine: #ba9170;
-  /* Button color (icons) */
-  --colorbutton: #ba9170;
-  /* Border color between panels */
-  --colorborder: #ba9170;
-  /* Link color */
-  --colorlink: #ba9170;
-  /* Markdown text color */
-  --colortext-markdown: #e0e0e0;
-  /* Markdown typography */
-  --md-font: 'Lora', serif; /* Default: 'Old Standard TT', serif; */
-  --md-size: 19px;
-  --md-line: 1.6;
-  /* Display font (headings, titles) */
-  --font-display: 'Fredericka the Great', cursive; /* Default: 'Lora', serif; */
-  /* Title Block font */
-  --font-title-block: 'Prata', serif;
+  /* Theme color - single source of truth for the accent palette */
+  --theme: #ba9170;   /* trầm thêm, vẫn ấm và tự nhiên */
+
+  /* ── Typography (single source) ── */
+  --font-display: 'Playfair Display', Georgia, serif;  /* titles / headings */
+  --font-body:    'EB Garamond', Georgia, serif;       /* normal text */
+  --font-mono:    'Courier New', Courier, monospace;   /* code + typewriter */
+  /* Markdown sizes and colo */
+  --md-size: 21px;
+  --md-line: 1.8;
+  --md-colortext: #e0e0e0;
+  /* Shared UI typography scale */
+  --ui-text-body: 1.06rem;
+  --ui-text-section-header: 0.82rem;
+  --ui-letter-section-header: 3px;
+  --ui-text-action: 0.82rem;
+  --ui-letter-action: 2px;
+  --ui-text-placeholder: 0.92rem;
+  --ui-letter-placeholder: 0.5px;
+  --ui-placeholder-opacity: 0.45;
+  --ui-text-title: clamp(1.25rem, 2vw, 1.55rem);
+  --ui-text-title-mobile: clamp(1.25rem, 5.5vw, 1.55rem);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -145,3 +138,62 @@ body::-webkit-scrollbar,
 
 @keyframes rise { 0% { transform: translateY(100%); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
 .animate-rise { opacity: 0; transform: translateY(100%); animation: rise 1.5s ease-out 1.5s forwards; }
+
+/* Shared Tooltip Styles */
+.info-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+.info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: bold;
+  cursor: help;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  user-select: none;
+  line-height: 1;
+  position: relative;
+  letter-spacing: normal;
+}
+.info-icon:hover {
+  opacity: 1;
+}
+.info-icon::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(10, 10, 12, 0.95);
+  color: var(--foreground);
+  border: 1px solid var(--theme);
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.5px;
+  width: 180px;
+  white-space: normal;
+  word-wrap: break-word;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 999;
+  text-transform: none;
+  font-weight: normal;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  text-align: center;
+}
+.info-icon:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(2px);
+}

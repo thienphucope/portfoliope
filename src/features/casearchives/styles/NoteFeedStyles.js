@@ -1,7 +1,7 @@
 export default function NoteFeedStyles() {
   return (
     <style jsx global>{`
-      @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Special+Elite&family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap');
 
       :root {
         --nf-bg: #0a0a0c;
@@ -10,9 +10,7 @@ export default function NoteFeedStyles() {
         --nf-accent: #ba9170;
         --nf-accent-dim: #8a6b52;
         --nf-border: rgba(255,255,255,0.08);
-        --nf-font-display: 'Playfair Display', Georgia, serif;
-        --nf-font-mono: 'Special Elite', monospace;
-        --nf-font-body: 'EB Garamond', Georgia, serif;
+        /* fonts: shared tokens in globals.css */
       }
 
       /* ── Shell ── */
@@ -23,7 +21,7 @@ export default function NoteFeedStyles() {
         overflow: hidden;
         background: var(--nf-bg);
         color: var(--nf-txt);
-        font-family: var(--nf-font-body);
+        font-family: var(--font-body);
       }
 
       /* ── Hero (left pane) ── */
@@ -63,7 +61,7 @@ export default function NoteFeedStyles() {
       }
       .nf-corner-dot {
         position: absolute;
-        font-size: 1rem;
+        font-size: 1.06rem;
         color: rgba(186,145,112,0.65);
         line-height: 1;
         font-weight: 900;
@@ -84,7 +82,7 @@ export default function NoteFeedStyles() {
       }
 
 .nf-title {
-  font-family: var(--nf-font-display);
+  font-family: var(--font-display);
   font-weight: 400;
   line-height: 1;
   margin: 0;
@@ -148,17 +146,17 @@ export default function NoteFeedStyles() {
       .nf-socials a:first-child { border-top: 1px solid var(--nf-border); }
       .nf-socials a:hover { color: var(--nf-accent); }
 
-      .nf-social-icon { font-size: 1rem; flex-shrink: 0; }
+      .nf-social-icon { font-size: 1.06rem; flex-shrink: 0; }
 
       .nf-social-label {
-        font-family: var(--nf-font-mono);
-        font-size: 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
         letter-spacing: 1px;
       }
 
       .nf-social-desc {
         opacity: 0.65;
-        font-size: 0.75rem;
+        font-size: 0.82rem;
       }
 
       .nf-hero-divider {
@@ -168,135 +166,7 @@ export default function NoteFeedStyles() {
         margin-top: 32px;
       }
 
-      /* ── TTS Section ── */
-      .nf-tts-section {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-      }
 
-      .nf-tts-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-
-      .nf-tts-label {
-        font-family: var(--nf-font-mono);
-        font-size: 0.75rem;
-        letter-spacing: 3px;
-        color: var(--nf-accent);
-      }
-
-      .nf-tts-input {
-        background: transparent;
-        border: 1px solid var(--nf-border);
-        color: var(--nf-txt);
-        font-family: var(--nf-font-body);
-        font-size: 1rem;
-        line-height: 1.5;
-        padding: 10px 12px;
-        resize: none;
-        outline: none;
-        width: 100%;
-        box-sizing: border-box;
-        transition: border-color 0.2s;
-      }
-      .nf-tts-input::placeholder { color: var(--nf-txt-dim); opacity: 0.5; font-style: italic; }
-      .nf-tts-input:focus { border-color: var(--nf-accent-dim); }
-      .nf-tts-input:disabled { opacity: 0.5; }
-      .nf-tts-input { scrollbar-width: thin; scrollbar-color: rgba(186,145,112,0.2) transparent; }
-      .nf-tts-input::-webkit-scrollbar { width: 3px; }
-      .nf-tts-input::-webkit-scrollbar-track { background: transparent; }
-      .nf-tts-input::-webkit-scrollbar-thumb { background: rgba(186,145,112,0.2); border-radius: 0; }
-      .nf-tts-input::-webkit-scrollbar-thumb:hover { background: rgba(186,145,112,0.4); }
-
-      .nf-tts-btn {
-        align-self: flex-start;
-        background: none;
-        border: none;
-        color: var(--nf-txt-dim);
-        font-family: var(--nf-font-mono);
-        font-size: 0.75rem;
-        letter-spacing: 2px;
-        padding: 8px 16px;
-        cursor: pointer;
-        transition: border-color 0.2s, color 0.2s;
-      }
-      .nf-tts-btn:hover:not(:disabled) { border-color: var(--nf-accent-dim); color: var(--nf-accent); }
-      .nf-tts-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-      .nf-tts-btn.loading { color: var(--nf-accent); border-color: var(--nf-accent-dim); opacity: 0.7; }
-
-      .nf-tts-error {
-        font-family: var(--nf-font-mono);
-        font-size: 0.75rem;
-        color: #c07070;
-        margin: 0;
-        letter-spacing: 0.5px;
-      }
-
-      .nf-tts-audio {
-        width: 100%;
-        filter: invert(1) sepia(1) saturate(0.5) hue-rotate(180deg);
-        opacity: 0.8;
-      }
-
-      .info-wrap {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        position: relative;
-      }
-      .info-icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 14px;
-        height: 14px;
-        border-radius: 50%;
-        border: 1px solid currentColor;
-        font-family: monospace;
-        font-size: 9px;
-        font-weight: bold;
-        cursor: help;
-        opacity: 0.6;
-        transition: opacity 0.2s;
-        user-select: none;
-        line-height: 1;
-        position: relative;
-        letter-spacing: normal;
-      }
-      .info-icon:hover {
-        opacity: 1;
-      }
-      .info-icon::after {
-        content: attr(data-tooltip);
-        position: absolute;
-        top: 125%;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(10, 10, 12, 0.95);
-        color: var(--nf-txt);
-        border: 1px solid var(--nf-accent);
-        padding: 6px 10px;
-        font-family: var(--nf-font-mono);
-        font-size: 0.72rem;
-        letter-spacing: 0.5px;
-        width: 180px;
-        white-space: normal;
-        word-wrap: break-word;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.15s ease, transform 0.15s ease;
-        z-index: 999;
-        text-transform: none;
-        font-weight: normal;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-      }
-      .info-icon:hover::after {
-        opacity: 1;
-        transform: translateX(-50%) translateY(2px);
-      }
 
       /* ── Sidekick (right pane) ── */
       .nf-sidekick {
@@ -332,9 +202,11 @@ export default function NoteFeedStyles() {
       }
 
       .nf-cases-label {
-        font-family: var(--nf-font-mono);
-        font-size: 0.75rem;
-        letter-spacing: 3px;
+        font-family: var(--font-display);
+        font-size: var(--ui-text-section-header);
+        font-weight: 700;
+        letter-spacing: var(--ui-letter-section-header);
+        text-transform: uppercase;
         color: var(--nf-accent);
       }
 
@@ -349,14 +221,14 @@ export default function NoteFeedStyles() {
         background: rgba(255, 255, 255, 0.02);
         border: 1px solid var(--nf-border);
         color: var(--nf-txt);
-        font-family: var(--nf-font-mono);
-        font-size: 0.85rem;
+        font-family: var(--font-body);
+        font-size: var(--ui-text-body);
+        font-weight: 400;
+        letter-spacing: normal;
         padding: 12px 16px;
         outline: none;
         box-sizing: border-box;
         transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
       }
 
       .nf-search-input:focus {
@@ -366,16 +238,20 @@ export default function NoteFeedStyles() {
       }
 
       .nf-search-input::placeholder {
-        color: var(--nf-txt-dim);
-        opacity: 0.4;
-        font-style: italic;
+        color: currentColor;
+        font-family: var(--font-mono);
+        font-size: var(--ui-text-placeholder);
+        font-weight: 400;
+        letter-spacing: var(--ui-letter-placeholder);
+        opacity: var(--ui-placeholder-opacity);
+        font-style: normal;
       }
 
       .nf-no-cases {
         padding: 40px 0;
         text-align: center;
-        font-family: var(--nf-font-mono);
-        font-size: 0.85rem;
+        font-family: var(--font-mono);
+        font-size: 0.92rem;
         letter-spacing: 2px;
         color: var(--nf-txt-dim);
         text-transform: uppercase;
@@ -424,15 +300,15 @@ export default function NoteFeedStyles() {
       }
 
       .nf-case-date {
-        font-family: var(--nf-font-mono);
-        font-size: 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
         color: var(--nf-accent-dim);
         letter-spacing: 1px;
       }
 
       .nf-case-tag {
-        font-family: var(--nf-font-mono);
-        font-size: 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
         letter-spacing: 1px;
         color: var(--nf-txt-dim);
         border: 1px solid var(--nf-border);
@@ -440,15 +316,15 @@ export default function NoteFeedStyles() {
       }
 
       .nf-case-author {
-        font-family: var(--nf-font-mono);
-        font-size: 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
         letter-spacing: 1px;
         color: var(--nf-txt-dim);
       }
 
       .nf-case-title {
-        font-family: var(--nf-font-display);
-        font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+        font-family: var(--font-display);
+        font-size: var(--ui-text-title);
         font-weight: 700;
         margin: 0 0 8px 0;
         color: var(--nf-txt);
@@ -459,7 +335,7 @@ export default function NoteFeedStyles() {
       .nf-case-title:hover { color: var(--nf-accent); }
 
       .nf-case-excerpt {
-        font-size: 1rem;
+        font-size: var(--ui-text-body);
         line-height: 1.65;
         color: rgba(224,224,224,0.8);
         margin-bottom: 10px;
@@ -470,9 +346,11 @@ export default function NoteFeedStyles() {
       .nf-case-read {
         background: none;
         border: none;
-        font-family: var(--nf-font-mono);
-        font-size: 0.75rem;
-        letter-spacing: 2px;
+        font-family: var(--font-mono);
+        font-size: var(--ui-text-action);
+        font-weight: 700;
+        letter-spacing: var(--ui-letter-action);
+        line-height: 1;
         text-transform: uppercase;
         color: var(--nf-accent-dim);
         cursor: pointer;
@@ -489,9 +367,11 @@ export default function NoteFeedStyles() {
         padding: 14px;
         background: none;
         border: 1px solid var(--nf-border);
-        font-family: var(--nf-font-mono);
-        font-size: 0.75rem;
-        letter-spacing: 3px;
+        font-family: var(--font-mono);
+        font-size: var(--ui-text-action);
+        font-weight: 700;
+        letter-spacing: var(--ui-letter-action);
+        line-height: 1;
         text-transform: uppercase;
         color: var(--nf-txt-dim);
         cursor: pointer;
@@ -510,8 +390,8 @@ export default function NoteFeedStyles() {
         align-items: center;
         padding: 24px 0 0;
         border-top: 1px solid var(--nf-border);
-        font-family: var(--nf-font-mono);
-        font-size: 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
         letter-spacing: 2px;
         color: var(--nf-txt-dim);
         text-transform: uppercase;
@@ -566,7 +446,7 @@ export default function NoteFeedStyles() {
           border-top: 1px solid var(--nf-border);
         }
         .nf-ctas { flex-direction: row; flex-wrap: wrap; gap: 10px; }
-        .nf-case-title { font-size: clamp(1.1rem, 5vw, 1.4rem); }
+        .nf-case-title { font-size: var(--ui-text-title-mobile); }
         .nf-case-img { height: 130px; }
       }
 

@@ -4,7 +4,7 @@ export default function MarkdownStyles() {
   return (
     <style jsx global>{`
         /* ── MARKDOWN TYPOGRAPHY ────────────────────────────────────────────── */
-        .markdown-content { font-family:var(--md-font); font-size:var(--md-size); line-height:var(--md-line); color:var(--colortext-markdown); text-align: justify; }
+        .markdown-content { font-family:var(--font-body); font-size:var(--md-size); line-height:var(--md-line); color:var(--md-colortext); text-align: justify; }
         .markdown-content h1 { font-size:2.0em; margin:.8em 0 .4em; color:#fff; font-weight:700; text-align: left; }
         .markdown-content h2 { font-size:1.6em; margin:.7em 0 .3em; color:#fff; font-weight:700; text-align: left; }
         .markdown-content h3 { font-size:1.2em; margin:.6em 0 .2em; color:#fff; font-weight:700; }
@@ -13,9 +13,9 @@ export default function MarkdownStyles() {
           width: 100%;
           white-space: nowrap;
           overflow: hidden;
-          font-family: var(--font-title-block, var(--md-font));
+          font-family: var(--font-display);
           font-weight: 700;
-          color: var(--colortext-spine);
+          color: var(--theme);
           line-height: 1;
           margin: 0.3em 0;
           letter-spacing: -0.03em;
@@ -55,7 +55,7 @@ export default function MarkdownStyles() {
         }
 
         .markdown-content a, .internal-link {
-          color:var(--colorlink); text-decoration:none; border-bottom:1px dotted var(--colorlink);
+          color:var(--theme); text-decoration:none; border-bottom:1px dotted var(--theme);
           padding-right:14px; position:relative; cursor:pointer;
           transition: opacity 0.2s;
         }

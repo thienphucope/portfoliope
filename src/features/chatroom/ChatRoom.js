@@ -231,8 +231,8 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
     <div className="chat-shell" style={isEmbedded ? { position: 'relative', height: '100%', width: '100%' } : {}}>
       <div className="chat-header">
         <div className="header-copy">
-          <div className="info-wrap">
-            <span className="chat-overline">Dispatch</span>
+          <div className="chat-overline info-wrap">
+            Dispatch
             <span className="info-icon" data-tooltip="Text/Voice workspace to chat with Moxxi and search documents">i</span>
           </div>
         </div>
@@ -285,7 +285,7 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
                       const displayToolCalls = isLast && (isThinking || isStreaming) ? liveToolCalls : (msg.toolCalls || []);
                       if (!displayToolCalls.length) return null;
                       return (
-                        <div style={{ fontFamily: 'var(--font-typewriter)', fontSize: '0.75rem', color: 'var(--colorone)', marginBottom: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0' }}>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: 'var(--theme)', marginBottom: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0' }}>
                           {displayToolCalls.map((tc, ti) => {
                             const args = typeof tc.args === 'string' ? tc.args : Object.entries(tc.args || {}).map(([k, v]) => `${k}: "${v}"`).join(', ');
                             return (

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Fingerprint } from 'lucide-react';
 
-export default function FingerprintEffect({ color = 'var(--colorone)' }) {
+export default function FingerprintEffect({ color = 'var(--theme)' }) {
   const [fingerprints, setFingerprints] = useState([]);
 
   useEffect(() => {

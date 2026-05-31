@@ -22,31 +22,31 @@ export default function Footer() {
           100% { opacity: 0; transform: translate(-50%, -60px) scale(1.5); }
         }
         .social-icon { position: relative; display: inline-block; cursor: pointer; }
-        .social-label { position: absolute; top: 50%; left: 50%; white-space: nowrap; color: var(--colorone); font-size: 0.4rem; font-weight: bold; pointer-events: none; opacity: 0; }
+        .social-label { position: absolute; top: 50%; left: 50%; white-space: nowrap; color: var(--theme); font-size: 0.4rem; font-weight: bold; pointer-events: none; opacity: 0; }
         .social-label.animating { animation: floatUp 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
       `}</style>
       <div className="order-1 lg:order-1 opacity-60 hover:opacity-100 transition-opacity" style={{ fontFamily: 'var(--font-display)' }}>
-        <span className="text-[var(--colorone)] font-bold text-xs md:text-base">&copy; Ope Watson 2026</span>
+        <span className="text-[var(--theme)] font-bold text-xs md:text-base">&copy; Ope Watson 2026</span>
       </div>
       <div className="order-2 lg:order-2 flex gap-4 z-20">
         <div className="social-icon" onMouseEnter={() => handleMouseEnter('youtube')}>
-          <a href={SOCIAL_LINKS.youtube} target="_blank" rel="noopener noreferrer"><FaYoutube className="text-[var(--colorone)] text-2xl md:text-3xl hover:text-white transition-colors" /></a>
+          <a href={SOCIAL_LINKS.youtube} target="_blank" rel="noopener noreferrer"><FaYoutube className="text-[var(--theme)] text-2xl md:text-3xl hover:text-white transition-colors" /></a>
           <span key={hoverKeys['youtube']} className={`social-label ${hoverKeys['youtube'] ? 'animating' : ''}`}>theres</span>
         </div>
         <div className="social-icon" onMouseEnter={() => handleMouseEnter('instagram')}>
-          <a href={SOCIAL_LINKS.instagram} target="_blank" rel="noopener noreferrer"><FaInstagram className="text-[var(--colorone)] text-2xl md:text-3xl hover:text-white transition-colors" /></a>
+          <a href={SOCIAL_LINKS.instagram} target="_blank" rel="noopener noreferrer"><FaInstagram className="text-[var(--theme)] text-2xl md:text-3xl hover:text-white transition-colors" /></a>
           <span key={hoverKeys['instagram']} className={`social-label ${hoverKeys['instagram'] ? 'animating' : ''}`}>nothing</span>
         </div>
         <div className="social-icon" onMouseEnter={() => handleMouseEnter('github')}>
-          <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer"><FaGithub className="text-[var(--colorone)] text-2xl md:text-3xl hover:text-white transition-colors" /></a>
+          <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer"><FaGithub className="text-[var(--theme)] text-2xl md:text-3xl hover:text-white transition-colors" /></a>
           <span key={hoverKeys['github']} className={`social-label ${hoverKeys['github'] ? 'animating' : ''}`}>about</span>
         </div>
         <div className="social-icon" onMouseEnter={() => handleMouseEnter('email')}>
-          <a href={SOCIAL_LINKS.email} target="_blank" rel="noopener noreferrer"><FaEnvelope className="text-[var(--colorone)] text-2xl md:text-3xl hover:text-white transition-colors" /></a>
+          <a href={SOCIAL_LINKS.email} target="_blank" rel="noopener noreferrer"><FaEnvelope className="text-[var(--theme)] text-2xl md:text-3xl hover:text-white transition-colors" /></a>
           <span key={hoverKeys['email']} className={`social-label ${hoverKeys['email'] ? 'animating' : ''}`}>me</span>
         </div>
         <div className="social-icon" onMouseEnter={() => handleMouseEnter('twitter')}>
-          <a href={SOCIAL_LINKS.twitter} target="_blank" rel="noopener noreferrer"><FaTwitter className="text-[var(--colorone)] text-2xl md:text-3xl hover:text-white transition-colors" /></a>
+          <a href={SOCIAL_LINKS.twitter} target="_blank" rel="noopener noreferrer"><FaTwitter className="text-[var(--theme)] text-2xl md:text-3xl hover:text-white transition-colors" /></a>
           <span key={hoverKeys['twitter']} className={`social-label ${hoverKeys['twitter'] ? 'animating' : ''}`}>here!</span>
         </div>
       </div>

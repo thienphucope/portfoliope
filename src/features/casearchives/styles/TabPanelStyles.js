@@ -18,7 +18,7 @@ export default function TabPanelStyles() {
           flex-direction: row;
           height: 100%;
           transition: flex-basis 1s cubic-bezier(0.25, 0.8, 0.25, 1), min-width 1s cubic-bezier(0.25, 0.8, 0.25, 1), flex-grow 1s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 1s, opacity 0.5s, border-color 0.3s;
-          border-right: 2px solid var(--colorborder);
+          border-right: 2px solid var(--theme);
           overflow: hidden;
           flex-shrink: 0;
         }
@@ -29,7 +29,7 @@ export default function TabPanelStyles() {
 
         /* Ẩn title các thanh tab khi hover vào content */
         .accordion-app:has(.acc-content:hover) .acc-panel:not(.sticky-spine) {
-          border-right-color: var(--colortab) !important;
+          border-right-color: var(--background) !important;
         }
         .accordion-app:has(.acc-content:hover) .acc-spine {
           opacity: 0 !important;
@@ -39,7 +39,7 @@ export default function TabPanelStyles() {
           flex-basis: 150px;
           min-width: 150px;
           flex-grow: 0;
-          background-color: var(--colortab);
+          background-color: var(--background);
           cursor: pointer;
           isolation: isolate;
         }
@@ -137,7 +137,7 @@ export default function TabPanelStyles() {
           height: 12px;
           margin-left: -6px;
           margin-top: -6px;
-          background: var(--colorbutton);
+          background: var(--theme);
           border-radius: 0;
           z-index: 110;
           cursor: move;
@@ -194,7 +194,7 @@ export default function TabPanelStyles() {
         .pc-layout .mini-graph-container {
           flex: 1;
           min-height: 40%;
-          border-bottom: 2px solid var(--colorborder);
+          border-bottom: 2px solid var(--theme);
           background: #0a0a0c;
         }
 
@@ -222,8 +222,8 @@ export default function TabPanelStyles() {
           display: flex;
           align-items: center;
           gap: 10px;
-          color: var(--colortext-spine);
-          font-family: 'Prata', serif;
+          color: var(--theme);
+          font-family: var(--font-display);
           font-size: 1.1rem;
           flex-shrink: 0;
         }
@@ -233,8 +233,8 @@ export default function TabPanelStyles() {
         }
 
         .pc-layout .tab-item-horizontal.active {
-          background: var(--colortext-spine);
-          color: var(--colortab);
+          background: var(--theme);
+          color: var(--background);
           filter: invert(1);
         }
 
@@ -296,13 +296,13 @@ export default function TabPanelStyles() {
 
         /* Title in Panel */
         .window-title-text {
-          font-family: 'Prata', serif !important;
+          font-family: var(--font-display) !important;
         }
 
         .acc-spine-container {
           flex: 0 0 150px;
           height: 100%;
-          background-color: var(--colortab);
+          background-color: var(--background);
           cursor: pointer;
           display: flex;
           align-items: top;
@@ -313,9 +313,9 @@ export default function TabPanelStyles() {
 
         .acc-spine {
           writing-mode: vertical-rl;
-          font-family: 'Prata', serif;
+          font-family: var(--font-display);
           font-size: 3rem;
-          color: var(--colortext-spine);
+          color: var(--theme);
           mix-blend-mode: destination-out;
           white-space: nowrap;
           letter-spacing: 2px;

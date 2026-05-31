@@ -81,7 +81,7 @@ Format:
 ### Verification
 - npm test — 15 passed, 0 failed
 - npm run lint — clean
-
+- do not npm run build because it kills the current process
 ### Notes
 - Found dead code in file A (not touched)
 - Requires `npm run migrate` before using

@@ -3,17 +3,15 @@ import React from 'react';
 export default function BaseStyles() {
   return (
     <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,700;1,400&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Prata&family=Fredericka+the+Great&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap');
 
         :root {
           --bg: #0a0a0c; --txt: #e0e0e0; --accent: #ba9170;
           --border: rgba(255,255,255,0.1); --code-bg: #1e1e1e;
-          --md-font: 'EB Garamond', Georgia, serif;
-          --font-display: 'Playfair Display', Georgia, serif;
-          --md-size: 21px; --md-line: 1.8;
+
         }
 
-        body { margin:0; background:var(--bg); color:var(--colortext-markdown); font-family:'Prata', serif; overflow:hidden; }
+        body { margin:0; background:var(--bg); color:var(--md-colortext); font-family:var(--font-body); overflow:hidden; }
 
         /* Hide all scrollbars */
         *::-webkit-scrollbar {

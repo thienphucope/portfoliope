@@ -2,16 +2,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ensureLibsLoaded } from '@/features/casearchives/utils/markdown';
-import { useBootstrapData } from './hooks/useBootstrapData';
-import { useFetchBatch, BATCH_SIZE } from './hooks/useFetchBatch';
-import { useFeedEffects } from './hooks/useFeedEffects';
-import HeroSection from './components/HeroSection';
-import CasesSection from './components/CasesSection';
-import FeedFooter from './components/FeedFooter';
+import { useBootstrapData } from '@/features/casearchives/hooks/useBootstrapData';
+import { useFetchBatch, BATCH_SIZE } from '@/features/casearchives/hooks/useFetchBatch';
+import { useFeedEffects } from '@/features/casearchives/hooks/useFeedEffects';
+import CasesSection from '@/features/casearchives/components/CasesSection';
+import FeedFooter from '@/features/casearchives/components/FeedFooter';
 import ChatRoom from '@/features/chatroom/ChatRoom';
-import NoteFeedStyles from './styles/NoteFeedStyles';
+import NoteFeedStyles from '@/features/casearchives/styles/NoteFeedStyles';
 
-export default function NoteFeed({ onLinkClick, serverData }) {
+export default function NoteFeed({ hero, onLinkClick, serverData }) {
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
   const [libsReady, setLibsReady] = useState(false);
@@ -45,7 +44,7 @@ export default function NoteFeed({ onLinkClick, serverData }) {
   return (
     <div className="nf-shell">
       <aside className="nf-hero">
-        <HeroSection />
+        {hero}
       </aside>
       <aside className="nf-sidekick">
         <ChatRoom isEmbedded onLinkClick={handleLinkClick} />

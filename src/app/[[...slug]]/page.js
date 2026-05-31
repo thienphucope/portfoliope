@@ -1,5 +1,7 @@
 import CaseClient from '@/features/casearchives/CaseArchives';
-import NoteFeed from '@/features/notefeed/NoteFeed';
+import NoteFeed from '@/features/casearchives/NoteFeed';
+import HeroSection from '@/components/sections/HeroSection';
+import TextToSpeech from '@/features/texttospeech/TextToSpeech';
 import { hydrateServerCache } from '@/services/caseProvider';
 
 export default async function CasePage({ params }) {
@@ -32,7 +34,16 @@ export default async function CasePage({ params }) {
       </div>
 
       {isRoot
-        ? <NoteFeed serverData={githubData} />
+        ? (
+          <NoteFeed
+            serverData={githubData}
+            hero={(
+              <HeroSection>
+                <TextToSpeech />
+              </HeroSection>
+            )}
+          />
+        )
         : <CaseClient serverHydratedData={githubData} />
       }
     </main>

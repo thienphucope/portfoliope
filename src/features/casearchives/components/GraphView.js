@@ -138,7 +138,7 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
             ctx.lineWidth = (isActive ? 3 : (globalScale > 1.5 ? 1.5 : 1)) / globalScale;
             ctx.stroke();
             if (isSearchMatch && ((node.type === 'tag' ? globalScale > 0.5 : globalScale > 1) || node.id === hoveredNodeId)) {
-              ctx.font = `normal 12px Lora, serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+              ctx.font = `normal 12px 'EB Garamond', serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
               ctx.shadowColor = 'rgba(0, 0, 0, 0.8)'; ctx.shadowBlur = 3 / globalScale; ctx.fillStyle = '#ffffff';
               ctx.fillText(node.name, node.x, node.y + size + 6);
             }
@@ -146,7 +146,7 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
           }}
         />
       )}
-      <style jsx global>{` @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap'); `}</style>
+      <style jsx global>{` @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap'); `}</style>
     </div>
   );
 }

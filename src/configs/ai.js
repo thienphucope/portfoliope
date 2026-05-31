@@ -45,7 +45,7 @@ DO NOT USE MARKDOWN UNDER ANY CIRCUMSTANCES. No asterisks (**), no hash hashes (
 All your output will be injected directly into a DOM element via dangerouslySetInnerHTML.
 
 Because you are outputting raw HTML, you have full freedom to embed rich media. Use standard HTML tags to embed:
-- Links: <a href="..." target="_blank" rel="noopener noreferrer" style="color: var(--colorone); text-decoration: underline;">...</a> (ALWAYS use target="_blank" for links so they open in a new tab)
+- Links: <a href="..." target="_blank" rel="noopener noreferrer" style="color: var(--theme); text-decoration: underline;">...</a> (ALWAYS use target="_blank" for links so they open in a new tab)
 - Images: <img src="..." alt="..." style="max-width: 100%; border: 1px solid var(--colorone-dim);">
 - Videos/Iframes (like YouTube): <iframe src="..." width="100%" height="315" frameborder="0" allowfullscreen></iframe>
 
@@ -67,19 +67,19 @@ Use this when presenting evidence, breaking down a topic, or delivering research
 <div style="background: rgba(186, 145, 112, 0.03); border: 1px dashed rgba(186, 145, 112, 0.2); padding: 16px; margin: 10px 0;">
   
   <!-- Header -->
-  <div style="font-family: var(--font-typewriter); font-size: 0.7rem; color: var(--colorone); letter-spacing: 3px; text-transform: uppercase; border-bottom: 1px solid rgba(186, 145, 112, 0.2); padding-bottom: 8px; margin-bottom: 12px;">
+  <div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--theme); letter-spacing: 3px; text-transform: uppercase; border-bottom: 1px solid rgba(186, 145, 112, 0.2); padding-bottom: 8px; margin-bottom: 12px;">
     // CLASSIFIED FINDINGS //
   </div>
 
   <!-- Key Value Pairs -->
   <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px;">
     <div style="display: flex; align-items: baseline;">
-      <span style="font-family: var(--font-typewriter); font-size: 0.65rem; color: var(--colorone-dim); width: 80px;">SUBJECT:</span>
+      <span style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--colorone-dim); width: 80px;">SUBJECT:</span>
       <span style="font-family: var(--font-body); color: #e0e0e0;">The artifact in question</span>
     </div>
     <div style="display: flex; align-items: baseline;">
-      <span style="font-family: var(--font-typewriter); font-size: 0.65rem; color: var(--colorone-dim); width: 80px;">STATUS:</span>
-      <span style="font-family: var(--font-typewriter); font-size: 0.65rem; color: var(--colorone); background: rgba(186,145,112,0.1); padding: 2px 6px;">UNRESOLVED</span>
+      <span style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--colorone-dim); width: 80px;">STATUS:</span>
+      <span style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--theme); background: rgba(186,145,112,0.1); padding: 2px 6px;">UNRESOLVED</span>
     </div>
   </div>
 
@@ -88,7 +88,7 @@ Use this when presenting evidence, breaking down a topic, or delivering research
     <p style="margin: 0 0 8px 0;">Here is the detailed breakdown of the situation. You can use multiple paragraphs.</p>
     
     <!-- Highlighted Quote / Core Evidence -->
-    <blockquote style="border-left: 3px solid var(--colorone); background: rgba(0,0,0,0.2); padding: 10px 14px; margin: 12px 0; font-style: italic; color: var(--parchment-dark);">
+    <blockquote style="border-left: 3px solid var(--theme); background: rgba(0,0,0,0.2); padding: 10px 14px; margin: 12px 0; font-style: italic; color: var(--parchment-dark);">
       "The footprints ended exactly at the edge of the pier."
     </blockquote>
   </div>
@@ -108,7 +108,7 @@ export const MOXXI_DISPLAY_NAME = 'MOXXI';
 export const MOXXI_GREETING = `
 <div style="background: rgba(186, 145, 112, 0.03); border: 1px dashed rgba(186, 145, 112, 0.2); padding: 16px; margin: 10px 0;">
 
-  <div style="font-family: var(--font-typewriter); font-size: 0.75rem; color: var(--colorone); letter-spacing: 3px; text-transform: uppercase; border-bottom: 1px solid rgba(186, 145, 112, 0.2); padding-bottom: 8px; margin-bottom: 12px;">
+  <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--theme); letter-spacing: 3px; text-transform: uppercase; border-bottom: 1px solid rgba(186, 145, 112, 0.2); padding-bottom: 8px; margin-bottom: 12px;">
     SYSTEM INITIALIZED
   </div>
 
@@ -117,25 +117,25 @@ export const MOXXI_GREETING = `
   </div>
 
   <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
-    <div style="font-family: var(--font-typewriter); font-size: 0.75rem; color: var(--colorone-dim); letter-spacing: 2px;">AVAILABLE SYSTEMS:</div>
+    <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--colorone-dim); letter-spacing: 2px;">AVAILABLE SYSTEMS:</div>
 
     <div style="display: flex; align-items: baseline; gap: 12px;">
-      <span style="font-family: var(--font-typewriter); font-size: 0.75rem; color: var(--colorone); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">INTERNET</span>
+      <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--theme); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">INTERNET</span>
       <span style="font-family: var(--font-body); font-size: 1rem; color: #e0e0e0;">Search and read live data from the web.</span>
     </div>
 
     <div style="display: flex; align-items: baseline; gap: 12px;">
-      <span style="font-family: var(--font-typewriter); font-size: 0.75rem; color: var(--colorone); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">CASE ARCHIVES</span>
+      <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--theme); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">CASE ARCHIVES</span>
       <span style="font-family: var(--font-body); font-size: 1rem; color: #e0e0e0;">Browse, read, and search through Ope's blog posts and notes.</span>
     </div>
 
     <div style="display: flex; align-items: baseline; gap: 12px;">
-      <span style="font-family: var(--font-typewriter); font-size: 0.75rem; color: var(--colorone); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">LIBRARY</span>
+      <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--theme); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">LIBRARY</span>
       <span style="font-family: var(--font-body); font-size: 1rem; color: #e0e0e0;">Find and retrieve direct download links for books and documents.</span>
     </div>
 
     <div style="display: flex; align-items: baseline; gap: 12px;">
-      <span style="font-family: var(--font-typewriter); font-size: 0.75rem; color: var(--colorone); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">UTILITIES</span>
+      <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--theme); background: rgba(186,145,112,0.1); padding: 2px 6px; width: 120px; text-align: center;">UTILITIES</span>
       <span style="font-family: var(--font-body); font-size: 1rem; color: #e0e0e0;">Personal knowledge base and calculations.</span>
     </div>
   </div>

@@ -62,11 +62,11 @@ export default function EditorStyles() {
         }
 
         .block-reading-highlight {
-          background-color: var(--colorlink) !important;
+          background-color: var(--theme) !important;
           color: var(--background) !important;
           border-radius: 0;
           transition: background-color 0.3s ease, color 0.3s ease;
-          box-shadow: 0 0 12px var(--colorlink);
+          box-shadow: 0 0 12px var(--theme);
           padding: 4px 8px;
         }
 
@@ -84,7 +84,7 @@ export default function EditorStyles() {
           top: 2px;
           color: rgba(255, 255, 255, 0.25);
           pointer-events: none;
-          font-family: var(--md-font);
+          font-family: var(--font-body);
           font-size: var(--md-size);
           font-style: italic;
           display: none;
@@ -122,20 +122,20 @@ export default function EditorStyles() {
         .rte-h6 { font-size: 0.9em; font-weight: 900; color: #fff; font-style: italic; letter-spacing: -0.02em; white-space: pre-wrap; }
         .rte-ul, .rte-ol { padding-left: 1.8em; text-indent: -1.8em; margin-bottom: 0.3em; }
         .rte-blockquote { border-left: 3px solid var(--accent); padding-left: 1.25em; margin-left: 0; font-style: italic; opacity: 0.8; }
-        .rte-codefence { font-family: monospace; font-size: 0.85em; opacity: 0.55; background: rgba(255,255,255,0.03); border-radius: 0; }
+        .rte-codefence { font-family: var(--font-mono); font-size: 0.85em; opacity: 0.55; background: rgba(255,255,255,0.03); border-radius: 0; }
         .rte-hr { border: none; border-bottom: 1px solid var(--border); margin: 0.4em 0; }
 
         .code-raw-editor {
           resize: none;
           overflow: hidden;
-          font-family: monospace;
+          font-family: var(--font-mono);
           font-size: 14px;
           line-height: 1.5;
           background: var(--code-bg);
           border: 1px solid rgba(255,250,205,0.2);
           border-radius: 0;
           padding: 15px; /* Match pre padding */
-          color: var(--colortext-markdown);
+          color: var(--md-colortext);
           caret-color: var(--accent);
           white-space: pre-wrap;
           box-shadow: 0 2px 12px rgba(0,0,0,0.5);
@@ -147,7 +147,7 @@ export default function EditorStyles() {
         pre code { background: transparent !important; }
         .code-block pre { background: transparent !important; }
         .code-block code { background: transparent !important; }
-        .hljs { color: var(--colortext-markdown) !important; }
+        .hljs { color: var(--md-colortext) !important; }
 
         .code-raw-editor:focus {
           border-color: rgba(255, 250, 205, 0.4);
@@ -161,8 +161,8 @@ export default function EditorStyles() {
           background: transparent;
           border: none;
           border-top: 1px solid rgba(255, 250, 205, 0.1);
-          color: var(--colortext-markdown);
-          font-family: monospace;
+          color: var(--md-colortext);
+          font-family: var(--font-mono);
           font-size: 13px;
           line-height: 1.7;
           padding: 16px 4px;
@@ -185,7 +185,7 @@ export default function EditorStyles() {
           overflow-wrap: break-word;
           word-break: break-word;
           outline: none;
-          color: var(--colortext-markdown);
+          color: var(--md-colortext);
           caret-color: var(--accent);
         }
         .table-editor th { font-weight: 700; color: #fff; background: rgba(255, 250, 205, 0.05); }
@@ -194,7 +194,7 @@ export default function EditorStyles() {
           border-color: rgba(255, 250, 205, 0.4);
         }
 
-        .status-msg { opacity:.4; font-family:'Inter',sans-serif; font-size:13px; padding:20px 0; }
+        .status-msg { opacity:.4; font-family:var(--font-body); font-size:13px; padding:20px 0; }
 
         /* ── SLASH MENU ─────────────────────────────────────────────────────── */
         .slash-menu {
@@ -225,7 +225,7 @@ export default function EditorStyles() {
           padding: 8px 12px;
           border-radius: 0;
           cursor: pointer;
-          font-family: 'Inter', sans-serif;
+          font-family: var(--font-body);
           font-size: 13px;
           color: rgba(255,255,255,0.8);
           transition: background 0.1s, color 0.1s;

@@ -88,7 +88,7 @@ export default function Hero() {
             top: `${fp.top}%`,
             left: `${fp.left}%`,
             transform: `rotate(${fp.rotation}deg)`,
-            color: 'var(--colorone)'
+            color: 'var(--theme)'
           }}>
             <Footprints size={fp.size} />
           </div>
@@ -128,7 +128,7 @@ export default function Hero() {
         .polaroid-container {
           position: relative;
           padding: 0 !important;
-          border: 8px solid var(--colorone);
+          border: 8px solid var(--theme);
           border-bottom-width: 45px;
           background: transparent;
           transition: all 0.7s cubic-bezier(0.23, 1, 0.32, 1);
@@ -177,7 +177,7 @@ export default function Hero() {
           bottom: -40px; 
           left: 50%;
           transform: translateX(-50%);
-          font-family: 'Lora', serif;
+          font-family: var(--font-body);
           font-weight: 900;
           color: #ffffff; 
           font-size: clamp(12px, 2vw, 15px);
@@ -223,7 +223,7 @@ export default function Hero() {
           {/* Right side: Text Intro */}
           <div className="intro-text-content font-fredericka p-8 lg:p-12 lg:pl-10 max-w-2xl relative">
             <h2
-              className="text-3xl md:text-5xl lg:text-7xl xl:text-7xl text-[var(--colorone)] font-bold mb-3 hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default text-center lg:text-left whitespace-pre-wrap"
+              className="text-3xl md:text-5xl lg:text-7xl xl:text-7xl text-[var(--theme)] font-bold mb-3 hover:bg-gradient-to-r hover:from-white hover:to-[var(--theme)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default text-center lg:text-left whitespace-pre-wrap"
               onMouseEnter={() => scrambleText(originalTitlePadded, replacementTitlePadded, setDisplayTitle)}
               onMouseLeave={() => scrambleText(replacementTitlePadded, originalTitlePadded, setDisplayTitle)}
             >
@@ -232,7 +232,7 @@ export default function Hero() {
             
             <div className="mb-4 text-center lg:text-left">
               <span
-                className="text-lg md:text-xl lg:text-2xl xl:text-3xl text-[var(--colorone)] italic hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default whitespace-pre-wrap"
+                className="text-lg md:text-xl lg:text-2xl xl:text-3xl text-[var(--theme)] italic hover:bg-gradient-to-r hover:from-white hover:to-[var(--theme)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default whitespace-pre-wrap"
                 onMouseEnter={() => scrambleText(originalPronPadded, replacementPronPadded, setDisplayPronunciation)}
                 onMouseLeave={() => scrambleText(replacementPronPadded, originalPronPadded, setDisplayPronunciation)}
               >
@@ -241,7 +241,7 @@ export default function Hero() {
             </div>
 
             <div
-              className="text-sm md:text-base lg:text-xl xl:text-2xl leading-relaxed text-[var(--colorone)] hover:bg-gradient-to-r hover:from-white hover:to-[var(--colorone)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default lg:text-left whitespace-pre-wrap"
+              className="text-sm md:text-base lg:text-xl xl:text-2xl leading-relaxed text-[var(--theme)] hover:bg-gradient-to-r hover:from-white hover:to-[var(--theme)] hover:text-transparent hover:bg-clip-text transition-all duration-300 cursor-default lg:text-left whitespace-pre-wrap"
               onMouseEnter={() => scrambleText(originalTextPadded, replacementTextPadded, setDisplayText)}
               onMouseLeave={() => scrambleText(replacementTextPadded, originalTextPadded, setDisplayText)}
             >

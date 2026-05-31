@@ -13,7 +13,7 @@ export default function CasesSection({ displayedCases, onLinkClick, loadedCount,
         <input
           type="text"
           className="nf-search-input"
-          placeholder="SEARCH EVIDENCE ARCHIVES..."
+          placeholder="Search evidence archives..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />

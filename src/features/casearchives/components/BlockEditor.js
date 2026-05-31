@@ -826,15 +826,15 @@ const BlockEditor = ({ content, fileName, onLinkClick, onSaveFile, editMode = 'v
       })}
       <style jsx global>{`
         .block-reading-highlight {
-          background-color: var(--colorlink) !important;
-          color: var(--colortab) !important;
+          background-color: var(--theme) !important;
+          color: var(--background) !important;
           border-radius: 4px;
           transition: background-color 0.3s ease, color 0.3s ease;
-          box-shadow: 0 0 12px var(--colorlink);
+          box-shadow: 0 0 12px var(--theme);
           padding: 4px 8px;
         }
         .block-reading-highlight :is(h1, h2, h3, h4, h5, h6, p, span, li, a, code, div) {
-          color: var(--colortab) !important;
+          color: var(--background) !important;
         }
       `}</style>
     </div>

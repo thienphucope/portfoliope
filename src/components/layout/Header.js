@@ -91,9 +91,9 @@ export default function Header() {
         @keyframes flyOut { 0% { opacity: 0; transform: translateY(-50%) translateX(0); } 100% { opacity: 1; transform: translateY(-50%) translateX(40px); } }
         @keyframes flyIn { 0% { opacity: 1; transform: translateY(-50%) translateX(40px); } 100% { opacity: 0; transform: translateY(-50%) translateX(0); } }
         @keyframes flyOutStayIn { 0% { opacity: 0; transform: translateY(-50%) translateX(0); } 9% { opacity: 1; transform: translateY(-50%) translateX(40px); } 91% { opacity: 1; transform: translateY(-50%) translateX(40px); } 100% { opacity: 0; transform: translateY(-50%) translateX(0); } }
-        .disk { width: 48px; height: 48px; border: 2px solid var(--colorone); border-radius: 50%; background-image: url('${MUSIC_PLAYER.diskImage}'); background-size: cover; background-position: center; animation: rotate 10s linear infinite; }
+        .disk { width: 48px; height: 48px; border: 2px solid var(--theme); border-radius: 50%; background-image: url('${MUSIC_PLAYER.diskImage}'); background-size: cover; background-position: center; animation: rotate 10s linear infinite; }
         .disk.paused { animation-play-state: paused; }
-        .title-fly-out { position: absolute; top: 50%; left: 50%; transform: translateY(-50%); color: var(--colorone); font-size: 1rem; font-weight: bold; font-style: italic; white-space: nowrap; opacity: 0; pointer-events: none; }
+        .title-fly-out { position: absolute; top: 50%; left: 50%; transform: translateY(-50%); color: var(--theme); font-size: 1rem; font-weight: bold; font-style: italic; white-space: nowrap; opacity: 0; pointer-events: none; }
         .title-fly-out.fly-out { animation: flyOut 0.5s forwards; }
         .title-fly-out.fly-in { animation: flyIn 0.5s forwards; }
         .title-fly-out.fly-cycle { animation: flyOutStayIn 5.5s forwards; }
@@ -104,7 +104,7 @@ export default function Header() {
           <div className={`disk ${!isPlaying ? 'paused' : ''}`}></div>
           {videoTitle && <span key={animationKey} className={`title-fly-out ${animationClass} font-fredericka`} style={{ fontFamily: 'var(--font-display)' }}>{videoTitle}</span>}
         </div>
-        <nav className="flex items-center gap-4 md:gap-6 text-[var(--colorone)]" style={{ fontFamily: 'var(--font-display)' }}>
+        <nav className="flex items-center gap-4 md:gap-6 text-[var(--theme)]" style={{ fontFamily: 'var(--font-display)' }}>
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
@@ -112,7 +112,7 @@ export default function Header() {
                 key={link.href}
                 href={link.href}
                 className={`text-lg md:text-xl font-bold transition-colors duration-300 ${isActive ? 'line-through' : 'hover:text-white'}`}
-                style={isActive ? { color: 'var(--colorone)', textDecorationThickness: '4px', textDecorationColor: 'white' } : {}}
+                style={isActive ? { color: 'var(--theme)', textDecorationThickness: '4px', textDecorationColor: 'white' } : {}}
               >
                 {link.label}
               </Link>
