@@ -163,9 +163,3 @@ export function updateFileInCache(path, content, sha, html) {
   serverGraphCache = buildGraphFromRaw(serverRawCache);
 }
 
-export function deleteFileFromCache(path) {
-  delete serverRawCache[path];
-  delete serverHtmlCache[path];
-  delete serverShaCache[path];
-  serverGraphCache = buildGraphFromRaw(serverRawCache);
-}

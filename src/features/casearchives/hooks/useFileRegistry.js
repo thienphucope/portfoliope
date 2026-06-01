@@ -6,10 +6,10 @@ import { useState, useRef, useCallback } from 'react';
  */
 export function useFileRegistry() {
   const [fileTree, setFileTree] = useState([]);
-  const fileRegistry   = useRef({});   // lowercased-path → github raw URL (or null for local-new)
+  const fileRegistry   = useRef({});   // lowercased-path → github raw URL
   const serverRawCache = useRef({});   // repoKey → last-known raw markdown string
 
-  /** Rebuild registry from a raw tree array fetched from /api/cases */
+  /** Rebuild registry from a raw tree array */
   const buildRegistry = useCallback((rawTree) => {
     const newRegistry    = {};
     const repoPathMap    = {}; // normalized → canonical repoPath string
@@ -40,58 +40,11 @@ export function useFileRegistry() {
     return repoPathMap;
   }, []);
 
-  /** Fetch the tree from the API, rebuild registry, update state */
-  const refreshTree = useCallback(async () => {
-    try {
-      const tree = await fetch('/api/cases', { cache: 'no-store' }).then((r) => r.json());
-      if (!Array.isArray(tree)) return null;
-      const repoPathMap = buildRegistry(tree);
-      setFileTree(tree);
-      return repoPathMap;
-    } catch (e) {
-      console.error('Failed to refresh tree:', e);
-      return null;
-    }
-  }, [buildRegistry]);
-
-  /** Register a brand-new local (unsaved) file into the registry */
-  const registerLocalFile = useCallback((serverPath, displayName, target) => {
-    fileRegistry.current[serverPath.toLowerCase()] = null;
-    fileRegistry.current[displayName.toLowerCase()] = null;
-    fileRegistry.current[target.toLowerCase()] = null;
-  }, []);
-
-  /** Insert a new file node into the tree without a server round-trip */
-  const insertFileIntoTree = useCallback((serverPath) => {
-    const parts = serverPath.split('/');
-    setFileTree((prev) => {
-      const insert = (nodes, [head, ...rest]) => {
-        if (rest.length === 0) {
-          if (nodes.some((n) => n.name.toLowerCase() === head.toLowerCase())) return nodes;
-          return [...nodes, { kind: 'file', name: head, path: null, isLocal: true }];
-        }
-        const folder = nodes.find(
-          (n) => n.kind === 'directory' && n.name.toLowerCase() === head.toLowerCase()
-        );
-        if (folder) {
-          return nodes.map((n) =>
-            n === folder ? { ...n, children: insert(n.children || [], rest) } : n
-          );
-        }
-        return [...nodes, { kind: 'directory', name: head, isOpen: true, children: insert([], rest) }];
-      };
-      return insert(prev, parts);
-    });
-  }, []);
-
   return {
     fileTree,
     setFileTree,
     fileRegistry,
     serverRawCache,
     buildRegistry,
-    refreshTree,
-    registerLocalFile,
-    insertFileIntoTree,
   };
 }

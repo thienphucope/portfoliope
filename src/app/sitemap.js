@@ -20,13 +20,14 @@ export default async function sitemap() {
 
   // 2. Lấy danh sách các case từ thư mục content (local)
   const contentDir = path.join(process.cwd(), 'public', 'content');
+  const RESERVED = new Set(['about', 'privacy', 'terms']);
   let localCases = [];
   try {
     const filenames = fs.readdirSync(contentDir)
-      .filter(file => file.endsWith('.md') && file !== 'about.md' && file !== 'privacy.md');
-    
+      .filter(file => file.endsWith('.md') && !RESERVED.has(file.replace(/\.md$/i, '').toLowerCase()));
+
     localCases = filenames.map(name => ({
-      url: `${baseUrl}/${name.replace('.md', '')}`,
+      url: encodeURI(`${baseUrl}/${name.replace('.md', '')}`),
       lastModified: new Date(),
       changeFrequency: 'daily', // Note có thể thay đổi thường xuyên
       priority: 0.8, // Ưu tiên các note
@@ -43,7 +44,7 @@ export default async function sitemap() {
       githubCases = Object.keys(snapshot.rawCache).map(filePath => {
         const slug = filePath.replace(/\.md$/i, '');
         return {
-          url: `${baseUrl}/${slug}`,
+          url: encodeURI(`${baseUrl}/${slug}`),
           lastModified: new Date(snapshot.hydratedAt || Date.now()),
           changeFrequency: 'daily',
           priority: 0.8, // Ưu tiên các note

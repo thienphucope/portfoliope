@@ -102,7 +102,7 @@ export function useScrollBehavior({ appShellRef, tabs }) {
       }
 
       // 2. Inner vertical-scrollable elements
-      const vScrollable = e.target.closest('.markdown-container, .file-list, .horizontal-tabs-container, .search-results, .chapter-rail-list, .note-gallery-container, .note-feed-container, .mind-palace-scroll-container');
+      const vScrollable = e.target.closest('.markdown-container, .file-list, .horizontal-tabs-container, .search-results, .note-gallery-container, .note-feed-container, .mind-palace-scroll-container');
       
       // Special case: Allow these to scroll natively without custom animation or horizontal hijacking
       if (e.target.closest('.pdf-body, .chat-history, .messages-area, canvas, .note-feed-container, .mind-palace-scroll-container, .mind-palace-scroll-wrapper')) {
@@ -128,7 +128,6 @@ export function useScrollBehavior({ appShellRef, tabs }) {
             isWheelScrollingY.current.set(vScrollable, true);
             const animateY = () => {
               const t    = verticalScrollTargets.current.get(vScrollable);
-              if (t === undefined) { isWheelScrollingY.current.set(vScrollable, false); return; }
               const diff = t - vScrollable.scrollTop;
               if (Math.abs(diff) < 0.2) {
                 vScrollable.scrollTop = t;

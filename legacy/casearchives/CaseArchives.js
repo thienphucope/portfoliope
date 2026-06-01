@@ -1,18 +1,23 @@
 "use client";
-import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { DEFAULT_VAULT_FILE } from '@/configs/vault';
 import { ArrowLeft } from 'lucide-react';
 import BlockEditor from '@/features/casearchives/components/BlockEditor';
 import BaseStyles from '@/features/casearchives/styles/BaseStyles';
 import TabPanelStyles from '@/features/casearchives/styles/TabPanelStyles';
+import PromptOverlays from '@/features/casearchives/components/PromptOverlays';
 import WindowFrame from '@/features/casearchives/components/WindowFrame';
 import dynamic from 'next/dynamic';
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
 import { useFileRegistry }     from '@/features/casearchives/hooks/useFileRegistry';
 import { useFileLoader }       from '@/features/casearchives/hooks/useFileLoader';
+import { useFileMutations }    from '@/features/casearchives/hooks/useFileMutations';
+import { useLockManager }      from '@/features/casearchives/hooks/useLockManager';
+import { useEditorState }      from '@/features/casearchives/hooks/useEditorState';
 import { useScrollBehavior }   from '@/features/casearchives/hooks/useScrollBehavior';
 import { useContentCache }     from '@/features/casearchives/hooks/useContentCache';
+import { usePrompts }          from '@/features/casearchives/hooks/usePrompts';
 import { useLinkHandler }      from '@/features/casearchives/hooks/useLinkHandler';
 
 import { useReader } from '@/features/casearchives/hooks/useReader';
@@ -21,9 +26,6 @@ import { useGraphData } from '@/features/casearchives/hooks/useGraphData';
 
 const GraphView = dynamic(() => import('@/features/casearchives/components/GraphView'), { ssr: false });
 
-
-// Layout effect on the client, no-op on the server (avoids SSR warning).
-const useIsoLayoutEffect = typeof document !== 'undefined' ? useLayoutEffect : useEffect;
 
 // ─── Spritz Overlay Component ────────────────────────────────────────────────
 const SpritzOverlay = ({ text, isPlaying, isPaused, playbackRate }) => {
@@ -61,42 +63,8 @@ const SpritzOverlay = ({ text, isPlaying, isPaused, playbackRate }) => {
 const PDFViewer = dynamic(() => import('@/features/casearchives/components/PDFViewer'), { ssr: false });
 const ChatRoom = dynamic(() => import('@/features/chatroom/ChatRoom'), { ssr: false });
 
-// ─── CHAPTER RAIL (left-side table of contents) ───────────────────────────────
-const ChapterRail = ({ chapters, activeIndex, onJump }) => {
-  if (!chapters.length) return null;
-  return (
-    <nav className="chapter-rail" aria-label="Chapters">
-      <div className="chapter-rail-title">Chapters</div>
-      <ul className="chapter-rail-list">
-        {chapters.map((c, i) => (
-          <li key={i} className="chapter-rail-item">
-            <button
-              type="button"
-              className={`chapter-rail-link ${i === activeIndex ? 'is-active' : ''}`}
-              data-level={c.level}
-              aria-current={i === activeIndex ? 'location' : undefined}
-              style={{ paddingLeft: `${(c.level - 1) * 12 + 14}px` }}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onJump(i);
-              }}
-              title={c.text}
-            >
-              <span className="chapter-text">{c.text}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-    </nav>
-  );
-};
-
 export default function CaseClient({ serverHydratedData = null }) {
-  const [fileName,     setFileName]     = useState('');
-  const [isEditorOpen,       setIsEditorOpen]       = useState(false);
-  const [editorView,         setEditorView]          = useState('note');
-  const reader = useReader({ resetKey: `${isEditorOpen ? 'open' : 'closed'}:${editorView}:${fileName}` });
+  const reader = useReader();
   const [pendingReadConfirm, setPendingReadConfirm] = useState(null);
   const triggerRead = useCallback((e, onConfirm) => {
     if (reader.isPlaying) return;
@@ -106,13 +74,11 @@ export default function CaseClient({ serverHydratedData = null }) {
 
   const augmentedReader = useMemo(() => ({ ...reader, triggerRead }), [reader, triggerRead]);
 
-  useEffect(() => {
-    setPendingReadConfirm(null);
-  }, [fileName, editorView, isEditorOpen]);
-
   const [content,      setContent]      = useState('');
+  const [fileName,     setFileName]     = useState('');
   const [contentKey,   setContentKey]   = useState(0);
   const [activeOverlay,      setActiveOverlay]      = useState(null); 
+  const [isEditorOpen,       setIsEditorOpen]       = useState(false);
   const [isChatOpen,         setIsChatOpen]         = useState(false);
   const [maximizedWindow,    setMaximizedWindow]    = useState(null);
   const [isLiveCallActive,   setIsLiveCallActive]   = useState(false);
@@ -145,17 +111,21 @@ export default function CaseClient({ serverHydratedData = null }) {
   const [showSearch,         setShowSearch]          = useState(false);
   const [viewMode,           setViewMode]            = useState('graph'); 
 const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
-  const [activeChapterIndex, setActiveChapterIndex]  = useState(0);
+  const [editorView,         setEditorView]          = useState('note');
 
+  const [editPass, setEditPass] = useState(() => { try { return sessionStorage.getItem('vault_edit_pass') || ''; } catch { return ''; } });
   const appShellRef  = useRef(null);
+  const sessionIdRef = useRef(Math.random().toString(36).substring(2, 15));
   const scrollPosMap = useRef({});
   const markdownContainerRef = useRef(null);
+  const serverGraphRef = useRef(serverHydratedData?.graph || { nodes: [], links: [] });
 
   const applyFileContent = useCallback((repoKey, newContent) => {
     React.startTransition(() => { setFileName(repoKey); setContent(newContent); setContentKey((k) => k + 1); setIsAtBottom(false); });
   }, []);
 
-  const { fileTree, setFileTree, fileRegistry, serverRawCache, buildRegistry } = useFileRegistry();
+  const { passPrompt, setPassPrompt, namePrompt, setNamePrompt, commentPrompt, setCommentPrompt, askPassword, askFileName, askComment } = usePrompts();
+  const { fileTree, setFileTree, fileRegistry, serverRawCache, buildRegistry, refreshTree, registerLocalFile, insertFileIntoTree } = useFileRegistry();
 
   const getAllFiles = useCallback((nodes, repoPath = '') => {
     let files = [];
@@ -168,10 +138,55 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
 
   const allFiles = useMemo(() => getAllFiles(fileTree), [fileTree, getAllFiles]);
 
-  const { fullContentCache, initializeFromServer, upsertCacheEntry } = useContentCache({ serverRawCache });
-  const { activeTab, setActiveTab, loadFile: _loadFile } = useFileLoader({ serverRawCache, upsertCacheEntry, applyFileContent, setActiveOverlay });
+  const syncServerStructures = useCallback(({ tree, registry, graph }) => {
+    if (Array.isArray(tree)) { setFileTree(tree); if (registry && typeof registry === 'object') fileRegistry.current = registry; else buildRegistry(tree); }
+    if (graph && typeof graph === 'object') serverGraphRef.current = graph;
+  }, [setFileTree, fileRegistry, buildRegistry]);
+
+  const { fullContentCache, setFullContentCache, initializeFromServer, upsertCacheEntry } = useContentCache({ serverRawCache });
+  const { openFiles, setOpenFiles, activeTab, setActiveTab, fileSha, setFileSha, loadFile: _loadFile } = useFileLoader({ fileRegistry, serverRawCache, upsertCacheEntry, syncServerStructures, applyFileContent, setActiveOverlay });
 
   const loadFile = useCallback((...args) => { setIsEditorOpen(true); return _loadFile(...args); }, [_loadFile]);
+  const onLockLost = useCallback(() => { setIsEditing(false); alert('Connection lost or file locked by another user. Returning to view mode.'); }, []);
+  const { acquireLock, releaseLock, startKeepAlive, stopKeepAlive } = useLockManager({ sessionIdRef, onLockLost });
+
+  const createAndOpenFile = useCallback((target) => {
+    const withExt = target.endsWith('.md') ? target : `${target}.md`;
+    const serverPath = withExt.includes('/') ? withExt : `notes/${withExt}`;
+    const displayName = serverPath.split('/').pop();
+    const title = displayName.replace('.md', '');
+    registerLocalFile(serverPath, displayName, target); insertFileIntoTree(serverPath);
+    try { localStorage.removeItem(`vault_v3::${serverPath}`); } catch {}
+    const initContent = `# ${title}\n*author: Ope*\n*tag: #content*\n*links:*\n`;
+    applyFileContent(serverPath, initContent);
+    setOpenFiles((prev) => { if (!prev.find((f) => f.id === serverPath)) return [...prev, { id: serverPath, path: null, name: displayName, serverPath, fetchedContent: initContent }]; return prev; });
+    setActiveTab(serverPath); setActiveOverlay(null);
+  }, [applyFileContent, registerLocalFile, insertFileIntoTree, setOpenFiles, setActiveTab]);
+
+  const { saveStatus, saveHandlerRef, handleSaveFile, handleSidebarSave, handleRenameFile: _handleRenameFile, handleDeleteFile: _handleDeleteFile, handleCreateNewNote: _handleCreateNewNote, handleAppendComment } = useFileMutations({ sessionIdRef, fileRegistry, serverRawCache, setFullContentCache, fileSha, setFileSha, editPass, setEditPass, fileName, content, setContent, setOpenFiles, setContentKey, applyFileContent, createAndOpenFile, refreshTree, acquireLock, releaseLock, askPassword, askFileName, askComment });
+
+  const handleRenameFile = useCallback((oldPath) => _handleRenameFile(oldPath, fileName, loadFile), [_handleRenameFile, fileName, loadFile]);
+  const handleDeleteFile = useCallback((filePath) => _handleDeleteFile(filePath, fileName, (wasActive) => { if (wasActive) { setActiveTab(null); window.history.replaceState({ repoKey: null }, '', '/'); } else { const url = fileRegistry.current[fileName?.toLowerCase()]; if (url) loadFile(url, fileName.split('/').pop(), fileName, 'replace'); } }), [_handleDeleteFile, fileName, loadFile, fileRegistry, setActiveTab]);
+  const handleCreateNewNote = useCallback(() => _handleCreateNewNote(setIsEditing, setActiveTab, startKeepAlive), [_handleCreateNewNote, setActiveTab, startKeepAlive]);
+  const { isEditing, setIsEditing, handleToggleEditMode } = useEditorState({ fileName, editPass, setEditPass, fileRegistry, serverRawCache, applyFileContent, setFileSha, acquireLock, releaseLock, startKeepAlive, stopKeepAlive, refreshTree, askPassword });
+
+  const [editSubMode, setEditSubMode] = useState('inline');
+  const editMode = isEditing ? editSubMode : 'view';
+
+  const handleCycleEditMode = useCallback(async () => {
+    if (!isEditing) {
+      setEditSubMode('inline');
+      await handleToggleEditMode();
+    } else if (editSubMode === 'inline') {
+      setEditSubMode('raw');
+    } else {
+      await handleToggleEditMode();
+    }
+  }, [isEditing, editSubMode, handleToggleEditMode]);
+
+  useEffect(() => {
+    if (!isEditing) setEditSubMode('inline');
+  }, [isEditing]);
 
   const tabs = useMemo(() => {
     const base = [ { id: 'chat', title: 'AI Chat Vault', type: 'chat' }, { id: 'pdf', title: 'PDF Reader', type: 'pdf' }, { id: 'graph', title: 'Graph View', type: 'static' } ];
@@ -215,59 +230,11 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
     const t = setTimeout(checkBottom, 400); return () => clearTimeout(t);
   }, [content, activeTab, activeOverlay, tabs.length]);
 
-  const isRestoringRef = useRef(false);
-  const updateActiveChapter = useCallback((container) => {
-    if (!container) return;
-    const heads = Array.from(container.querySelectorAll('.block-view h1, .block-view h2, .block-view h3, .block-view h4, .block-view h5, .block-view h6'));
-    if (!heads.length) {
-      setActiveChapterIndex(0);
-      return;
-    }
-    const containerTop = container.getBoundingClientRect().top;
-    let nextIndex = 0;
-    for (let i = 0; i < heads.length; i++) {
-      if (heads[i].getBoundingClientRect().top - containerTop <= 80) nextIndex = i;
-      else break;
-    }
-    setActiveChapterIndex(prev => prev === nextIndex ? prev : nextIndex);
-  }, []);
-
-  useIsoLayoutEffect(() => {
-    setActiveChapterIndex(0);
-  }, [contentKey, activeTab]);
-
-  // Restore each note's own scroll position (default: top). Blocks/images render
-  // asynchronously, so re-apply for a few frames until layout settles — and stop
-  // early if the user scrolls, so we never fight their input.
-  useIsoLayoutEffect(() => {
-    const el = markdownContainerRef.current;
-    if (!el || !fileName) return;
-    const target = scrollPosMap.current[fileName] ?? 0;
-    resetScroll(el); // stop any in-flight custom wheel-scroll and clear its cached target for this reused element
-    isRestoringRef.current = true;
-    el.scrollTop = target;
-    updateActiveChapter(el);
-    let raf;
-    let frames = 0;
-    const reapply = () => {
-      if (!isRestoringRef.current) return;
-      el.scrollTop = target;
-      updateActiveChapter(el);
-      if (++frames < 8) raf = requestAnimationFrame(reapply);
-      else isRestoringRef.current = false;
-    };
-    raf = requestAnimationFrame(reapply);
-    const stop = () => {
-      isRestoringRef.current = false;
-      if (raf) cancelAnimationFrame(raf);
-      el.removeEventListener('wheel', stop);
-      el.removeEventListener('touchmove', stop);
-    };
-    el.addEventListener('wheel', stop, { passive: true });
-    el.addEventListener('touchmove', stop, { passive: true });
-    const timer = setTimeout(stop, 320);
-    return () => { clearTimeout(timer); stop(); };
-  }, [fileName, resetScroll, updateActiveChapter]);
+  useEffect(() => {
+    if (!fileName || !markdownContainerRef.current) return;
+    const saved = scrollPosMap.current[fileName] || 0;
+    markdownContainerRef.current.scrollTop = saved;
+  }, [fileName, contentKey]);
 
   useEffect(() => {
     if (window.location.pathname === '/' && !window.history.state) window.history.replaceState({ isRoot: true }, '', '/');
@@ -308,69 +275,26 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
     }
   }, []);
 
-  const { handleLinkClick } = useLinkHandler({ loadFile, tabs, fileRegistry, setActiveOverlay });
+  const { handleLinkClick } = useLinkHandler({ loadFile, createAndOpenFile, openFiles, tabs, applyFileContent, fileRegistry, setActiveTab, setActiveOverlay });
   const contentCacheRef = useRef(fullContentCache);
   contentCacheRef.current = fullContentCache; // sync during render, no effect needed
   const graphFiles = useMemo(() => allFiles.map((f) => ({ ...f, fetchedContent: contentCacheRef.current[f.id]?.raw || '' })), [allFiles]);
   const { nodes: graphNodes } = useGraphData({ allFiles: graphFiles, fullContentCache });
 
-  // Headings of the current note → left-rail chapters (in document order).
-  const chapters = useMemo(() => {
-    if (!content) return [];
-    const out = [];
-    let inFence = false;
-    for (const line of content.split('\n')) {
-      if (/^\s*```/.test(line)) { inFence = !inFence; continue; }
-      if (inFence) continue;
-      const m = /^(#{1,6})\s+(.+?)\s*#*\s*$/.exec(line);
-      if (m) {
-        const text = m[2].replace(/\[\[([^\]]+)\]\]/g, '$1').replace(/[*_`~]/g, '').trim();
-        if (text) out.push({ level: m[1].length, text });
-      }
-    }
-    return out;
-  }, [content]);
-
-  const scrollToChapter = useCallback((index) => {
-    const el = markdownContainerRef.current;
-    if (!el) return;
-    isRestoringRef.current = false; // let the user's jump win over any in-flight restore
-    resetScroll(el);
-    setActiveChapterIndex(index);
-
-    let attempts = 0;
-    const jump = () => {
-      const heads = Array.from(el.querySelectorAll('.block-view h1, .block-view h2, .block-view h3, .block-view h4, .block-view h5, .block-view h6'));
-      const target = heads[index];
-      if (!target) {
-        if (attempts < 2) {
-          attempts += 1;
-          requestAnimationFrame(jump);
-        }
-        return;
-      }
-      const containerTop = el.getBoundingClientRect().top;
-      const targetTop = target.getBoundingClientRect().top - containerTop + el.scrollTop - 16;
-      el.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
-    };
-
-    jump();
-  }, [resetScroll]);
-
   const activeTabPanel = useMemo(() => {
     const activeT = tabs.find(t => t.id === activeTab); if (!activeT) return null;
     return (
-      <article ref={markdownContainerRef} className="markdown-container" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }} onScroll={(e) => { const t = e.target; if (fileName && !isRestoringRef.current) scrollPosMap.current[fileName] = t.scrollTop; updateActiveChapter(t); const bottom = t.scrollHeight - t.scrollTop <= t.clientHeight + 100; if (bottom !== isAtBottom) setIsAtBottom(bottom); }}>
-        <div className="note-content-wrapper">
+      <article ref={markdownContainerRef} className="markdown-container" style={{ flex: 1, overflowY: editMode === 'raw' ? 'hidden' : 'auto', overflowX: 'hidden', ...(editMode === 'raw' && { display: 'flex', flexDirection: 'column' }) }} onScroll={(e) => { const t = e.target; if (fileName) scrollPosMap.current[fileName] = t.scrollTop; const bottom = t.scrollHeight - t.scrollTop <= t.clientHeight + 100; if (bottom !== isAtBottom) setIsAtBottom(bottom); }}>
+        <div className="note-content-wrapper" style={editMode === 'raw' ? { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 } : undefined}>
           {fileName === activeT.id ? (
-            <BlockEditor content={content} fileName={fileName} onLinkClick={handleLinkClick} fileRegistry={fileRegistry.current} reader={augmentedReader} />
+            <BlockEditor content={content} fileName={fileName} onLinkClick={handleLinkClick} onSaveFile={handleSaveFile} editMode={activeT.type === 'editor' ? editMode : 'view'} readOnly={activeT.type === 'static'} onToggleEditing={handleCycleEditMode} onSaveRef={saveHandlerRef} fileRegistry={fileRegistry.current} reader={augmentedReader} />
           ) : (
             <div className="loading-placeholder" style={{ padding: '2rem', opacity: 0.5 }}>Loading...</div>
           )}
         </div>
       </article>
     );
-  }, [activeTab, tabs, fileName, content, fileRegistry, isAtBottom, augmentedReader, handleLinkClick, updateActiveChapter]);
+  }, [activeTab, tabs, editMode, handleCycleEditMode, fileName, content, handleSaveFile, saveHandlerRef, fileRegistry, isAtBottom, augmentedReader, handleLinkClick]);
 
   return (
     <div className={['accordion-app pc-layout', activeTab ? 'has-active' : '', !isEditorOpen ? 'feed-active' : ''].join(' ')} ref={appShellRef}>
@@ -385,10 +309,6 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
 
           {isEditorOpen && (
             <div className={`windows-container has-editor ${maximizedWindow ? 'has-maximized' : ''}`} style={{ width: '100vw', height: '100vh', margin: 0, display: 'flex', flexDirection: 'row' }}>
-
-              {editorView === 'note' && !isChatOpen && tabs.find(t => t.id === activeTab)?.type === 'editor' && (
-                <ChapterRail chapters={chapters} activeIndex={activeChapterIndex} onJump={scrollToChapter} />
-              )}
 
               {(() => {
                 const isMax = !!maximizedWindow;
@@ -420,6 +340,12 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
                       isHidden={false}
                       onToggleMaximize={toggleMaximize}
                       onClose={closeEditorWindow}
+                      onSave={handleSidebarSave}
+                      saveStatus={saveStatus}
+                      onToggleEdit={handleCycleEditMode}
+                      editMode={editMode}
+                      onComment={handleAppendComment}
+                      onNewNote={handleCreateNewNote}
                       isMobile={false}
                       allFiles={graphNodes}
                       onSelectFile={(f) => {
@@ -465,6 +391,7 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
           <style dangerouslySetInnerHTML={{ __html: ` .reader-ctrl-btn { opacity: 0.8; transition: all 0.2s; } .reader-ctrl-btn:hover { opacity: 1; transform: scale(1.1); } .reader-speed-toggle:hover { background: rgba(255,250,205,0.2); } .reader-cefr-toggle { transition: all 0.2s; } .reader-cefr-toggle:hover { transform: scale(1.05); filter: brightness(1.1); } @keyframes fadeInDown { from { opacity: 0; transform: translate(-50%, -20px); } to { opacity: 1; transform: translate(-50%, 0); } } `}} />
         </div>
       )}
+      <PromptOverlays passPrompt={passPrompt} setPassPrompt={setPassPrompt} namePrompt={namePrompt} setNamePrompt={setNamePrompt} commentPrompt={commentPrompt} setCommentPrompt={setCommentPrompt} />
       <BaseStyles />
       <TabPanelStyles />
     </div>

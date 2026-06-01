@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { Maximize2, Minimize2, X, Zap, MessageSquare, ChevronLeft, ChevronRight, Upload, Search, Network, FileText } from 'lucide-react';
+import { Maximize2, Minimize2, X, Zap, Save, Pencil, Eye, Code2, MessageSquare, Plus, Loader2, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight, Upload, Search, Network, FileText } from 'lucide-react';
 
 /**
  * WindowFrame component that provides a title bar, borders, and window controls
@@ -11,8 +11,15 @@ export default function WindowFrame({
   id, 
   onClose, 
   isMaximized, 
+  onToggleMaximize, 
   onLiveCall,
   isLiveCallActive = false,
+  onSave,
+  saveStatus = 'idle',
+  onToggleEdit,
+  editMode = 'view',
+  onComment,
+  onNewNote,
   pdfState = null,
   onPdfPrev,
   onPdfNext,
@@ -89,8 +96,12 @@ export default function WindowFrame({
         {/* Render Title Bar based on window type */}
         {(id === 'editor' || id === 'graph') ? (
           <>
+            {/* Fixed Prefix - Now at top in vertical mode */}
+            <div className="window-title-prefix">{prefix || (id === 'graph' ? 'Graph' : '')}</div>
+
+            {/* Center: Interactive Subject Box */}
             <div className="window-title-content" ref={searchRef}>
-              {isSearchOpen && (
+              {isSearchOpen ? (
                 <div className="window-search-active">
                   <Search size={14} color="var(--theme)" className="search-icon-inside" />
                   <input 
@@ -128,24 +139,18 @@ export default function WindowFrame({
                     </div>
                   )}
                 </div>
+              ) : (
+                <div 
+                  className="window-title-box clickable"
+                  onClick={() => {
+                    setIsSearchOpen(true);
+                    setSearchTerm('');
+                  }}
+                >
+                  <Search size={12} color="var(--theme)" className="title-search-hint" />
+                  <span className="window-title-text">{subject}</span>
+                </div>
               )}
-              <button
-                type="button"
-                className="window-title-box"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsSearchOpen(true);
-                  setSearchTerm('');
-                }}
-                title="Search notes & tags"
-              >
-                <Search size={15} color="var(--theme)" className="title-search-hint" />
-                <span className="window-title-text">{subject}</span>
-              </button>
-            </div>
-
-            <div className="window-brand-search">
-              <div className="window-title-prefix">{prefix || (id === 'graph' ? 'Graph' : '')}</div>
             </div>
           </>
         ) : (
@@ -191,12 +196,47 @@ export default function WindowFrame({
               <button className="window-control-btn" onClick={onPdfToggleFit} title={pdfState.fitMode === 'width' ? "Fit Height" : "Fit Width"}>
                 {pdfState.fitMode === 'width' ? <Maximize2 size={14} /> : <Minimize2 size={14} />}
               </button>
+              <div className="control-separator" />
             </>
           )}
 
           {/* Editor Specific Controls */}
           {id === 'editor' && (
             <>
+              {!isGraphActive && !isPdfActive && (
+                <>
+                  <button className="window-control-btn" onClick={onNewNote} title="New Note">
+                    <Plus size={16} />
+                  </button>
+                  <button className="window-control-btn" onClick={onComment} title="Add Comment">
+                    <MessageSquare size={16} />
+                  </button>
+                  <button
+                    className={`window-control-btn ${editMode !== 'view' ? 'active-mode' : ''}`}
+                    onClick={onToggleEdit}
+                    title={editMode === 'view' ? "Inline Edit" : editMode === 'inline' ? "Raw Edit" : "View Mode"}
+                  >
+                    {editMode === 'view' ? <Pencil size={16} /> : editMode === 'inline' ? <Code2 size={16} /> : <Eye size={16} />}
+                  </button>
+                  <button
+                    className={`window-control-btn save-btn ${saveStatus !== 'idle' ? 'status-' + saveStatus : ''}`}
+                    onClick={onSave}
+                    disabled={saveStatus === 'saving'}
+                    title="Save Changes"
+                  >
+                    {saveStatus === 'saving' ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : saveStatus === 'saved' ? (
+                      <CheckCircle2 size={16} color="#4caf50" />
+                    ) : saveStatus === 'error' ? (
+                      <AlertCircle size={16} color="#f44336" />
+                    ) : (
+                      <Save size={16} />
+                    )}
+                  </button>
+                  <div className="control-separator" />
+                </>
+              )}
               <button className={`window-control-btn ${isGraphActive ? 'active-mode' : ''}`} onClick={onToggleGraph} title="Graph View">
                 <Network size={16} />
               </button>
@@ -206,6 +246,7 @@ export default function WindowFrame({
               <button className={`window-control-btn ${isChatActive ? 'active-mode' : ''}`} onClick={onToggleChat} title="AI Chat">
                 <MessageSquare size={16} />
               </button>
+              <div className="control-separator" />
             </>
           )}
 
@@ -218,13 +259,20 @@ export default function WindowFrame({
               <Zap size={16} fill={isLiveCallActive ? "#ff4d4d" : "currentColor"} color={isLiveCallActive ? "#ff4d4d" : "currentColor"} className={isLiveCallActive ? 'animate-pulse' : ''} />
             </button>
           )}
+          <button
+            className="window-control-btn"
+            onClick={() => onToggleMaximize(id)}
+            title={isMaximized ? "Minimize" : "Maximize"}
+          >
+            {isMaximized ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+          </button>
         </div>
       </div>
 
       <style jsx>{`
         .window-frame {
           display: flex;
-          flex-direction: row-reverse;
+          flex-direction: row;
           background: var(--feature-bg);
           border: none;
           border-radius: 0;
@@ -270,40 +318,10 @@ export default function WindowFrame({
           display: flex;
           flex-direction: column;
           align-items: center;
-          justify-content: flex-start;
+          justify-content: space-between;
           border-left: none;
           user-select: none;
           flex-shrink: 0;
-        }
-
-        .window-brand-search {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          width: 100%;
-          margin: 10px 0 14px;
-          flex-shrink: 0;
-          z-index: 20;
-        }
-
-        .window-search-trigger {
-          width: 28px;
-          height: 28px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: rgba(255, 250, 205, 0.12);
-          border: 1px solid rgba(255, 250, 205, 0.2);
-          border-radius: 6px;
-          color: var(--theme);
-          cursor: pointer;
-          transition: background 0.18s ease, border-color 0.18s ease;
-        }
-
-        .window-search-trigger:hover {
-          background: rgba(255, 250, 205, 0.2);
-          border-color: rgba(255, 250, 205, 0.42);
         }
 
         .window-title-prefix {
@@ -315,12 +333,9 @@ export default function WindowFrame({
           white-space: nowrap;
           z-index: 1;
           writing-mode: vertical-rl;
-          text-orientation: mixed;
-          transform: none;
-          margin-top: 0;
+          transform: rotate(180deg);
+          margin-top: 15px;
           letter-spacing: 1px;
-          text-rendering: geometricPrecision;
-          -webkit-font-smoothing: antialiased;
         }
 
         .window-title-fixed {
@@ -332,13 +347,10 @@ export default function WindowFrame({
           white-space: nowrap;
           z-index: 1;
           writing-mode: vertical-rl;
-          text-orientation: mixed;
-          transform: none;
+          transform: rotate(180deg);
           margin-bottom: auto;
           margin-top: 10px;
           letter-spacing: 1px;
-          text-rendering: geometricPrecision;
-          -webkit-font-smoothing: antialiased;
         }
 
         .window-title-content {
@@ -348,7 +360,7 @@ export default function WindowFrame({
           justify-content: flex-start;
           align-items: center;
           width: 100%;
-          margin: 0;
+          margin: 15px 0;
           z-index: 10;
           min-height: 0;
         }
@@ -358,8 +370,8 @@ export default function WindowFrame({
           flex-direction: column;
           align-items: center;
           justify-content: flex-start;
-          gap: 10px;
-          padding: 6px 2px 12px;
+          gap: 12px;
+          padding: 12px 2px;
           background: rgba(255, 250, 205, 0.12);
           border: 1px solid rgba(255, 250, 205, 0.2);
           border-radius: 20px;
@@ -367,14 +379,15 @@ export default function WindowFrame({
           width: 28px;
           height: auto;
           max-height: 100%;
-          color: var(--theme);
-          cursor: pointer;
-          appearance: none;
         }
 
-        .window-title-box:hover {
+        .window-title-box.clickable {
+          cursor: pointer;
+        }
+
+        .window-title-box.clickable:hover {
           background: rgba(255, 250, 205, 0.2);
-          border-color: rgba(255, 250, 205, 0.42);
+          border-color: rgba(255, 250, 205, 0.4);
         }
 
         .window-title-text {
@@ -383,13 +396,10 @@ export default function WindowFrame({
           color: var(--theme);
           opacity: 1;
           writing-mode: vertical-rl;
-          text-orientation: mixed;
-          transform: none;
+          transform: rotate(180deg) translateZ(0);
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          text-rendering: geometricPrecision;
-          -webkit-font-smoothing: antialiased;
         }
 
         .title-search-hint {
@@ -398,11 +408,10 @@ export default function WindowFrame({
         }
 
         .window-search-active {
-          position: fixed;
-          left: calc(50% + 19px); /* match the content column, offset by the 38px title bar */
-          top: 16px;
-          transform: translateX(-50%);
-          width: 50vw;
+          position: absolute;
+          right: 42px;
+          top: 0;
+          width: calc(100cqw - 60px);
           display: flex;
           align-items: center;
           gap: 8px;
@@ -410,9 +419,9 @@ export default function WindowFrame({
           backdrop-filter: blur(10px);
           border: 1px solid rgba(255, 250, 205, 0.5);
           border-radius: 20px;
-          padding: 8px 16px;
-          box-shadow: 0 8px 30px rgba(0,0,0,0.6);
-          z-index: 1000;
+          padding: 6px 14px;
+          box-shadow: -4px 4px 20px rgba(0,0,0,0.6);
+          z-index: 100;
         }
 
         .search-icon-inside {

@@ -48,6 +48,9 @@ export const configureMarked = () => {
   renderer.heading = (token) => {
     const level = token.depth;
     const text = window.marked.parseInline(token.text);
+    if (level === 6) {
+      return `<h6 class="fit-heading">${text}</h6>`;
+    }
     return `<h${level}>${text}</h${level}>`;
   };
 

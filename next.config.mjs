@@ -9,6 +9,18 @@ const nextConfig = {
         destination: 'https://opewatson.com/:path*',
         permanent: true,
       },
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.opewatson.com' }],
+        destination: 'https://opewatson.com/:path*',
+        permanent: true,
+      },
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.opewatson.org' }],
+        destination: 'https://opewatson.com/:path*',
+        permanent: true,
+      },
     ]
   },
 }

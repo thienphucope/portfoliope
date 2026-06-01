@@ -2,8 +2,12 @@ import { useCallback } from 'react';
 
 export function useLinkHandler({
   loadFile,
+  createAndOpenFile,
+  openFiles,
   tabs,
+  applyFileContent,
   fileRegistry,
+  setActiveTab,
   setActiveOverlay,
 }) {
   const resolveWikiPath = (target) => {
@@ -38,9 +42,15 @@ export function useLinkHandler({
       const existing = tabs.find((t) => t.fileData?.path === realPath);
       if (existing) loadFile(realPath, existing.fileData.name, existing.id);
       else          loadFile(realPath, serverPath.split('/').pop(), serverPath);
+    } else if (realPath === null) {
+      setActiveTab(serverPath);
+      const openF  = openFiles.find((f) => f.id === serverPath);
+      const raw    = openF?.fetchedContent;
+      applyFileContent(serverPath, raw || `# ${serverPath.split('/').pop().replace('.md', '')}\n*author: <author>*\n*tag: [[Dash Board]]*\n*links:*\n`);
+    } else {
+      createAndOpenFile(target);
     }
-    // Link points to a note that does not exist → no-op in read-only mode.
-  }, [loadFile, tabs, fileRegistry, setActiveOverlay]);
+  }, [loadFile, createAndOpenFile, openFiles, tabs, applyFileContent, fileRegistry, setActiveTab]);
 
   return { resolveWikiPath, handleLinkClick };
 }

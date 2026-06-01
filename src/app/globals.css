@@ -201,3 +201,142 @@ body::-webkit-scrollbar,
   opacity: 1;
   transform: translateX(-50%) translateY(2px);
 }
+
+/* -------------------------------------------------------------------------- */
+/*                               CHAPTER RAIL                                 */
+/* -------------------------------------------------------------------------- */
+/* Background-less, borderless table-of-contents docked on the LEFT, sitting in
+   the reader's left gutter so the text emerges straight out of the page.
+   No box, no bullets — hierarchy is carried by the type scale + indent, with a
+   slim accent bar that reveals on hover and edges that fade into the page. */
+.chapter-rail {
+  position: fixed;
+  left: 38px; /* right after the left-docked WindowFrame title bar */
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+  width: calc(25vw - 24px); /* fill the left gutter, up to the centered content */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 30px 18px 30px 10px;
+  background: none;
+  max-height: 100vh;
+  pointer-events: auto;
+}
+
+.chapter-rail-title {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--theme);
+  opacity: 0.85;
+  padding: 2px 8px 6px;
+}
+
+.chapter-rail-list {
+  flex: 1;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--theme) 35%, transparent) transparent;
+  /* dissolve into the background at the edges */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+}
+.chapter-rail-list::-webkit-scrollbar { width: 4px; }
+.chapter-rail-list::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--theme) 40%, transparent);
+  border-radius: 10px;
+}
+
+.chapter-rail-item { margin: 0; }
+
+.chapter-rail-link {
+  position: relative;
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  text-align: left;
+  cursor: pointer;
+  color: color-mix(in srgb, var(--md-colortext) 75%, transparent);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-weight: 400;
+  line-height: 1.4;
+  padding: 5px 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, color 0.18s ease, transform 0.18s ease, opacity 0.18s ease;
+}
+/* slim accent bar that reveals on hover — in place of a bullet */
+.chapter-rail-link::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 50%;
+  width: 2px;
+  height: 0;
+  background: color-mix(in srgb, var(--theme) 78%, white);
+  border-radius: 2px;
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: height 0.18s ease, opacity 0.18s ease;
+}
+.chapter-rail-link:hover {
+  color: var(--theme);
+  background: color-mix(in srgb, var(--theme) 8%, transparent);
+  border-color: color-mix(in srgb, var(--theme) 16%, transparent);
+  transform: translateX(4px);
+}
+.chapter-rail-link:hover::before,
+.chapter-rail-link.is-active::before {
+  height: 58%;
+  opacity: 1;
+}
+
+.chapter-rail-link.is-active {
+  background: color-mix(in srgb, var(--theme) 14%, transparent);
+  border-color: color-mix(in srgb, var(--theme) 34%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 20px rgba(0, 0, 0, 0.2);
+  color: #fff;
+  transform: translateX(4px);
+}
+
+/* hierarchy through type, not bullets */
+.chapter-rail-link[data-level="1"] {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.04rem;
+  color: color-mix(in srgb, var(--md-colortext) 95%, transparent);
+  margin-top: 10px;
+}
+.chapter-rail-link[data-level="2"] { font-size: 0.92rem; }
+.chapter-rail-link[data-level="3"],
+.chapter-rail-link[data-level="4"],
+.chapter-rail-link[data-level="5"],
+.chapter-rail-link[data-level="6"] {
+  font-size: 0.82rem;
+  opacity: 0.72;
+}
+
+.chapter-rail-link.is-active[data-level="1"] {
+  color: #fff;
+}
+
+.chapter-text { display: inline; }
+
+@media (max-width: 1024px) {
+  .chapter-rail { display: none; }
+}

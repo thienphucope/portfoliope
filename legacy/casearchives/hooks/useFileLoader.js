@@ -1,22 +1,25 @@
 import { useState, useCallback } from 'react';
 
 /**
- * Read-only file loader: opens a note from the hydrated cache, falling back to
- * a single server read only when the content is not already cached.
- * Manages the open-files list, the active tab, and browser history.
+ * Handles fetching file content from the API / CDN fallback,
+ * managing the open-files list and active tab, and updating browser history.
+ * Uses HTML cache for instant tab loading.
  */
-export function useFileLoader({
-  serverRawCache,
+export function useFileLoader({ 
+  fileRegistry, 
+  serverRawCache, 
   upsertCacheEntry,
-  applyFileContent,
-  setActiveOverlay,
+  syncServerStructures,
+  applyFileContent, 
+  setActiveOverlay
 }) {
   const [openFiles, setOpenFiles] = useState([]);
   const [activeTab, setActiveTab] = useState(null);
+  const [fileSha,   setFileSha]   = useState(null);
 
   const loadFile = useCallback(
     async (path, name, serverPath = null, historyMode = 'push', activate = true) => {
-      // 1. Resolve the repo key used to address the cache / server.
+      // 1. Calculate repoKey early to clear content or load from cache
       let repoKey = serverPath;
       if (!repoKey && path) {
         try {
@@ -29,18 +32,29 @@ export function useFileLoader({
         repoKey = name;
       }
 
-      // 2. Serve instantly from the hydrated cache when available.
-      let newContent = serverRawCache.current[repoKey] ?? null;
-
       if (activate) {
         setActiveTab(repoKey);
         if (setActiveOverlay) setActiveOverlay(null);
-        applyFileContent(repoKey, newContent ?? '');
+        
+        // Immediate feedback: Load from cache if available, otherwise clear content
+        const cached = serverRawCache.current[repoKey];
+        if (cached) {
+          applyFileContent(repoKey, cached);
+        } else {
+          // Clear old content immediately to avoid glitching previous note content
+          applyFileContent(repoKey, ''); 
+        }
       }
 
-      // 3. Only hit the network when the note was not in the cache.
-      if (newContent == null) {
+      let newContent = '';
+
+      if (!path) {
+        // Local-only file (newly created, never saved)
+        newContent = `# ${name.replace('.md', '')}\n*author: <author>*\n*tag: [[Dash Board]]*\n*links:*\n`;
+        applyFileContent(repoKey, newContent);
+      } else {
         try {
+          // Always read from server cache on tab open/click.
           const apiRes = await fetch('/api/cases', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -50,25 +64,32 @@ export function useFileLoader({
 
           if (data.ok) {
             newContent = data.raw || '';
+            if (data.sha) setFileSha(data.sha);
             upsertCacheEntry(repoKey, newContent, data.html ?? null, Date.now());
-          } else if (path) {
+            applyFileContent(repoKey, newContent);
+          } else {
+            // Last fallback: raw URL
             const res = await fetch(path);
             newContent = await res.text();
             upsertCacheEntry(repoKey, newContent, null, Date.now());
-          } else {
-            newContent = '';
+            applyFileContent(repoKey, newContent);
           }
         } catch (e) {
           console.error('Error loading file:', e);
-          newContent = '# Error\nFailed to load.';
+          applyFileContent(repoKey, '# Error\nFailed to load.');
         }
-        if (activate) applyFileContent(repoKey, newContent);
       }
 
       if (repoKey && repoKey !== 'error') {
         setOpenFiles((prev) => {
           if (!prev.find((f) => f.id === repoKey)) {
-            return [...prev, { id: repoKey, path, name, serverPath: repoKey, fetchedContent: newContent }];
+            return [...prev, { 
+              id: repoKey, 
+              path, 
+              name, 
+              serverPath: repoKey, 
+              fetchedContent: newContent
+            }];
           }
           return prev.map((f) =>
             f.id === repoKey ? { ...f, fetchedContent: newContent } : f
@@ -76,6 +97,7 @@ export function useFileLoader({
         });
 
         if (activate) {
+          setActiveTab(repoKey);
           const cleanPath = repoKey.replace(/\.md$/, '');
           const newUrl    = `/${cleanPath}`;
           if (window.location.pathname !== newUrl) {
@@ -88,8 +110,8 @@ export function useFileLoader({
         }
       }
     },
-    [applyFileContent, serverRawCache, upsertCacheEntry, setActiveOverlay]
+    [applyFileContent, serverRawCache, upsertCacheEntry, syncServerStructures]
   );
 
-  return { openFiles, setOpenFiles, activeTab, setActiveTab, loadFile };
+  return { openFiles, setOpenFiles, activeTab, setActiveTab, fileSha, setFileSha, loadFile };
 }

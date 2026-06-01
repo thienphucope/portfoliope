@@ -5,19 +5,18 @@ import "./globals.css";
 import { Analytics } from '@vercel/analytics/react';
 
 export const metadata = {
+  metadataBase: new URL("https://opewatson.com"),
   title: "Ope Watson",
   description: "Ope Watson's Blog Website",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/blackcat.jpg" />
-        {/* Thêm dòng này để cố định domain chuẩn không có www */}
-        <link rel="canonical" href="https://opewatson.com" />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         {children}
       </body>
       <Analytics />

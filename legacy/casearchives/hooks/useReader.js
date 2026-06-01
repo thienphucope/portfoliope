@@ -4,7 +4,7 @@ import { useTTS } from '@/hooks/useTTS';
 
 const CEFR_LEVELS = ['none', 'a1', 'a2', 'b1', 'b2', 'c1', 'c2'];
 
-export function useReader({ resetKey } = {}) {
+export function useReader() {
   const { generateAudio } = useTTS();
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -98,17 +98,6 @@ export function useReader({ resetKey } = {}) {
 
   const [currentText, setCurrentText] = useState('');
 
-  const lastResetKeyRef = useRef(resetKey);
-  useEffect(() => {
-    if (resetKey === undefined || lastResetKeyRef.current === resetKey) return;
-    lastResetKeyRef.current = resetKey;
-    stop();
-  }, [resetKey, stop]);
-
-  useEffect(() => {
-    return () => stop();
-  }, [stop]);
-
   const cleanText = useCallback((text) => {
     return text
       .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')
@@ -146,23 +135,8 @@ export function useReader({ resetKey } = {}) {
     if (currentRate === 4.0) {
       const wordsCount = cleaned.split(/\s+/).filter(Boolean).length;
       // Approx 500-600 WPM -> ~120ms per word
-      const success = await new Promise((resolve) => {
-        if (signal.aborted) {
-          resolve(false);
-          return;
-        }
-        let timer;
-        const handleAbort = () => {
-          clearTimeout(timer);
-          resolve(false);
-        };
-        timer = setTimeout(() => {
-          signal.removeEventListener('abort', handleAbort);
-          resolve(true);
-        }, wordsCount * 120);
-        signal.addEventListener('abort', handleAbort, { once: true });
-      });
-      return success && !signal.aborted;
+      await new Promise(r => setTimeout(r, wordsCount * 120));
+      return true;
     }
 
     const chunks = lang === 'vi' && cleaned.length > 200 
