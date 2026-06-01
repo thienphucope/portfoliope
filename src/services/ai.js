@@ -470,6 +470,12 @@ const PROVIDERS = [
 ];
 
 export async function handleAiRequest(rawInput, onToolCall = () => {}, onToken = null) {
+  const MAX_QUERY_LENGTH = 500;
+  if ((rawInput.query || '').length > MAX_QUERY_LENGTH) {
+    console.warn(`⚠️ [AI] Query vượt quá ${MAX_QUERY_LENGTH} ký tự, trả về response vô dụng.`);
+    return { response: '...', provider: 'blocked', toolCalls: [] };
+  }
+
   const normalized = normalize(rawInput);
   console.log(`🤖 [AI] Query: "${(rawInput.query || '').slice(0, 50)}..."`);
 

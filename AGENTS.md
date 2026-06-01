@@ -63,6 +63,10 @@
 - **If blocked** — find the root cause, don't break things to make it go away.
 - Match the scope of actions to what was actually requested. User OK'ing something once does not mean OK for all contexts.
 
+### Codex Windows Sandbox Note
+
+- Run PowerShell commands outside the sandbox (`sandbox_permissions: "require_escalated"`); the normal Windows sandbox can fail with `windows sandbox: spawn setup refresh`.
+
 ---
 
 ## 5. Report Changes
