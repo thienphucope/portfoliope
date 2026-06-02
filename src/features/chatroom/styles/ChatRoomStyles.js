@@ -489,10 +489,8 @@ export default function ChatRoomStyles({ isEmbedded }) {
         .bubble-content { font-size: var(--ui-text-body); }
         
         .input-area { padding: 12px var(--feature-space-right) var(--feature-space-bottom) var(--feature-space-left); }
-        .textarea-row { padding: 10px; flex-wrap: wrap; gap: 4px; }
-        .textarea-actions { order: 2; width: 100%; align-items: flex-end; flex-direction: column; gap: 8px; }
+        .textarea-row { padding: 10px; gap: 10px; }
         .action-btn { font-size: var(--ui-text-action); padding: 4px 0; }
-        .chat-input { order: 1; width: 100%; flex: none; font-size: var(--ui-text-body); }
         .live-controls { flex-direction: column; gap: 16px; text-align: center; }
       }
     `}</style>
