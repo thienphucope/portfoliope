@@ -26,17 +26,39 @@
   --feature-bg: #0a0a0c;
   --feature-backdrop-bg: #000000;
   --feature-backdrop-overlay: rgba(0, 0, 0, 0.50);
+  /* Feature edge spacing */
+  --feature-space-top: 28px;
+  --feature-space-right: 24px;
+  --feature-space-bottom: 28px;
+  --feature-space-left: 24px;
+  --feature-space: var(--feature-space-top) var(--feature-space-right) var(--feature-space-bottom) var(--feature-space-left);
   /* Shared UI typography scale */
-  --ui-text-body: 1.06rem;
-  --ui-text-section-header: 0.82rem;
+  --ui-text-body: 1rem;
+  --ui-text-section-header: 0.74rem;
   --ui-letter-section-header: 3px;
-  --ui-text-action: 0.82rem;
+  --ui-text-action: 0.74rem;
   --ui-letter-action: 2px;
-  --ui-text-placeholder: 0.92rem;
+  --ui-text-placeholder: var(--ui-text-body);
   --ui-letter-placeholder: 0.5px;
   --ui-placeholder-opacity: 0.45;
-  --ui-text-title: clamp(1.25rem, 2vw, 1.55rem);
-  --ui-text-title-mobile: clamp(1.25rem, 5.5vw, 1.55rem);
+  --ui-text-title: clamp(1.08rem, 1.7vw, 1.36rem);
+  --ui-text-title-mobile: clamp(1.08rem, 4.8vw, 1.36rem);
+}
+
+@media (max-width: 768px) {
+  :root {
+    --feature-space-top: 28px;
+    --feature-space-right: 20px;
+    --feature-space-bottom: 40px;
+    --feature-space-left: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --feature-space-right: 18px;
+    --feature-space-left: 18px;
+  }
 }
 
 /* -------------------------------------------------------------------------- */

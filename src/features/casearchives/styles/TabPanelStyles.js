@@ -273,17 +273,23 @@ export default function TabPanelStyles() {
           max-width: 100% !important;
           width: 100% !important;
           padding: 10px;
+          min-height: 0;
+          box-sizing: border-box;
+          -webkit-overflow-scrolling: touch;
+          overscroll-behavior: contain;
         }
 
         .window-frame .note-content-wrapper {
           max-width: 50vw;
           width: 100%;
           margin: 0 auto;
+          box-sizing: border-box;
         }
 
         .window-content > div {
           height: 100%;
           width: 100%;
+          min-height: 0;
         }
 
         /* Ensure Chat, Graph, PDF fill window */
@@ -355,13 +361,30 @@ export default function TabPanelStyles() {
         }
 
         @media (max-width: 768px) {
+          .accordion-app.pc-layout,
+          .windows-container,
+          .window-frame.maximized {
+            height: 100dvh !important;
+          }
+
+          .window-frame,
+          .window-content,
+          .window-frame-wrapper {
+            min-height: 0;
+          }
+
           .window-title-bar,
           .window-controls {
             display: none !important;
           }
 
+          .window-frame .markdown-container {
+            padding: 10px 10px max(24px, env(safe-area-inset-bottom));
+          }
+
           .window-frame .note-content-wrapper {
             max-width: 100%;
+            padding-bottom: max(28px, env(safe-area-inset-bottom));
           }
         }
     `}</style>

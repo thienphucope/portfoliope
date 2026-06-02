@@ -360,7 +360,7 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
   const activeTabPanel = useMemo(() => {
     const activeT = tabs.find(t => t.id === activeTab); if (!activeT) return null;
     return (
-      <article ref={markdownContainerRef} className="markdown-container" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }} onScroll={(e) => { const t = e.target; if (fileName && !isRestoringRef.current) scrollPosMap.current[fileName] = t.scrollTop; updateActiveChapter(t); const bottom = t.scrollHeight - t.scrollTop <= t.clientHeight + 100; if (bottom !== isAtBottom) setIsAtBottom(bottom); }}>
+      <article ref={markdownContainerRef} className="markdown-container" style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }} onScroll={(e) => { const t = e.target; if (fileName && !isRestoringRef.current) scrollPosMap.current[fileName] = t.scrollTop; updateActiveChapter(t); const bottom = t.scrollHeight - t.scrollTop <= t.clientHeight + 100; if (bottom !== isAtBottom) setIsAtBottom(bottom); }}>
         <div className="note-content-wrapper">
           {fileName === activeT.id ? (
             <BlockEditor content={content} fileName={fileName} onLinkClick={handleLinkClick} fileRegistry={fileRegistry.current} reader={augmentedReader} />
@@ -384,7 +384,7 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
           )}
 
           {isEditorOpen && (
-            <div className={`windows-container has-editor ${maximizedWindow ? 'has-maximized' : ''}`} style={{ width: '100vw', height: '100vh', margin: 0, display: 'flex', flexDirection: 'row' }}>
+            <div className={`windows-container has-editor ${maximizedWindow ? 'has-maximized' : ''}`} style={{ width: '100vw', height: '100dvh', margin: 0, display: 'flex', flexDirection: 'row' }}>
 
               {editorView === 'note' && !isChatOpen && tabs.find(t => t.id === activeTab)?.type === 'editor' && (
                 <ChapterRail chapters={chapters} activeIndex={activeChapterIndex} onJump={scrollToChapter} />
@@ -399,8 +399,8 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
                     ? <div className="pdf-container"><PDFViewer ref={pdfRef} onClose={() => setEditorView('note')} reader={augmentedReader} isOpen={true} onStateChange={handlePdfStateChange} initialFile={lastPdfStateRef.current.file} initialPage={lastPdfStateRef.current.pageNumber} initialFitMode={lastPdfStateRef.current.fitMode} /></div>
                     : activeTabPanel;
                 const editorContent = (
-                  <div style={{ display: 'flex', height: '100%', width: '100%' }}>
-                    <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}>{mainContent}</div>
+                  <div style={{ display: 'flex', height: '100%', minHeight: 0, width: '100%' }}>
+                    <div style={{ flex: 1, minWidth: 0, minHeight: 0, overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}>{mainContent}</div>
                     {isChatOpen && (
                       <div style={{ width: '50%', flexShrink: 0, borderLeft: '1px solid var(--theme)', height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                         <div className="chat-container" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
@@ -412,7 +412,7 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
                 );
 
                 return (
-                  <div className="window-frame-wrapper" style={isMax ? {} : { flex: 1, height: '100%' }}>
+                  <div className="window-frame-wrapper" style={isMax ? {} : { flex: 1, height: '100%', minHeight: 0 }}>
                     <WindowFrame
                       id="editor"
                       title={`Case Archives - ${tabTitle}`}

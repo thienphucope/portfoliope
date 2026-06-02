@@ -154,13 +154,13 @@ export default function NoteFeedStyles() {
 
       .nf-social-label {
         font-family: var(--font-mono);
-        font-size: 0.82rem;
+        font-size: var(--ui-text-body);
         letter-spacing: 1px;
       }
 
       .nf-social-desc {
         opacity: 0.65;
-        font-size: 0.82rem;
+        font-size: var(--ui-text-body);
       }
 
       .nf-hero-divider {
@@ -277,7 +277,7 @@ export default function NoteFeedStyles() {
         padding: 40px 0;
         text-align: center;
         font-family: var(--font-mono);
-        font-size: 0.92rem;
+        font-size: var(--ui-text-placeholder);
         letter-spacing: 2px;
         color: var(--nf-txt-dim);
         text-transform: uppercase;
@@ -331,14 +331,14 @@ export default function NoteFeedStyles() {
 
       .nf-case-date {
         font-family: var(--font-mono);
-        font-size: 0.82rem;
+        font-size: var(--ui-text-action);
         color: var(--theme);
         letter-spacing: 1px;
       }
 
       .nf-case-tag {
         font-family: var(--font-mono);
-        font-size: 0.82rem;
+        font-size: var(--ui-text-action);
         letter-spacing: 1px;
         color: var(--nf-txt-dim);
         border: 1px solid var(--nf-border);
@@ -347,7 +347,7 @@ export default function NoteFeedStyles() {
 
       .nf-case-author {
         font-family: var(--font-mono);
-        font-size: 0.82rem;
+        font-size: var(--ui-text-action);
         letter-spacing: 1px;
         color: var(--nf-txt-dim);
       }
@@ -421,7 +421,7 @@ export default function NoteFeedStyles() {
         padding: 24px 0 0;
         border-top: 1px solid var(--nf-border);
         font-family: var(--font-mono);
-        font-size: 0.82rem;
+        font-size: var(--ui-text-body);
         letter-spacing: 2px;
         color: var(--nf-txt-dim);
         text-align: center;

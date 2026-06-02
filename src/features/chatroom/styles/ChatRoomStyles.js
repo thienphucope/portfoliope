@@ -42,7 +42,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 20px 16px;
+        padding: var(--feature-space-top) var(--feature-space-right) 20px var(--feature-space-left);
         border-bottom: 1px dashed rgba(186, 145, 112, 0.3);
         background: rgba(10, 10, 12, 0.95);
         position: relative;
@@ -75,10 +75,10 @@ export default function ChatRoomStyles({ isEmbedded }) {
       .username-input::placeholder {
         color: currentColor;
         font-family: var(--font-mono);
-        font-size: inherit;
+        font-size: var(--ui-text-placeholder);
         font-weight: 400;
-        letter-spacing: inherit;
-        opacity: 0.5;
+        letter-spacing: var(--ui-letter-placeholder);
+        opacity: var(--ui-placeholder-opacity);
         font-style: normal;
       }
       .username-input:focus { border-bottom-color: rgba(196, 180, 138, 0.6); color: rgba(196, 180, 138, 0.9); }
@@ -192,7 +192,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
       .messages-list {
         flex: 1;
         overflow-y: auto;
-        padding: 24px 16px;
+        padding: 24px var(--feature-space-right) 24px var(--feature-space-left);
         display: flex;
         flex-direction: column;
         gap: 32px;
@@ -217,6 +217,9 @@ export default function ChatRoomStyles({ isEmbedded }) {
         font-size: var(--ui-text-body);
         color: #e0e0e0;
         line-height: 1.65;
+      }
+      .chat-shell .bubble-content.markdown-content {
+        font-size: var(--ui-text-body);
       }
       .bubble-content p { margin: 0 0 10px 0; }
       .bubble-content p:last-child { margin-bottom: 0; }
@@ -303,7 +306,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
 
       .input-area {
         flex-shrink: 0;
-        padding: 16px;
+        padding: 16px var(--feature-space-right) var(--feature-space-bottom) var(--feature-space-left);
         border-top: 1px dashed rgba(186, 145, 112, 0.3);
         background: rgba(10, 10, 12, 0.95);
         position: relative;
@@ -435,7 +438,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
       ${isEmbedded ? `
         /* header */
         .chat-header {
-          padding: 12px 24px;
+          padding: 12px var(--feature-space-right) 12px var(--feature-space-left);
           flex-wrap: nowrap;
           align-items: center;
           gap: 6px;
@@ -460,24 +463,24 @@ export default function ChatRoomStyles({ isEmbedded }) {
 
         /* messages */
         .messages-area { padding: 0; }
-        .messages-list { padding: 16px 24px; gap: 20px; }
-        .bubble-content { font-size: 0.92rem; line-height: 1.6; color: #e0e0e0; }
+        .messages-list { padding: 16px var(--feature-space-right) 16px var(--feature-space-left); gap: 20px; }
+        .bubble-content { font-size: var(--ui-text-body); line-height: 1.6; color: #e0e0e0; }
 
         /* input */
-        .input-area { padding: 12px 24px; }
+        .input-area { padding: 12px var(--feature-space-right) 12px var(--feature-space-left); }
         .text-controls { max-width: none; margin: 0; }
         .textarea-row { padding: 8px 10px; gap: 6px; }
         .chat-input { font-size: var(--ui-text-body); color: #e0e0e0; }
         .send-btn, .composer-tool { font-size: var(--ui-text-action); letter-spacing: var(--ui-letter-action); }
 
         /* live */
-        .live-controls { max-width: none; margin: 0; padding: 10px 24px; }
+        .live-controls { max-width: none; margin: 0; padding: 10px var(--feature-space-right) 10px var(--feature-space-left); }
         .live-title { font-size: 0.92rem; }
         .live-subtitle { font-size: 0.65rem; letter-spacing: 1px; }
       ` : ''}
 
       @media (max-width: 768px) {
-        .chat-header { padding: 12px 16px; flex-wrap: nowrap; gap: 8px; }
+        .chat-header { padding: var(--feature-space-top) var(--feature-space-right) 12px var(--feature-space-left); flex-wrap: nowrap; gap: 8px; }
         .header-copy { min-width: 0; flex-shrink: 1; }
         .chat-name { font-size: 0.65rem; letter-spacing: 2px; }
         .chat-overline { font-size: var(--ui-text-section-header); letter-spacing: var(--ui-letter-section-header); white-space: nowrap; }
@@ -486,11 +489,11 @@ export default function ChatRoomStyles({ isEmbedded }) {
         .username-input { width: 70px; flex: 1; max-width: 110px; font-size: 0.65rem; }
         .voice-header-btn { font-size: var(--ui-text-action); letter-spacing: var(--ui-letter-action); }
         
-        .messages-list { padding: 20px 12px; gap: 24px; }
+        .messages-list { padding: 20px var(--feature-space-right) 20px var(--feature-space-left); gap: 24px; }
         .message-bubble { max-width: 98%; }
-        .bubble-content { font-size: 1.14rem; }
+        .bubble-content { font-size: var(--ui-text-body); }
         
-        .input-area { padding: 12px; }
+        .input-area { padding: 12px var(--feature-space-right) var(--feature-space-bottom) var(--feature-space-left); }
         .textarea-row { padding: 10px; flex-wrap: wrap; gap: 4px; }
         .textarea-actions { order: 2; width: 100%; align-items: flex-end; flex-direction: column; gap: 8px; }
         .action-btn { font-size: var(--ui-text-action); padding: 4px 0; }

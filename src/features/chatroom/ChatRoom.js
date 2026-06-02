@@ -1,16 +1,39 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { useAI } from '@/hooks/useAI';
 import { MOXXI_DISPLAY_NAME, MOXXI_GREETING, MOXXI_ERROR_MSG, SUGGESTED_PROMPTS } from '@/configs/ai';
 import { useSTT } from '@/hooks/useSTT';
 import { useTTS } from '@/hooks/useTTS';
-import { ensureLibsLoaded } from '@/features/casearchives/utils/markdown';
+import { ensureLibsLoaded, postProcess } from '@/features/casearchives/utils/markdown';
+import EditorStyles from '@/features/casearchives/styles/EditorStyles';
+import MarkdownStyles from '@/features/casearchives/styles/MarkdownStyles';
 import ChatRoomStyles from './styles/ChatRoomStyles';
 
-const extractSpeechText = (html) => {
-  if (!html) return '';
-  const withBreaks = html
+const cleanAssistantOutput = (txt) => {
+  if (!txt) return '';
+  const cleaned = txt.trim();
+  const taggedWrapper = cleaned.match(/^```(?:html|md|markdown|text)\s*\n([\s\S]*?)\n```$/i);
+  if (taggedWrapper) return taggedWrapper[1].trim();
+  const htmlWrapper = cleaned.match(/^```\s*\n([\s\S]*?)\n```$/i);
+  if (htmlWrapper && /<\/?[a-z][\s\S]*>/i.test(htmlWrapper[1])) return htmlWrapper[1].trim();
+  return cleaned;
+};
+
+const renderAssistantContent = (txt, markdownReady) => {
+  const cleaned = cleanAssistantOutput(txt);
+  if (!cleaned) return '';
+  if (!markdownReady || typeof window === 'undefined' || !window.marked) return cleaned;
+  try {
+    return window.marked.parse(cleaned);
+  } catch {
+    return cleaned;
+  }
+};
+
+const extractSpeechText = (content, markdownReady) => {
+  if (!content) return '';
+  const withBreaks = renderAssistantContent(content, markdownReady)
     .replace(/<br\s*\/?>/gi, ' ')
     .replace(/<\/(p|div|li|h[1-6]|section|article|blockquote)>/gi, ' ');
   const normalize = (text) => text.replace(/\s+/g, ' ').replace(/\s+([,.!?])/g, '$1').trim().toLowerCase();
@@ -24,9 +47,56 @@ const extractSpeechText = (html) => {
   return normalize(doc.body.textContent || '');
 };
 
+const createLinkPayload = (target, element) => ({
+  target: element,
+  preventDefault: () => {},
+  replace: (...args) => target.replace(...args),
+  toString: () => target,
+  valueOf: () => target,
+});
+
+const ChatMarkdownContent = ({ content, markdownReady, onLinkClick, isStreaming }) => {
+  const contentRef = useRef(null);
+  const html = renderAssistantContent(content, markdownReady);
+
+  useLayoutEffect(() => {
+    if (contentRef.current && markdownReady) postProcess(contentRef.current);
+  }, [html, markdownReady, isStreaming]);
+
+  const handleClick = useCallback((e) => {
+    const a = e.target.closest('a[href]');
+    if (a && onLinkClick) {
+      const href = a.getAttribute('href');
+      // Allow normal browser behavior for external links
+      if (href.startsWith('http://') || href.startsWith('https://')) {
+        return;
+      }
+      e.preventDefault();
+      onLinkClick(createLinkPayload(href, a));
+      return;
+    }
+
+    const internalLink = e.target.closest('.internal-link');
+    if (internalLink && onLinkClick) {
+      e.preventDefault();
+      const target = internalLink.getAttribute('data-target') || internalLink.innerText;
+      onLinkClick(createLinkPayload(target, internalLink));
+    }
+  }, [onLinkClick]);
+
+  return (
+    <div
+      ref={contentRef}
+      className="bubble-content html-content block-content markdown-content block-view"
+      dangerouslySetInnerHTML={{ __html: html }}
+      onClick={handleClick}
+    />
+  );
+};
+
 const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick, onLiveCallChange }, ref) {
   const [isMounted, setIsMounted] = useState(false);
-  const [libsReady, setLibsReady] = useState(false);
+  const [markdownReady, setMarkdownReady] = useState(false);
   const [convo, setConvo] = useState([
     { role: 'assistant', content: MOXXI_GREETING }
   ]);
@@ -65,7 +135,18 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
         console.error('Failed to load chat history:', e);
       }
     }
-    ensureLibsLoaded().then(() => setLibsReady(true));
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    ensureLibsLoaded()
+      .then(() => {
+        if (active) setMarkdownReady(true);
+      })
+      .catch((e) => {
+        console.error('Failed to load markdown engine:', e);
+      });
+    return () => { active = false; };
   }, []);
 
   useEffect(() => {
@@ -140,7 +221,7 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
         });
       });
       if (isLiveCallRef.current) {
-        const speechText = extractSpeechText(reply);
+        const speechText = extractSpeechText(reply, markdownReady);
         if (speechText) streamAudioLive(speechText);
       }
     } catch (e) {
@@ -261,16 +342,6 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
         {(() => {
           const assistantMsgs = convo.filter(m => m.role === 'assistant');
 
-          // Clean up any accidental markdown code blocks the AI might slip in despite the prompt
-          const cleanHtml = (txt) => {
-            if (!txt) return '';
-            let cleaned = txt;
-            // Remove ```html or ```text wrapping
-            cleaned = cleaned.replace(/^```[a-z]*\n?/i, '');
-            cleaned = cleaned.replace(/\n?```$/i, '');
-            return cleaned.trim();
-          };
-
           return (
             <div className="messages-list" ref={messagesAreaRef}>
               {assistantMsgs.map((msg, i) => {
@@ -295,22 +366,7 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
                         </div>
                       );
                     })()}
-                    <div
-                      className="bubble-content html-content"
-                      dangerouslySetInnerHTML={{ __html: cleanHtml(content) }}
-                      onClick={(e) => { 
-                        const a = e.target.closest('a[href]'); 
-                        if (a && onLinkClick) {
-                          const href = a.getAttribute('href');
-                          // Allow normal browser behavior for external links
-                          if (href.startsWith('http://') || href.startsWith('https://')) {
-                            return;
-                          }
-                          e.preventDefault(); 
-                          onLinkClick(href); 
-                        } 
-                      }}
-                    />
+                    <ChatMarkdownContent content={content} markdownReady={markdownReady} onLinkClick={onLinkClick} isStreaming={isLast && isStreaming} />
                     {isLast && (
                       <>
                         {isStreaming && <span className="streaming-cursor" />}
@@ -407,6 +463,8 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
       </div>
 
       <ChatRoomStyles isEmbedded={isEmbedded} />
+      <EditorStyles />
+      <MarkdownStyles />
     </div>
   );
 });

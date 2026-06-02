@@ -53,13 +53,13 @@ const TitleBlock = ({ fileName, reader, onDoubleClick, isReading }) => {
       <div className="block-content markdown-content" style={{ textAlign: 'center', overflow: 'visible', width: '100%' }}>
         <h1
           ref={titleRef}
-          className="fit-heading"
+          className="fit-heading note-title-heading"
           style={{
             display: 'inline-block',
             whiteSpace: 'nowrap',
             overflow: 'visible',
             textAlign: 'center',
-            padding: '2rem 0',
+            padding: 'var(--note-title-padding)',
             margin: '0',
             fontFamily: 'var(--font-display)',
             fontWeight: '900'
@@ -247,6 +247,14 @@ const BlockEditor = ({ content, fileName, onLinkClick, fileRegistry = {}, reader
         );
       })}
       <style jsx global>{`
+        .title-block {
+          --note-title-padding: 18px 0 14px;
+        }
+        @media (max-width: 768px) {
+          .title-block {
+            --note-title-padding: 12px 0 10px;
+          }
+        }
         .block-reading-highlight {
           background-color: var(--theme) !important;
           color: var(--background) !important;
