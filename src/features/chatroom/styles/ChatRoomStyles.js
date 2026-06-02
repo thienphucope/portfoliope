@@ -448,7 +448,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
           flex-direction: row; align-items: center; justify-content: center; gap: 8px;
         }
         .chat-overline {
-          font-size: var(--ui-text-section-header); letter-spacing: var(--ui-letter-section-header);
+          letter-spacing: var(--ui-letter-section-header);
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
           flex-shrink: 1;
         }
