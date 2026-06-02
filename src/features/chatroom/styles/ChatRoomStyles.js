@@ -444,13 +444,8 @@ export default function ChatRoomStyles({ isEmbedded }) {
           gap: 6px;
         }
         .header-copy {
-          min-width: 0; overflow: hidden;
+          min-width: 0;
           flex-direction: row; align-items: center; justify-content: center; gap: 8px;
-        }
-        .chat-overline {
-          letter-spacing: var(--ui-letter-section-header);
-          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-          flex-shrink: 1;
         }
         .chat-name {
           font-size: 0.65rem; letter-spacing: 1px;
@@ -483,7 +478,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
         .chat-header { padding: var(--feature-header-top) var(--feature-space-right) var(--feature-header-bottom) var(--feature-space-left); flex-wrap: nowrap; gap: 8px; }
         .header-copy { min-width: 0; flex-shrink: 1; }
         .chat-name { font-size: 0.65rem; letter-spacing: 2px; }
-        .chat-overline { font-size: var(--ui-text-section-header); letter-spacing: var(--ui-letter-section-header); white-space: nowrap; }
+        .chat-overline { letter-spacing: var(--ui-letter-section-header); white-space: nowrap; }
         .header-actions { flex-shrink: 0; gap: 8px; }
         .header-btn-group { gap: 8px; white-space: nowrap; }
         .username-input { width: 70px; flex: 1; max-width: 110px; font-size: 0.65rem; }
