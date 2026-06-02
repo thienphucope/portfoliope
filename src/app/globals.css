@@ -32,6 +32,9 @@
   --feature-space-bottom: 28px;
   --feature-space-left: 24px;
   --feature-space: var(--feature-space-top) var(--feature-space-right) var(--feature-space-bottom) var(--feature-space-left);
+  --feature-header-top: var(--feature-space-top);
+  --feature-header-bottom: 12px;
+  --feature-divider: 1px dashed rgba(186, 145, 112, 0.3);
   /* Shared UI typography scale */
   --ui-text-body: 1rem;
   --ui-text-section-header: 0.74rem;

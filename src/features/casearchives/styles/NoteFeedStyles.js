@@ -163,6 +163,66 @@ export default function NoteFeedStyles() {
         font-size: var(--ui-text-body);
       }
 
+      .nf-feature-refs {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .nf-feature-ref-slot {
+        display: block;
+      }
+
+      .nf-feature-ref {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        border: 1px solid var(--nf-border);
+        background: rgba(186,145,112,0.02);
+        color: var(--nf-txt-dim);
+        font-family: var(--font-mono);
+        text-align: left;
+        text-decoration: none;
+        cursor: pointer;
+        transition: border-color 0.2s, background 0.2s, color 0.2s;
+        box-sizing: border-box;
+      }
+
+      .nf-feature-ref:hover,
+      .nf-feature-ref.is-active {
+        border-color: rgba(186,145,112,0.45);
+        background: rgba(186,145,112,0.06);
+        color: var(--theme);
+      }
+
+      .nf-feature-ref-icon {
+        flex-shrink: 0;
+        font-size: 1.06rem;
+      }
+
+      .nf-feature-ref-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+      }
+
+      .nf-feature-ref-label {
+        font-size: var(--ui-text-body);
+        letter-spacing: 1px;
+      }
+
+      .nf-feature-ref-desc {
+        font-size: var(--ui-text-body);
+        opacity: 0.65;
+      }
+
+      .nf-feature-ref-mobile {
+        display: none;
+      }
+
       .nf-hero-divider {
         width: 100%;
         height: 1px;
@@ -185,13 +245,47 @@ export default function NoteFeedStyles() {
         box-sizing: border-box;
       }
 
+      .nf-feature-panel {
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+      }
+
+      .nf-feature-panel-slot {
+        display: none;
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+      }
+
+      .nf-feature-panel-slot.is-active {
+        display: block;
+      }
+
+      .nf-feature-panel-fill {
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+      }
+
+      .nf-feature-panel-body {
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        overflow-y: auto;
+        padding: var(--feature-space);
+        box-sizing: border-box;
+        scrollbar-width: none;
+      }
+      .nf-feature-panel-body::-webkit-scrollbar { display: none; }
+
       /* ── Feed (middle pane) ── */
       .nf-feed {
         flex: 1 1 0;
         min-width: 0;
         height: 100%;
         overflow-y: auto;
-        padding: 28px 24px;
+        padding: var(--feature-space);
         scrollbar-width: none;
         box-sizing: border-box;
       }
@@ -202,7 +296,10 @@ export default function NoteFeedStyles() {
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-bottom: 12px;
+        margin: 0 calc(-1 * var(--feature-space-right)) 12px calc(-1 * var(--feature-space-left));
+        padding: 0 var(--feature-space-right) var(--feature-header-bottom) var(--feature-space-left);
+        border-bottom: var(--feature-divider);
+        box-sizing: border-box;
       }
 
       .nf-cases-label {
@@ -287,7 +384,6 @@ export default function NoteFeedStyles() {
       /* ── Cases ── */
       .nf-cases { padding-bottom: 48px; }
 
-      .nf-mobile-only { display: none !important; }
       .nf-case-list {
         display: flex;
         flex-direction: column;
@@ -364,14 +460,18 @@ export default function NoteFeedStyles() {
       }
       .nf-case-title:hover { color: var(--theme); }
 
-      .nf-case-excerpt {
+      .nf-case-excerpt,
+      .nf-feed .nf-case-excerpt.markdown-content {
         font-size: var(--ui-text-body);
         line-height: 1.65;
         color: rgba(224,224,224,0.8);
         margin-bottom: 10px;
+        text-align: left;
       }
-      .nf-case-excerpt p { margin: 0 0 4px 0; }
-      .nf-case-excerpt p:last-child { margin: 0; }
+      .nf-case-excerpt p,
+      .nf-feed .nf-case-excerpt.markdown-content p { margin: 0 0 4px 0; }
+      .nf-case-excerpt p:last-child,
+      .nf-feed .nf-case-excerpt.markdown-content p:last-child { margin: 0; }
 
       .nf-case-read {
         background: none;
@@ -440,28 +540,6 @@ export default function NoteFeedStyles() {
 
       ::selection { background: var(--theme); color: var(--nf-bg); }
 
-      .nf-desktop-only { display: block; height: 100%; width: 100%; }
-      .nf-mobile-only { display: none !important; }
-      .nf-block-ref-link {
-        display: block;
-        padding: 16px;
-        background: rgba(186,145,112,0.05);
-        border: 1px dashed var(--nf-border);
-        color: var(--theme);
-        font-family: var(--font-display);
-        font-size: var(--ui-text-title);
-        font-weight: 700;
-        letter-spacing: var(--ui-letter-section-header);
-        text-align: center;
-        text-decoration: none;
-        transition: border-color 0.2s, background 0.2s;
-        margin-top: 16px;
-      }
-      .nf-block-ref-link:hover {
-        border-color: var(--theme);
-        background: rgba(186,145,112,0.1);
-      }
-
       /* ── Mobile ── */
       @media (max-width: 768px) {
         .nf-title-link {
@@ -489,25 +567,20 @@ export default function NoteFeedStyles() {
         .nf-feed {
           height: auto;
           overflow-y: visible;
-          padding: 28px 20px 40px;
+          padding: var(--feature-space);
         }
         .nf-sidekick {
-          flex: none;
-          width: 100%;
-          height: auto;
-          padding: 0 24px 24px;
-          border-left: none;
-          border-top: none;
+          display: none;
         }
-        .nf-desktop-only { display: none !important; }
-        .nf-mobile-only { display: block !important; }
+        .nf-feature-ref-desktop { display: none; }
+        .nf-feature-ref-mobile { display: flex; }
         .nf-ctas { flex-direction: row; flex-wrap: wrap; gap: 10px; }
         .nf-case-title { font-size: var(--ui-text-title-mobile); }
       }
 
       @media (max-width: 480px) {
         .nf-hero { padding: 44px 18px 16px; }
-        .nf-feed { padding: 28px 18px 40px; }
+        .nf-feed { padding: var(--feature-space); }
         .nf-ctas { flex-direction: column; }
         .nf-footer { flex-direction: column; gap: 8px; text-align: center; }
         .nf-sidekick { height: auto; }

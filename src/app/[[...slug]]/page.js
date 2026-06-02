@@ -1,8 +1,6 @@
 import CaseClient from '@/features/casearchives/CaseArchives';
-import NoteFeed from '@/features/casearchives/NoteFeed';
 import HeroSection from '@/components/sections/HeroSection';
-import Link from 'next/link';
-import TextToSpeech from '@/features/texttospeech/TextToSpeech';
+import NoteFeed from '@/features/casearchives/NoteFeed';
 import { hydrateServerCache } from '@/services/caseProvider';
 
 function caseTitleFromKey(key) {
@@ -119,19 +117,10 @@ export default async function CasePage({ params }) {
 
       {isRoot
         ? (
-          <NoteFeed
-            serverData={githubData}
-            hero={(
-              <HeroSection>
-                <div className="nf-desktop-only">
-                  <TextToSpeech />
-                </div>
-                <Link href="/voice" className="nf-mobile-only nf-block-ref-link">
-                  Voice synthesis →
-                </Link>
-              </HeroSection>
-            )}
-          />
+          <div className="nf-shell">
+            <HeroSection />
+            <NoteFeed serverData={githubData} />
+          </div>
         )
         : <CaseClient serverHydratedData={githubData} />
       }

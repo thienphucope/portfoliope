@@ -6,11 +6,9 @@ import { useBootstrapData } from '@/features/casearchives/hooks/useBootstrapData
 import { useFetchBatch, BATCH_SIZE } from '@/features/casearchives/hooks/useFetchBatch';
 import { useFeedEffects } from '@/features/casearchives/hooks/useFeedEffects';
 import CasesSection from '@/features/casearchives/components/CasesSection';
-import Link from 'next/link';
-import ChatRoom from '@/features/chatroom/ChatRoom';
 import NoteFeedStyles from '@/features/casearchives/styles/NoteFeedStyles';
 
-export default function NoteFeed({ hero, onLinkClick, serverData }) {
+export default function NoteFeed({ onLinkClick, serverData }) {
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
   const [libsReady, setLibsReady] = useState(false);
@@ -39,34 +37,23 @@ export default function NoteFeed({ hero, onLinkClick, serverData }) {
     }
   };
 
-  if (!isMounted) return null;
-
   return (
-    <div className="nf-shell">
-      <aside className="nf-hero">
-        {hero}
-      </aside>
-      <aside className="nf-sidekick">
-        <div className="nf-desktop-only" style={{ height: '100%' }}>
-          <ChatRoom isEmbedded onLinkClick={handleLinkClick} />
-        </div>
-        <Link href="/chat" className="nf-mobile-only nf-block-ref-link">
-          Consult →
-        </Link>
-      </aside>
-      <main className="nf-feed" ref={feedRef}>
-        <CasesSection
-          displayedCases={displayedCases}
-          onLinkClick={handleLinkClick}
-          loadedCount={loadedCount}
-          totalCount={totalCount}
-          loading={loading}
-          onLoadMore={() => fetchBatch(loadedCount, loadedCount + BATCH_SIZE)}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-        />
-      </main>
+    <>
+      {isMounted && (
+        <main className="nf-feed" ref={feedRef}>
+          <CasesSection
+            displayedCases={displayedCases}
+            onLinkClick={handleLinkClick}
+            loadedCount={loadedCount}
+            totalCount={totalCount}
+            loading={loading}
+            onLoadMore={() => fetchBatch(loadedCount, loadedCount + BATCH_SIZE)}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+          />
+        </main>
+      )}
       <NoteFeedStyles />
-    </div>
+    </>
   );
 }

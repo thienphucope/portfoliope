@@ -11,9 +11,16 @@ export default function TextToSpeech() {
   const { generateAudio } = useTTS();
 
   const historyRef = useRef(audioHistory);
+  const historyAreaRef = useRef(null);
+  const textareaRef = useRef(null);
   useEffect(() => {
     historyRef.current = audioHistory;
   }, [audioHistory]);
+
+  useEffect(() => {
+    const area = historyAreaRef.current;
+    if (area) area.scrollTo({ top: area.scrollHeight, behavior: 'smooth' });
+  }, [audioHistory.length]);
 
   useEffect(() => {
     return () => {
@@ -29,8 +36,9 @@ export default function TextToSpeech() {
     try {
       const blob = await generateAudio(text, { provider: 'modal' });
       const url = URL.createObjectURL(blob);
-      setAudioHistory(prev => [{ url, text }, ...prev]);
+      setAudioHistory(prev => [...prev, { url, text }]);
       setTtsText('');
+      if (textareaRef.current) textareaRef.current.style.height = 'auto';
     } catch (e) {
       setTtsError('Generation failed. The voice server may be cold — try again in a moment.');
     } finally {
@@ -47,38 +55,51 @@ export default function TextToSpeech() {
             <span className="info-icon" data-tooltip="Speech synthesis using a fine-tuned GPT-SoVITS model of Moxxi's voice">i</span>
           </div>
         </div>
-        <div className="nf-tts-textarea-row">
-          <textarea
-            className="nf-tts-input"
-            placeholder="Speak..."
-            value={ttsText}
-            onChange={(e) => setTtsText(e.target.value)}
-            rows={1}
-            onInput={(e) => {
-              e.target.style.height = 'auto';
-              e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
-            }}
-            disabled={ttsLoading}
-          />
-          <button
-            className="nf-tts-btn"
-            onClick={handleGenerate}
-            disabled={!ttsText.trim() || ttsLoading}
-          >
-            {ttsLoading ? '[ ... ]' : '[ GEN ]'}
-          </button>
+        <div className="nf-tts-history-area" ref={historyAreaRef}>
+          {audioHistory.length > 0 ? (
+            <div className="nf-tts-history">
+              {audioHistory.map((item, i) => (
+                <div key={i} className="nf-tts-history-item">
+                  <p className="nf-tts-history-text">&quot;{item.text}&quot;</p>
+                  <audio className="nf-tts-audio" controls src={item.url} autoPlay={i === audioHistory.length - 1} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="nf-tts-empty">No audio generated yet.</div>
+          )}
         </div>
-        {ttsError && <p className="nf-tts-error">{ttsError}</p>}
-        {audioHistory.length > 0 && (
-          <div className="nf-tts-history">
-            {audioHistory.map((item, i) => (
-              <div key={i} className="nf-tts-history-item">
-                <p className="nf-tts-history-text">&quot;{item.text}&quot;</p>
-                <audio className="nf-tts-audio" controls src={item.url} autoPlay={i === 0} />
-              </div>
-            ))}
+        <div className="nf-tts-composer">
+          {ttsError && <p className="nf-tts-error">{ttsError}</p>}
+          <div className="nf-tts-textarea-row">
+            <textarea
+              ref={textareaRef}
+              className="nf-tts-input"
+              placeholder="Speak..."
+              value={ttsText}
+              onChange={(e) => setTtsText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleGenerate();
+                }
+              }}
+              rows={1}
+              onInput={(e) => {
+                e.target.style.height = 'auto';
+                e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+              }}
+              disabled={ttsLoading}
+            />
+            <button
+              className="nf-tts-btn"
+              onClick={handleGenerate}
+              disabled={!ttsText.trim() || ttsLoading}
+            >
+              {ttsLoading ? '[ ... ]' : '[ GEN ]'}
+            </button>
           </div>
-        )}
+        </div>
       </div>
       <TextToSpeechStyles />
     </>

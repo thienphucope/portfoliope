@@ -42,8 +42,8 @@ export default function ChatRoomStyles({ isEmbedded }) {
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: var(--feature-space-top) var(--feature-space-right) 20px var(--feature-space-left);
-        border-bottom: 1px dashed rgba(186, 145, 112, 0.3);
+        padding: var(--feature-header-top) var(--feature-space-right) var(--feature-header-bottom) var(--feature-space-left);
+        border-bottom: var(--feature-divider);
         background: rgba(10, 10, 12, 0.95);
         position: relative;
         z-index: 10;
@@ -307,7 +307,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
       .input-area {
         flex-shrink: 0;
         padding: 16px var(--feature-space-right) var(--feature-space-bottom) var(--feature-space-left);
-        border-top: 1px dashed rgba(186, 145, 112, 0.3);
+        border-top: var(--feature-divider);
         background: rgba(10, 10, 12, 0.95);
         position: relative;
         z-index: 10;
@@ -438,7 +438,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
       ${isEmbedded ? `
         /* header */
         .chat-header {
-          padding: 12px var(--feature-space-right) 12px var(--feature-space-left);
+          padding: var(--feature-header-top) var(--feature-space-right) var(--feature-header-bottom) var(--feature-space-left);
           flex-wrap: nowrap;
           align-items: center;
           gap: 6px;
@@ -480,7 +480,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
       ` : ''}
 
       @media (max-width: 768px) {
-        .chat-header { padding: var(--feature-space-top) var(--feature-space-right) 12px var(--feature-space-left); flex-wrap: nowrap; gap: 8px; }
+        .chat-header { padding: var(--feature-header-top) var(--feature-space-right) var(--feature-header-bottom) var(--feature-space-left); flex-wrap: nowrap; gap: 8px; }
         .header-copy { min-width: 0; flex-shrink: 1; }
         .chat-name { font-size: 0.65rem; letter-spacing: 2px; }
         .chat-overline { font-size: var(--ui-text-section-header); letter-spacing: var(--ui-letter-section-header); white-space: nowrap; }
