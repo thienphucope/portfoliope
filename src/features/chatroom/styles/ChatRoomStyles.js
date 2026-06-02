@@ -306,7 +306,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
 
       .input-area {
         flex-shrink: 0;
-        padding: 16px var(--feature-space-right) var(--feature-space-bottom) var(--feature-space-left);
+        padding: var(--feature-header-bottom) var(--feature-space-right) var(--feature-header-bottom) var(--feature-space-left);
         border-top: var(--feature-divider);
         background: rgba(10, 10, 12, 0.95);
         position: relative;
@@ -488,7 +488,6 @@ export default function ChatRoomStyles({ isEmbedded }) {
         .message-bubble { max-width: 98%; }
         .bubble-content { font-size: var(--ui-text-body); }
         
-        .input-area { padding: 12px var(--feature-space-right) var(--feature-space-bottom) var(--feature-space-left); }
         .textarea-row { padding: 10px; gap: 10px; }
         .action-btn { font-size: var(--ui-text-action); padding: 4px 0; }
         .live-controls { flex-direction: column; gap: 16px; text-align: center; }
