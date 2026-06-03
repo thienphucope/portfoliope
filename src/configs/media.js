@@ -1,7 +1,6 @@
 export const MUSIC_PLAYER = {
-  videoId: 'QUDwL_0UsPY',
+  videoId: 'JEUf8nTl5aU',
   volume: 30,
-  diskImage: '/blackcat.jpg',
 };
 
 export const BACKGROUND_VIDEO = {

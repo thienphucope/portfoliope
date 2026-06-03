@@ -1,16 +1,34 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { fitHeading } from '@/features/casearchives/utils/markdown';
 import WindowFrame from '@/features/casearchives/components/WindowFrame';
 import BaseStyles from '@/features/casearchives/styles/BaseStyles';
 import TabPanelStyles from '@/features/casearchives/styles/TabPanelStyles';
 import MarkdownStyles from '@/features/casearchives/styles/MarkdownStyles';
 
-export default function PrivacyClient({ content }) {
+export default function PrivacyClient({ content, title }) {
   const [isMaximized, setIsMaximized] = useState(true);
   const router = useRouter();
+  const titleRef = useRef(null);
+
+  useEffect(() => {
+    const el = titleRef.current;
+    if (!el) return;
+    const update = () => fitHeading(el, 160);
+    update();
+    const fontTimer = setTimeout(update, 500);
+    window.addEventListener('resize', update);
+    const observer = new ResizeObserver(update);
+    if (el.parentElement) observer.observe(el.parentElement);
+    return () => {
+      clearTimeout(fontTimer);
+      window.removeEventListener('resize', update);
+      observer.disconnect();
+    };
+  }, [title]);
 
   const handleClose = () => {
     router.push('/');
@@ -33,15 +51,26 @@ export default function PrivacyClient({ content }) {
             onToggleMaximize={() => setIsMaximized(!isMaximized)}
             onClose={handleClose}
           >
-            <article className="markdown-container" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
-              <div className="note-content-wrapper" style={{ padding: '2rem 1.5rem' }}>
-                <div className="markdown-content">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {content}
-                  </ReactMarkdown>
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+              <article className="markdown-container" style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch' }}>
+                <div className="note-content-wrapper" style={{ padding: '2rem 1.5rem' }}>
+                  <div className="markdown-content" style={{ textAlign: 'center', width: '100%', overflow: 'visible' }}>
+                    <h1
+                      ref={titleRef}
+                      className="fit-heading"
+                      style={{ display: 'inline-block', whiteSpace: 'nowrap', overflow: 'visible', textAlign: 'center', margin: 0, padding: '18px 0 14px', fontFamily: 'var(--font-display)', fontWeight: 900 }}
+                    >
+                      {title}
+                    </h1>
+                  </div>
+                  <div className="markdown-content">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {content}
+                    </ReactMarkdown>
+                  </div>
                 </div>
-              </div>
-            </article>
+              </article>
+            </div>
           </WindowFrame>
         </div>
       </div>

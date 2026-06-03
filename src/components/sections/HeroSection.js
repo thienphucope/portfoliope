@@ -72,13 +72,20 @@ export default function HeroSection() {
                 <span className="nf-title-italic">Ope</span>
                 <Link href="/noirboard" target="_blank" rel="noopener noreferrer" className="nf-title-link">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img className="nf-title-img" src="/ope.png" alt="Inspect Board" />
+                  <img className="nf-title-img" src="/ope-new.png" alt="Inspect Board" style={{ height: '1.15em', width: 'auto', display: 'block' }} />
                 </Link>
               </span>
               <span className="nf-italic" ref={watsonRef}>Watson</span>
             </h1>
           </div>
           <FeedFooter />
+          <nav className="nf-legal-links">
+            <Link href="/about">About</Link>
+            <span className="nf-legal-sep">·</span>
+            <Link href="/terms">Terms</Link>
+            <span className="nf-legal-sep">·</span>
+            <Link href="/privacy">Privacy</Link>
+          </nav>
           <div className="nf-socials">
             <a href={SOCIAL_LINKS.github}  target="_blank" rel="noopener noreferrer">
               <FaGithub className="nf-social-icon" />

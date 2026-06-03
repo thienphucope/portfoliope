@@ -2455,3 +2455,7 @@ Skip to the latest Gemini result
 
 
 còn cái i'll pay you 5 pounds to swap clothes with me (với cậu bé làm vườn và ông bán báo)
+
+sherlock khá nổi tiếng chắc đoạn này chưa nổi lắm
+
+số tiền còn lại trong túi của enola là bao nhiêu?

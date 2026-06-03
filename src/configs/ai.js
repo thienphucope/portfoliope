@@ -140,10 +140,10 @@ export const MOXXI_GREETING = `
 export const MOXXI_ERROR_MSG = "Well, that's a smudge on the record. Something went wrong, but I'll get to the bottom of it.";
 
 export const SUGGESTED_PROMPTS = [
-  'His projects?',
-  'Skills and expertise?',
-  'Background and experience?',
-  'How to contact him?',
+  'Ope Watson Backstory?',
+  'His skills and expertise?',
+  'His background and experience?',
+  'How to contact Ope?',
 ];
 
 // ─── Model Config ────────────────────────────────────────────────────────────

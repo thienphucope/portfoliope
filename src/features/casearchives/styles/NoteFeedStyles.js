@@ -527,6 +527,24 @@ export default function NoteFeedStyles() {
         text-align: center;
       }
 
+      .nf-legal-links {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-top: 10px;
+        font-family: var(--font-mono);
+        font-size: var(--ui-text-body);
+        letter-spacing: 1px;
+      }
+      .nf-legal-links a {
+        color: var(--nf-txt-dim);
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+      .nf-legal-links a:hover { color: var(--theme); }
+      .nf-legal-sep { color: var(--nf-txt-dim); opacity: 0.5; }
+
       /* ── Reveal animation ── */
       .reveal {
         opacity: 0;
