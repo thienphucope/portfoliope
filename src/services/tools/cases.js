@@ -1,5 +1,5 @@
-// src/services/casestool.js
-import { hydrateServerCache, getCacheSnapshot } from './caseProvider.js';
+// src/services/tools/cases.js
+import { hydrateServerCache, getCacheSnapshot } from '../caseProvider.js';
 
 async function ensureCache() {
   const snapshot = getCacheSnapshot();

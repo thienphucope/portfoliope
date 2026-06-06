@@ -1,6 +1,6 @@
 // src/app/api/ai/route.js
 import { NextResponse } from 'next/server';
-import { handleAiRequest } from '@/services/ai';
+import { handleAiRequest } from '@/services/aiGateway';
 
 const RATE_LIMIT = 10;
 const RATE_WINDOW = 60_000; // 1 minute

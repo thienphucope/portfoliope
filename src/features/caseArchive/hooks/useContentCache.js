@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { ensureLibsLoaded } from '../utils/markdown';
+import { ensureLibsLoaded } from '@/lib/markdown';
 
 /**
  * Holds the client mirror of server-managed cache.

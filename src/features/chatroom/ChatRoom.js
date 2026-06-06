@@ -5,9 +5,9 @@ import { useAI } from '@/hooks/useAI';
 import { MOXXI_DISPLAY_NAME, MOXXI_GREETING, MOXXI_ERROR_MSG, SUGGESTED_PROMPTS } from '@/configs/ai';
 import { useSTT } from '@/hooks/useSTT';
 import { useTTS } from '@/hooks/useTTS';
-import { ensureLibsLoaded, postProcess } from '@/features/casearchives/utils/markdown';
-import EditorStyles from '@/features/casearchives/styles/EditorStyles';
-import MarkdownStyles from '@/features/casearchives/styles/MarkdownStyles';
+import { ensureLibsLoaded, postProcess } from '@/lib/markdown';
+import EditorStyles from '@/styles/EditorStyles';
+import MarkdownStyles from '@/styles/MarkdownStyles';
 import ChatRoomStyles from './styles/ChatRoomStyles';
 
 const cleanAssistantOutput = (txt) => {

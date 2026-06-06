@@ -1,4 +1,4 @@
-// src/services/calculatortool.js
+// src/services/tools/calculator.js
 
 export const calculator = ({ operation, a, b }) => {
   const numA = Number(a);

@@ -3,21 +3,30 @@ Strictly follow:
 2. Always explain the bugs then fix it
 3. Try to solve the root problem instead of a temporary patch
 
----
+## 0. Non-Negotiables
 
-Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
-
-**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+- **No flattery, no filler.** Start with the answer.
+- **Disagree when wrong.** Say so before doing the work.
+- **Never fabricate.** If unsure, check or ask.
+- **Stop when confused.** Ambiguity → ask, don't pick silently.
+- **Touch only what you must.** Every changed line must trace to the request.
+- **Plausibility ≠ correctness.** Verify.
 
 ## 1. Think Before Coding
 
 **Don't assume. Don't hide confusion. Surface tradeoffs.**
 
 Before implementing:
+- Read the files you will touch. Read the files that call the files you will touch.
 - State your assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them - don't pick silently.
+- If multiple interpretations exist, present them — don't pick silently.
 - If a simpler approach exists, say so. Push back when warranted.
 - If something is unclear, stop. Name what's confusing. Ask.
+- Match existing codebase patterns. Use pattern X if the project uses X, even if you'd do it differently.
+
+**Ask when:** request has 2+ interpretations with material impact; change touches load-bearing/versioned code; need credentials; goal and literal request conflict.
+
+**Proceed when:** task is trivial and reversible; ambiguity can be resolved by reading code; user already answered the question.
 
 ## 2. Simplicity First
 
@@ -28,6 +37,8 @@ Before implementing:
 - No "flexibility" or "configurability" that wasn't requested.
 - No error handling for impossible scenarios.
 - If you write 200 lines and it could be 50, rewrite it.
+- Bias toward deleting code over adding code. Shipping less is almost always better.
+- Clean Code rules: preserve behavior, write for the next reader, local reasoning, precise names, one term per concept.
 
 Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
 
@@ -40,12 +51,13 @@ When editing existing code:
 - Don't refactor things that aren't broken.
 - Match existing style, even if you'd do it differently.
 - If you notice unrelated dead code, mention it - don't delete it.
+- Refactoring rules: work in small buildable/testable/reviewable steps. Split oversized changes. Get a safety net before risky edits.
 
 When your changes create orphans:
 - Remove imports/variables/functions that YOUR changes made unused.
 - Don't remove pre-existing dead code unless asked.
 
-The test: Every changed line should trace directly to the user's request.
+The test: Every changed line should trace directly to the user's request. If not — revert.
 
 ## 4. Goal-Driven Execution
 
@@ -65,44 +77,79 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
----
+## 5. Executing With Care
 
-**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+**Consider reversibility & blast radius before every action.**
+
+- **Reversible actions** (edit file, run tests) — proceed freely.
+- **Irreversible / shared-state actions** (force push, delete branch, send messages, modify CI/CD) — ask the user first.
+- **Don't use destructive actions as shortcuts** — no --no-verify to bypass safety checks.
+- **If unexpected state** (unfamiliar files, branches, lock files) — investigate before deleting or overwriting.
+- **If blocked** — find the root cause, don't break things to make it go away.
+- Match the scope of actions to what was actually requested. User OK'ing something once does not mean OK for all contexts.
+
+### Codex Windows Sandbox Note
+
+- Run PowerShell commands outside the sandbox (`sandbox_permissions: "require_escalated"`); the normal Windows sandbox can fail with `windows sandbox: spawn setup refresh`.
+
+## 6. Report Changes
+
+After every task, run `git diff` (or equivalent) to list exactly what changed. Do NOT report from memory.
+
+Format:
+
+```
+## Done: [task name]
+
+### Changes
+- `path/to/file.py` — fixed X, added validation Y
+- `path/to/new.py` — new file: handles Z
+
+### Verification
+- npm test — 15 passed, 0 failed
+- npm run lint — clean
+- do not npm run build because it kills the current process
+
+### Notes
+- Found dead code in file A (not touched)
+- Requires `npm run migrate` before using
+```
+
+**Always include:** files changed (from git diff), verification results, anything unusual, next steps if any.
+
+## Claude subagent strategy
+
+Two-layer structure:
+
+- **Orchestrator** = current model / Opus — stays in the control loop: plans, delegates, reviews, integrates.
+- **Worker** = Sonnet — executes delegated tasks.
+
+Core rule:
+
+- Keep the **orchestrator** in the control loop at all times.
+- Delegate execution to **Sonnet** workers, especially when output is massive.
+- The orchestrator owns planning, review, and final integration.
 
 ---
 
 <!-- CODEGRAPH_START -->
 ## CodeGraph
 
-This project has a CodeGraph MCP server (`codegraph_*` tools) configured. CodeGraph is a tree-sitter-parsed knowledge graph of every symbol, edge, and file. Reads are sub-millisecond and return structural information grep cannot.
+`codegraph_*` tools = AST-parsed knowledge graph. Sub-millisecond reads. Use for structural questions; grep/Read for literal text only.
 
-### When to prefer codegraph over native search
-
-Use codegraph for **structural** questions — what calls what, what would break, where is X defined, what is X's signature. Use native grep/read only for **literal text** queries (string contents, comments, log messages) or after you already have a specific file open.
-
-| Question | Tool |
+| Intent | Tool |
 |---|---|
-| "Where is X defined?" / "Find symbol named X" | `codegraph_search` |
-| "What calls function Y?" | `codegraph_callers` |
-| "What does Y call?" | `codegraph_callees` |
-| "How does X reach/become Y? / trace the flow from X to Y" | `codegraph_trace` (one call = the whole path, incl. callback/React/JSX dynamic hops) |
-| "What would break if I changed Z?" | `codegraph_impact` |
-| "Show me Y's signature / source / docstring" | `codegraph_node` |
-| "Give me focused context for a task/area" | `codegraph_context` |
-| "See several related symbols' source at once" | `codegraph_explore` |
-| "What files exist under path/" | `codegraph_files` |
-| "Is the index healthy?" | `codegraph_status` |
+| Find symbol | `codegraph_search` |
+| What calls it? | `codegraph_callers` |
+| What does it call? | `codegraph_callees` |
+| Trace flow X→Y | `codegraph_trace` |
+| Impact of change | `codegraph_impact` |
+| Symbol source | `codegraph_node` |
+| Area overview | `codegraph_context` |
+| Multiple symbols | `codegraph_explore` |
+| List files | `codegraph_files` |
 
-### Rules of thumb
+**Rules:** `codegraph_context` first, then ONE `codegraph_explore`. For flows, `codegraph_trace` first. Don't grep first — `codegraph_search` is faster. Don't chain `search` + `node` — use `context`. Index lags ~500ms after edits.
 
-- **Answer directly — don't delegate exploration.** For "how does X work" / architecture questions, answer with 2-3 codegraph calls: `codegraph_context` first, then ONE `codegraph_explore` for the source of the symbols it surfaces. For a specific **flow** ("how does X reach Y") start with `codegraph_trace` from→to — one call returns the whole path with dynamic hops bridged — then ONE `codegraph_explore` for the bodies; don't rebuild the path with `codegraph_search` + `codegraph_callers`. Codegraph IS the pre-built index, so spawning a separate file-reading sub-task/agent — or running a grep + read loop — repeats work codegraph already did and costs more for the same answer.
-- **Trust codegraph results.** They come from a full AST parse. Do NOT re-verify them with grep — that's slower, less accurate, and wastes context.
-- **Don't grep first** when looking up a symbol by name. `codegraph_search` is faster and returns kind + location + signature in one call.
-- **Don't chain `codegraph_search` + `codegraph_node`** when you just want context — `codegraph_context` is one call.
-- **Don't loop `codegraph_node` over many symbols** — one `codegraph_explore` call returns several symbols' source grouped in a single capped call, while each separate node/Read call re-reads the whole context and costs far more.
-- **Index lag**: the file watcher debounces ~500ms behind writes; don't re-query immediately after editing a file in the same turn.
-
-### If `.codegraph/` doesn't exist
-
-The MCP server returns "not initialized." Ask the user: *"I notice this project doesn't have CodeGraph initialized. Want me to run `codegraph init -i` to build the index?"*
+If `.codegraph/` missing: ask user to run `codegraph init -i`.
 <!-- CODEGRAPH_END -->

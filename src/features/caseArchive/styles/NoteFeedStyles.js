@@ -97,7 +97,7 @@ export default function NoteFeedStyles() {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 0.18em;
   white-space: nowrap;
 }
 

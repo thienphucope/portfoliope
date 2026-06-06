@@ -1,4 +1,4 @@
-// src/services/searchtool.js
+// src/services/tools/search.js
 import { Ollama } from 'ollama';
 
 const client = new Ollama({ apiKey: process.env.OLLAMA_API_KEY });

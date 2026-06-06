@@ -1,4 +1,4 @@
-// src/services/hermestool.js
+// src/services/tools/discordMessaging.js
 import { randomUUID } from 'crypto';
 
 const DISCORD_API = 'https://discord.com/api/v10';

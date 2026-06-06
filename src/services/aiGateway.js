@@ -1,7 +1,7 @@
-// src/services/ai.js
+// src/services/aiGateway.js — multi-provider AI gateway (fallback + circuit breaker)
 
 import { Ollama } from 'ollama';
-import { availableTools, executeToolCall } from './aitool.js';
+import { availableTools, executeToolCall } from './tools/index.js';
 import { 
   MOXXI_SYSTEM_PROMPT, 
   TEMPERATURE, 

@@ -2,97 +2,35 @@
 import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
 import { DEFAULT_VAULT_FILE } from '@/configs/vault';
 import { ArrowLeft } from 'lucide-react';
-import BlockEditor from '@/features/casearchives/components/BlockEditor';
-import BaseStyles from '@/features/casearchives/styles/BaseStyles';
-import TabPanelStyles from '@/features/casearchives/styles/TabPanelStyles';
-import WindowFrame from '@/features/casearchives/components/WindowFrame';
+import BlockEditor from '@/features/caseArchive/components/BlockEditor';
+import BaseStyles from '@/styles/BaseStyles';
+import TabPanelStyles from '@/styles/TabPanelStyles';
+import WindowFrame from '@/components/ui/WindowFrame';
 import dynamic from 'next/dynamic';
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
-import { useFileRegistry }     from '@/features/casearchives/hooks/useFileRegistry';
-import { useFileLoader }       from '@/features/casearchives/hooks/useFileLoader';
-import { useScrollBehavior }   from '@/features/casearchives/hooks/useScrollBehavior';
-import { useContentCache }     from '@/features/casearchives/hooks/useContentCache';
-import { useLinkHandler }      from '@/features/casearchives/hooks/useLinkHandler';
+import { useFileRegistry }     from '@/features/caseArchive/hooks/useFileRegistry';
+import { useFileLoader }       from '@/features/caseArchive/hooks/useFileLoader';
+import { useScrollBehavior }   from '@/features/caseArchive/hooks/useScrollBehavior';
+import { useContentCache }     from '@/features/caseArchive/hooks/useContentCache';
+import { useLinkHandler }      from '@/features/caseArchive/hooks/useLinkHandler';
 
-import { useReader } from '@/features/casearchives/hooks/useReader';
+import { useReader } from '@/features/caseArchive/hooks/useReader';
 import { Volume2, VolumeX, Play, Pause, Square, Zap } from 'lucide-react';
-import { useGraphData } from '@/features/casearchives/hooks/useGraphData';
+import { useGraphData } from '@/features/caseArchive/hooks/useGraphData';
+import SpritzOverlay from '@/features/caseArchive/components/SpritzOverlay';
+import ChapterRail from '@/features/caseArchive/components/ChapterRail';
 
-const GraphView = dynamic(() => import('@/features/casearchives/components/GraphView'), { ssr: false });
+const GraphView = dynamic(() => import('@/features/caseArchive/components/GraphView'), { ssr: false });
 
 
 // Layout effect on the client, no-op on the server (avoids SSR warning).
 const useIsoLayoutEffect = typeof document !== 'undefined' ? useLayoutEffect : useEffect;
 
-// ─── Spritz Overlay Component ────────────────────────────────────────────────
-const SpritzOverlay = ({ text, isPlaying, isPaused, playbackRate }) => {
-  const [words, setWords] = useState([]);
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    if (!text) return;
-    const w = text.split(/\s+/).filter(Boolean);
-    setWords(w);
-    setIndex(0);
-  }, [text]);
-
-  useEffect(() => {
-    if (!isPlaying || isPaused || playbackRate !== 4.0 || index >= words.length) return;
-    const word = words[index] || "";
-    const baseDuration = 110; 
-    const extra = (word.length > 8 ? 40 : 0) + (/[.,!?;]/.test(word) ? 60 : 0);
-    const timer = setTimeout(() => { setIndex(i => i + 1); }, baseDuration + extra);
-    return () => clearTimeout(timer);
-  }, [index, words, isPlaying, isPaused, playbackRate]);
-
-  if (playbackRate !== 4.0 || !isPlaying || words.length === 0) return null;
-
-  return (
-    <div className="spritz-overlay" style={{ position: 'fixed', inset: 0, background: 'var(--background, #000)', color: 'var(--theme, #FFFACD)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, userSelect: 'none' }}>
-      <div className="spritz-word" style={{ fontSize: '6vw', fontWeight: '400', fontFamily: 'var(--font-mono)', textAlign: 'center', letterSpacing: '-0.02em', textTransform: 'lowercase' }}>
-        {words[index] || words[words.length - 1]}
-      </div>
-    </div>
-  );
-};
-
-// ─── MAIN VAULT ───────────────────────────────────────────────────────────────
-const PDFViewer = dynamic(() => import('@/features/casearchives/components/PDFViewer'), { ssr: false });
+const PDFViewer = dynamic(() => import('@/features/caseArchive/components/PDFViewer'), { ssr: false });
 const ChatRoom = dynamic(() => import('@/features/chatroom/ChatRoom'), { ssr: false });
 
-// ─── CHAPTER RAIL (left-side table of contents) ───────────────────────────────
-const ChapterRail = ({ chapters, activeIndex, onJump }) => {
-  if (!chapters.length) return null;
-  return (
-    <nav className="chapter-rail" aria-label="Chapters">
-      <div className="chapter-rail-title">Chapters</div>
-      <ul className="chapter-rail-list">
-        {chapters.map((c, i) => (
-          <li key={i} className="chapter-rail-item">
-            <button
-              type="button"
-              className={`chapter-rail-link ${i === activeIndex ? 'is-active' : ''}`}
-              data-level={c.level}
-              aria-current={i === activeIndex ? 'location' : undefined}
-              style={{ paddingLeft: `${(c.level - 1) * 12 + 14}px` }}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onJump(i);
-              }}
-              title={c.text}
-            >
-              <span className="chapter-text">{c.text}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-    </nav>
-  );
-};
-
-export default function CaseClient({ serverHydratedData = null }) {
+export default function CaseReader({ serverHydratedData = null }) {
   const [fileName,     setFileName]     = useState('');
   const [isEditorOpen,       setIsEditorOpen]       = useState(false);
   const [editorView,         setEditorView]          = useState('note');

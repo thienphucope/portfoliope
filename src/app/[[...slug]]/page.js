@@ -1,13 +1,13 @@
-import CaseClient from '@/features/casearchives/CaseArchives';
+import CaseReader from '@/features/caseArchive/CaseReader';
 import HeroSection from '@/components/sections/HeroSection';
-import NoteFeed from '@/features/casearchives/NoteFeed';
+import NoteFeed from '@/features/caseArchive/NoteFeed';
 import { hydrateServerCache } from '@/services/caseProvider';
 
 function caseTitleFromKey(key) {
   return key.split('/').pop().replace(/\.md$/i, '');
 }
 
-// Mirror the slug -> file resolution used client-side in CaseArchives.
+// Mirror the slug -> file resolution used client-side in CaseReader.
 function resolveCaseKey(rawCache, slugParts) {
   if (!rawCache || !slugParts || slugParts.length === 0) return null;
   const target = decodeURIComponent(slugParts.join('/')).replace(/\.md$/i, '').toLowerCase();
@@ -122,7 +122,7 @@ export default async function CasePage({ params }) {
             <NoteFeed serverData={githubData} />
           </div>
         )
-        : <CaseClient serverHydratedData={githubData} />
+        : <CaseReader serverHydratedData={githubData} />
       }
     </main>
   );

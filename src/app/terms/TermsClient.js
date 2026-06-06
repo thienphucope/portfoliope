@@ -3,11 +3,11 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { fitHeading } from '@/features/casearchives/utils/markdown';
-import WindowFrame from '@/features/casearchives/components/WindowFrame';
-import BaseStyles from '@/features/casearchives/styles/BaseStyles';
-import TabPanelStyles from '@/features/casearchives/styles/TabPanelStyles';
-import MarkdownStyles from '@/features/casearchives/styles/MarkdownStyles';
+import { fitHeading } from '@/lib/markdown';
+import WindowFrame from '@/components/ui/WindowFrame';
+import BaseStyles from '@/styles/BaseStyles';
+import TabPanelStyles from '@/styles/TabPanelStyles';
+import MarkdownStyles from '@/styles/MarkdownStyles';
 
 export default function TermsClient({ content, title }) {
   const [isMaximized, setIsMaximized] = useState(true);

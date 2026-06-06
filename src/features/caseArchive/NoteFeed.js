@@ -1,12 +1,12 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ensureLibsLoaded } from '@/features/casearchives/utils/markdown';
-import { useBootstrapData } from '@/features/casearchives/hooks/useBootstrapData';
-import { useFetchBatch, BATCH_SIZE } from '@/features/casearchives/hooks/useFetchBatch';
-import { useFeedEffects } from '@/features/casearchives/hooks/useFeedEffects';
-import CasesSection from '@/features/casearchives/components/CasesSection';
-import NoteFeedStyles from '@/features/casearchives/styles/NoteFeedStyles';
+import { ensureLibsLoaded } from '@/lib/markdown';
+import { useBootstrapData } from '@/features/caseArchive/hooks/useBootstrapData';
+import { useFetchBatch, BATCH_SIZE } from '@/features/caseArchive/hooks/useFetchBatch';
+import { useFeedEffects } from '@/features/caseArchive/hooks/useFeedEffects';
+import CasesSection from '@/features/caseArchive/components/CasesSection';
+import NoteFeedStyles from '@/features/caseArchive/styles/NoteFeedStyles';
 
 export default function NoteFeed({ onLinkClick, serverData }) {
   const router = useRouter();

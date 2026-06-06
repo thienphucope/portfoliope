@@ -4,9 +4,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FaGithub, FaEnvelope, FaDiscord, FaComments, FaVolumeUp } from 'react-icons/fa';
 import { SOCIAL_LINKS } from '@/configs/social';
-import FeedFooter from '@/features/casearchives/components/FeedFooter';
+import FeedFooter from '@/components/layout/FeedFooter';
 import ChatRoom from '@/features/chatroom/ChatRoom';
 import TextToSpeech from '@/features/texttospeech/TextToSpeech';
+import OpeAvatar from '@/components/ui/OpeAvatar';
 
 const FEATURE_REFS = [
   { id: 'chat', href: '/chat', label: 'Consult', desc: 'Chat room', Icon: FaComments },
@@ -70,10 +71,7 @@ export default function HeroSection() {
             <h1 className="nf-title">
               <span className="nf-title-row" ref={opeRef}>
                 <span className="nf-title-italic">Ope</span>
-                <Link href="/noirboard" target="_blank" rel="noopener noreferrer" className="nf-title-link">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img className="nf-title-img" src="/ope-new.png" alt="Inspect Board" style={{ height: '1.15em', width: 'auto', display: 'block' }} />
-                </Link>
+                <OpeAvatar size="0.9em" />
               </span>
               <span className="nf-italic" ref={watsonRef}>Watson</span>
             </h1>

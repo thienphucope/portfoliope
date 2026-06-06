@@ -1,4 +1,4 @@
-// src/services/ragtool.js
+// src/services/tools/rag.js
 import { MongoClient } from 'mongodb';
 
 const MONGODB_URI = process.env.MONGODB_URI || '';

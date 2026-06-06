@@ -1,10 +1,10 @@
-// src/services/aitool.js
-import { calculator, calculatorSchema } from './calculatortool.js';
-import { ragSearch, ragSearchSchema } from './ragtool.js';
-import { bookGet, bookGetSchema } from './booktool.js';
-import { webSearch, webSearchSchema, webFetch, webFetchSchema } from './searchtool.js';
-import { casesList, casesRead, casesSearch, casesListSchema, casesReadSchema, casesSearchSchema } from './casestool.js';
-import { sendOpeAnonymousMessage, sendOpeAnonymousMessageSchema } from './hermestool.js';
+// src/services/tools/index.js — AI tool registry & dispatcher
+import { calculator, calculatorSchema } from './calculator.js';
+import { ragSearch, ragSearchSchema } from './rag.js';
+import { bookGet, bookGetSchema } from './book.js';
+import { webSearch, webSearchSchema, webFetch, webFetchSchema } from './search.js';
+import { casesList, casesRead, casesSearch, casesListSchema, casesReadSchema, casesSearchSchema } from './cases.js';
+import { sendOpeAnonymousMessage, sendOpeAnonymousMessageSchema } from './discordMessaging.js';
 
 const toolsFunctions = {
   calculator,

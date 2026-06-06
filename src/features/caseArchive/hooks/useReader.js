@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import cefrDict from '../utils/cefr_dict.json';
+import cefrDict from '../utils/cefrDict.json';
 import { useTTS } from '@/hooks/useTTS';
 
 const CEFR_LEVELS = ['none', 'a1', 'a2', 'b1', 'b2', 'c1', 'c2'];

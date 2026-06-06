@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useEffect } from 'react';
-import { postProcess } from '@/features/casearchives/utils/markdown';
+import { postProcess } from '@/lib/markdown';
 
 export default function CaseItem({ caseData, onLinkClick }) {
   const contentRef = useRef(null);

@@ -2,7 +2,7 @@
 // node --env-file=.env scripts/test-providers.mjs
 // node --env-file=.env scripts/test-providers.mjs gemini
 
-import { handleAiRequest } from '../src/services/ai.js';
+import { handleAiRequest } from '../src/services/aiGateway.js';
 
 // Chỉ test provider có API key
 const ALL_PROVIDERS = [

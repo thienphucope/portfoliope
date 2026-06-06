@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { ensureLibsLoaded, postProcess, fitHeading } from '../utils/markdown';
+import { ensureLibsLoaded, postProcess, fitHeading } from '@/lib/markdown';
 import { mkBlock } from '../utils/editor';
-import EditorStyles from '../styles/EditorStyles';
-import MarkdownStyles from '../styles/MarkdownStyles';
+import EditorStyles from '@/styles/EditorStyles';
+import MarkdownStyles from '@/styles/MarkdownStyles';
 
 /**
  * Read-only block renderer for the case vault.
