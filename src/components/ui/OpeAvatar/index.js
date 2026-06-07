@@ -1,157 +1,125 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import Eyebrows from './Eyebrows';
-import Eyes from './Eyes';
-import Mouth from './Mouth';
+import { IDLE_KAOMOJI_KEYS, KAOMOJI_BY_KEY, getKaomojiKey } from './kaomojis';
 
-// Minimal emoticon face (2 eyes + 1 mouth) drawn in a 100x100 viewBox.
-// Everything is procedural and repainted every frame from a few animated
-// params, so the WHOLE face is alive: the head floats/tilts, eyes blink &
-// glance & follow the cursor, the mouth morphs and "talks". Expression can
-// also be forced via the `expression` prop.
+// Kaomoji face drawn in the existing 100x100 viewBox.
+// Static wrapper chars stay in place, while eyes + mouth inherit the old
+// lookGroup tracking so the expression follows the cursor like the SVG avatar.
 
-const CX = 50;
-const MY = 62;        // mouth baseline
-const W = 6.5;        // mouth half-width (narrow, compact kaomoji-like)
-const EYE = { L: 16, R: 84, Y: 43, RX: 6, RY: 8.5 }; // extremely wide spread apart eyes typical of =D face
-const LOOK = 4;       // max pupil travel (viewBox units)
-const BLINK_DUR = 130;
-
-// Expression = target values the live params chase toward.
-//  smile: -frown .. +smile · open: mouth opening · eye: lid openness · tongue
-const EXPR = {
-  neutral:  { smile: 0.18, open: 0.06, eye: 1.0,  tongue: 0 }, // :|
-  smile:    { smile: 0.62, open: 0.06, eye: 0.92, tongue: 0 }, // :)
-  grin:     { smile: 1.0,  open: 0.5,  eye: 0.5,  tongue: 0 }, // :D
-  squintD:  { smile: 1.0,  open: 0.7,  eye: 0.16, tongue: 0 }, // =D (squinted to horizontal lines)
-  tongue:   { smile: 0.7,  open: 0.34, eye: 0.8,  tongue: 1 }, // :p
-  surprise: { smile: 0.0,  open: 0.78, eye: 1.18, tongue: 0 }, // :o
-};
-const IDLE_FACES = ['neutral', 'smile', 'smile', 'grin', 'tongue', 'surprise'];
+const LOOK = 4;
+const TOOL_EMOTION_STEP_MS = 1200;
+const TOOL_IDLE_RESET_MS = 30000;
 const rand = (a, b) => a + Math.random() * (b - a);
 const f = (v) => Number(v).toFixed(2);
 
-function drawRoundRect(cx, cy, w, h, r) {
-  const x = cx - w / 2;
-  const y = cy - h / 2;
-  const rad = Math.min(r, w / 2, h / 2);
-  return `M ${f(x + rad)} ${f(y)} h ${f(w - 2 * rad)} a ${f(rad)} ${f(rad)} 0 0 1 ${f(rad)} ${f(rad)} v ${f(h - 2 * rad)} a ${f(rad)} ${f(rad)} 0 0 1 ${f(-rad)} ${f(rad)} h ${f(-(w - 2 * rad))} a ${f(rad)} ${f(rad)} 0 0 1 ${f(-rad)} ${f(-rad)} v ${f(-(h - 2 * rad))} a ${f(rad)} ${f(rad)} 0 0 1 ${f(rad)} ${f(-rad)} Z`;
+const SLOT = {
+  leftParen: { x: 2, y: 52 },
+  leftMark: { x: 24, y: 45 },
+  leftEye: { x: 26, y: 45 },
+  mouth: { x: 50, y: 58 },
+  rightEye: { x: 74, y: 45 },
+  rightMark: { x: 76, y: 45 },
+  rightParen: { x: 98, y: 52 },
+};
+
+function getSlots(kaomoji) {
+  const leftWrap = Array.from(kaomoji.leftWrap);
+  const rightWrap = Array.from(kaomoji.rightWrap);
+
+  return {
+    leftParen: leftWrap[0] || '',
+    leftMark: leftWrap[1] || '',
+    leftEye: kaomoji.leftEye,
+    mouth: kaomoji.mouth,
+    rightEye: kaomoji.rightEye,
+    rightMark: rightWrap.length > 1 ? rightWrap[0] : '',
+    rightParen: rightWrap.length > 1 ? rightWrap[1] : rightWrap[0] || '',
+  };
 }
 
-// Repaint every SVG node from the current animated values.
-function paintFace(n, p, look, bf, bob) {
-  if (!n.face) return;
+function countChars(value) {
+  return Array.from(String(value || '')).length;
+}
+
+function isCustomKaomoji(value) {
+  return value
+    && typeof value === 'object'
+    && value.key
+    && countChars(value.leftWrap) >= 1
+    && countChars(value.leftWrap) <= 2
+    && countChars(value.leftEye) === 1
+    && countChars(value.mouth) === 1
+    && countChars(value.rightEye) === 1
+    && countChars(value.rightWrap) >= 1
+    && countChars(value.rightWrap) <= 2;
+}
+
+function getKaomoji(value) {
+  if (isCustomKaomoji(value)) return value;
+  return KAOMOJI_BY_KEY[getKaomojiKey(value)] || KAOMOJI_BY_KEY.smile;
+}
+
+function paintFace(n, kaomoji, look, bob) {
+  if (!n.face || !kaomoji) return;
+
   n.face.setAttribute('transform', `translate(${f(bob.x)} ${f(bob.y)}) rotate(${f(bob.rot)} 50 55)`);
 
-  // Translate the entire lookGroup together to preserve face composition (eyes, eyebrows, mouth move as one block)
-  const lookT = `translate(${f(look.x)} ${f(look.y)})`;
   if (n.lookGroup) {
-    n.lookGroup.setAttribute('transform', lookT);
-  }
-  // Clear any individual transforms on paths
-  if (n.eyesPath) n.eyesPath.removeAttribute('transform');
-  if (n.eyebrowsPath) n.eyebrowsPath.removeAttribute('transform');
-  if (n.mouthPath) n.mouthPath.removeAttribute('transform');
-
-  const smile = p.smile;
-  const open = Math.max(0, p.open);
-  const cyCorner = MY - smile * 3;
-  const cyMid = MY + smile * 2;
-  const bottomMid = cyCorner + Math.max(3.5, open * 13);
-
-  // Squeeze eye openness when looking far up/down (squinting/flattening look)
-  const verticalLookFactor = Math.abs(look.y) / LOOK;
-  const vertSquint = Math.max(0.1, 1.0 - verticalLookFactor * 0.85);
-
-  // Piecewise LERP supporting 3 states: vertical rectangle (t=1), square (t=0.5), horizontal rectangle (t=0)
-  const t = Math.min(1.2, Math.max(0, p.eye * bf * vertSquint));
-  let w, h;
-  if (t < 0.5) {
-    const factor = t / 0.5;
-    w = 16 + factor * (8 - 16);
-    h = 5 + factor * (8 - 5);
-  } else {
-    const factor = Math.min(1, (t - 0.5) / 0.5);
-    w = 8 + factor * (5 - 8);
-    h = 8 + factor * (16 - 8);
+    n.lookGroup.setAttribute('transform', `translate(${f(look.x)} ${f(look.y)})`);
   }
 
-  // Local eye shifting relative to the face to create pupil glancing.
-  // Moderate horizontal displacement, larger vertical displacement to sit at top/bottom margins.
-  const eyeShiftX = look.x * 0.5;
-  const eyeShiftY = look.y * 1.25;
-
-  // 1. Left Eye Rounded Rectangle Sub-path
-  const leftEyeD = drawRoundRect(EYE.L + eyeShiftX, EYE.Y + eyeShiftY, w, h, 2);
-
-  // 2. Right Eye Rounded Rectangle Sub-path
-  const rightEyeD = drawRoundRect(EYE.R + eyeShiftX, EYE.Y + eyeShiftY, w, h, 2);
-
-  if (n.eyesPath) {
-    n.eyesPath.setAttribute('d', `${leftEyeD} ${rightEyeD}`);
-  }
-
-  // 3. Mouth Sub-path (Line Art)
-  // If open is very small, draw as single curved smile line. When opening the mouth, the top lip transitions
-  // from a curved smile to flat/horizontal (at most flat), while the bottom lip extends downwards.
-  const rc = 2.5; // corner radius to soften the mouth corners
-  const cyTopMid = cyMid + (cyCorner - cyMid) * Math.min(1, open * 15);
-  const mouthD = open < 0.05
-    ? `M ${CX - W} ${f(cyCorner)} Q ${CX} ${f(cyMid)} ${CX + W} ${f(cyCorner)}`
-    : `M ${f(CX - W + rc)} ${f(cyCorner)} Q ${CX} ${f(cyTopMid)} ${f(CX + W - rc)} ${f(cyCorner)} a ${rc} ${rc} 0 0 1 ${rc} ${rc} C ${f(CX + W - rc * 0.5)} ${f(bottomMid)} ${f(CX - W + rc * 0.5)} ${f(bottomMid)} ${CX - W} ${f(cyCorner + rc)} a ${rc} ${rc} 0 0 1 ${rc} ${-rc} Z`;
-
-  if (n.mouthPath) {
-    n.mouthPath.setAttribute('d', mouthD);
-  }
-
-  // 4. Eyebrows Sub-path (Horizontal Lines)
-  // Eyebrows lower dynamically as the eyes close (t -> 0) and shift with look
-  const ebShiftX = look.x * 0.3;
-  const ebShiftY = look.y * 0.8;
-  const ebY = 32 - t * 4;
-  const ebW = 6;
-  const eyebrowsD = `M ${EYE.L + ebShiftX - ebW} ${f(ebY + ebShiftY)} H ${EYE.L + ebShiftX + ebW} M ${EYE.R + ebShiftX - ebW} ${f(ebY + ebShiftY)} H ${EYE.R + ebShiftX + ebW}`;
-  if (n.eyebrowsPath) {
-    n.eyebrowsPath.setAttribute('d', eyebrowsD);
-  }
+  const slots = getSlots(kaomoji);
+  if (n.leftParen) n.leftParen.textContent = slots.leftParen;
+  if (n.leftMark) n.leftMark.textContent = slots.leftMark;
+  if (n.leftEye) n.leftEye.textContent = slots.leftEye;
+  if (n.mouth) n.mouth.textContent = slots.mouth;
+  if (n.rightEye) n.rightEye.textContent = slots.rightEye;
+  if (n.rightMark) n.rightMark.textContent = slots.rightMark;
+  if (n.rightParen) n.rightParen.textContent = slots.rightParen;
 }
 
 export default function OpeAvatar({ size = '1em', expression = null, autoplay = true }) {
   const [auto, setAuto] = useState('smile');
   const [hover, setHover] = useState(false);
   const [tap, setTap] = useState(null);
+  const [toolExpression, setToolExpression] = useState(null);
   const [reduced, setReduced] = useState(false);
 
   const svgRef = useRef(null);
   const faceRef = useRef(null);
   const lookGroupRef = useRef(null);
-  const eyesPathRef = useRef(null);
-  const mouthPathRef = useRef(null);
-  const eyebrowsPathRef = useRef(null);
+  const leftParenRef = useRef(null);
+  const leftMarkRef = useRef(null);
+  const leftEyeRef = useRef(null);
+  const mouthRef = useRef(null);
+  const rightEyeRef = useRef(null);
+  const rightMarkRef = useRef(null);
+  const rightParenRef = useRef(null);
 
-  // Live animation state (kept in refs so frames never trigger re-renders).
-  const cur = useRef({ smile: 0.5, open: 0.1, eye: 1, tongue: 0 });
   const look = useRef({ x: 0, y: 0 });
   const mouse = useRef(null);
   const lastMove = useRef(0);
   const glance = useRef({ x: 0, y: 0 });
   const glanceNext = useRef(0);
-  const blinkStart = useRef(0);
-  const blinkNext = useRef(0);
-  const talkStart = useRef(0);
-  const talkDur = useRef(0);
-  const talkNext = useRef(0);
+  const toolQueue = useRef([]);
+  const toolQueueActive = useRef(false);
+  const toolStepTimer = useRef(null);
+  const toolResetTimer = useRef(null);
 
-  const current = expression || tap || (hover ? 'grin' : auto);
-  const targetRef = useRef(EXPR.smile);
-  targetRef.current = EXPR[current] || EXPR.neutral;
+  const current = expression || tap || toolExpression || (hover ? 'joy' : auto);
+  const kaomojiRef = useRef(KAOMOJI_BY_KEY.smile);
+  kaomojiRef.current = getKaomoji(current);
 
   const nodes = () => ({
     face: faceRef.current,
     lookGroup: lookGroupRef.current,
-    eyesPath: eyesPathRef.current,
-    mouthPath: mouthPathRef.current,
-    eyebrowsPath: eyebrowsPathRef.current,
+    leftParen: leftParenRef.current,
+    leftMark: leftMarkRef.current,
+    leftEye: leftEyeRef.current,
+    mouth: mouthRef.current,
+    rightEye: rightEyeRef.current,
+    rightMark: rightMarkRef.current,
+    rightParen: rightParenRef.current,
   });
 
   // Reduced-motion preference.
@@ -163,15 +131,47 @@ export default function OpeAvatar({ size = '1em', expression = null, autoplay = 
     return () => mq.removeEventListener('change', on);
   }, []);
 
+  useEffect(() => {
+    const scheduleNextToolEmotion = () => {
+      clearTimeout(toolResetTimer.current);
+      const next = toolQueue.current.shift();
+
+      if (!next) {
+        toolQueueActive.current = false;
+        toolResetTimer.current = setTimeout(() => setToolExpression(null), TOOL_IDLE_RESET_MS);
+        return;
+      }
+
+      toolQueueActive.current = true;
+      setToolExpression(next);
+      toolStepTimer.current = setTimeout(scheduleNextToolEmotion, TOOL_EMOTION_STEP_MS);
+    };
+
+    const onEmotion = (event) => {
+      const next = event.detail?.kaomoji || event.detail?.emotion;
+      if (!isCustomKaomoji(next) && !KAOMOJI_BY_KEY[next]) return;
+      toolQueue.current.push(next);
+      clearTimeout(toolResetTimer.current);
+      if (!toolQueueActive.current) scheduleNextToolEmotion();
+    };
+
+    window.addEventListener('ope-avatar-emotion', onEmotion);
+    return () => {
+      clearTimeout(toolStepTimer.current);
+      clearTimeout(toolResetTimer.current);
+      window.removeEventListener('ope-avatar-emotion', onEmotion);
+    };
+  }, []);
+
   // Drift the resting expression over time (only when nothing else drives it).
   useEffect(() => {
     if (!autoplay || reduced) return undefined;
     let t;
     const loop = () => {
       t = setTimeout(() => {
-        setAuto(IDLE_FACES[Math.floor(Math.random() * IDLE_FACES.length)]);
+        setAuto(IDLE_KAOMOJI_KEYS[Math.floor(Math.random() * IDLE_KAOMOJI_KEYS.length)]);
         loop();
-      }, rand(3800, 7000));
+      }, rand(2400, 4200));
     };
     loop();
     return () => clearTimeout(t);
@@ -180,11 +180,10 @@ export default function OpeAvatar({ size = '1em', expression = null, autoplay = 
   // Static paint when animation is off / reduced motion.
   useEffect(() => {
     if (autoplay && !reduced) return;
-    cur.current = { ...targetRef.current };
-    paintFace(nodes(), targetRef.current, { x: 0, y: 0 }, 1, { x: 0, y: 0, rot: 0 });
+    paintFace(nodes(), kaomojiRef.current, { x: 0, y: 0 }, { x: 0, y: 0, rot: 0 });
   }, [current, autoplay, reduced]);
 
-  // The life loop: float, blink, glance, talk, morph — all per frame.
+  // Tracking loop: cursor-following look group + old idle wobble.
   useEffect(() => {
     if (!autoplay || reduced) return undefined;
     const onMove = (e) => {
@@ -194,38 +193,11 @@ export default function OpeAvatar({ size = '1em', expression = null, autoplay = 
     window.addEventListener('mousemove', onMove);
 
     const start = performance.now();
-    blinkNext.current = start + rand(1400, 3200);
-    talkNext.current = start + rand(2200, 4800);
     glanceNext.current = start + rand(1200, 2600);
 
     let raf;
     const tick = () => {
       const now = performance.now();
-      const tgt = targetRef.current;
-      const c = cur.current;
-      c.smile += (tgt.smile - c.smile) * 0.12;
-      c.open += (tgt.open - c.open) * 0.12;
-      c.eye += (tgt.eye - c.eye) * 0.12;
-      c.tongue += (tgt.tongue - c.tongue) * 0.16;
-
-      // Blink (smooth lid dip).
-      if (now > blinkNext.current) {
-        blinkStart.current = now;
-        blinkNext.current = now + rand(2400, 5600);
-      }
-      const bd = now - blinkStart.current;
-      const bf = bd >= 0 && bd < BLINK_DUR ? 1 - Math.sin((bd / BLINK_DUR) * Math.PI) : 1;
-
-      // Occasional "talk" burst — the mouth flaps a few times.
-      if (now > talkNext.current) {
-        talkStart.current = now;
-        talkDur.current = rand(700, 1400);
-        talkNext.current = now + talkDur.current + rand(3200, 6500);
-      }
-      const td = now - talkStart.current;
-      const talk = td >= 0 && td < talkDur.current
-        ? Math.abs(Math.sin((td / talkDur.current) * Math.PI * 3)) * Math.sin((td / talkDur.current) * Math.PI) * 0.24
-        : 0;
 
       // Where to look: cursor if recent, otherwise idle saccades.
       if (now > glanceNext.current) {
@@ -246,19 +218,12 @@ export default function OpeAvatar({ size = '1em', expression = null, autoplay = 
       look.current.x += (tx - look.current.x) * 0.16;
       look.current.y += (ty - look.current.y) * 0.16;
 
-      // Add never-resting idle wobble on top of the eased params.
-      const p = {
-        smile: c.smile + Math.sin(now * 0.0016) * 0.04,
-        open: c.open + Math.sin(now * 0.0021) * 0.05 + talk,
-        eye: c.eye + Math.sin(now * 0.0026) * 0.03,
-        tongue: c.tongue,
-      };
       const bob = {
         x: Math.sin(now * 0.0012) * 3 + Math.sin(now * 0.0023) * 1.1,
         y: Math.sin(now * 0.0017) * 2.2,
         rot: look.current.x * 2.2,
       };
-      paintFace(nodes(), p, look.current, bf, bob);
+      paintFace(nodes(), kaomojiRef.current, look.current, bob);
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -269,9 +234,11 @@ export default function OpeAvatar({ size = '1em', expression = null, autoplay = 
   }, [autoplay, reduced]);
 
   const tapPulse = () => {
-    setTap('tongue');
+    setTap('sparkle');
     setTimeout(() => setTap(null), 900);
   };
+
+  const initialSlots = getSlots(kaomojiRef.current);
 
   return (
     <span
@@ -284,11 +251,15 @@ export default function OpeAvatar({ size = '1em', expression = null, autoplay = 
     >
       <svg ref={svgRef} viewBox="0 0 100 100" className="ope-avatar-svg">
         <g ref={faceRef}>
+          <text ref={leftParenRef} className="ope-kaomoji" x={SLOT.leftParen.x} y={SLOT.leftParen.y}>{initialSlots.leftParen}</text>
+          <text ref={leftMarkRef} className="ope-kaomoji" x={SLOT.leftMark.x} y={SLOT.leftMark.y}>{initialSlots.leftMark}</text>
           <g ref={lookGroupRef}>
-            {/* <Eyebrows ref={eyebrowsPathRef} /> */}
-            <Eyes ref={eyesPathRef} />
-            <Mouth ref={mouthPathRef} />
+            <text ref={leftEyeRef} className="ope-kaomoji" x={SLOT.leftEye.x} y={SLOT.leftEye.y}>{initialSlots.leftEye}</text>
+            <text ref={mouthRef} className="ope-kaomoji" x={SLOT.mouth.x} y={SLOT.mouth.y}>{initialSlots.mouth}</text>
+            <text ref={rightEyeRef} className="ope-kaomoji" x={SLOT.rightEye.x} y={SLOT.rightEye.y}>{initialSlots.rightEye}</text>
           </g>
+          <text ref={rightMarkRef} className="ope-kaomoji" x={SLOT.rightMark.x} y={SLOT.rightMark.y}>{initialSlots.rightMark}</text>
+          <text ref={rightParenRef} className="ope-kaomoji" x={SLOT.rightParen.x} y={SLOT.rightParen.y}>{initialSlots.rightParen}</text>
         </g>
       </svg>
 
@@ -307,6 +278,15 @@ export default function OpeAvatar({ size = '1em', expression = null, autoplay = 
           height: 100%;
           display: block;
           overflow: visible;
+        }
+        .ope-kaomoji {
+          fill: white;
+          font-family: "Noto Sans JP", "Meiryo", "Hiragino Sans", "Segoe UI Symbol", monospace;
+          font-size: 24px;
+          font-weight: 700;
+          dominant-baseline: middle;
+          text-anchor: middle;
+          user-select: none;
         }
       `}</style>
     </span>
