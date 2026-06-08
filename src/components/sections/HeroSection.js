@@ -70,7 +70,7 @@ export default function HeroSection() {
             <h1 className="nf-title">
               <span className="nf-title-row" ref={opeRef}>
                 <span className="nf-title-italic">Ope</span>
-                <img src="/cursor.png" alt="" style={{ height: '0.65em', width: 'auto', alignSelf: 'flex-end', marginLeft: '-0.2em', transform: 'scaleX(-1) rotate(15deg)' }} />
+                <img src="/cursor.png" alt="" style={{ height: '0.65em', width: 'auto', alignSelf: 'flex-end', marginLeft: '0em', marginBottom: '-0.07em', transform: 'rotate(120deg)' }} />
               </span>
               <span className="nf-italic" ref={watsonRef}>Watson</span>
             </h1>
@@ -90,7 +90,7 @@ export default function HeroSection() {
             </a>
             <a href={SOCIAL_LINKS.discord} target="_blank" rel="noopener noreferrer">
               <FaDiscord className="nf-social-icon" />
-              <span className="nf-social-label">Discord <span className="nf-social-desc">— chat with agent Arii</span></span>
+              <span className="nf-social-label">Discord <span className="nf-social-desc">— chat with Arii</span></span>
             </a>
             <a href={SOCIAL_LINKS.email}   target="_blank" rel="noopener noreferrer">
               <FaEnvelope className="nf-social-icon" />
