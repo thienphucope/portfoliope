@@ -7,7 +7,6 @@ import { SOCIAL_LINKS } from '@/configs/social';
 import FeedFooter from '@/components/layout/FeedFooter';
 import ChatRoom from '@/features/chatroom/ChatRoom';
 import TextToSpeech from '@/features/texttospeech/TextToSpeech';
-import OpeAvatar from '@/components/ui/OpeAvatar';
 
 const FEATURE_REFS = [
   { id: 'chat', href: '/chat', label: 'Consult', desc: 'Chat room', Icon: FaComments },
@@ -71,7 +70,7 @@ export default function HeroSection() {
             <h1 className="nf-title">
               <span className="nf-title-row" ref={opeRef}>
                 <span className="nf-title-italic">Ope</span>
-                <OpeAvatar size="0.9em" />
+                <img src="/cursor.png" alt="" style={{ height: '0.65em', width: 'auto', alignSelf: 'flex-end', marginLeft: '-0.2em', transform: 'scaleX(-1) rotate(15deg)' }} />
               </span>
               <span className="nf-italic" ref={watsonRef}>Watson</span>
             </h1>

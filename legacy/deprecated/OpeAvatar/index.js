@@ -59,6 +59,11 @@ function getKaomoji(value) {
   return KAOMOJI_BY_KEY[getKaomojiKey(value)] || KAOMOJI_BY_KEY.smile;
 }
 
+function getEmotionKey(value) {
+  if (isCustomKaomoji(value)) return value.key;
+  return value;
+}
+
 function paintFace(n, kaomoji, look, bob) {
   if (!n.face || !kaomoji) return;
 
@@ -103,6 +108,7 @@ export default function OpeAvatar({ size = '1em', expression = null, autoplay = 
   const glanceNext = useRef(0);
   const toolQueue = useRef([]);
   const toolQueueActive = useRef(false);
+  const lastToolEmotionKey = useRef(null);
   const toolStepTimer = useRef(null);
   const toolResetTimer = useRef(null);
 
@@ -143,6 +149,7 @@ export default function OpeAvatar({ size = '1em', expression = null, autoplay = 
       }
 
       toolQueueActive.current = true;
+      lastToolEmotionKey.current = getEmotionKey(next);
       setToolExpression(next);
       toolStepTimer.current = setTimeout(scheduleNextToolEmotion, TOOL_EMOTION_STEP_MS);
     };
@@ -150,6 +157,11 @@ export default function OpeAvatar({ size = '1em', expression = null, autoplay = 
     const onEmotion = (event) => {
       const next = event.detail?.kaomoji || event.detail?.emotion;
       if (!isCustomKaomoji(next) && !KAOMOJI_BY_KEY[next]) return;
+      const nextKey = getEmotionKey(next);
+      const tailKey = toolQueue.current.length
+        ? getEmotionKey(toolQueue.current[toolQueue.current.length - 1])
+        : lastToolEmotionKey.current;
+      if (nextKey === tailKey) return;
       toolQueue.current.push(next);
       clearTimeout(toolResetTimer.current);
       if (!toolQueueActive.current) scheduleNextToolEmotion();

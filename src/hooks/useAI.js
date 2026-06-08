@@ -1,41 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
 
-function parseToolArgs(args) {
-  if (!args) return {};
-  if (typeof args === 'string') {
-    try { return JSON.parse(args); } catch { return {}; }
-  }
-  return args;
-}
-
-function normalizeCustomKaomoji(input = {}) {
-  return {
-    key: input.key || input.emotion || input.name,
-    leftWrap: input.leftWrap || input.left_wrap || input.left_wrapper || input.open || '(',
-    leftEye: input.leftEye || input.left_eye || input.eyeLeft || input.eye_left,
-    mouth: input.mouth,
-    rightEye: input.rightEye || input.right_eye || input.eyeRight || input.eye_right,
-    rightWrap: input.rightWrap || input.right_wrap || input.right_wrapper || input.close || ')',
-  };
-}
-
-function emitOpeAvatarToolCall(name, args) {
-  if (typeof window === 'undefined') return;
-  const parsed = parseToolArgs(args);
-
-  if (name === 'ope_avatar_set_emotion') {
-    window.dispatchEvent(new CustomEvent('ope-avatar-emotion', {
-      detail: { emotion: parsed.emotion },
-    }));
-    return;
-  }
-
-  if (name === 'ope_avatar_set_custom_emotion') {
-    window.dispatchEvent(new CustomEvent('ope-avatar-emotion', {
-      detail: { kaomoji: normalizeCustomKaomoji(parsed) },
-    }));
-  }
-}
 
 export function useAI() {
   const [isThinking, setIsThinking] = useState(false);
@@ -99,7 +63,6 @@ export function useAI() {
           const event = JSON.parse(line);
           if (event.type === 'tool_call') {
             const tc = { name: event.name, args: event.args };
-            emitOpeAvatarToolCall(event.name, event.args);
             liveToolCallsRef.current = [...liveToolCallsRef.current, tc];
             setLiveToolCalls([...liveToolCallsRef.current]);
           } else if (event.type === 'text_delta') {

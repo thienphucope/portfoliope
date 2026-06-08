@@ -5,7 +5,6 @@ import { bookGet, bookGetSchema } from './book.js';
 import { webSearch, webSearchSchema, webFetch, webFetchSchema } from './search.js';
 import { casesList, casesRead, casesSearch, casesListSchema, casesReadSchema, casesSearchSchema } from './cases.js';
 import { sendOpeAnonymousMessage, sendOpeAnonymousMessageSchema } from './discordMessaging.js';
-import { setOpeAvatarEmotion, setOpeAvatarEmotionSchema, setOpeAvatarCustomEmotion, setOpeAvatarCustomEmotionSchema } from './opeAvatar.js';
 
 const toolsFunctions = {
   calculator,
@@ -17,11 +16,9 @@ const toolsFunctions = {
   cases_read: casesRead,
   cases_search: casesSearch,
   send_ope_anonymous_message: sendOpeAnonymousMessage,
-  ope_avatar_set_emotion: setOpeAvatarEmotion,
-  ope_avatar_set_custom_emotion: setOpeAvatarCustomEmotion,
 };
 
-export const availableTools = [calculatorSchema, ragSearchSchema, bookGetSchema, webSearchSchema, webFetchSchema, casesListSchema, casesReadSchema, casesSearchSchema, sendOpeAnonymousMessageSchema, setOpeAvatarEmotionSchema, setOpeAvatarCustomEmotionSchema];
+export const availableTools = [calculatorSchema, ragSearchSchema, bookGetSchema, webSearchSchema, webFetchSchema, casesListSchema, casesReadSchema, casesSearchSchema, sendOpeAnonymousMessageSchema];
 
 export async function executeToolCall(toolName, args) {
   console.log(`🛠️ [Tool] AI gọi tool: ${toolName}`, args);
