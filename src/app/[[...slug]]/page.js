@@ -1,3 +1,4 @@
+import { notFound } from 'next/navigation';
 import CaseReader from '@/features/caseArchive/CaseReader';
 import HeroSection from '@/components/sections/HeroSection';
 import NoteFeed from '@/features/caseArchive/NoteFeed';
@@ -90,6 +91,13 @@ export default async function CasePage({ params }) {
   const htmlCache = githubData?.htmlCache || {};
 
   const activeKey = !isRoot ? resolveCaseKey(rawCache, slug) : null;
+
+  // Slug không khớp case nào → 404 thật (chống soft-404 trên Google).
+  // Guard: chỉ 404 khi cache đã load; GitHub down tạm (rawCache rỗng) thì không false-404 case thật.
+  if (!isRoot && !activeKey && Object.keys(rawCache).length > 0) {
+    notFound();
+  }
+
   const caseLinks = isRoot
     ? Object.keys(rawCache).map((key) => ({ href: '/' + key.replace(/\.md$/i, ''), title: caseTitleFromKey(key) }))
     : [];
