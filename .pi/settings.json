@@ -1,6 +1,6 @@
 {
-  "defaultProvider": "opencode-go",
-  "defaultModel": "deepseek-v4-flash",
+  "defaultProvider": "llamacpp",
+  "defaultModel": "gemma",
   "lastChangelogVersion": "0.76.0",
   "shellPath": "D:\\Programs\\Git\\bin\\bash.exe",
   "packages": [

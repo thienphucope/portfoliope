@@ -1,13 +1,25 @@
 {
   "permissions": {
+    "defaultMode": "bypassPermissions",
     "allow": [
-      "mcp__codegraph__codegraph_search",
-      "mcp__codegraph__codegraph_context",
-      "mcp__codegraph__codegraph_callers",
-      "mcp__codegraph__codegraph_callees",
-      "mcp__codegraph__codegraph_impact",
-      "mcp__codegraph__codegraph_node",
-      "mcp__codegraph__codegraph_status"
+      "Read(**)",
+      "Edit(**)",
+      "Write(**)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git show *)",
+      "Bash(git branch *)",
+      "Bash(git status *)",
+      "Bash(git stash list)",
+      "Bash(git -C * status)",
+      "Bash(git -C * ls-files)",
+      "Bash(git -C * log *)",
+      "Bash(wc *)",
+      "Bash(where.exe *)",
+      "Bash(where *)",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "mcp__codegraph__*"
     ]
   }
 }

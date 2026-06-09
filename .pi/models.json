@@ -14,7 +14,7 @@
           "name": "Qwen 3.5 35B A3B",
           "reasoning": false,
           "input": ["text"],
-          "contextWindow": 65536,
+          "contextWindow": 64000,
           "maxTokens": 8192,
           "cost": {
             "input": 0,
@@ -24,17 +24,9 @@
           }
         },
         {
-          "id": "qwen-think",
-          "name": "Qwen 3.5 35B A3B (think)",
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "off": null,
-            "minimal": null,
-            "low": null,
-            "medium": "high",
-            "high": "high",
-            "xhigh": "high"
-          },
+          "id": "gemma",
+          "name": "gemma4-12b",
+          "reasoning": false,
           "input": ["text"],
           "contextWindow": 65536,
           "maxTokens": 8192,
