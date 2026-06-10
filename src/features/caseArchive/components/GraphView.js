@@ -81,10 +81,10 @@ export default function GraphView({ allFiles, onSelectFile, searchTerm = '', act
     if (!graphRef.current || dimensions.width === 0) return;
     const fg = graphRef.current;
     const timer = setTimeout(() => {
-      fg.d3Force('charge')?.strength(-400);
-      fg.d3Force('link')?.distance(100).strength(1);
-      fg.d3Force('x', forceX(0).strength(0.09));
-      fg.d3Force('y', forceY(0).strength(0.09));
+      fg.d3Force('charge')?.strength(-1500);
+      fg.d3Force('link')?.distance(100);
+      fg.d3Force('x', forceX(0).strength(0.05));
+      fg.d3Force('y', forceY(0).strength(0.05));
       fg.d3Force('center', null);
       fg.resumeAnimation();
     }, 100);

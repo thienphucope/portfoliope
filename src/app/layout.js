@@ -14,7 +14,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/blackcat.jpg" />
+        <link rel="icon" href="/ope-new.png" />
       </head>
       <body suppressHydrationWarning>
         {children}
