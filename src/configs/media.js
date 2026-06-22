@@ -1,5 +1,5 @@
 export const MUSIC_PLAYER = {
-  videoId: 'JEUf8nTl5aU',
+  videoId: 'KtC-pl9P3kE',
   volume: 30,
 };
 
