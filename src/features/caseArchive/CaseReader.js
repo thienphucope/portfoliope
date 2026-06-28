@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
-import { DEFAULT_VAULT_FILE } from '@/configs/vault';
+import { DEFAULT_VAULT_FILE, CASE_BASE } from '@/configs/vault';
 import { ArrowLeft } from 'lucide-react';
 import BlockEditor from '@/features/caseArchive/components/BlockEditor';
 import BaseStyles from '@/styles/BaseStyles';
@@ -73,7 +73,7 @@ export default function CaseReader({ serverHydratedData = null }) {
     setMaximizedWindow(null);
     setActiveTab(null);
     setEditorView('note');
-    window.history.replaceState({}, '', '/');
+    window.history.replaceState({}, '', CASE_BASE);
   }, []);
 
   const toggleMaximize = useCallback(() => { setMaximizedWindow(prev => prev ? null : 'editor'); }, []);
@@ -125,7 +125,7 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
   useEffect(() => {
     const lastProcessedKey = { current: null };
     const onPop = (e) => {
-      const isRoot = window.location.pathname === '/';
+      const isRoot = window.location.pathname === CASE_BASE || window.location.pathname === `${CASE_BASE}/`;
       if (isRoot) { setIsEditorOpen(false); setIsChatOpen(false); setActiveTab(null); setActiveOverlay(null); return; }
       const repoKey = e.state?.repoKey || null;
       if (lastProcessedKey.current === repoKey) return;
@@ -208,10 +208,12 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
   }, [fileName, resetScroll, updateActiveChapter]);
 
   useEffect(() => {
-    if (window.location.pathname === '/' && !window.history.state) window.history.replaceState({ isRoot: true }, '', '/');
+    if ((window.location.pathname === CASE_BASE || window.location.pathname === `${CASE_BASE}/`) && !window.history.state) window.history.replaceState({ isRoot: true }, '', CASE_BASE);
     const initialize = (data) => {
       const repoPathMap = buildRegistry(data.tree); setFileTree(data.tree); initializeFromServer(data.contentCache || {}, data.rawCache || {});
-      const pathParts = window.location.pathname.split('/').filter(Boolean);
+      // Path is /casearchive[/<slug>]; drop the base prefix to recover the case slug parts.
+      const relPath = window.location.pathname.startsWith(CASE_BASE) ? window.location.pathname.slice(CASE_BASE.length) : window.location.pathname;
+      const pathParts = relPath.split('/').filter(Boolean);
       const rawDefault = DEFAULT_VAULT_FILE;
       const cleanDefault = rawDefault.replace(/\.md$/, '');
       const isCaseRoot = pathParts.length === 0;

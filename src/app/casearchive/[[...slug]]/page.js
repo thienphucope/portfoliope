@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation';
 import CaseReader from '@/features/caseArchive/CaseReader';
-import HeroSection from '@/components/sections/HeroSection';
 import NoteFeed from '@/features/caseArchive/NoteFeed';
 import { hydrateServerCache } from '@/services/caseProvider';
 
@@ -46,9 +45,9 @@ export async function generateMetadata({ params }) {
   const slug = (await params)?.slug;
   if (!slug || slug.length === 0) {
     return {
-      title: 'Ope Watson',
+      title: 'Case Archives | Ope Watson',
       description: 'Detective case archives, notes, and stories by Ope Watson.',
-      alternates: { canonical: '/' },
+      alternates: { canonical: '/casearchive' },
     };
   }
 
@@ -61,12 +60,12 @@ export async function generateMetadata({ params }) {
 
   const key = snapshot ? resolveCaseKey(snapshot.rawCache, slug) : null;
   if (!key) {
-    return { alternates: { canonical: '/' + slug.join('/') } };
+    return { alternates: { canonical: '/casearchive/' + slug.join('/') } };
   }
 
   const title = `${caseTitleFromKey(key)} | Ope Watson`;
   const description = buildDescription(snapshot.rawCache[key]);
-  const canonical = '/' + key.replace(/\.md$/i, '');
+  const canonical = '/casearchive/' + key.replace(/\.md$/i, '');
 
   return {
     title,
@@ -76,12 +75,12 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default async function CasePage({ params }) {
+export default async function CaseArchivePage({ params }) {
   let githubData = null;
   try {
     githubData = await hydrateServerCache(false);
   } catch (e) {
-    console.error("Failed to hydrate server cache in CasePage:", e);
+    console.error("Failed to hydrate server cache in CaseArchivePage:", e);
   }
 
   const slug = (await params)?.slug;
@@ -99,7 +98,7 @@ export default async function CasePage({ params }) {
   }
 
   const caseLinks = isRoot
-    ? Object.keys(rawCache).map((key) => ({ href: '/' + key.replace(/\.md$/i, ''), title: caseTitleFromKey(key) }))
+    ? Object.keys(rawCache).map((key) => ({ href: '/casearchive/' + key.replace(/\.md$/i, ''), title: caseTitleFromKey(key) }))
     : [];
 
   return (
@@ -126,7 +125,6 @@ export default async function CasePage({ params }) {
       {isRoot
         ? (
           <div className="nf-shell">
-            <HeroSection />
             <NoteFeed serverData={githubData} />
           </div>
         )

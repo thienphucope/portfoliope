@@ -1,12 +1,11 @@
 // src/components/sections/MusicHeader.js
 "use client";
 import { useState, useEffect, useRef } from 'react';
-import { usePathname } from 'next/navigation';
-import Link from 'next/link';
+import { SOCIAL_LINKS } from '@/configs/social';
+import { FaGithub, FaDiscord, FaEnvelope } from 'react-icons/fa';
 import { MUSIC_PLAYER } from '@/configs/media';
 
 function MusicHeader() {
-  const pathname = usePathname();
   const [isPlaying, setIsPlaying] = useState(true);
   const [videoTitle, setVideoTitle] = useState('');
   const [animationClass, setAnimationClass] = useState('');
@@ -79,10 +78,10 @@ function MusicHeader() {
     setAnimationClass('fly-in'); setAnimationKey(k => k + 1);
   };
 
-  const navLinks = [
-    { href: '/about', label: 'about' },
-    { href: '/privacy', label: 'privacy' },
-    { href: '/terms', label: 'terms' },
+  const socialLinks = [
+    { href: SOCIAL_LINKS.github, label: 'GitHub', Icon: FaGithub },
+    { href: SOCIAL_LINKS.discord, label: 'Discord', Icon: FaDiscord },
+    { href: SOCIAL_LINKS.email, label: 'Email', Icon: FaEnvelope },
   ];
 
   return (
@@ -101,8 +100,7 @@ function MusicHeader() {
           justify-content: space-between;
           gap: 14px;
           margin-bottom: 0;
-          padding-bottom: 12px;
-          border-bottom: 1px solid color-mix(in srgb, var(--theme) 36%, transparent);
+          padding-bottom: 4px;
         }
         .about-music-control {
           position: relative;
@@ -153,7 +151,7 @@ function MusicHeader() {
           transform: translate(-50%, -50%);
         }
         .disk.paused { animation-play-state: paused; }
-        .title-fly-out { position: absolute; top: 50%; left: 50%; transform: translateY(-50%); color: var(--theme); font-size: 1rem; font-weight: bold; font-style: italic; white-space: nowrap; opacity: 0; pointer-events: none; }
+        .title-fly-out { position: absolute; top: 50%; left: 50%; transform: translateY(-50%); color: var(--theme); font-size: 1rem; font-weight: bold; font-style: italic; white-space: nowrap; max-width: 42vw; overflow: hidden; text-overflow: ellipsis; opacity: 0; pointer-events: none; }
         .title-fly-out.fly-out { animation: flyOut 0.5s forwards; }
         .title-fly-out.fly-in { animation: flyIn 0.5s forwards; }
         .title-fly-out.fly-cycle { animation: flyOutStayIn 5.5s forwards; }
@@ -165,31 +163,44 @@ function MusicHeader() {
           gap: 16px;
           color: var(--theme);
         }
+        .about-social-link {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--theme);
+          font-size: 1.35rem;
+          line-height: 1;
+          transition: color 0.25s ease, transform 0.25s ease;
+        }
+        .about-social-link:hover {
+          color: #fff;
+          transform: translateY(-2px);
+        }
 
         @media (min-width: 768px) {
-          .about-nav { gap: 24px; }
+          .about-nav { gap: 22px; }
+          .about-social-link { font-size: 1.6rem; }
         }
       `}</style>
       <div style={{ display: 'none' }}><div ref={musicPlayerDivRef}></div></div>
       <header className="about-masthead">
         <div className="about-music-control" onClick={togglePlayPause} onMouseEnter={handleDiskMouseEnter} onMouseLeave={handleDiskMouseLeave}>
           <div className={`disk ${!isPlaying ? 'paused' : ''}`}></div>
-          {videoTitle && <span key={animationKey} className={`title-fly-out ${animationClass} font-fredericka`} style={{ fontFamily: 'var(--font-display)' }}>{videoTitle}</span>}
+          {videoTitle && <span key={animationKey} className={`title-fly-out ${animationClass} font-fredericka`} style={{ fontFamily: 'var(--font-display)' }}>{videoTitle.length > 30 ? videoTitle.slice(0, 30).trimEnd() + '…' : videoTitle}</span>}
         </div>
-        <nav className="about-nav" style={{ fontFamily: 'var(--font-display)' }}>
-          {navLinks.map((link) => {
-            const isActive = pathname === link.href;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`text-lg md:text-xl font-bold transition-colors duration-300 ${isActive ? 'line-through' : 'hover:text-white'}`}
-                style={isActive ? { color: 'var(--theme)', textDecorationThickness: '4px', textDecorationColor: 'white' } : {}}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
+        <nav className="about-nav" aria-label="Social links">
+          {socialLinks.map(({ href, label, Icon }) => (
+            <a
+              key={label}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="about-social-link"
+              aria-label={label}
+            >
+              <Icon />
+            </a>
+          ))}
         </nav>
       </header>
     </>

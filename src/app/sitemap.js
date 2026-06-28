@@ -8,7 +8,7 @@ export default async function sitemap() {
   // 1. Các trang tĩnh cơ bản
   const staticPages = [
     { route: '', priority: 1.0, changeFrequency: 'daily' },
-    { route: '/about', priority: 0.3, changeFrequency: 'monthly' },
+    { route: '/casearchive', priority: 0.9, changeFrequency: 'daily' },
     { route: '/privacy', priority: 0.3, changeFrequency: 'monthly' },
     { route: '/terms', priority: 0.3, changeFrequency: 'monthly' },
   ].map((item) => ({
@@ -27,7 +27,7 @@ export default async function sitemap() {
       .filter(file => file.endsWith('.md') && !RESERVED.has(file.replace(/\.md$/i, '').toLowerCase()));
 
     localCases = filenames.map(name => ({
-      url: encodeURI(`${baseUrl}/${name.replace('.md', '')}`),
+      url: encodeURI(`${baseUrl}/casearchive/${name.replace('.md', '')}`),
       lastModified: new Date(),
       changeFrequency: 'daily', // Note có thể thay đổi thường xuyên
       priority: 0.8, // Ưu tiên các note
@@ -44,7 +44,7 @@ export default async function sitemap() {
       githubCases = Object.keys(snapshot.rawCache).map(filePath => {
         const slug = filePath.replace(/\.md$/i, '');
         return {
-          url: encodeURI(`${baseUrl}/${slug}`),
+          url: encodeURI(`${baseUrl}/casearchive/${slug}`),
           lastModified: new Date(snapshot.hydratedAt || Date.now()),
           changeFrequency: 'daily',
           priority: 0.8, // Ưu tiên các note

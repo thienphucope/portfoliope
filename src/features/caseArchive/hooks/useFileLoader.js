@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { CASE_BASE } from '@/configs/vault';
 
 /**
  * Read-only file loader: opens a note from the hydrated cache, falling back to
@@ -77,7 +78,7 @@ export function useFileLoader({
 
         if (activate) {
           const cleanPath = repoKey.replace(/\.md$/, '');
-          const newUrl    = `/${cleanPath}`;
+          const newUrl    = `${CASE_BASE}/${cleanPath}`;
           if (window.location.pathname !== newUrl) {
             if (historyMode === 'replace') {
               window.history.replaceState({ repoKey }, '', newUrl);

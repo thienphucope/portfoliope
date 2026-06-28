@@ -4,7 +4,13 @@ import SnowEffect from '@/components/sections/SnowEffect';
 import FingerprintEffect from '@/components/sections/FingerprintEffect';
 import MomentumScroll from '@/components/layout/MomentumScroll';
 
-export default async function AboutPage() {
+export const metadata = {
+  title: 'Ope Watson',
+  description: 'Detective case archives, notes, and stories by Ope Watson.',
+  alternates: { canonical: '/' },
+};
+
+export default function HomePage() {
   return (
     <div className="min-h-[100dvh] flex flex-col">
       <div className="relative flex-1">

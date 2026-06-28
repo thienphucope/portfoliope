@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ensureLibsLoaded } from '@/lib/markdown';
 import { useBootstrapData } from '@/features/caseArchive/hooks/useBootstrapData';
@@ -7,6 +8,7 @@ import { useFetchBatch, BATCH_SIZE } from '@/features/caseArchive/hooks/useFetch
 import { useFeedEffects } from '@/features/caseArchive/hooks/useFeedEffects';
 import CasesSection from '@/features/caseArchive/components/CasesSection';
 import NoteFeedStyles from '@/features/caseArchive/styles/NoteFeedStyles';
+import { CASE_BASE } from '@/configs/vault';
 
 export default function NoteFeed({ onLinkClick, serverData }) {
   const router = useRouter();
@@ -33,7 +35,7 @@ export default function NoteFeed({ onLinkClick, serverData }) {
       link.classList.add('internal-link');
       onLinkClick({ target: link, preventDefault: () => {} });
     } else {
-      router.push(`/${targetId.replace(/\.md$/i, '')}`);
+      router.push(`${CASE_BASE}/${targetId.replace(/\.md$/i, '')}`);
     }
   };
 
@@ -51,6 +53,11 @@ export default function NoteFeed({ onLinkClick, serverData }) {
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
           />
+          <footer className="nf-legal-links" style={{ marginTop: 28, paddingBottom: 8 }}>
+            <Link href="/privacy">Privacy</Link>
+            <span className="nf-legal-sep">·</span>
+            <Link href="/terms">Terms</Link>
+          </footer>
         </main>
       )}
       <NoteFeedStyles />
