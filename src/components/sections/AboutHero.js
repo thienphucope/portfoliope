@@ -113,6 +113,7 @@ export default function Hero() {
       <style jsx global>{`
         .about-noir {
           position: relative;
+          --about-tile-gap: 8px;
           width: min(1040px, calc(100vw - 32px));
           margin: 0 auto;
           display: grid;
@@ -123,7 +124,7 @@ export default function Hero() {
             "copy"
             "social";
           align-items: start;
-          gap: 14px;
+          gap: var(--about-tile-gap);
           color: #f7f5ef;
           background-image:
             repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 28px),
@@ -265,7 +266,7 @@ export default function Hero() {
           margin: 0;
           display: flex;
           flex-wrap: nowrap;
-          gap: 8px;
+          gap: var(--about-tile-gap);
         }
         .noir-action {
           flex: 1 1 0;
@@ -310,7 +311,6 @@ export default function Hero() {
         @media (max-width: 430px) {
           .about-noir {
             grid-template-columns: minmax(0, 1fr);
-            gap: 12px;
             padding: 10px 10px 14px;
           }
 
@@ -354,13 +354,13 @@ export default function Hero() {
 
         @media (min-width: 768px) {
           .about-noir {
-            grid-template-columns: minmax(220px, 0.72fr) minmax(0, 1.28fr);
+            --about-tile-gap: 10px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             grid-template-areas:
-              "visual masthead"
-              "visual copy"
-              "social social";
+              "visual masthead masthead"
+              "visual copy copy"
+              "social social social";
             align-items: stretch;
-            gap: 8px 34px;
             padding: 20px 28px 28px;
           }
 
@@ -394,7 +394,7 @@ export default function Hero() {
           }
 
           .noir-actions {
-            gap: 10px;
+            gap: var(--about-tile-gap);
           }
           .noir-action {
             padding: 10px 14px;
@@ -406,8 +406,7 @@ export default function Hero() {
         @media (min-width: 1024px) {
           .about-noir {
             width: min(1080px, calc(100vw - 120px));
-            grid-template-columns: minmax(280px, 0.74fr) minmax(0, 1.26fr);
-            gap: 10px 52px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             padding: 24px 38px 34px;
           }
 
