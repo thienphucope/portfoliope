@@ -52,6 +52,7 @@ export default function NoteFeed({ onLinkClick, serverData }) {
             onLoadMore={() => fetchBatch(loadedCount, loadedCount + BATCH_SIZE)}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
+            showDesktopDiscuss
           />
           <footer className="nf-legal-links" style={{ marginTop: 28, paddingBottom: 8 }}>
             <Link href="/privacy">Privacy</Link>

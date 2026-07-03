@@ -50,7 +50,7 @@ export default async function GalleryPage() {
             <SnowEffect mounted={true} />
           </div>
           <div className="w-full transition-opacity duration-1000 opacity-100 relative z-10">
-            <Gallery images={images} />
+            <Gallery images={images} showDesktopDiscuss />
           </div>
         </main>
       </div>

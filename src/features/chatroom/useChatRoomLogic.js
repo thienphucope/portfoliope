@@ -134,14 +134,14 @@ export function useChatRoomLogic({ onLiveCallChange, ref } = {}) {
           return n;
         });
       });
-      if (isLiveCallRef.current) {
+      if (live) {
         const speechText = extractSpeechText(reply, markdownReady);
         if (speechText) streamAudioLive(speechText);
       }
     } catch (e) {
       setConvo(prev => {
         const n = [...prev];
-        n[n.length - 1] = { role: 'assistant', content: MOXXI_ERROR_MSG };
+        n[n.length - 1] = { role: 'assistant', content: MOXXI_ERROR_MSG, live };
         return n;
       });
     }

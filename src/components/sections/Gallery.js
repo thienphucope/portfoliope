@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { FaTimes } from 'react-icons/fa';
+import MusicHeader from '@/components/sections/MusicHeader';
 
-export default function Gallery({ images = [] }) {
+export default function Gallery({ images = [], showDesktopDiscuss = false }) {
   const [activePhoto, setActivePhoto] = useState(null);
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function Gallery({ images = [] }) {
           --font-mono: 'Special Elite', 'Courier New', monospace;
           color: #241d16;
           background: oklch(0.938 0.03 84);
-          padding: clamp(22px, 4vw, 42px);
+          padding: var(--feature-space);
           border: 1px solid oklch(0.5 0.045 64);
           box-shadow:
             inset 0 0 0 5px oklch(0.938 0.03 84),
@@ -64,38 +64,16 @@ export default function Gallery({ images = [] }) {
         .gallery-shell {
           position: relative;
           z-index: 2;
-          width: min(1320px, 100%);
+          width: 100%;
           margin: 0 auto;
         }
 
         .gallery-masthead {
-          display: grid;
-          grid-template-columns: minmax(0, 1fr);
-          gap: clamp(12px, 2.5vw, 20px);
           padding-bottom: clamp(22px, 4vw, 38px);
         }
 
-        .gallery-kicker {
-          display: flex;
-          flex-wrap: wrap;
-          align-items: center;
-          gap: 10px 18px;
-          font-family: var(--font-mono);
-          font-style: italic;
-          font-size: 0.78rem;
-          letter-spacing: 0.18em;
-          text-transform: lowercase;
-          color: oklch(0.55 0.02 64);
-        }
-
-        .gallery-kicker a {
-          color: #7a1f3d;
-          text-decoration: none;
-          transition: color 0.22s ease;
-        }
-
-        .gallery-kicker a:hover {
-          color: #4f1027;
+        .gallery-masthead .gallery-discuss-links {
+          display: none;
         }
 
         .gallery-title {
@@ -263,18 +241,37 @@ export default function Gallery({ images = [] }) {
         }
 
         @media (min-width: 900px) {
-          .gallery-masthead {
-            grid-template-columns: minmax(0, 1fr) auto;
-            align-items: end;
-          }
-
-          .gallery-kicker {
-            justify-content: flex-end;
-            text-align: right;
-          }
-
           .gallery-wall {
             column-count: 3;
+          }
+        }
+
+        @media (min-width: 1024px) {
+          .gallery-masthead {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: clamp(24px, 5vw, 72px);
+          }
+
+          .gallery-masthead .gallery-discuss-links {
+            display: flex;
+            flex: 0 0 auto;
+            justify-content: flex-start;
+            gap: 16px;
+            padding-bottom: 0;
+          }
+
+          .gallery-masthead .gallery-discuss-links .about-nav {
+            gap: 18px;
+          }
+
+          .gallery-masthead .gallery-discuss-links .about-social-prompt {
+            color: #5c4636;
+          }
+
+          .gallery-masthead .gallery-discuss-links .title-fly-out {
+            max-width: 22vw;
           }
         }
 
@@ -290,9 +287,14 @@ export default function Gallery({ images = [] }) {
         <div className="gallery-shell">
           <header className="gallery-masthead">
             <h1 className="gallery-title">Gallery</h1>
-            <nav className="gallery-kicker" aria-label="Gallery navigation">
-              <Link href="/">back to ope watson</Link>
-            </nav>
+            {showDesktopDiscuss && (
+              <MusicHeader
+                className="gallery-discuss-links"
+                promptLabel="discuss?"
+                ariaLabel="Discuss links"
+                showMusicControl={false}
+              />
+            )}
           </header>
 
           <div className="gallery-wall" aria-label="Gallery">

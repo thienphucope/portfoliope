@@ -5,7 +5,7 @@ import { SOCIAL_LINKS } from '@/configs/social';
 import { FaGithub, FaDiscord, FaEnvelope } from 'react-icons/fa';
 import { MUSIC_PLAYER } from '@/configs/media';
 
-function MusicHeader({ onPlayStateChange } = {}) {
+function MusicHeader({ onPlayStateChange, className = '', promptLabel = '', ariaLabel = 'Social links', showMusicControl = true } = {}) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoTitle, setVideoTitle] = useState('');
   const [animationClass, setAnimationClass] = useState('');
@@ -82,6 +82,7 @@ function MusicHeader({ onPlayStateChange } = {}) {
     { href: SOCIAL_LINKS.discord, label: 'Discord', Icon: FaDiscord },
     { href: SOCIAL_LINKS.email, label: 'Email', Icon: FaEnvelope },
   ];
+  const mastheadClassName = ['about-masthead', className].filter(Boolean).join(' ');
 
   return (
     <>
@@ -162,6 +163,15 @@ function MusicHeader({ onPlayStateChange } = {}) {
           gap: 16px;
           color: var(--theme);
         }
+        .about-social-prompt {
+          font-family: var(--font-mono);
+          font-size: 0.78rem;
+          font-style: italic;
+          letter-spacing: 0.08em;
+          line-height: 1;
+          color: currentColor;
+          white-space: nowrap;
+        }
         .about-social-link {
           display: inline-flex;
           align-items: center;
@@ -182,12 +192,15 @@ function MusicHeader({ onPlayStateChange } = {}) {
         }
       `}</style>
       <div style={{ display: 'none' }}><div ref={musicPlayerDivRef}></div></div>
-      <header className="about-masthead">
-        <div className="about-music-control" onClick={togglePlayPause} onMouseEnter={handleDiskMouseEnter} onMouseLeave={handleDiskMouseLeave}>
-          <div className={`disk ${!isPlaying ? 'paused' : ''}`}></div>
-          {videoTitle && <span key={animationKey} className={`title-fly-out ${animationClass} font-fredericka`} style={{ fontFamily: 'var(--font-display)' }}>{videoTitle.length > 30 ? videoTitle.slice(0, 30).trimEnd() + '…' : videoTitle}</span>}
-        </div>
-        <nav className="about-nav" aria-label="Social links">
+      <div className={mastheadClassName}>
+        {showMusicControl && (
+          <div className="about-music-control" onClick={togglePlayPause} onMouseEnter={handleDiskMouseEnter} onMouseLeave={handleDiskMouseLeave}>
+            <div className={`disk ${!isPlaying ? 'paused' : ''}`}></div>
+            {videoTitle && <span key={animationKey} className={`title-fly-out ${animationClass} font-fredericka`} style={{ fontFamily: 'var(--font-display)' }}>{videoTitle.length > 30 ? videoTitle.slice(0, 30).trimEnd() + '…' : videoTitle}</span>}
+          </div>
+        )}
+        <nav className="about-nav" aria-label={ariaLabel}>
+          {promptLabel && <span className="about-social-prompt">{promptLabel}</span>}
           {socialLinks.map(({ href, label, Icon }) => (
             <a
               key={label}
@@ -201,7 +214,7 @@ function MusicHeader({ onPlayStateChange } = {}) {
             </a>
           ))}
         </nav>
-      </header>
+      </div>
     </>
   );
 }

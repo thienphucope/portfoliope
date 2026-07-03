@@ -19,8 +19,8 @@ export default function Hero() {
   const { setSpotlightEnabled, spotlightOverlay } = useSpotlight();
 
   const padChar = ' ';
-  const originalText = "An IT developer and embedded IoT programmer wiring up connected devices, firmware, and the quiet systems that keep them talking.";
-  const replacementText = "A counselling detective for love, loss, doubt, and the stories people cannot bring themselves to close.";
+  const originalText = "A counseling detective and quiet explorer of love, loss, doubt, and the stories people cannot bring themselves to close.";
+  const replacementText = "An IT developer and embedded IoT programmer who builds connected devices, firmware, and the quiet systems that keep them talking.";
   const textMaxLen = Math.max(originalText.length, replacementText.length);
   const originalTextPadded = originalText + padChar.repeat(textMaxLen - originalText.length);
   const replacementTextPadded = replacementText + padChar.repeat(textMaxLen - replacementText.length);
@@ -312,7 +312,7 @@ export default function Hero() {
         .noir-action-label {
           flex: 1;
           min-width: 0;
-          font-weight: 800;
+          font-weight: 400;
           font-size: clamp(1rem, 2.5vw, 1.18rem);
           letter-spacing: 0.04em;
           text-transform: none;
@@ -339,6 +339,16 @@ export default function Hero() {
           font-size: 0.78rem;
           color: oklch(0.68 0.02 64);
         }
+        .noir-hint-button {
+          border: 0;
+          padding: 0;
+          background: transparent;
+          cursor: pointer;
+          transition: color 0.25s ease;
+        }
+        .noir-hint-button:hover {
+          color: var(--theme);
+        }
         .noir-cursor {
           animation: noir-cursor-blink 1.1s step-end infinite;
         }
@@ -356,10 +366,9 @@ export default function Hero() {
         }
         .video-modal {
           position: relative;
-          width: 50vw;
-          height: 50vh;
-          min-width: 280px;
-          min-height: 158px;
+          width: 100vw;
+          aspect-ratio: 16 / 9;
+          height: auto;
           background: #000;
           border: 1px solid oklch(0.7 0.045 70);
           box-shadow: 0 24px 70px rgba(0, 0, 0, 0.72);
@@ -372,8 +381,8 @@ export default function Hero() {
         }
         .video-modal-close {
           position: absolute;
-          top: -14px;
-          right: -14px;
+          top: 8px;
+          right: 8px;
           width: 32px;
           height: 32px;
           display: flex;
@@ -388,6 +397,13 @@ export default function Hero() {
         }
 
         @media (min-width: 768px) {
+          .video-modal {
+            width: 75vw;
+          }
+          .video-modal-close {
+            top: -14px;
+            right: -14px;
+          }
           .about-noir {
             grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
             grid-template-rows: auto 1fr auto;
@@ -428,13 +444,7 @@ export default function Hero() {
       <div className="about-noir relative z-10">
         <div className="noir-masthead">
           <MusicHeader onPlayStateChange={setSpotlightEnabled} />
-          <button
-            type="button"
-            className="noir-eyebrow"
-            onClick={() => setShowVideoOverlay(true)}
-          >
-            inspired by ↗
-          </button>
+          <span className="noir-eyebrow">hover anything<span className="noir-cursor">_</span></span>
           <h2
             className="noir-name"
             onMouseEnter={() => scrambleText(originalTitlePadded, replacementTitlePadded, setDisplayTitle)}
@@ -484,7 +494,13 @@ export default function Hero() {
         </div>
 
         <div className="noir-footer">
-          <span className="noir-hint">hover anything<span className="noir-cursor">_</span></span>
+          <button
+            type="button"
+            className="noir-hint noir-hint-button"
+            onClick={() => setShowVideoOverlay(true)}
+          >
+            inspired by ↗
+          </button>
         </div>
       </div>
 

@@ -43,17 +43,18 @@ export default function ChatDeskStyles() {
         pointer-events: none;
       }
       .arrow-line {
-        width: 2px;
-        height: 44px;
+        width: 10px;
+        height: 54px;
         background: color-mix(in srgb, var(--theme) 70%, transparent);
+        border-radius: 999px;
       }
       .arrow-head {
         width: 0;
         height: 0;
-        border-left: 8px solid transparent;
-        border-right: 8px solid transparent;
-        border-bottom: 12px solid color-mix(in srgb, var(--theme) 70%, transparent);
-        margin-bottom: -2px;
+        border-left: 23px solid transparent;
+        border-right: 23px solid transparent;
+        border-bottom: 34px solid color-mix(in srgb, var(--theme) 70%, transparent);
+        margin-bottom: -7px;
       }
       .arrow-label {
         font-size: 0.68rem;
@@ -93,12 +94,13 @@ export default function ChatDeskStyles() {
 
       .paper-stack {
         position: absolute;
-        left: 32%;
+        left: 50%;
         top: 50%;
-        transform: translate(-50%, -50%);
+        margin-left: -160px;
+        margin-top: -110px;
         width: min(320px, 78vw);
         height: 220px;
-        z-index: 4;
+        z-index: auto;
       }
 
       .writable-paper {
@@ -165,8 +167,21 @@ export default function ChatDeskStyles() {
         .writable-paper, .paper-stack { height: 150px; }
         .desk-paper { padding: 12px 14px; }
         .paper-textarea, .response-paper, .response-paper .markdown-content { font-size: 15px; }
-        .paper-stack { left: 50%; }
-        .magnifier { width: 150px; height: 150px; top: auto; bottom: 4%; right: 4%; margin-top: 0; }
+        .paper-stack {
+          left: 50%;
+          top: 30%;
+          margin-left: -34vw;
+          margin-top: -75px;
+        }
+        .magnifier {
+          width: 200px;
+          height: 200px;
+          top: 62%;
+          bottom: auto;
+          left: calc(50% - 100px);
+          right: auto;
+          margin-top: 0;
+        }
       }
     `}</style>
   );

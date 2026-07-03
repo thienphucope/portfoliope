@@ -1,14 +1,21 @@
-import Link from 'next/link';
 import CaseItem from './CaseItem';
+import MusicHeader from '@/components/sections/MusicHeader';
 
-export default function CasesSection({ displayedCases, onLinkClick, loadedCount, totalCount, loading, onLoadMore, searchTerm, setSearchTerm }) {
+export default function CasesSection({ displayedCases, onLinkClick, loadedCount, totalCount, loading, onLoadMore, searchTerm, setSearchTerm, showDesktopDiscuss = false }) {
   return (
     <section className="nf-cases" id="cases">
       <div className="nf-cases-header">
         <div className="nf-cases-label">
           Case archives
         </div>
-        <Link href="/" className="nf-cases-back">back to ope watson</Link>
+        {showDesktopDiscuss && (
+          <MusicHeader
+            className="nf-discuss-links"
+            promptLabel="discuss?"
+            ariaLabel="Discuss links"
+            showMusicControl={false}
+          />
+        )}
       </div>
       <div className="nf-search-row">
         <input

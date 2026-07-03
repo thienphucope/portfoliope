@@ -312,31 +312,36 @@ export default function NoteFeedStyles() {
         color: var(--theme);
       }
 
-      .nf-cases-back {
-        width: fit-content;
-        font-family: var(--font-mono);
-        font-style: italic;
-        font-size: 0.78rem;
-        letter-spacing: 0.18em;
-        text-transform: lowercase;
-        color: var(--theme);
-        text-decoration: none;
-        transition: color 0.22s ease;
+      .nf-cases-header .nf-discuss-links {
+        display: none;
       }
 
-      .nf-cases-back:hover {
-        color: #4f1027;
-      }
-
-      @media (min-width: 900px) {
+      @media (min-width: 1024px) {
         .nf-cases-header {
           grid-template-columns: minmax(0, 1fr) auto;
+          align-items: center;
         }
 
-        .nf-cases-back {
+        .nf-cases-header .nf-discuss-links {
+          display: flex;
+          grid-area: auto;
           justify-self: end;
-          margin-bottom: 0.3em;
-          text-align: right;
+          align-self: center;
+          justify-content: flex-start;
+          gap: 16px;
+          padding-bottom: 0;
+        }
+
+        .nf-cases-header .nf-discuss-links .about-nav {
+          gap: 18px;
+        }
+
+        .nf-cases-header .nf-discuss-links .about-social-prompt {
+          color: var(--nf-txt-dim);
+        }
+
+        .nf-cases-header .nf-discuss-links .title-fly-out {
+          max-width: 22vw;
         }
       }
 

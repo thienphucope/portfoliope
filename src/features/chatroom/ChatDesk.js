@@ -9,6 +9,7 @@ import { useChatRoomLogic } from './useChatRoomLogic';
 import ChatDeskStyles from './styles/ChatDeskStyles';
 import EditorStyles from '@/styles/EditorStyles';
 import MarkdownStyles from '@/styles/MarkdownStyles';
+import { MOXXI_GREETING } from '@/configs/ai';
 
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(Draggable, InertiaPlugin);
@@ -16,22 +17,33 @@ if (typeof window !== 'undefined') {
 
 const MAX_PAPERS = 10;
 
-// Fixed slots as fractions of the desk's current size, cycled by index so
-// papers always land fully inside the visible desk regardless of how many
-// pile up, and never underneath the always-on-top writable paper stack
-// (centered, ~roughly the middle 40% of the desk).
-const REST_SLOTS = [
-  { xf: 0.10, yf: 0.62 }, { xf: 0.32, yf: 0.68 }, { xf: 0.56, yf: 0.64 }, { xf: 0.10, yf: 0.84 },
-  { xf: 0.34, yf: 0.86 }, { xf: 0.58, yf: 0.84 }, { xf: 0.10, yf: 0.20 }, { xf: 0.58, yf: 0.18 },
-];
+function centerScreenSpot(deskEl, el) {
+  const deskRect = deskEl.getBoundingClientRect();
+  const paperRect = el.getBoundingClientRect();
+  const viewport = window.visualViewport;
+  const viewportLeft = viewport?.offsetLeft || 0;
+  const viewportTop = viewport?.offsetTop || 0;
+  const viewportWidth = viewport?.width || window.innerWidth;
+  const viewportHeight = viewport?.height || window.innerHeight;
 
-function randomRestSpot(deskEl, index) {
-  const rect = deskEl.getBoundingClientRect();
-  const slot = REST_SLOTS[(index - 1) % REST_SLOTS.length];
-  const baseX = slot.xf * rect.width + (Math.random() * 30 - 15);
-  const baseY = slot.yf * rect.height + (Math.random() * 30 - 15);
-  const rot = Math.random() * 14 - 7;
-  return { x: baseX, y: baseY, rot };
+  return {
+    x: viewportLeft + viewportWidth / 2 - deskRect.left - paperRect.width / 2,
+    y: viewportTop + viewportHeight / 2 - deskRect.top - paperRect.height / 2,
+  };
+}
+
+function topCenterSpawnSpot(deskEl, el) {
+  const deskRect = deskEl.getBoundingClientRect();
+  const paperRect = el.getBoundingClientRect();
+  const viewport = window.visualViewport;
+  const viewportLeft = viewport?.offsetLeft || 0;
+  const viewportTop = viewport?.offsetTop || 0;
+  const viewportWidth = viewport?.width || window.innerWidth;
+
+  return {
+    x: viewportLeft + viewportWidth / 2 - deskRect.left - paperRect.width / 2,
+    y: viewportTop - deskRect.top - paperRect.height - 24,
+  };
 }
 
 // Small deterministic pile offsets so the 10 blank papers stack like a
@@ -88,16 +100,21 @@ export default function ChatDesk() {
   const writableElRefs = useRef({});
   const writableCbCache = useRef({});
   const writableInstances = useRef({});
-  const writableZRef = useRef(MAX_PAPERS);
+  const paperZRef = useRef(MAX_PAPERS);
 
-  // Response papers (falling down as the assistant replies).
+  // Response papers (popping into the middle as the assistant replies).
   const paperPosRef = useRef({});
   const paperElRefs = useRef({});
+  const responseInstances = useRef({});
   const registerPaperElCache = useRef({});
-  const topZRef = useRef(10);
 
   const assistantMsgs = convo.filter(m => m.role === 'assistant');
   const exchangeCount = assistantMsgs.length - 1;
+
+  const liftPaper = useCallback((el) => {
+    paperZRef.current += 1;
+    el.style.zIndex = paperZRef.current;
+  }, []);
 
   const updateText = useCallback((id, val) => {
     textsRef.current[id] = val;
@@ -131,7 +148,14 @@ export default function ChatDesk() {
     if (writableCbCache.current[id]) return writableCbCache.current[id];
 
     const callback = (el) => {
-      if (!el || writableElRefs.current[id]) return;
+      if (!el) {
+        writableInstances.current[id]?.kill();
+        delete writableInstances.current[id];
+        delete writableElRefs.current[id];
+        return;
+      }
+      if (writableElRefs.current[id] === el) return;
+      writableInstances.current[id]?.kill();
       writableElRefs.current[id] = el;
 
       const deskEl = deskRef.current || el.closest('.chat-desk');
@@ -144,8 +168,7 @@ export default function ChatDesk() {
         inertia: true,
         onPress: function () {
           this._dragged = false;
-          writableZRef.current += 1;
-          this.target.style.zIndex = writableZRef.current;
+          liftPaper(this.target);
           gsap.to(this.target, { scale: 1.06, duration: 0.15, ease: 'power1.out' });
         },
         onDragStart: function () { this._dragged = true; },
@@ -171,45 +194,54 @@ export default function ChatDesk() {
     };
     writableCbCache.current[id] = callback;
     return callback;
-  }, [throwWritablePaper]);
+  }, [liftPaper, throwWritablePaper]);
 
   useEffect(() => () => {
     Object.values(writableInstances.current).forEach(inst => inst?.kill());
+    Object.values(responseInstances.current).forEach(inst => inst?.kill());
   }, []);
 
   const registerPaperEl = useCallback((index) => {
     if (registerPaperElCache.current[index]) return registerPaperElCache.current[index];
 
     const callback = (el) => {
-      if (!el || paperElRefs.current[index]) return;
+      if (!el) {
+        responseInstances.current[index]?.kill();
+        delete responseInstances.current[index];
+        delete paperElRefs.current[index];
+        delete paperPosRef.current[index];
+        return;
+      }
+      if (paperElRefs.current[index] === el) return;
+      responseInstances.current[index]?.kill();
       paperElRefs.current[index] = el;
 
       const deskEl = deskRef.current || el.closest('.chat-desk');
-      const pos = randomRestSpot(deskEl, index);
+      const pos = centerScreenSpot(deskEl, el);
+      const spawn = topCenterSpawnSpot(deskEl, el);
       paperPosRef.current[index] = pos;
-      topZRef.current += 1;
-      el.style.zIndex = topZRef.current;
+      liftPaper(el);
       gsap.fromTo(el,
-        { x: pos.x, y: -window.innerHeight * 0.6, rotation: pos.rot, scale: 0.5, opacity: 0 },
-        { y: pos.y, opacity: 1, scale: 1, duration: 0.55, ease: 'back.out(1.4)' }
+        { x: spawn.x, y: spawn.y, rotation: -4, scale: 0.72, opacity: 0 },
+        { x: pos.x, y: pos.y, rotation: 0, opacity: 1, scale: 1, duration: 0.58, ease: 'power3.out' }
       );
-      Draggable.create(el, {
+      const [inst] = Draggable.create(el, {
         type: 'x,y',
         bounds: deskEl,
         inertia: true,
         onPress: function () {
-          topZRef.current += 1;
-          this.target.style.zIndex = topZRef.current;
+          liftPaper(this.target);
           gsap.to(this.target, { scale: 1.06, duration: 0.15, ease: 'power1.out' });
         },
         onRelease: function () {
           gsap.to(this.target, { scale: 1, duration: 0.2, ease: 'power1.out' });
         },
       });
+      responseInstances.current[index] = inst;
     };
     registerPaperElCache.current[index] = callback;
     return callback;
-  }, []);
+  }, [liftPaper]);
 
   // When every writable paper has been thrown, reset the conversation and
   // deal a fresh ream (once the pending reply, if any, has finished).
@@ -217,14 +249,16 @@ export default function ChatDesk() {
     if (papers.length === 0 && !isProcessing) {
       const t = setTimeout(() => {
         resetConversation();
+        Object.values(responseInstances.current).forEach(inst => inst?.kill());
         paperElRefs.current = {};
         paperPosRef.current = {};
+        responseInstances.current = {};
         registerPaperElCache.current = {};
         writableElRefs.current = {};
         writableCbCache.current = {};
         writableInstances.current = {};
         textsRef.current = {};
-        writableZRef.current = MAX_PAPERS;
+        paperZRef.current = MAX_PAPERS;
         setTexts({});
         batchRef.current += 1;
         setPapers(makeBatch(batchRef.current));
@@ -267,8 +301,9 @@ export default function ChatDesk() {
       </div>
 
       {assistantMsgs.map((msg, i) => {
-        if (i === 0 || msg.live) return null;
         const isLast = i === assistantMsgs.length - 1;
+        const savedContent = (msg.content || '').trim();
+        if (savedContent === MOXXI_GREETING.trim() || msg.live) return null;
         const content = (isLast && isStreaming) ? streamingText : (msg.content || '');
         if (isLast && !content.trim()) return null;
         const displayToolCalls = isLast && (isThinking || isStreaming) ? liveToolCalls : (msg.toolCalls || []);
