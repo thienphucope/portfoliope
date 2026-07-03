@@ -5,8 +5,8 @@ import { SOCIAL_LINKS } from '@/configs/social';
 import { FaGithub, FaDiscord, FaEnvelope } from 'react-icons/fa';
 import { MUSIC_PLAYER } from '@/configs/media';
 
-function MusicHeader() {
-  const [isPlaying, setIsPlaying] = useState(true);
+function MusicHeader({ onPlayStateChange } = {}) {
+  const [isPlaying, setIsPlaying] = useState(false);
   const [videoTitle, setVideoTitle] = useState('');
   const [animationClass, setAnimationClass] = useState('');
   const [animationKey, setAnimationKey] = useState(0);
@@ -24,12 +24,13 @@ function MusicHeader() {
       if (!window.YT?.Player || playerRef.current || !musicPlayerDivRef.current) return;
       playerRef.current = new window.YT.Player(musicPlayerDivRef.current, {
         height: '0', width: '0', videoId: MUSIC_PLAYER.videoId,
-        playerVars: { autoplay: 1, loop: 1, playlist: MUSIC_PLAYER.videoId, controls: 0, showinfo: 0, modestbranding: 1 },
+        playerVars: { autoplay: 0, loop: 1, playlist: MUSIC_PLAYER.videoId, controls: 0, showinfo: 0, modestbranding: 1 },
         events: {
-          onReady: (e) => { e.target.setVolume(MUSIC_PLAYER.volume); e.target.playVideo(); },
+          onReady: (e) => { e.target.setVolume(MUSIC_PLAYER.volume); },
           onStateChange: (e) => {
             if (e.data === window.YT.PlayerState.PLAYING) {
               setIsPlaying(true);
+              onPlayStateChange?.(true);
               const newTitle = e.target.getVideoData().title;
               setVideoTitle(old => {
                 if (old !== newTitle) {
@@ -39,7 +40,10 @@ function MusicHeader() {
                 }
                 return newTitle;
               });
-            } else { setIsPlaying(false); }
+            } else {
+              setIsPlaying(false);
+              onPlayStateChange?.(false);
+            }
           },
         },
       });
@@ -56,16 +60,11 @@ function MusicHeader() {
       const prev = window.onYouTubeIframeAPIReady;
       window.onYouTubeIframeAPIReady = () => { if (prev) prev(); initPlayer(); };
     }
-
-    const handleClick = () => { playerRef.current?.playVideo?.(); window.removeEventListener('click', handleClick); };
-    window.addEventListener('click', handleClick);
-    return () => window.removeEventListener('click', handleClick);
-  }, [mounted]);
+  }, [mounted, onPlayStateChange]);
 
   const togglePlayPause = () => {
     if (!playerRef.current) return;
     isPlaying ? playerRef.current.pauseVideo() : playerRef.current.playVideo();
-    setIsPlaying(!isPlaying);
   };
 
   const handleDiskMouseEnter = () => {

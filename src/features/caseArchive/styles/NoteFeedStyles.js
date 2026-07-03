@@ -293,21 +293,51 @@ export default function NoteFeedStyles() {
 
       /* ── Cases Header ── */
       .nf-cases-header {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 calc(-1 * var(--feature-space-right)) 12px calc(-1 * var(--feature-space-left));
-        padding: 0 var(--feature-space-right) var(--feature-header-bottom) var(--feature-space-left);
-        border-bottom: var(--feature-divider);
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        align-items: end;
+        gap: 12px 18px;
+        margin: 0 0 clamp(18px, 3vw, 30px);
+        padding: 0;
+        border-bottom: none;
         box-sizing: border-box;
       }
 
       .nf-cases-label {
-        font-family: var(--font-display);
-        font-size: var(--ui-text-title);
-        font-weight: 700;
-        letter-spacing: var(--ui-letter-section-header);
+        font-family: var(--font-body);
+        font-size: clamp(3.2rem, 10vw, 7.4rem);
+        font-weight: 900;
+        line-height: 0.95;
+        letter-spacing: -0.01em;
         color: var(--theme);
+      }
+
+      .nf-cases-back {
+        width: fit-content;
+        font-family: var(--font-mono);
+        font-style: italic;
+        font-size: 0.78rem;
+        letter-spacing: 0.18em;
+        text-transform: lowercase;
+        color: var(--theme);
+        text-decoration: none;
+        transition: color 0.22s ease;
+      }
+
+      .nf-cases-back:hover {
+        color: #4f1027;
+      }
+
+      @media (min-width: 900px) {
+        .nf-cases-header {
+          grid-template-columns: minmax(0, 1fr) auto;
+        }
+
+        .nf-cases-back {
+          justify-self: end;
+          margin-bottom: 0.3em;
+          text-align: right;
+        }
       }
 
       /* ── Search Bar ── */
@@ -385,14 +415,43 @@ export default function NoteFeedStyles() {
       .nf-cases { padding-bottom: 48px; }
 
       .nf-case-list {
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh;
+        min-height: 55vh;
+      }
+
+      .nf-case-list.is-masonry {
+        column-count: 1;
+        column-gap: clamp(14px, 2.4vw, 26px);
+      }
+
+      .nf-case-list.is-empty {
+        display: block;
       }
 
       .nf-case {
-        padding: 20px 0;
-        border-bottom: 1px solid var(--nf-border);
+        display: inline-block;
+        width: 100%;
+        break-inside: avoid;
+        page-break-inside: avoid;
+        margin: 0 0 clamp(14px, 2.4vw, 26px);
+        padding: clamp(10px, 1.2vw, 14px) clamp(10px, 1.2vw, 14px) clamp(16px, 1.8vw, 24px);
+        border: 1px solid rgba(243, 208, 152, 0.24);
+        border-radius: 2px;
+        background:
+          linear-gradient(180deg, rgba(243, 208, 152, 0.08), rgba(243, 208, 152, 0.018)),
+          rgba(5, 5, 7, 0.84);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.05),
+          0 18px 34px -24px rgba(0, 0, 0, 0.95);
+        color: var(--nf-txt);
+        transition: transform 0.24s ease, box-shadow 0.24s ease;
+      }
+
+      .nf-case:hover {
+        border-color: rgba(243, 208, 152, 0.48);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.08),
+          0 24px 44px -24px rgba(0, 0, 0, 1);
+        transform: translateY(-3px);
       }
 
       .nf-case-img {
@@ -407,12 +466,15 @@ export default function NoteFeedStyles() {
         width: 100%;
         height: auto;
         display: block;
-        opacity: 0.75;
+        border: 1px solid rgba(243, 208, 152, 0.18);
+        background: rgba(255, 255, 255, 0.04);
+        opacity: 0.82;
         transition: opacity 0.3s, filter 0.3s;
-        filter: grayscale(30%);
+        filter: grayscale(28%);
       }
 
-      .nf-case-img:hover img {
+      .nf-case-img:hover img,
+      .nf-case:hover .nf-case-img img {
         opacity: 1;
         filter: grayscale(0%);
       }
@@ -420,8 +482,8 @@ export default function NoteFeedStyles() {
       .nf-case-meta {
         display: flex;
         align-items: center;
-        gap: 12px;
-        margin-bottom: 8px;
+        gap: 8px;
+        margin-bottom: 9px;
         flex-wrap: wrap;
       }
 
@@ -436,8 +498,8 @@ export default function NoteFeedStyles() {
         font-family: var(--font-mono);
         font-size: var(--ui-text-action);
         letter-spacing: 1px;
-        color: var(--nf-txt-dim);
-        border: 1px solid var(--nf-border);
+        color: rgba(224,224,224,0.72);
+        border: 1px solid rgba(243, 208, 152, 0.2);
         padding: 2px 7px;
       }
 
@@ -445,27 +507,27 @@ export default function NoteFeedStyles() {
         font-family: var(--font-mono);
         font-size: var(--ui-text-action);
         letter-spacing: 1px;
-        color: var(--nf-txt-dim);
+        color: rgba(224,224,224,0.64);
       }
 
       .nf-case-title {
         font-family: var(--font-display);
-        font-size: var(--ui-text-title);
+        font-size: clamp(1.25rem, 2.1vw, 1.7rem);
         font-weight: 700;
         margin: 0 0 8px 0;
         color: var(--nf-txt);
         cursor: pointer;
         transition: color 0.2s;
-        line-height: 1.3;
+        line-height: 1.18;
       }
       .nf-case-title:hover { color: var(--theme); }
 
       .nf-case-excerpt,
       .nf-feed .nf-case-excerpt.markdown-content {
         font-size: var(--ui-text-body);
-        line-height: 1.65;
-        color: rgba(224,224,224,0.8);
-        margin-bottom: 10px;
+        line-height: 1.55;
+        color: rgba(224,224,224,0.78);
+        margin-bottom: 12px;
         text-align: left;
       }
       .nf-case-excerpt p,
@@ -487,7 +549,28 @@ export default function NoteFeedStyles() {
         padding: 0;
         transition: color 0.2s;
       }
-      .nf-case-read:hover { color: var(--theme); }
+      .nf-case-read:hover {
+        color: #fff;
+        text-shadow: 0 0 10px rgba(243, 208, 152, 0.42);
+      }
+
+      @media (min-width: 640px) {
+        .nf-case-list.is-masonry {
+          column-count: 2;
+        }
+      }
+
+      @media (min-width: 1080px) {
+        .nf-case-list.is-masonry {
+          column-count: 3;
+        }
+      }
+
+      @media (min-width: 1500px) {
+        .nf-case-list.is-masonry {
+          column-count: 4;
+        }
+      }
 
       /* ── Load more ── */
       .nf-load-more {
@@ -554,6 +637,16 @@ export default function NoteFeedStyles() {
       .reveal.visible {
         opacity: 1;
         transform: translateY(0);
+      }
+      .nf-case.reveal {
+        transform: translateY(14px);
+        transition: opacity 0.5s ease, transform 0.5s ease, box-shadow 0.24s ease;
+      }
+      .nf-case.reveal.visible {
+        transform: translateY(0);
+      }
+      .nf-case.reveal.visible:hover {
+        transform: translateY(-3px);
       }
 
       ::selection { background: var(--theme); color: var(--nf-bg); }

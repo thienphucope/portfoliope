@@ -1,20 +1,21 @@
 "use client";
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Footprints } from 'lucide-react';
-import { FaComments, FaVolumeUp, FaFolderOpen } from 'react-icons/fa';
+import { FaTimes } from 'react-icons/fa';
 
 import useSpotlight from '@/hooks/useSpotlight';
 import MusicHeader from '@/components/sections/MusicHeader';
+import { BACKGROUND_VIDEO } from '@/configs/media';
 
 const visibleScrambleText = (value) => value.trimEnd();
+const GLYPHS = ['✦', '✳', '❋', '◆', '○', '✕', '△', '❉', '⟡', '✧', '✺', '✴', '＋', '◇', '☾', '✶'];
 
 export default function Hero() {
   const [displayText, setDisplayText] = useState("");
   const [displayTitle, setDisplayTitle] = useState("");
   const [displayPronunciation, setDisplayPronunciation] = useState("");
-  const [isHoveringPortrait, setIsHoveringPortrait] = useState(false);
   const [footprints, setFootprints] = useState([]);
+  const [showVideoOverlay, setShowVideoOverlay] = useState(false);
   const { setSpotlightEnabled, spotlightOverlay } = useSpotlight();
 
   const padChar = ' ';
@@ -41,16 +42,27 @@ export default function Hero() {
     setDisplayTitle(visibleScrambleText(originalTitlePadded));
     setDisplayPronunciation(visibleScrambleText(originalPronPadded));
 
-    // Generate footprints only on the client to avoid hydration mismatch.
+    // Generate decorative glyphs only on the client to avoid hydration mismatch.
     const generatedFootprints = Array.from({ length: 12 }).map((_, i) => ({
       id: i,
-      top: Math.random() * 100,
-      left: Math.random() * 100,
-      rotation: Math.random() * 360,
-      size: Math.random() * 60 + 80,
+      glyph: GLYPHS[Math.floor(Math.random() * GLYPHS.length)],
+      top: 4 + Math.random() * 90,
+      left: 3 + Math.random() * 93,
+      size: 14 + Math.random() * 30,
+      rotation: Math.floor(Math.random() * 90) - 45,
+      duration: 5 + Math.random() * 5,
+      delay: -Math.random() * 6,
+      opacity: 0.1 + Math.random() * 0.14,
     }));
     setFootprints(generatedFootprints);
   }, [originalPronPadded, originalTextPadded, originalTitlePadded]);
+
+  useEffect(() => {
+    if (!showVideoOverlay) return;
+    const handleKeyDown = (e) => { if (e.key === 'Escape') setShowVideoOverlay(false); };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showVideoOverlay]);
 
   const scrambleText = (original, target, setDisplay, duration = 200) => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -94,28 +106,56 @@ export default function Hero() {
   };
 
   return (
-    <section className="about-hero-section relative w-full min-h-[100dvh] flex items-center justify-center px-4 pt-0 pb-10 lg:px-10 lg:pt-4 lg:pb-8 overflow-visible">
+    <section className="about-hero-section relative w-full min-h-[100dvh] flex items-center justify-center overflow-hidden">
       {spotlightOverlay}
-      <div className={`absolute inset-[-80px] pointer-events-none transition-opacity duration-500 z-0 ${isHoveringPortrait ? 'opacity-25' : 'opacity-0'}`}>
+      <div className="absolute inset-[-80px] pointer-events-none z-0">
         {footprints.map(fp => (
-          <div key={fp.id} style={{
-            position: 'absolute',
+          <span key={fp.id} className="noir-glyph" style={{
             top: `${fp.top}%`,
             left: `${fp.left}%`,
-            transform: `rotate(${fp.rotation}deg)`,
-            color: 'var(--theme)'
+            fontSize: `${fp.size}px`,
+            opacity: fp.opacity,
+            '--r': `${fp.rotation}deg`,
+            animationDuration: `${fp.duration}s`,
+            animationDelay: `${fp.delay}s`,
           }}>
-            <Footprints size={fp.size} />
-          </div>
+            {fp.glyph}
+          </span>
         ))}
       </div>
 
       <style jsx global>{`
+        @keyframes noir-glyph-float {
+          0%   { transform: translateY(0) rotate(var(--r)); }
+          50%  { transform: translateY(-14px) rotate(calc(var(--r) + 8deg)); }
+          100% { transform: translateY(0) rotate(var(--r)); }
+        }
+        @keyframes noir-cursor-blink {
+          0%, 49% { opacity: 1; }
+          50%, 100% { opacity: 0; }
+        }
+
+        .noir-glyph {
+          position: absolute;
+          color: var(--theme);
+          animation-name: noir-glyph-float;
+          animation-timing-function: ease-in-out;
+          animation-iteration-count: infinite;
+        }
+
         .about-noir {
           position: relative;
-          --about-tile-gap: 8px;
-          width: min(1040px, calc(100vw - 32px));
-          margin: 0 auto;
+          width: 100%;
+          min-height: 100dvh;
+          margin: 0;
+          --font-mono: 'Special Elite', 'Courier New', monospace;
+          color: #241d16;
+          background: oklch(0.938 0.03 84);
+          padding: clamp(22px, 4vw, 40px);
+          border: 1px solid oklch(0.5 0.045 64);
+          box-shadow:
+            inset 0 0 0 5px oklch(0.938 0.03 84),
+            inset 0 0 0 6px oklch(0.5 0.045 64);
           display: grid;
           grid-template-columns: minmax(0, 1fr);
           grid-template-areas:
@@ -123,16 +163,7 @@ export default function Hero() {
             "visual"
             "copy"
             "social";
-          align-items: start;
-          gap: var(--about-tile-gap);
-          color: #f7f5ef;
-          background-image:
-            repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 28px),
-            linear-gradient(135deg, rgba(0,0,0,0.94), rgba(0,0,0,0.68));
-          border-top: 1px solid color-mix(in srgb, var(--theme) 54%, transparent);
-          border-bottom: 1px solid rgba(255,255,255,0.18);
-          box-shadow: 0 24px 70px rgba(0,0,0,0.72), inset 0 1px 0 rgba(255,255,255,0.08);
-          padding: 12px 14px 18px;
+          gap: clamp(20px, 4vw, 32px);
           overflow: hidden;
         }
         .about-noir::before {
@@ -140,307 +171,270 @@ export default function Hero() {
           position: absolute;
           inset: 0;
           pointer-events: none;
-          background:
-            linear-gradient(90deg, transparent 0, transparent 42%, color-mix(in srgb, var(--theme) 36%, transparent) 42%, transparent 43%),
-            repeating-linear-gradient(0deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 9px);
-          opacity: 0.38;
           z-index: 0;
-        }
-        .about-noir::after {
-          content: "";
-          position: absolute;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          height: 3px;
-          pointer-events: none;
-          background: linear-gradient(90deg, var(--theme), #fff, transparent);
-          opacity: 0.72;
-          z-index: 1;
+          mix-blend-mode: multiply;
+          opacity: 0.09;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
         }
 
         .noir-visual,
+        .noir-masthead,
         .noir-copy,
-        .noir-actions {
+        .noir-footer {
           position: relative;
           z-index: 2;
+          min-width: 0;
+        }
+
+        .noir-masthead {
+          grid-area: masthead;
+          display: flex;
+          flex-direction: column;
+          gap: 18px;
+        }
+        .noir-eyebrow {
+          display: inline-block;
+          width: fit-content;
+          font-family: var(--font-mono);
+          font-style: italic;
+          font-size: 11px;
+          letter-spacing: 0.3em;
+          text-transform: uppercase;
+          text-decoration: none;
+          color: oklch(0.55 0.02 64);
+          transition: color 0.25s ease;
+        }
+        .noir-eyebrow:hover {
+          color: var(--theme);
+        }
+
+        .noir-name {
+          font-family: var(--font-body);
+          font-weight: 900;
+          font-size: clamp(3rem, 10.5vw, 4.6rem);
+          line-height: 0.98;
+          white-space: nowrap;
+          overflow: hidden;
+          padding-bottom: 0.15em;
+          letter-spacing: -0.01em;
+          color: var(--theme);
+          margin: 0;
+          cursor: default;
+          transition: color 0.25s ease;
+        }
+        .noir-name:hover {
+          color: var(--theme);
+        }
+
+        .noir-pron {
+          display: block;
+          margin-top: 4px;
+          text-transform: lowercase;
+          font-family: var(--font-mono);
+          font-style: normal;
+          font-size: clamp(1rem, 2.2vw, 1.15rem);
+          letter-spacing: 0.02em;
+          color: oklch(0.5 0.03 64);
+          cursor: default;
         }
 
         .noir-visual {
           grid-area: visual;
-          min-width: 0;
         }
-
         .noir-portrait {
           position: relative;
+          display: block;
           width: 100%;
+          min-height: 260px;
           aspect-ratio: 4 / 5;
           overflow: hidden;
-          background: #000;
-          border: 1px solid rgba(255,255,255,0.18);
-          box-shadow: 0 18px 44px rgba(0,0,0,0.72);
-          transition: transform 0.45s ease, border-color 0.45s ease;
+          border-radius: 4px;
+          border: 1px solid oklch(0.7 0.045 70);
+          background-image: repeating-linear-gradient(135deg, oklch(0.9 0.034 82) 0 11px, oklch(0.93 0.03 84) 11px 22px);
+          transition: box-shadow 0.35s ease, transform 0.35s ease;
         }
         .noir-portrait:hover {
+          box-shadow: 0 24px 48px -22px rgba(60,45,110,0.5);
           transform: translateY(-3px);
-          border-color: color-mix(in srgb, var(--theme) 66%, #fff);
         }
         .noir-portrait img {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          filter: grayscale(0.58) contrast(1.12) brightness(0.98);
-          transition: filter 0.6s ease;
         }
-        .noir-portrait:hover img {
-          filter: grayscale(1) contrast(1.18) brightness(0.82);
-        }
-        .noir-portrait::after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          background:
-            linear-gradient(180deg, transparent 46%, rgba(0,0,0,0.72)),
-            repeating-linear-gradient(0deg, rgba(255,255,255,0.055) 0 1px, transparent 1px 7px);
-          mix-blend-mode: screen;
-          opacity: 0.45;
-        }
+
         .noir-copy {
           grid-area: copy;
-          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
         }
-
-        .noir-name {
-          font-family: var(--font-display);
-          font-size: 2.15rem;
-          font-weight: 900;
-          line-height: 1.08;
-          height: 1.16em;
-          color: #fff;
-          margin: 0 0 8px;
-          white-space: nowrap;
-          overflow: hidden;
-          cursor: default;
-          text-shadow: 0 0 22px rgba(243,208,152,0.16);
-          transition: color 0.25s ease, text-shadow 0.25s ease;
-        }
-        .noir-name:hover {
-          color: var(--theme);
-          text-shadow: 0 0 28px rgba(243,208,152,0.32);
-        }
-
-        .noir-pron {
-          display: block;
-          text-transform: lowercase;
-          width: 100%;
-          margin-bottom: 10px;
-          color: var(--theme);
-          font-family: var(--font-mono);
-          font-size: 0.62rem;
-          line-height: 1.25;
-          height: 1.25em;
-          font-style: italic;
-          letter-spacing: 0.4px;
-          white-space: nowrap;
-          overflow: hidden;
-          cursor: default;
-        }
-
         .noir-desc {
-          font-family: var(--font-mono);
-          text-transform: lowercase;
-          color: rgba(255,255,255,0.82);
-          font-size: 0.78rem;
-          line-height: 1.38;
-          min-height: calc(1.38em * 4);
-          overflow: hidden;
           margin: 0;
+          font-family: var(--font-mono);
+          font-style: normal;
+          text-transform: lowercase;
+          font-size: clamp(1.05rem, 2.4vw, 1.22rem);
+          line-height: 1.7;
+          min-height: calc(1.7em * 4);
+          color: oklch(0.34 0.02 64);
           cursor: default;
           transition: color 0.25s ease;
         }
-        .noir-desc:hover { color: #fff; }
+        .noir-desc:hover {
+          color: #241d16;
+        }
 
-        .noir-actions {
-          grid-area: social;
-          margin: 0;
+        .noir-nav {
           display: flex;
-          flex-wrap: nowrap;
-          gap: var(--about-tile-gap);
+          flex-direction: column;
+          gap: 2px;
         }
         .noir-action {
-          flex: 1 1 0;
-          min-width: 0;
-          display: inline-flex;
+          display: flex;
           align-items: center;
-          justify-content: center;
-          gap: 8px;
-          padding: 8px 12px;
-          border: 1px solid color-mix(in srgb, var(--theme) 40%, transparent);
-          background: rgba(0,0,0,0.34);
-          color: rgba(255,255,255,0.86);
+          gap: 14px;
+          padding: 13px 4px;
           text-decoration: none;
+          color: #7a1f3d;
+          border-top: 1px solid oklch(0.76 0.04 72);
           font-family: var(--font-mono);
-          transition: border-color 0.25s ease, color 0.25s ease, background 0.25s ease, transform 0.25s ease;
+          font-style: italic;
+          transition: color 0.25s ease, padding-left 0.25s ease;
+        }
+        .noir-action:last-child {
+          border-bottom: 1px solid oklch(0.76 0.04 72);
         }
         .noir-action:hover {
-          border-color: color-mix(in srgb, var(--theme) 76%, #fff);
-          background: color-mix(in srgb, var(--theme) 12%, rgba(0,0,0,0.48));
-          color: #fff;
-          transform: translateY(-2px);
-        }
-        .noir-action-primary {
-          border-color: color-mix(in srgb, var(--theme) 70%, transparent);
-          color: var(--theme);
-        }
-        .noir-action-icon {
-          font-size: 1rem;
-          flex: 0 0 auto;
+          color: #4f1027;
+          padding-left: 12px;
         }
         .noir-action-label {
+          flex: 1;
           min-width: 0;
-          font-size: 0.74rem;
-          font-weight: 700;
-          letter-spacing: 0.3px;
-          text-transform: lowercase;
+          font-weight: 800;
+          font-size: clamp(1rem, 2.5vw, 1.18rem);
+          letter-spacing: 0.04em;
+          text-transform: none;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
         }
-
-        @media (max-width: 430px) {
-          .about-noir {
-            grid-template-columns: minmax(0, 1fr);
-            padding: 10px 10px 14px;
-          }
-
-          .noir-name {
-            font-size: 1.75rem;
-          }
-
-          .noir-pron {
-            font-size: 0.5rem;
-          }
-
-          .noir-desc {
-            font-size: 0.68rem;
-            line-height: 1.3;
-            min-height: calc(1.3em * 5);
-          }
-
-          .noir-action {
-            flex: 1 1 auto;
-            padding: 8px 6px;
-            gap: 5px;
-          }
-          .noir-action-icon { font-size: 0.95rem; }
-          .noir-action-label { font-size: 0.64rem; }
+        .noir-action-arrow {
+          flex: 0 0 auto;
+          font-size: 0.78rem;
+          color: currentColor;
         }
 
-        @media (max-width: 767px) {
-          section.about-hero-section {
-            padding: 0;
-            align-items: stretch;
-          }
-          .about-noir {
-            width: 100%;
-            max-width: none;
-            min-height: 100dvh;
-            margin: 0;
-            border-left: none;
-            border-right: none;
-          }
+        .noir-footer {
+          grid-area: social;
+          display: flex;
+          align-items: center;
+          padding-top: 6px;
+        }
+        .noir-hint {
+          margin-left: auto;
+          font-family: var(--font-mono);
+          font-style: italic;
+          font-size: 0.78rem;
+          color: oklch(0.68 0.02 64);
+        }
+        .noir-cursor {
+          animation: noir-cursor-blink 1.1s step-end infinite;
+        }
+
+        .video-modal-backdrop {
+          position: fixed;
+          inset: 0;
+          z-index: 100;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(0, 0, 0, 0.75);
+          backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(4px);
+        }
+        .video-modal {
+          position: relative;
+          width: 50vw;
+          height: 50vh;
+          min-width: 280px;
+          min-height: 158px;
+          background: #000;
+          border: 1px solid oklch(0.7 0.045 70);
+          box-shadow: 0 24px 70px rgba(0, 0, 0, 0.72);
+        }
+        .video-modal iframe {
+          width: 100%;
+          height: 100%;
+          border: 0;
+          display: block;
+        }
+        .video-modal-close {
+          position: absolute;
+          top: -14px;
+          right: -14px;
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+          border: 1px solid oklch(0.7 0.045 70);
+          background: oklch(0.938 0.03 84);
+          color: #241d16;
+          cursor: pointer;
+          z-index: 1;
         }
 
         @media (min-width: 768px) {
           .about-noir {
-            --about-tile-gap: 10px;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+            grid-template-rows: auto 1fr auto;
             grid-template-areas:
-              "visual masthead masthead"
-              "visual copy copy"
-              "social social social";
-            align-items: stretch;
-            padding: 20px 28px 28px;
+              "masthead visual"
+              "copy visual"
+              "social visual";
+            column-gap: clamp(32px, 5vw, 60px);
+            padding: clamp(28px, 3vw, 40px);
           }
-
           .noir-visual {
             display: flex;
             align-self: stretch;
             min-height: 0;
           }
-
           .noir-portrait {
             flex: 1;
             height: 100%;
             min-height: 0;
             aspect-ratio: auto;
           }
-
           .noir-name {
-            font-size: 3.6rem;
-            margin-bottom: 10px;
+            font-size: clamp(4.2rem, 7.4vw, 6.4rem);
           }
-
-          .noir-pron {
-            font-size: 0.78rem;
-            margin-bottom: 16px;
-          }
-
-          .noir-desc {
-            font-size: 1rem;
-            line-height: 1.52;
-            min-height: calc(1.52em * 3);
-          }
-
-          .noir-actions {
-            gap: var(--about-tile-gap);
-          }
-          .noir-action {
-            padding: 10px 14px;
-          }
-          .noir-action-icon { font-size: 1.15rem; }
-          .noir-action-label { font-size: 0.82rem; }
         }
 
         @media (min-width: 1024px) {
-          .about-noir {
-            width: min(1080px, calc(100vw - 120px));
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            padding: 24px 38px 34px;
-          }
-
           .noir-name {
-            font-size: 5rem;
+            font-size: 7.6rem;
           }
-
           .noir-desc {
-            max-width: 680px;
+            font-size: 1.35rem;
+            max-width: 46ch;
           }
         }
       `}</style>
 
-      <div
-        className="about-noir relative z-10"
-        onMouseEnter={() => setSpotlightEnabled(true)}
-        onMouseLeave={() => setSpotlightEnabled(false)}
-      >
-        <MusicHeader />
-
-        <div className="noir-visual">
-          <Link href="/noirboard" style={{ display: 'contents' }}>
-            <div
-              className="noir-portrait"
-              onMouseEnter={() => setIsHoveringPortrait(true)}
-              onMouseLeave={() => setIsHoveringPortrait(false)}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/ope-new.png" alt="Ope" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            </div>
-          </Link>
-        </div>
-
-        <div className="noir-copy">
+      <div className="about-noir relative z-10">
+        <div className="noir-masthead">
+          <MusicHeader onPlayStateChange={setSpotlightEnabled} />
+          <button
+            type="button"
+            className="noir-eyebrow"
+            onClick={() => setShowVideoOverlay(true)}
+          >
+            inspired by ↗
+          </button>
           <h2
             className="noir-name"
             onMouseEnter={() => scrambleText(originalTitlePadded, replacementTitlePadded, setDisplayTitle)}
@@ -448,7 +442,6 @@ export default function Hero() {
           >
             {displayTitle}
           </h2>
-
           <span
             className="noir-pron"
             onMouseEnter={() => scrambleText(originalPronPadded, replacementPronPadded, setDisplayPronunciation)}
@@ -456,7 +449,16 @@ export default function Hero() {
           >
             {displayPronunciation}
           </span>
+        </div>
 
+        <div className="noir-visual">
+          <Link href="/noirboard" className="noir-portrait">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/ope-new.png" alt="Ope" />
+          </Link>
+        </div>
+
+        <div className="noir-copy">
           <p
             className="noir-desc"
             onMouseEnter={() => scrambleText(originalTextPadded, replacementTextPadded, setDisplayText)}
@@ -465,23 +467,47 @@ export default function Hero() {
             {displayText}
           </p>
 
+          <nav className="noir-nav">
+            <Link href="/chat" className="noir-action">
+              <span className="noir-action-label">Chat with librarian moxxi</span>
+              <span className="noir-action-arrow">↗</span>
+            </Link>
+            <Link href="/casearchive" className="noir-action">
+              <span className="noir-action-label">Explore the case archives</span>
+              <span className="noir-action-arrow">↗</span>
+            </Link>
+            <Link href="/gallery" className="noir-action">
+              <span className="noir-action-label">Visit the gallery</span>
+              <span className="noir-action-arrow">↗</span>
+            </Link>
+          </nav>
         </div>
 
-        <div className="noir-actions">
-          <Link href="/chat" className="noir-action">
-            <FaComments className="noir-action-icon" />
-            <span className="noir-action-label">consult</span>
-          </Link>
-          <Link href="/voice" className="noir-action">
-            <FaVolumeUp className="noir-action-icon" />
-            <span className="noir-action-label">voice</span>
-          </Link>
-          <Link href="/casearchive" className="noir-action noir-action-primary">
-            <FaFolderOpen className="noir-action-icon" />
-            <span className="noir-action-label">case archive</span>
-          </Link>
+        <div className="noir-footer">
+          <span className="noir-hint">hover anything<span className="noir-cursor">_</span></span>
         </div>
       </div>
+
+      {showVideoOverlay && (
+        <div className="video-modal-backdrop" onClick={() => setShowVideoOverlay(false)}>
+          <div className="video-modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="video-modal-close"
+              aria-label="Close"
+              onClick={() => setShowVideoOverlay(false)}
+            >
+              <FaTimes />
+            </button>
+            <iframe
+              src={`https://www.youtube.com/embed/${BACKGROUND_VIDEO.videoId}?autoplay=1&start=${BACKGROUND_VIDEO.start}`}
+              title="Background video"
+              allow="autoplay; encrypted-media"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      )}
     </section>
   );
 }

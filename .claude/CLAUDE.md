@@ -153,3 +153,5 @@ Core rule:
 
 If `.codegraph/` missing: ask user to run `codegraph init -i`.
 <!-- CODEGRAPH_END -->
+
+# Chỉ verify code không động tới browser instance hay mở ra để chụp ảnh gì cả cứ làm theo lệnh tôi, reviewer là tôi

@@ -42,7 +42,7 @@ export default function NoteFeed({ onLinkClick, serverData }) {
   return (
     <>
       {isMounted && (
-        <main className="nf-feed" ref={feedRef}>
+        <main className="nf-feed nf-gallery-feed" ref={feedRef}>
           <CasesSection
             displayedCases={displayedCases}
             onLinkClick={handleLinkClick}

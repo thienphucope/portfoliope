@@ -1,13 +1,14 @@
+import Link from 'next/link';
 import CaseItem from './CaseItem';
 
 export default function CasesSection({ displayedCases, onLinkClick, loadedCount, totalCount, loading, onLoadMore, searchTerm, setSearchTerm }) {
   return (
     <section className="nf-cases" id="cases">
       <div className="nf-cases-header">
-        <div className="nf-cases-label info-wrap">
+        <div className="nf-cases-label">
           Case archives
-          <span className="info-icon" data-tooltip="Searchable database of investigative case notes and evidence">i</span>
         </div>
+        <Link href="/" className="nf-cases-back">back to ope watson</Link>
       </div>
       <div className="nf-search-row">
         <input
@@ -24,7 +25,7 @@ export default function CasesSection({ displayedCases, onLinkClick, loadedCount,
           {loading ? '[ ... ]' : '[ SEARCH ]'}
         </button>
       </div>
-      <div className="nf-case-list">
+      <div className={`nf-case-list ${displayedCases.length > 0 ? 'is-masonry' : 'is-empty'}`}>
         {displayedCases.length > 0 ? (
           displayedCases.map((c) => (
             <CaseItem key={c.id} caseData={c} onLinkClick={onLinkClick} />
