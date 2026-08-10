@@ -106,8 +106,9 @@ export default function Hero() {
   };
 
   return (
-    <section className="about-hero-section relative w-full min-h-[100dvh] flex items-center justify-center overflow-hidden">
+    <section className="about-hero-section teal-scene relative w-full min-h-[100dvh] flex items-center justify-center overflow-hidden">
       {spotlightOverlay}
+      <div className="teal-haze z-0" />
       <div className="absolute inset-[-80px] pointer-events-none z-0">
         {footprints.map(fp => (
           <span key={fp.id} className="noir-glyph" style={{
@@ -149,13 +150,16 @@ export default function Hero() {
           min-height: 100dvh;
           margin: 0;
           --font-mono: 'Special Elite', 'Courier New', monospace;
-          color: #241d16;
-          background: oklch(0.938 0.03 84);
+          color: #d7e7e3;
+          background: rgba(5, 11, 13, 0.8);
+          backdrop-filter: blur(9px);
+          -webkit-backdrop-filter: blur(9px);
           padding: clamp(22px, 4vw, 40px);
-          border: 1px solid oklch(0.5 0.045 64);
+          border: 1px solid rgba(174, 226, 218, 0.16);
           box-shadow:
-            inset 0 0 0 5px oklch(0.938 0.03 84),
-            inset 0 0 0 6px oklch(0.5 0.045 64);
+            inset 0 0 0 5px rgba(11, 24, 26, 0.4),
+            inset 0 0 0 6px rgba(174, 226, 218, 0.14),
+            0 40px 90px -40px rgba(0, 0, 0, 0.8);
           display: grid;
           grid-template-columns: minmax(0, 1fr);
           grid-template-areas:
@@ -172,8 +176,8 @@ export default function Hero() {
           inset: 0;
           pointer-events: none;
           z-index: 0;
-          mix-blend-mode: multiply;
-          opacity: 0.09;
+          mix-blend-mode: screen;
+          opacity: 0.05;
           background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
         }
 
@@ -201,7 +205,7 @@ export default function Hero() {
           letter-spacing: 0.3em;
           text-transform: uppercase;
           text-decoration: none;
-          color: oklch(0.55 0.02 64);
+          color: rgba(174, 226, 218, 0.55);
           transition: color 0.25s ease;
         }
         .noir-eyebrow:hover {
@@ -234,33 +238,86 @@ export default function Hero() {
           font-style: normal;
           font-size: clamp(1rem, 2.2vw, 1.15rem);
           letter-spacing: 0.02em;
-          color: oklch(0.5 0.03 64);
+          color: rgba(174, 226, 218, 0.6);
           cursor: default;
         }
 
         .noir-visual {
           grid-area: visual;
+          position: relative;
+        }
+        /* the picture casts light outward across the page */
+        .noir-visual::before {
+          content: "";
+          position: absolute;
+          inset: -60% -80%;
+          z-index: 0;
+          pointer-events: none;
+          background: radial-gradient(50% 42% at 50% 30%,
+            rgba(174,226,218,0.28) 0%,
+            rgba(120,190,182,0.12) 34%,
+            transparent 68%);
+          mix-blend-mode: screen;
+          filter: blur(8px);
         }
         .noir-portrait {
           position: relative;
+          z-index: 1;
           display: block;
           width: 100%;
           min-height: 260px;
           aspect-ratio: 4 / 5;
           overflow: hidden;
           border-radius: 4px;
-          border: 1px solid oklch(0.7 0.045 70);
-          background-image: repeating-linear-gradient(135deg, oklch(0.9 0.034 82) 0 11px, oklch(0.93 0.03 84) 11px 22px);
+          border: 1px solid rgba(174, 226, 218, 0.28);
+          background-image: repeating-linear-gradient(135deg, rgba(27,46,48,0.9) 0 11px, rgba(12,28,31,0.9) 11px 22px);
+          /* the frame itself glows, spilling light onto the surrounding page */
+          box-shadow:
+            0 0 60px 4px rgba(174,226,218,0.28),
+            0 20px 120px 30px rgba(174,226,218,0.16);
           transition: box-shadow 0.35s ease, transform 0.35s ease;
         }
         .noir-portrait:hover {
-          box-shadow: 0 24px 48px -22px rgba(60,45,110,0.5);
           transform: translateY(-3px);
+          box-shadow:
+            0 0 80px 6px rgba(174,226,218,0.38),
+            0 24px 140px 40px rgba(174,226,218,0.22);
         }
         .noir-portrait img {
           width: 100%;
           height: 100%;
           object-fit: cover;
+          filter: brightness(1.08) contrast(1.02);
+        }
+        /* cone of scattered light falling from the top strip: brightest just
+           under the bar, spreading wider and fading with distance */
+        .noir-portrait::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          z-index: 2;
+          pointer-events: none;
+          background: radial-gradient(125% 78% at 50% -8%,
+            rgba(174,226,218,0.55) 0%,
+            rgba(174,226,218,0.2) 26%,
+            rgba(174,226,218,0.05) 48%,
+            transparent 66%);
+          mix-blend-mode: screen;
+        }
+        /* the emitting light strip at the top edge, ~full width, glowing */
+        .noir-portrait::after {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 6%;
+          right: 6%;
+          height: 3px;
+          z-index: 3;
+          pointer-events: none;
+          border-radius: 0 0 3px 3px;
+          background: linear-gradient(90deg,
+            transparent, rgba(174,226,218,0.95) 22%, #ffffff 50%, rgba(174,226,218,0.95) 78%, transparent);
+          box-shadow: 0 0 14px 2px rgba(174,226,218,0.85), 0 6px 24px 4px rgba(174,226,218,0.4);
         }
 
         .noir-copy {
@@ -277,12 +334,12 @@ export default function Hero() {
           font-size: clamp(1.05rem, 2.4vw, 1.22rem);
           line-height: 1.7;
           min-height: calc(1.7em * 4);
-          color: oklch(0.34 0.02 64);
+          color: rgba(215, 231, 227, 0.72);
           cursor: default;
           transition: color 0.25s ease;
         }
         .noir-desc:hover {
-          color: #241d16;
+          color: #eaf6f2;
         }
 
         .noir-nav {
@@ -296,17 +353,17 @@ export default function Hero() {
           gap: 14px;
           padding: 13px 4px;
           text-decoration: none;
-          color: #7a1f3d;
-          border-top: 1px solid oklch(0.76 0.04 72);
+          color: var(--teal-glow);
+          border-top: 1px solid rgba(174, 226, 218, 0.14);
           font-family: var(--font-mono);
           font-style: italic;
           transition: color 0.25s ease, padding-left 0.25s ease;
         }
         .noir-action:last-child {
-          border-bottom: 1px solid oklch(0.76 0.04 72);
+          border-bottom: 1px solid rgba(174, 226, 218, 0.14);
         }
         .noir-action:hover {
-          color: #4f1027;
+          color: #ffffff;
           padding-left: 12px;
         }
         .noir-action-label {
@@ -337,7 +394,7 @@ export default function Hero() {
           font-family: var(--font-mono);
           font-style: italic;
           font-size: 0.78rem;
-          color: oklch(0.68 0.02 64);
+          color: rgba(174, 226, 218, 0.45);
         }
         .noir-hint-button {
           border: 0;

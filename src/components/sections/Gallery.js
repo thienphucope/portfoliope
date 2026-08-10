@@ -40,13 +40,18 @@ export default function Gallery({ images = [], showDesktopDiscuss = false }) {
           min-height: 100dvh;
           margin: 0;
           --font-mono: 'Special Elite', 'Courier New', monospace;
-          color: #241d16;
-          background: oklch(0.938 0.03 84);
+          color: #d7e7e3;
+          background:
+            radial-gradient(120% 60% at 50% 0%, rgba(174,226,218,0.10), transparent 40%),
+            radial-gradient(140% 90% at 50% 120%, rgba(61,107,106,0.16), transparent 60%),
+            rgba(10, 20, 22, 0.42);
+          backdrop-filter: blur(9px);
+          -webkit-backdrop-filter: blur(9px);
           padding: var(--feature-space);
-          border: 1px solid oklch(0.5 0.045 64);
+          border: 1px solid rgba(174, 226, 218, 0.16);
           box-shadow:
-            inset 0 0 0 5px oklch(0.938 0.03 84),
-            inset 0 0 0 6px oklch(0.5 0.045 64);
+            inset 0 0 0 5px rgba(10, 20, 22, 0.4),
+            inset 0 0 0 6px rgba(174, 226, 218, 0.14);
           overflow: hidden;
         }
 
@@ -56,8 +61,8 @@ export default function Gallery({ images = [], showDesktopDiscuss = false }) {
           inset: 0;
           pointer-events: none;
           z-index: 0;
-          mix-blend-mode: multiply;
-          opacity: 0.09;
+          mix-blend-mode: screen;
+          opacity: 0.05;
           background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
         }
 
@@ -120,8 +125,8 @@ export default function Gallery({ images = [], showDesktopDiscuss = false }) {
           width: 100%;
           height: auto;
           border-radius: 4px;
-          background: #ece9df;
-          box-shadow: 0 16px 34px -26px rgba(15, 15, 15, 0.58);
+          background: rgba(12, 28, 31, 0.9);
+          box-shadow: 0 16px 34px -26px rgba(0, 0, 0, 0.7);
           transition: box-shadow 0.24s ease;
         }
 
@@ -130,7 +135,7 @@ export default function Gallery({ images = [], showDesktopDiscuss = false }) {
         }
 
         .gallery-image-button:focus-visible {
-          outline: 2px solid #7a1f3d;
+          outline: 2px solid var(--teal-glow);
           outline-offset: 4px;
         }
 
@@ -140,7 +145,7 @@ export default function Gallery({ images = [], showDesktopDiscuss = false }) {
           font-size: clamp(0.72rem, 1.3vw, 0.86rem);
           font-style: italic;
           line-height: 1.25;
-          color: #343434;
+          color: rgba(215, 231, 227, 0.7);
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -154,8 +159,8 @@ export default function Gallery({ images = [], showDesktopDiscuss = false }) {
           font-family: var(--font-mono);
           font-size: clamp(5rem, 20vw, 16rem);
           line-height: 0.8;
-          color: #111;
-          opacity: 0.035;
+          color: var(--teal-glow);
+          opacity: 0.04;
           pointer-events: none;
           transform: rotate(-8deg);
         }
@@ -191,7 +196,7 @@ export default function Gallery({ images = [], showDesktopDiscuss = false }) {
           height: auto;
           object-fit: contain;
           border-radius: 4px;
-          background: oklch(0.938 0.03 84);
+          background: rgba(12, 28, 31, 0.9);
           box-shadow: 0 26px 90px rgba(0, 0, 0, 0.55);
         }
 
@@ -217,9 +222,11 @@ export default function Gallery({ images = [], showDesktopDiscuss = false }) {
           align-items: center;
           justify-content: center;
           border-radius: 50%;
-          border: 1px solid oklch(0.7 0.045 70);
-          background: oklch(0.938 0.03 84);
-          color: #241d16;
+          border: 1px solid rgba(174, 226, 218, 0.3);
+          background: rgba(11, 24, 26, 0.7);
+          backdrop-filter: blur(6px);
+          -webkit-backdrop-filter: blur(6px);
+          color: var(--teal-glow);
           cursor: pointer;
           transition: transform 0.2s ease, background-color 0.2s ease;
         }
@@ -267,7 +274,7 @@ export default function Gallery({ images = [], showDesktopDiscuss = false }) {
           }
 
           .gallery-masthead .gallery-discuss-links .about-social-prompt {
-            color: #5c4636;
+            color: rgba(174, 226, 218, 0.6);
           }
 
           .gallery-masthead .gallery-discuss-links .title-fly-out {

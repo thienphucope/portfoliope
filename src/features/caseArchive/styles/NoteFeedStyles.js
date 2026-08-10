@@ -4,7 +4,7 @@ export default function NoteFeedStyles() {
       @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap');
 
       :root {
-        --nf-bg: #0a0a0c;
+        --nf-bg: #070f11;
         --nf-txt: #e0e0e0;
         --nf-txt-dim: #aaaaaa;
         --nf-border: rgba(255,255,255,0.08);
@@ -288,6 +288,11 @@ export default function NoteFeedStyles() {
         padding: var(--feature-space);
         scrollbar-width: none;
         box-sizing: border-box;
+        background:
+          radial-gradient(120% 55% at 50% 0%, rgba(174,226,218,0.08), transparent 42%),
+          radial-gradient(140% 80% at 50% 100%, rgba(61,107,106,0.12), transparent 60%),
+          var(--nf-bg);
+        background-attachment: local, local, local;
       }
       .nf-feed::-webkit-scrollbar { display: none; }
 
@@ -442,8 +447,8 @@ export default function NoteFeedStyles() {
         border: 1px solid rgba(243, 208, 152, 0.24);
         border-radius: 2px;
         background:
-          linear-gradient(180deg, rgba(243, 208, 152, 0.08), rgba(243, 208, 152, 0.018)),
-          rgba(5, 5, 7, 0.84);
+          linear-gradient(180deg, rgba(174, 226, 218, 0.07), rgba(61, 107, 106, 0.03)),
+          rgba(9, 16, 18, 0.82);
         box-shadow:
           inset 0 1px 0 rgba(255, 255, 255, 0.05),
           0 18px 34px -24px rgba(0, 0, 0, 0.95);
