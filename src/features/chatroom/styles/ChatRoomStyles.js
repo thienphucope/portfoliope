@@ -4,10 +4,10 @@ export default function ChatRoomStyles({ isEmbedded }) {
       @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap');
 
       :root {
-        --void: #0a0a0c;
-        --colorone-dim: #8a6b52;
-        --parchment: #f4e8c1;
-        --parchment-dark: #c4b48a;
+        --void: #070f11;
+        --colorone-dim: #6fa8a0;
+        --parchment: #d7e7e3;
+        --parchment-dark: #3D6B6A;
         /* fonts: shared tokens in globals.css */
       }
 
@@ -20,14 +20,15 @@ export default function ChatRoomStyles({ isEmbedded }) {
         height: 100dvh;
         background: var(--void);
         background-image:
-          radial-gradient(circle at 10% 20%, rgba(186, 145, 112, 0.05), transparent 40rem),
-          repeating-linear-gradient(0deg, rgba(186, 145, 112, 0.02) 0, rgba(186, 145, 112, 0.02) 1px, transparent 1px, transparent 3px);
+          radial-gradient(120% 70% at 50% 4%, rgba(174, 226, 218, 0.10), transparent 42%),
+          radial-gradient(140% 90% at 50% 118%, rgba(61, 107, 106, 0.16), transparent 60%),
+          repeating-linear-gradient(0deg, rgba(120, 190, 182, 0.02) 0, rgba(120, 190, 182, 0.02) 1px, transparent 1px, transparent 3px);
         color: var(--parchment);
         font-family: var(--font-body);
         display: flex;
         flex-direction: column;
       }
-      ${isEmbedded ? '.chat-shell { position: relative; flex: 1; min-height: 0; background: #0a0a0c; background-image: none; }' : ''}
+      ${isEmbedded ? '.chat-shell { position: relative; flex: 1; min-height: 0; background: radial-gradient(120% 60% at 50% 0%, rgba(174,226,218,0.08), transparent 44%), #070f11; }' : ''}
 
       .chat-shell::after {
         content: "";
@@ -56,7 +57,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
       .chat-name {
         font-family: var(--font-mono);
         font-size: 0.82rem;
-        color: rgba(196, 180, 138, 0.55);
+        color: rgba(174, 226, 218, 0.55);
         letter-spacing: 3px;
         text-transform: uppercase;
       }
@@ -66,8 +67,8 @@ export default function ChatRoomStyles({ isEmbedded }) {
         letter-spacing: 2px;
         background: transparent;
         border: none;
-        border-bottom: 1px solid rgba(196, 180, 138, 0.25);
-        color: rgba(196, 180, 138, 0.7);
+        border-bottom: 1px solid rgba(174, 226, 218, 0.25);
+        color: rgba(174, 226, 218, 0.7);
         outline: none;
         width: 100px;
         padding: 2px 0;
@@ -81,7 +82,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
         opacity: var(--ui-placeholder-opacity);
         font-style: normal;
       }
-      .username-input:focus { border-bottom-color: rgba(196, 180, 138, 0.6); color: rgba(196, 180, 138, 0.9); }
+      .username-input:focus { border-bottom-color: rgba(174, 226, 218, 0.6); color: rgba(174, 226, 218, 0.9); }
       .chat-overline {
         font-family: var(--font-display);
         font-size: var(--ui-text-title);
@@ -135,7 +136,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
         right: 0;
         width: 260px;
         background: rgba(10, 10, 12, 0.98);
-        border: 1px dashed rgba(186, 145, 112, 0.4);
+        border: 1px dashed rgba(120, 190, 182, 0.4);
         padding: 16px;
         display: flex;
         flex-direction: column;
@@ -156,7 +157,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
         text-align: left;
         cursor: pointer;
         padding: 10px 0;
-        border-bottom: 1px dashed rgba(186, 145, 112, 0.15);
+        border-bottom: 1px dashed rgba(120, 190, 182, 0.15);
         display: flex;
         flex-direction: column;
         gap: 4px;
@@ -174,7 +175,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
       .feature-sub {
         font-family: var(--font-mono);
         font-size: 0.82rem;
-        color: rgba(186, 145, 112, 0.35);
+        color: rgba(120, 190, 182, 0.35);
         letter-spacing: 1px;
         font-style: italic;
       }
@@ -197,10 +198,10 @@ export default function ChatRoomStyles({ isEmbedded }) {
         flex-direction: column;
         gap: 32px;
         scrollbar-width: thin;
-        scrollbar-color: rgba(186, 145, 112, 0.15) transparent;
+        scrollbar-color: rgba(120, 190, 182, 0.15) transparent;
       }
       .messages-list::-webkit-scrollbar { width: 4px; }
-      .messages-list::-webkit-scrollbar-thumb { background: rgba(186, 145, 112, 0.15); }
+      .messages-list::-webkit-scrollbar-thumb { background: rgba(120, 190, 182, 0.15); }
 
       .history-entry .bubble-content {
         font-size: 0.92rem;
@@ -225,20 +226,20 @@ export default function ChatRoomStyles({ isEmbedded }) {
       .bubble-content p:last-child { margin-bottom: 0; }
       .bubble-content a {
         color: var(--theme);
-        text-decoration-color: rgba(186, 145, 112, 0.55);
+        text-decoration-color: rgba(120, 190, 182, 0.55);
         text-underline-offset: 3px;
       }
-      .bubble-content a:hover { color: #d6ad8a; }
+      .bubble-content a:hover { color: #cfeee8; }
       .bubble-content code {
         font-family: var(--font-mono);
         font-size: 0.9em;
-        background: rgba(186,145,112,0.08);
+        background: rgba(120,190,182,0.08);
         padding: 1px 5px;
         border-radius: 2px;
       }
       .bubble-content pre {
-        background: rgba(186,145,112,0.06);
-        border: 1px solid rgba(186,145,112,0.15);
+        background: rgba(120,190,182,0.06);
+        border: 1px solid rgba(120,190,182,0.15);
         padding: 12px;
         overflow-x: auto;
         font-size: 0.92rem;
@@ -265,7 +266,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
         font-size: 0.82rem;
         letter-spacing: 2px;
         background: transparent;
-        border: 1px dashed rgba(186, 145, 112, 0.35);
+        border: 1px dashed rgba(120, 190, 182, 0.35);
         color: var(--colorone-dim);
         padding: 6px 12px;
         cursor: pointer;
@@ -274,7 +275,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
       .suggest-btn:hover {
         color: var(--theme);
         border-color: var(--theme);
-        background: rgba(186, 145, 112, 0.05);
+        background: rgba(120, 190, 182, 0.05);
       }
 
       .live-transcription {
@@ -319,12 +320,12 @@ export default function ChatRoomStyles({ isEmbedded }) {
         display: flex;
         align-items: center;
         gap: 16px;
-        border: 1px solid rgba(186, 145, 112, 0.2);
-        background: rgba(186, 145, 112, 0.02);
+        border: 1px solid rgba(120, 190, 182, 0.2);
+        background: rgba(120, 190, 182, 0.02);
         padding: 16px;
         transition: border-color 0.3s;
       }
-      .textarea-row:focus-within { border-color: var(--colorone-dim); background: rgba(186, 145, 112, 0.05); }
+      .textarea-row:focus-within { border-color: var(--colorone-dim); background: rgba(120, 190, 182, 0.05); }
 
       .chat-input {
         flex: 1;
@@ -382,8 +383,8 @@ export default function ChatRoomStyles({ isEmbedded }) {
       .action-btn:hover:not(:disabled) { color: var(--theme); }
       .action-btn.active { color: var(--theme); animation: blink 1.5s infinite; }
       .action-btn.send-btn { color: var(--theme); }
-      .action-btn.send-btn:hover:not(:disabled) { text-shadow: 0 0 10px rgba(186, 145, 112, 0.5); }
-      .action-btn:disabled { color: rgba(186, 145, 112, 0.3); cursor: default; }
+      .action-btn.send-btn:hover:not(:disabled) { text-shadow: 0 0 10px rgba(120, 190, 182, 0.5); }
+      .action-btn:disabled { color: rgba(120, 190, 182, 0.3); cursor: default; }
 
       .live-controls {
         display: flex;
@@ -391,9 +392,9 @@ export default function ChatRoomStyles({ isEmbedded }) {
         justify-content: space-between;
         max-width: 800px;
         margin: 0 auto;
-        border: 1px solid rgba(186, 145, 112, 0.2);
+        border: 1px solid rgba(120, 190, 182, 0.2);
         padding: 16px 24px;
-        background: rgba(186, 145, 112, 0.02);
+        background: rgba(120, 190, 182, 0.02);
       }
 
       .live-copy {
@@ -413,7 +414,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
         font-family: var(--font-mono);
         font-size: 0.82rem;
         letter-spacing: 2px;
-        color: rgba(244, 232, 193, 0.4);
+        color: rgba(215, 231, 227, 0.4);
       }
 
       .mic-btn, .end-btn {
@@ -428,7 +429,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
       }
 
       .mic-btn { color: var(--theme); }
-      .mic-btn.listening { color: #f4e8c1; text-shadow: 0 0 8px rgba(244, 232, 193, 0.6); }
+      .mic-btn.listening { color: #d7e7e3; text-shadow: 0 0 8px rgba(215, 231, 227, 0.6); }
       .mic-btn.processing { color: var(--colorone-dim); animation: blink 1.5s infinite; }
       .mic-btn.holding { color: #60a5fa; text-shadow: 0 0 8px rgba(96, 165, 250, 0.6); }
 

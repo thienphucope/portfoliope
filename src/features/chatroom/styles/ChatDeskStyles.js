@@ -9,13 +9,16 @@ export default function ChatDeskStyles() {
         width: 100%;
         height: 100dvh;
         overflow: hidden;
-        color: #241d16;
-        background: oklch(0.938 0.03 84);
+        color: #d7e7e3;
+        background:
+          radial-gradient(120% 70% at 50% 4%, rgba(174,226,218,0.10), transparent 42%),
+          radial-gradient(140% 90% at 50% 118%, rgba(61,107,106,0.16), transparent 60%),
+          #070f11;
         font-family: 'Special Elite', 'Courier New', monospace;
-        border: 1px solid oklch(0.5 0.045 64);
+        border: 1px solid rgba(174, 226, 218, 0.16);
         box-shadow:
-          inset 0 0 0 5px oklch(0.938 0.03 84),
-          inset 0 0 0 6px oklch(0.5 0.045 64);
+          inset 0 0 0 5px rgba(7, 15, 17, 0.6),
+          inset 0 0 0 6px rgba(174, 226, 218, 0.14);
       }
       .chat-desk::before {
         content: '';
@@ -23,8 +26,8 @@ export default function ChatDeskStyles() {
         inset: 0;
         pointer-events: none;
         z-index: 0;
-        mix-blend-mode: multiply;
-        opacity: 0.09;
+        mix-blend-mode: screen;
+        opacity: 0.05;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
       }
 
@@ -59,7 +62,7 @@ export default function ChatDeskStyles() {
       .arrow-label {
         font-size: 0.68rem;
         letter-spacing: 0.14em;
-        color: oklch(0.55 0.02 64);
+        color: rgba(174, 226, 218, 0.55);
       }
 
       .desk-paper {
@@ -68,9 +71,11 @@ export default function ChatDeskStyles() {
         left: 0;
         z-index: 2;
         width: min(320px, 78vw);
-        background: #fdfbf3;
-        border: 1px solid oklch(0.76 0.04 72);
-        box-shadow: 0 10px 26px rgba(0,0,0,0.22);
+        background: rgba(13, 27, 30, 0.72);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(174, 226, 218, 0.22);
+        box-shadow: 0 10px 26px rgba(0,0,0,0.5), 0 0 24px rgba(174,226,218,0.12);
         padding: 18px 20px;
         font-size: 0.86rem;
         line-height: 1.6;
@@ -78,8 +83,8 @@ export default function ChatDeskStyles() {
       }
       .desk-paper:active { cursor: grabbing; }
 
-      .response-paper { color: #241d16; font-size: 1.02rem; }
-      .response-paper .markdown-content { color: #241d16; }
+      .response-paper { color: #d7e7e3; font-size: 1.02rem; }
+      .response-paper .markdown-content { color: #d7e7e3; }
       .paper-tool-trace {
         display: flex;
         flex-direction: column;
@@ -123,14 +128,14 @@ export default function ChatDeskStyles() {
         border: none;
         outline: none;
         background: transparent;
-        color: #241d16;
+        color: #d7e7e3;
         font-family: 'Special Elite', 'Courier New', monospace;
         font-size: var(--md-size);
         line-height: 1.6;
         pointer-events: none;
       }
       .writable-paper.focused .paper-textarea { pointer-events: auto; }
-      .paper-textarea::placeholder { color: oklch(0.68 0.02 64); }
+      .paper-textarea::placeholder { color: rgba(174, 226, 218, 0.4); }
 
       .magnifier {
         position: absolute;
