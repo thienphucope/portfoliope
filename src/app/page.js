@@ -3,6 +3,7 @@ import Hero from '@/components/sections/AboutHero';
 import SnowEffect from '@/components/sections/SnowEffect';
 import FingerprintEffect from '@/components/sections/FingerprintEffect';
 import MomentumScroll from '@/components/layout/MomentumScroll';
+import { getGalleryImages } from '@/lib/galleryImages';
 
 export const metadata = {
   title: 'Ope Watson',
@@ -10,7 +11,8 @@ export const metadata = {
   alternates: { canonical: '/' },
 };
 
-export default function HomePage() {
+export default async function HomePage() {
+  const galleryImages = await getGalleryImages();
   return (
     <div className="min-h-[100dvh] flex flex-col">
       <div className="relative flex-1">
@@ -22,7 +24,7 @@ export default function HomePage() {
             <SnowEffect mounted={true} />
           </div>
           <div className="w-full transition-opacity duration-1000 opacity-100 relative z-10">
-            <Hero />
+            <Hero galleryImages={galleryImages} />
           </div>
         </main>
       </div>

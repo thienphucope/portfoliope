@@ -10,10 +10,7 @@ export default function ChatDeskStyles() {
         height: 100dvh;
         overflow: hidden;
         color: #d7e7e3;
-        background:
-          radial-gradient(120% 70% at 50% 4%, rgba(174,226,218,0.10), transparent 42%),
-          radial-gradient(140% 90% at 50% 118%, rgba(61,107,106,0.16), transparent 60%),
-          #070f11;
+        background: var(--scene-falloff), #000;
         font-family: 'Special Elite', 'Courier New', monospace;
         border: 1px solid rgba(174, 226, 218, 0.16);
         box-shadow:
@@ -65,37 +62,52 @@ export default function ChatDeskStyles() {
         color: rgba(174, 226, 218, 0.55);
       }
 
+      /* Two knobs for the whole sheet — tune here, not per rule. */
+      .chat-desk { --paper: #f5f4ef; --paper-ink: #16211f; }
+
       .desk-paper {
         position: absolute;
         top: 0;
         left: 0;
         z-index: 2;
         width: min(320px, 78vw);
-        background: rgba(13, 27, 30, 0.72);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        border: 1px solid rgba(174, 226, 218, 0.22);
-        box-shadow: 0 10px 26px rgba(0,0,0,0.5), 0 0 24px rgba(174,226,218,0.12);
+        /* Opaque now, so the backdrop-filter it used to carry was pure GPU cost. */
+        background: var(--paper);
+        border: 1px solid rgba(0, 0, 0, 0.14);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.62), 0 2px 6px rgba(0,0,0,0.4);
         padding: 18px 20px;
         font-size: 0.86rem;
         line-height: 1.6;
+        color: var(--paper-ink);
         cursor: grab;
       }
       .desk-paper:active { cursor: grabbing; }
 
-      .response-paper { color: #d7e7e3; font-size: 1.02rem; }
-      .response-paper .markdown-content { color: #d7e7e3; }
+      .response-paper { color: var(--paper-ink); font-size: 1.02rem; }
+      /* MarkdownStyles is light-on-dark globally (#fff headings, pale-gold
+         links); on white paper those vanish, so re-ink them here. */
+      .response-paper .markdown-content,
+      .response-paper .markdown-content h1,
+      .response-paper .markdown-content h2,
+      .response-paper .markdown-content h3,
+      .response-paper .markdown-content h4,
+      .response-paper .markdown-content h5,
+      .response-paper .markdown-content h6,
+      .response-paper .markdown-content .fit-heading,
+      .response-paper .markdown-content .table-container th { color: var(--paper-ink); }
+      .response-paper .markdown-content a { color: #7a4a12; border-bottom-color: rgba(122,74,18,0.45); }
+      .response-paper .markdown-content blockquote { border-left-color: rgba(0,0,0,0.22); }
       .paper-tool-trace {
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 4px;
         font-size: 0.72rem;
-        color: var(--theme);
+        color: rgba(22, 33, 31, 0.55);
         margin-bottom: 10px;
         text-align: center;
       }
-      .thinking-dots { color: var(--theme); }
+      .thinking-dots { color: rgba(22, 33, 31, 0.55); }
 
       .paper-stack {
         position: absolute;
@@ -128,21 +140,23 @@ export default function ChatDeskStyles() {
         border: none;
         outline: none;
         background: transparent;
-        color: #d7e7e3;
+        color: var(--paper-ink);
         font-family: 'Special Elite', 'Courier New', monospace;
         font-size: var(--md-size);
         line-height: 1.6;
         pointer-events: none;
       }
       .writable-paper.focused .paper-textarea { pointer-events: auto; }
-      .paper-textarea::placeholder { color: rgba(174, 226, 218, 0.4); }
+      .paper-textarea::placeholder { color: rgba(22, 33, 31, 0.38); }
 
       .magnifier {
         position: absolute;
         right: 14%;
         top: 50%;
         margin-top: -187.5px;
-        z-index: 5;
+        /* above the shade (45): on mobile it sits at 62% height, deep in the
+           dark end of the ramp, and it's the primary control */
+        z-index: 46;
         width: 375px;
         height: 375px;
         cursor: grab;
@@ -156,7 +170,8 @@ export default function ChatDeskStyles() {
         bottom: 6%;
         left: 50%;
         transform: translateX(-50%);
-        z-index: 6;
+        /* above the LampScene shade (45) — it hits solid black at this edge */
+        z-index: 46;
         font-size: 0.82rem;
         letter-spacing: 0.16em;
         text-transform: uppercase;

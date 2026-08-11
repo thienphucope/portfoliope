@@ -19,12 +19,15 @@
   --teal-mid:    #3D6B6A;  /* hắt sáng tường/kệ */
   --teal-shadow: #1B2E30;  /* bóng râm */
   --teal-void:   #090E11;  /* góc khuất */
-  /* Reusable atmospheric background stack: doorway glow + floor bounce + vignette + base */
-  --teal-scene:
-    radial-gradient(120% 85% at 50% 6%, rgba(174,226,218,0.18), rgba(174,226,218,0.05) 28%, transparent 52%),
-    radial-gradient(150% 120% at 50% 118%, rgba(61,107,106,0.24), transparent 58%),
-    radial-gradient(110% 110% at 50% 46%, transparent 50%, rgba(9,14,17,0.9)),
-    linear-gradient(180deg, #0c1c1f 0%, #0a1618 42%, #070f11 100%);
+  /* Reusable atmospheric background: pure noir black (matches AboutHero .noir-room) */
+  --teal-scene: #000;
+  /* Top-down light falloff. Stops sample 1 - t^2.2, the mirror of the shade
+     curve in LampScene: the lift holds through the upper half instead of
+     draining off linearly, then fades out. Every stop sits on one smooth curve —
+     a stop that breaks it puts the old bright band back near the top. Layer it
+     OVER a black base, sized 100dvh (same as <LampScene />) so long pages don't
+     stretch the ramp. */
+  --scene-falloff: linear-gradient(180deg, rgba(174,226,218,0.17) 0%, rgba(174,226,218,0.167) 15%, rgba(174,226,218,0.158) 30%, rgba(174,226,218,0.141) 45%, rgba(174,226,218,0.115) 60%, rgba(174,226,218,0.08) 75%, rgba(174,226,218,0.051) 85%, rgba(174,226,218,0.025) 93%, rgba(174,226,218,0) 100%);
 
   /* ── Typography (single source) ── */
   --font-display: 'Playfair Display', Georgia, serif;  /* titles / headings */
@@ -37,7 +40,9 @@
   /* Feature backgrounds */
   --feature-bg: #0a1618;
   --feature-backdrop-bg: #070f11;
-  --feature-backdrop-overlay: rgba(6, 16, 18, 0.52);
+  /* Scrim over the photo backdrop (.case-background): even top-down ramp to
+     near-solid black — two stops, same reason as --scene-falloff. */
+  --feature-backdrop-overlay: linear-gradient(180deg, rgba(4,11,13,0.55) 0%, rgba(0,0,0,0.97) 100%);
   /* Feature edge spacing */
   --feature-space-top: 28px;
   --feature-space-right: 24px;
@@ -79,29 +84,16 @@
 /* -------------------------------------------------------------------------- */
 /*                            TEAL NIGHT-SCENE ATMOSPHERE                      */
 /* -------------------------------------------------------------------------- */
-/* Full atmospheric backdrop: layered gradients (glow + vignette) as bg. */
-.teal-scene { background: var(--teal-scene); }
+/* Full atmospheric backdrop: black floor + one screen-tall top-down falloff. */
+.teal-scene {
+  background: var(--scene-falloff), var(--teal-scene);
+  background-size: 100% 100dvh;
+  background-repeat: no-repeat;
+}
 
-/* Slow drifting cold haze — drop as an absolutely-positioned child. */
-.teal-haze {
-  position: absolute;
-  inset: -20%;
-  pointer-events: none;
-  background:
-    radial-gradient(40% 30% at 30% 40%, rgba(174,226,218,0.10), transparent 70%),
-    radial-gradient(45% 35% at 72% 60%, rgba(61,107,106,0.14), transparent 70%);
-  filter: blur(30px);
-  opacity: 0.7;
-  animation: teal-haze-drift 26s ease-in-out infinite alternate;
-}
-@keyframes teal-haze-drift {
-  0%   { transform: translate3d(-3%, -2%, 0) scale(1.05); opacity: 0.55; }
-  50%  { transform: translate3d(2%, 1%, 0)   scale(1.12); opacity: 0.8; }
-  100% { transform: translate3d(4%, 3%, 0)   scale(1.05); opacity: 0.6; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .teal-haze { animation: none; }
-}
+/* The overhead light beam now lives in the reusable <LampScene /> component
+   (src/components/layout/LampScene.js). Drop it as the first child of any
+   .teal-scene (black) container. */
 
 /* -------------------------------------------------------------------------- */
 /*                                 BASE STYLES                                */

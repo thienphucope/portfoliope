@@ -8,6 +8,7 @@ import { useFetchBatch, BATCH_SIZE } from '@/features/caseArchive/hooks/useFetch
 import { useFeedEffects } from '@/features/caseArchive/hooks/useFeedEffects';
 import CasesSection from '@/features/caseArchive/components/CasesSection';
 import NoteFeedStyles from '@/features/caseArchive/styles/NoteFeedStyles';
+import LampScene from '@/components/layout/LampScene';
 import { CASE_BASE } from '@/configs/vault';
 
 export default function NoteFeed({ onLinkClick, serverData }) {
@@ -43,6 +44,7 @@ export default function NoteFeed({ onLinkClick, serverData }) {
     <>
       {isMounted && (
         <main className="nf-feed nf-gallery-feed" ref={feedRef}>
+          <LampScene />
           <CasesSection
             displayedCases={displayedCases}
             onLinkClick={handleLinkClick}

@@ -4,7 +4,7 @@ export default function NoteFeedStyles() {
       @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap');
 
       :root {
-        --nf-bg: #070f11;
+        --nf-bg: #000;
         --nf-txt: #e0e0e0;
         --nf-txt-dim: #aaaaaa;
         --nf-border: rgba(255,255,255,0.08);
@@ -281,6 +281,7 @@ export default function NoteFeedStyles() {
 
       /* ── Feed (middle pane) ── */
       .nf-feed {
+        position: relative;
         flex: 1 1 0;
         min-width: 0;
         height: 100%;
@@ -288,11 +289,10 @@ export default function NoteFeedStyles() {
         padding: var(--feature-space);
         scrollbar-width: none;
         box-sizing: border-box;
-        background:
-          radial-gradient(120% 55% at 50% 0%, rgba(174,226,218,0.08), transparent 42%),
-          radial-gradient(140% 80% at 50% 100%, rgba(61,107,106,0.12), transparent 60%),
-          var(--nf-bg);
-        background-attachment: local, local, local;
+        background: var(--scene-falloff), var(--nf-bg);
+        background-size: 100% 100dvh;
+        background-repeat: no-repeat;
+        background-attachment: local;
       }
       .nf-feed::-webkit-scrollbar { display: none; }
 
@@ -626,6 +626,10 @@ export default function NoteFeedStyles() {
         align-items: center;
         gap: 10px;
         margin-top: 10px;
+        /* above the LampScene shade (45): it lands at the viewport bottom, where
+           the ramp is solid black */
+        position: relative;
+        z-index: 46;
         font-family: var(--font-mono);
         font-size: var(--ui-text-body);
         letter-spacing: 1px;

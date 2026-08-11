@@ -6,6 +6,7 @@ import BlockEditor from '@/features/caseArchive/components/BlockEditor';
 import BaseStyles from '@/styles/BaseStyles';
 import TabPanelStyles from '@/styles/TabPanelStyles';
 import WindowFrame from '@/components/ui/WindowFrame';
+import LampScene from '@/components/layout/LampScene';
 import dynamic from 'next/dynamic';
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
@@ -316,6 +317,7 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
     <div className={['accordion-app pc-layout', activeTab ? 'has-active' : '', !isEditorOpen ? 'feed-active' : ''].join(' ')} ref={appShellRef}>
       <div className="case-background"><img src="/casebg2.png" alt="" /></div>
       <div className="video-overlay" />
+      <LampScene shade={false} />
       <SpritzOverlay text={reader.currentText} isPlaying={reader.isPlaying} isPaused={reader.isPaused} playbackRate={reader.playbackRate} />
 
       <>

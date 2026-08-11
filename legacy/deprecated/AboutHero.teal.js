@@ -1,0 +1,586 @@
+"use client";
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { FaTimes } from 'react-icons/fa';
+
+import useSpotlight from '@/hooks/useSpotlight';
+import MusicHeader from '@/components/sections/MusicHeader';
+import { BACKGROUND_VIDEO } from '@/configs/media';
+
+const visibleScrambleText = (value) => value.trimEnd();
+const GLYPHS = ['✦', '✳', '❋', '◆', '○', '✕', '△', '❉', '⟡', '✧', '✺', '✴', '＋', '◇', '☾', '✶'];
+
+export default function Hero() {
+  const [displayText, setDisplayText] = useState("");
+  const [displayTitle, setDisplayTitle] = useState("");
+  const [displayPronunciation, setDisplayPronunciation] = useState("");
+  const [footprints, setFootprints] = useState([]);
+  const [showVideoOverlay, setShowVideoOverlay] = useState(false);
+  const { setSpotlightEnabled, spotlightOverlay } = useSpotlight();
+
+  const padChar = ' ';
+  const originalText = "A counseling detective and quiet explorer of love, loss, doubt, and the stories people cannot bring themselves to close.";
+  const replacementText = "An IT developer and embedded IoT programmer who builds connected devices, firmware, and the quiet systems that keep them talking.";
+  const textMaxLen = Math.max(originalText.length, replacementText.length);
+  const originalTextPadded = originalText + padChar.repeat(textMaxLen - originalText.length);
+  const replacementTextPadded = replacementText + padChar.repeat(textMaxLen - replacementText.length);
+
+  const originalTitle = "Ope Watson";
+  const replacementTitle = "No Touchin!";
+  const titleMaxLen = Math.max(originalTitle.length, replacementTitle.length);
+  const originalTitlePadded = originalTitle + padChar.repeat(titleMaxLen - originalTitle.length);
+  const replacementTitlePadded = replacementTitle + padChar.repeat(titleMaxLen - replacementTitle.length);
+
+  const originalPronunciation = "en. /'ohp 'wots-uhn/  jp. /opeオペ/";
+  const replacementPronunciation = "pronounce it anyways!";
+  const pronMaxLen = Math.max(originalPronunciation.length, replacementPronunciation.length);
+  const originalPronPadded = originalPronunciation + padChar.repeat(pronMaxLen - originalPronunciation.length);
+  const replacementPronPadded = replacementPronunciation + padChar.repeat(pronMaxLen - replacementPronunciation.length);
+
+  useEffect(() => {
+    setDisplayText(visibleScrambleText(originalTextPadded));
+    setDisplayTitle(visibleScrambleText(originalTitlePadded));
+    setDisplayPronunciation(visibleScrambleText(originalPronPadded));
+
+    // Generate decorative glyphs only on the client to avoid hydration mismatch.
+    const generatedFootprints = Array.from({ length: 12 }).map((_, i) => ({
+      id: i,
+      glyph: GLYPHS[Math.floor(Math.random() * GLYPHS.length)],
+      top: 4 + Math.random() * 90,
+      left: 3 + Math.random() * 93,
+      size: 14 + Math.random() * 30,
+      rotation: Math.floor(Math.random() * 90) - 45,
+      duration: 5 + Math.random() * 5,
+      delay: -Math.random() * 6,
+      opacity: 0.1 + Math.random() * 0.14,
+    }));
+    setFootprints(generatedFootprints);
+  }, [originalPronPadded, originalTextPadded, originalTitlePadded]);
+
+  useEffect(() => {
+    if (!showVideoOverlay) return;
+    const handleKeyDown = (e) => { if (e.key === 'Escape') setShowVideoOverlay(false); };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showVideoOverlay]);
+
+  const scrambleText = (original, target, setDisplay, duration = 200) => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let seed = 1234;
+    const m = 2147483647;
+    const a = 1103515245;
+    const c = 12345;
+    const pseudoRandom = () => { seed = (a * seed + c) % m; return seed / m; };
+    let startTime = null;
+    let frame;
+    const length = Math.max(original.length, target.length);
+    const animate = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      const progress = timestamp - startTime;
+      const progressRatio = Math.min(progress / duration, 1);
+      if (progressRatio < 0.7) {
+        const scrambled = Array.from({ length }).map((_, i) => {
+          const targetChar = target[i] || padChar;
+          return targetChar === " "
+            ? " "
+            : chars[Math.floor(pseudoRandom() * chars.length)];
+        }).join("");
+        setDisplay(visibleScrambleText(scrambled));
+        frame = requestAnimationFrame(animate);
+      } else {
+        const blendRatio = (progressRatio - 0.7) / 0.3;
+        const currentText = Array.from({ length }).map((_, i) => {
+          const originalChar = original[i] || padChar;
+          const targetChar = target[i] || padChar;
+          if (targetChar === " ") return " ";
+          if (originalChar === " ") return targetChar;
+          return blendRatio < pseudoRandom() ? originalChar : targetChar;
+        }).join("");
+        setDisplay(visibleScrambleText(currentText));
+        if (progressRatio < 1) frame = requestAnimationFrame(animate);
+        else setDisplay(visibleScrambleText(target));
+      }
+    };
+    frame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frame);
+  };
+
+  return (
+    <section className="about-hero-section teal-scene relative w-full min-h-[100dvh] flex items-center justify-center overflow-hidden">
+      {spotlightOverlay}
+      <div className="teal-haze z-0" />
+      <div className="absolute inset-[-80px] pointer-events-none z-0">
+        {footprints.map(fp => (
+          <span key={fp.id} className="noir-glyph" style={{
+            top: `${fp.top}%`,
+            left: `${fp.left}%`,
+            fontSize: `${fp.size}px`,
+            opacity: fp.opacity,
+            '--r': `${fp.rotation}deg`,
+            animationDuration: `${fp.duration}s`,
+            animationDelay: `${fp.delay}s`,
+          }}>
+            {fp.glyph}
+          </span>
+        ))}
+      </div>
+
+      <style jsx global>{`
+        @keyframes noir-glyph-float {
+          0%   { transform: translateY(0) rotate(var(--r)); }
+          50%  { transform: translateY(-14px) rotate(calc(var(--r) + 8deg)); }
+          100% { transform: translateY(0) rotate(var(--r)); }
+        }
+        @keyframes noir-cursor-blink {
+          0%, 49% { opacity: 1; }
+          50%, 100% { opacity: 0; }
+        }
+
+        .noir-glyph {
+          position: absolute;
+          color: var(--theme);
+          animation-name: noir-glyph-float;
+          animation-timing-function: ease-in-out;
+          animation-iteration-count: infinite;
+        }
+
+        .about-noir {
+          position: relative;
+          width: 100%;
+          min-height: 100dvh;
+          margin: 0;
+          --font-mono: 'Special Elite', 'Courier New', monospace;
+          color: #d7e7e3;
+          background: rgba(5, 11, 13, 0.8);
+          backdrop-filter: blur(9px);
+          -webkit-backdrop-filter: blur(9px);
+          padding: clamp(22px, 4vw, 40px);
+          border: 1px solid rgba(174, 226, 218, 0.16);
+          box-shadow:
+            inset 0 0 0 5px rgba(11, 24, 26, 0.4),
+            inset 0 0 0 6px rgba(174, 226, 218, 0.14),
+            0 40px 90px -40px rgba(0, 0, 0, 0.8);
+          display: grid;
+          grid-template-columns: minmax(0, 1fr);
+          grid-template-areas:
+            "masthead"
+            "visual"
+            "copy"
+            "social";
+          gap: clamp(20px, 4vw, 32px);
+          overflow: hidden;
+        }
+        .about-noir::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          z-index: 0;
+          mix-blend-mode: screen;
+          opacity: 0.05;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        .noir-visual,
+        .noir-masthead,
+        .noir-copy,
+        .noir-footer {
+          position: relative;
+          z-index: 2;
+          min-width: 0;
+        }
+
+        .noir-masthead {
+          grid-area: masthead;
+          display: flex;
+          flex-direction: column;
+          gap: 18px;
+        }
+        .noir-eyebrow {
+          display: inline-block;
+          width: fit-content;
+          font-family: var(--font-mono);
+          font-style: italic;
+          font-size: 11px;
+          letter-spacing: 0.3em;
+          text-transform: uppercase;
+          text-decoration: none;
+          color: rgba(174, 226, 218, 0.55);
+          transition: color 0.25s ease;
+        }
+        .noir-eyebrow:hover {
+          color: var(--theme);
+        }
+
+        .noir-name {
+          font-family: var(--font-body);
+          font-weight: 900;
+          font-size: clamp(3rem, 10.5vw, 4.6rem);
+          line-height: 0.98;
+          white-space: nowrap;
+          overflow: hidden;
+          padding-bottom: 0.15em;
+          letter-spacing: -0.01em;
+          color: var(--theme);
+          margin: 0;
+          cursor: default;
+          transition: color 0.25s ease;
+        }
+        .noir-name:hover {
+          color: var(--theme);
+        }
+
+        .noir-pron {
+          display: block;
+          margin-top: 4px;
+          text-transform: lowercase;
+          font-family: var(--font-mono);
+          font-style: normal;
+          font-size: clamp(1rem, 2.2vw, 1.15rem);
+          letter-spacing: 0.02em;
+          color: rgba(174, 226, 218, 0.6);
+          cursor: default;
+        }
+
+        .noir-visual {
+          grid-area: visual;
+          position: relative;
+        }
+        /* the picture casts light outward across the page */
+        .noir-visual::before {
+          content: "";
+          position: absolute;
+          inset: -60% -80%;
+          z-index: 0;
+          pointer-events: none;
+          background: radial-gradient(50% 42% at 50% 30%,
+            rgba(174,226,218,0.28) 0%,
+            rgba(120,190,182,0.12) 34%,
+            transparent 68%);
+          mix-blend-mode: screen;
+          filter: blur(8px);
+        }
+        .noir-portrait {
+          position: relative;
+          z-index: 1;
+          display: block;
+          width: 100%;
+          min-height: 260px;
+          aspect-ratio: 4 / 5;
+          overflow: hidden;
+          border-radius: 4px;
+          border: 1px solid rgba(174, 226, 218, 0.28);
+          background-image: repeating-linear-gradient(135deg, rgba(27,46,48,0.9) 0 11px, rgba(12,28,31,0.9) 11px 22px);
+          /* the frame itself glows, spilling light onto the surrounding page */
+          box-shadow:
+            0 0 60px 4px rgba(174,226,218,0.28),
+            0 20px 120px 30px rgba(174,226,218,0.16);
+          transition: box-shadow 0.35s ease, transform 0.35s ease;
+        }
+        .noir-portrait:hover {
+          transform: translateY(-3px);
+          box-shadow:
+            0 0 80px 6px rgba(174,226,218,0.38),
+            0 24px 140px 40px rgba(174,226,218,0.22);
+        }
+        .noir-portrait img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          filter: brightness(1.08) contrast(1.02);
+        }
+        /* cone of scattered light falling from the top strip: brightest just
+           under the bar, spreading wider and fading with distance */
+        .noir-portrait::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          z-index: 2;
+          pointer-events: none;
+          background: radial-gradient(125% 78% at 50% -8%,
+            rgba(174,226,218,0.55) 0%,
+            rgba(174,226,218,0.2) 26%,
+            rgba(174,226,218,0.05) 48%,
+            transparent 66%);
+          mix-blend-mode: screen;
+        }
+        /* the emitting light strip at the top edge, ~full width, glowing */
+        .noir-portrait::after {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 6%;
+          right: 6%;
+          height: 3px;
+          z-index: 3;
+          pointer-events: none;
+          border-radius: 0 0 3px 3px;
+          background: linear-gradient(90deg,
+            transparent, rgba(174,226,218,0.95) 22%, #ffffff 50%, rgba(174,226,218,0.95) 78%, transparent);
+          box-shadow: 0 0 14px 2px rgba(174,226,218,0.85), 0 6px 24px 4px rgba(174,226,218,0.4);
+        }
+
+        .noir-copy {
+          grid-area: copy;
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
+        }
+        .noir-desc {
+          margin: 0;
+          font-family: var(--font-mono);
+          font-style: normal;
+          text-transform: lowercase;
+          font-size: clamp(1.05rem, 2.4vw, 1.22rem);
+          line-height: 1.7;
+          min-height: calc(1.7em * 4);
+          color: rgba(215, 231, 227, 0.72);
+          cursor: default;
+          transition: color 0.25s ease;
+        }
+        .noir-desc:hover {
+          color: #eaf6f2;
+        }
+
+        .noir-nav {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+        .noir-action {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          padding: 13px 4px;
+          text-decoration: none;
+          color: var(--teal-glow);
+          border-top: 1px solid rgba(174, 226, 218, 0.14);
+          font-family: var(--font-mono);
+          font-style: italic;
+          transition: color 0.25s ease, padding-left 0.25s ease;
+        }
+        .noir-action:last-child {
+          border-bottom: 1px solid rgba(174, 226, 218, 0.14);
+        }
+        .noir-action:hover {
+          color: #ffffff;
+          padding-left: 12px;
+        }
+        .noir-action-label {
+          flex: 1;
+          min-width: 0;
+          font-weight: 400;
+          font-size: clamp(1rem, 2.5vw, 1.18rem);
+          letter-spacing: 0.04em;
+          text-transform: none;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .noir-action-arrow {
+          flex: 0 0 auto;
+          font-size: 0.78rem;
+          color: currentColor;
+        }
+
+        .noir-footer {
+          grid-area: social;
+          display: flex;
+          align-items: center;
+          padding-top: 6px;
+        }
+        .noir-hint {
+          margin-left: auto;
+          font-family: var(--font-mono);
+          font-style: italic;
+          font-size: 0.78rem;
+          color: rgba(174, 226, 218, 0.45);
+        }
+        .noir-hint-button {
+          border: 0;
+          padding: 0;
+          background: transparent;
+          cursor: pointer;
+          transition: color 0.25s ease;
+        }
+        .noir-hint-button:hover {
+          color: var(--theme);
+        }
+        .noir-cursor {
+          animation: noir-cursor-blink 1.1s step-end infinite;
+        }
+
+        .video-modal-backdrop {
+          position: fixed;
+          inset: 0;
+          z-index: 100;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(0, 0, 0, 0.75);
+          backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(4px);
+        }
+        .video-modal {
+          position: relative;
+          width: 100vw;
+          aspect-ratio: 16 / 9;
+          height: auto;
+          background: #000;
+          border: 1px solid oklch(0.7 0.045 70);
+          box-shadow: 0 24px 70px rgba(0, 0, 0, 0.72);
+        }
+        .video-modal iframe {
+          width: 100%;
+          height: 100%;
+          border: 0;
+          display: block;
+        }
+        .video-modal-close {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+          border: 1px solid oklch(0.7 0.045 70);
+          background: oklch(0.938 0.03 84);
+          color: #241d16;
+          cursor: pointer;
+          z-index: 1;
+        }
+
+        @media (min-width: 768px) {
+          .video-modal {
+            width: 75vw;
+          }
+          .video-modal-close {
+            top: -14px;
+            right: -14px;
+          }
+          .about-noir {
+            grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+            grid-template-rows: auto 1fr auto;
+            grid-template-areas:
+              "masthead visual"
+              "copy visual"
+              "social visual";
+            column-gap: clamp(32px, 5vw, 60px);
+            padding: clamp(28px, 3vw, 40px);
+          }
+          .noir-visual {
+            display: flex;
+            align-self: stretch;
+            min-height: 0;
+          }
+          .noir-portrait {
+            flex: 1;
+            height: 100%;
+            min-height: 0;
+            aspect-ratio: auto;
+          }
+          .noir-name {
+            font-size: clamp(4.2rem, 7.4vw, 6.4rem);
+          }
+        }
+
+        @media (min-width: 1024px) {
+          .noir-name {
+            font-size: 7.6rem;
+          }
+          .noir-desc {
+            font-size: 1.35rem;
+            max-width: 46ch;
+          }
+        }
+      `}</style>
+
+      <div className="about-noir relative z-10">
+        <div className="noir-masthead">
+          <MusicHeader onPlayStateChange={setSpotlightEnabled} />
+          <span className="noir-eyebrow">hover anything<span className="noir-cursor">_</span></span>
+          <h2
+            className="noir-name"
+            onMouseEnter={() => scrambleText(originalTitlePadded, replacementTitlePadded, setDisplayTitle)}
+            onMouseLeave={() => scrambleText(replacementTitlePadded, originalTitlePadded, setDisplayTitle)}
+          >
+            {displayTitle}
+          </h2>
+          <span
+            className="noir-pron"
+            onMouseEnter={() => scrambleText(originalPronPadded, replacementPronPadded, setDisplayPronunciation)}
+            onMouseLeave={() => scrambleText(replacementPronPadded, originalPronPadded, setDisplayPronunciation)}
+          >
+            {displayPronunciation}
+          </span>
+        </div>
+
+        <div className="noir-visual">
+          <Link href="/noirboard" className="noir-portrait">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/ope-new.png" alt="Ope" />
+          </Link>
+        </div>
+
+        <div className="noir-copy">
+          <p
+            className="noir-desc"
+            onMouseEnter={() => scrambleText(originalTextPadded, replacementTextPadded, setDisplayText)}
+            onMouseLeave={() => scrambleText(replacementTextPadded, originalTextPadded, setDisplayText)}
+          >
+            {displayText}
+          </p>
+
+          <nav className="noir-nav">
+            <Link href="/chat" className="noir-action">
+              <span className="noir-action-label">Chat with librarian moxxi</span>
+              <span className="noir-action-arrow">↗</span>
+            </Link>
+            <Link href="/casearchive" className="noir-action">
+              <span className="noir-action-label">Explore the case archives</span>
+              <span className="noir-action-arrow">↗</span>
+            </Link>
+            <Link href="/gallery" className="noir-action">
+              <span className="noir-action-label">Visit the gallery</span>
+              <span className="noir-action-arrow">↗</span>
+            </Link>
+          </nav>
+        </div>
+
+        <div className="noir-footer">
+          <button
+            type="button"
+            className="noir-hint noir-hint-button"
+            onClick={() => setShowVideoOverlay(true)}
+          >
+            inspired by ↗
+          </button>
+        </div>
+      </div>
+
+      {showVideoOverlay && (
+        <div className="video-modal-backdrop" onClick={() => setShowVideoOverlay(false)}>
+          <div className="video-modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="video-modal-close"
+              aria-label="Close"
+              onClick={() => setShowVideoOverlay(false)}
+            >
+              <FaTimes />
+            </button>
+            <iframe
+              src={`https://www.youtube.com/embed/${BACKGROUND_VIDEO.videoId}?autoplay=1&start=${BACKGROUND_VIDEO.start}`}
+              title="Background video"
+              allow="autoplay; encrypted-media"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}

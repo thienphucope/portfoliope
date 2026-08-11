@@ -5,57 +5,39 @@ import { FaTimes } from 'react-icons/fa';
 
 import useSpotlight from '@/hooks/useSpotlight';
 import MusicHeader from '@/components/sections/MusicHeader';
+import LampScene from '@/components/layout/LampScene';
 import { BACKGROUND_VIDEO } from '@/configs/media';
 
-const visibleScrambleText = (value) => value.trimEnd();
+const TOP_LINKS = [
+  { label: 'chat', href: '/chat' },
+  { label: 'casearchives', href: '/casearchive' },
+  { label: 'gallery', href: '/gallery' },
+];
+
 const GLYPHS = ['✦', '✳', '❋', '◆', '○', '✕', '△', '❉', '⟡', '✧', '✺', '✴', '＋', '◇', '☾', '✶'];
 
-export default function Hero() {
-  const [displayText, setDisplayText] = useState("");
-  const [displayTitle, setDisplayTitle] = useState("");
-  const [displayPronunciation, setDisplayPronunciation] = useState("");
-  const [footprints, setFootprints] = useState([]);
+export default function Hero({ galleryImages = [] }) {
+  const [glyphs, setGlyphs] = useState([]);
   const [showVideoOverlay, setShowVideoOverlay] = useState(false);
-  const { setSpotlightEnabled, spotlightOverlay } = useSpotlight();
+  const { setSpotlightEnabled } = useSpotlight();
 
-  const padChar = ' ';
-  const originalText = "A counseling detective and quiet explorer of love, loss, doubt, and the stories people cannot bring themselves to close.";
-  const replacementText = "An IT developer and embedded IoT programmer who builds connected devices, firmware, and the quiet systems that keep them talking.";
-  const textMaxLen = Math.max(originalText.length, replacementText.length);
-  const originalTextPadded = originalText + padChar.repeat(textMaxLen - originalText.length);
-  const replacementTextPadded = replacementText + padChar.repeat(textMaxLen - replacementText.length);
-
-  const originalTitle = "Ope Watson";
-  const replacementTitle = "No Touchin!";
-  const titleMaxLen = Math.max(originalTitle.length, replacementTitle.length);
-  const originalTitlePadded = originalTitle + padChar.repeat(titleMaxLen - originalTitle.length);
-  const replacementTitlePadded = replacementTitle + padChar.repeat(titleMaxLen - replacementTitle.length);
-
-  const originalPronunciation = "en. /'ohp 'wots-uhn/  jp. /opeオペ/";
-  const replacementPronunciation = "pronounce it anyways!";
-  const pronMaxLen = Math.max(originalPronunciation.length, replacementPronunciation.length);
-  const originalPronPadded = originalPronunciation + padChar.repeat(pronMaxLen - originalPronunciation.length);
-  const replacementPronPadded = replacementPronunciation + padChar.repeat(pronMaxLen - replacementPronunciation.length);
+  const title = "Ope Watson";
+  const pronunciation = "en. /'ohp 'wots-uhn/  jp. /opeオペ/";
 
   useEffect(() => {
-    setDisplayText(visibleScrambleText(originalTextPadded));
-    setDisplayTitle(visibleScrambleText(originalTitlePadded));
-    setDisplayPronunciation(visibleScrambleText(originalPronPadded));
-
-    // Generate decorative glyphs only on the client to avoid hydration mismatch.
-    const generatedFootprints = Array.from({ length: 12 }).map((_, i) => ({
+    const generated = Array.from({ length: 16 }).map((_, i) => ({
       id: i,
       glyph: GLYPHS[Math.floor(Math.random() * GLYPHS.length)],
       top: 4 + Math.random() * 90,
       left: 3 + Math.random() * 93,
-      size: 14 + Math.random() * 30,
+      size: 12 + Math.random() * 26,
       rotation: Math.floor(Math.random() * 90) - 45,
       duration: 5 + Math.random() * 5,
       delay: -Math.random() * 6,
-      opacity: 0.1 + Math.random() * 0.14,
+      opacity: 0.08 + Math.random() * 0.12,
     }));
-    setFootprints(generatedFootprints);
-  }, [originalPronPadded, originalTextPadded, originalTitlePadded]);
+    setGlyphs(generated);
+  }, []);
 
   useEffect(() => {
     if (!showVideoOverlay) return;
@@ -64,64 +46,14 @@ export default function Hero() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showVideoOverlay]);
 
-  const scrambleText = (original, target, setDisplay, duration = 200) => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let seed = 1234;
-    const m = 2147483647;
-    const a = 1103515245;
-    const c = 12345;
-    const pseudoRandom = () => { seed = (a * seed + c) % m; return seed / m; };
-    let startTime = null;
-    let frame;
-    const length = Math.max(original.length, target.length);
-    const animate = (timestamp) => {
-      if (!startTime) startTime = timestamp;
-      const progress = timestamp - startTime;
-      const progressRatio = Math.min(progress / duration, 1);
-      if (progressRatio < 0.7) {
-        const scrambled = Array.from({ length }).map((_, i) => {
-          const targetChar = target[i] || padChar;
-          return targetChar === " "
-            ? " "
-            : chars[Math.floor(pseudoRandom() * chars.length)];
-        }).join("");
-        setDisplay(visibleScrambleText(scrambled));
-        frame = requestAnimationFrame(animate);
-      } else {
-        const blendRatio = (progressRatio - 0.7) / 0.3;
-        const currentText = Array.from({ length }).map((_, i) => {
-          const originalChar = original[i] || padChar;
-          const targetChar = target[i] || padChar;
-          if (targetChar === " ") return " ";
-          if (originalChar === " ") return targetChar;
-          return blendRatio < pseudoRandom() ? originalChar : targetChar;
-        }).join("");
-        setDisplay(visibleScrambleText(currentText));
-        if (progressRatio < 1) frame = requestAnimationFrame(animate);
-        else setDisplay(visibleScrambleText(target));
-      }
-    };
-    frame = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(frame);
-  };
-
   return (
-    <section className="about-hero-section teal-scene relative w-full min-h-[100dvh] flex items-center justify-center overflow-hidden">
-      {spotlightOverlay}
-      <div className="teal-haze z-0" />
-      <div className="absolute inset-[-80px] pointer-events-none z-0">
-        {footprints.map(fp => (
-          <span key={fp.id} className="noir-glyph" style={{
-            top: `${fp.top}%`,
-            left: `${fp.left}%`,
-            fontSize: `${fp.size}px`,
-            opacity: fp.opacity,
-            '--r': `${fp.rotation}deg`,
-            animationDuration: `${fp.duration}s`,
-            animationDelay: `${fp.delay}s`,
-          }}>
-            {fp.glyph}
-          </span>
+    <section className="noir-room relative w-full overflow-hidden">
+      <div className="noir-glyphs" aria-hidden>
+        {glyphs.map((g) => (
+          <span key={g.id} className="noir-glyph" style={{
+            top: `${g.top}%`, left: `${g.left}%`, fontSize: `${g.size}px`, opacity: g.opacity,
+            '--r': `${g.rotation}deg`, animationDuration: `${g.duration}s`, animationDelay: `${g.delay}s`,
+          }}>{g.glyph}</span>
         ))}
       </div>
 
@@ -131,452 +63,135 @@ export default function Hero() {
           50%  { transform: translateY(-14px) rotate(calc(var(--r) + 8deg)); }
           100% { transform: translateY(0) rotate(var(--r)); }
         }
-        @keyframes noir-cursor-blink {
-          0%, 49% { opacity: 1; }
-          50%, 100% { opacity: 0; }
-        }
+        @keyframes cursor-blink { 0%,49%{opacity:1;} 50%,100%{opacity:0;} }
 
-        .noir-glyph {
-          position: absolute;
-          color: var(--theme);
-          animation-name: noir-glyph-float;
-          animation-timing-function: ease-in-out;
-          animation-iteration-count: infinite;
-        }
+        .noir-room { background: #000; --font-mono: 'Special Elite', 'Courier New', monospace; color: #dfe8e6; --beam-w: min(640px, 84vw); }
 
-        .about-noir {
-          position: relative;
-          width: 100%;
-          min-height: 100dvh;
-          margin: 0;
-          --font-mono: 'Special Elite', 'Courier New', monospace;
-          color: #d7e7e3;
-          background: rgba(5, 11, 13, 0.8);
-          backdrop-filter: blur(9px);
-          -webkit-backdrop-filter: blur(9px);
-          padding: clamp(22px, 4vw, 40px);
-          border: 1px solid rgba(174, 226, 218, 0.16);
-          box-shadow:
-            inset 0 0 0 5px rgba(11, 24, 26, 0.4),
-            inset 0 0 0 6px rgba(174, 226, 218, 0.14),
-            0 40px 90px -40px rgba(0, 0, 0, 0.8);
-          display: grid;
-          grid-template-columns: minmax(0, 1fr);
-          grid-template-areas:
-            "masthead"
-            "visual"
-            "copy"
-            "social";
-          gap: clamp(20px, 4vw, 32px);
-          overflow: hidden;
+        .noir-glyphs { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+        .noir-glyph { position: absolute; color: #cfe3df; animation: noir-glyph-float ease-in-out infinite; }
+
+        .noir-stage { position: relative; z-index: 2; width: 100%; margin: 0; padding: 0; }
+
+        /* landing fits exactly one screen */
+        .scene-zone { position: relative; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
+
+        /* No z-index here on purpose: it would open a stacking context and trap
+           .noir-id below the LampScene shade. .noir-stage (z 2) already lifts
+           the whole scene above the glyph layer. */
+        .scene { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: clamp(12px, 2.2vh, 26px); padding: clamp(10px, 3vh, 32px) 0; height: 100%; }
+
+        /* across the table: no frame, edges dissolved into the dark */
+        .noir-portrait {
+          position: relative; z-index: 1; display: block; height: min(88vh, 1040px); width: auto; max-width: 96vw; aspect-ratio: 4/5; overflow: hidden; transform: translateY(8vh); margin-bottom: -2.6em; flex: 0 1 auto;
+          -webkit-mask-image: radial-gradient(74% 80% at 50% 42%, #000 40%, rgba(0,0,0,0.5) 66%, transparent 90%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 80%, transparent 100%);
+          -webkit-mask-composite: source-in;
+                  mask-image: radial-gradient(74% 80% at 50% 42%, #000 40%, rgba(0,0,0,0.5) 66%, transparent 90%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 80%, transparent 100%);
+                  mask-composite: intersect;
         }
-        .about-noir::before {
-          content: "";
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          z-index: 0;
+        .noir-portrait img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.98) contrast(1.04) grayscale(0.12); }
+        .noir-portrait::before {
+          content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+          background: radial-gradient(120% 55% at 50% -8%, rgba(214,236,232,0.35) 0%, rgba(214,236,232,0.08) 26%, transparent 56%);
           mix-blend-mode: screen;
-          opacity: 0.05;
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
         }
 
-        .noir-visual,
-        .noir-masthead,
-        .noir-copy,
-        .noir-footer {
-          position: relative;
-          z-index: 2;
-          min-width: 0;
-        }
-
-        .noir-masthead {
-          grid-area: masthead;
-          display: flex;
-          flex-direction: column;
-          gap: 18px;
-        }
-        .noir-eyebrow {
-          display: inline-block;
-          width: fit-content;
-          font-family: var(--font-mono);
-          font-style: italic;
-          font-size: 11px;
-          letter-spacing: 0.3em;
-          text-transform: uppercase;
-          text-decoration: none;
-          color: rgba(174, 226, 218, 0.55);
-          transition: color 0.25s ease;
-        }
-        .noir-eyebrow:hover {
-          color: var(--theme);
-        }
+        /* The name sits ~80% down the screen, where the LampScene shade is ~0.6
+           black — under it, even white text reads as grey. z 46 lifts the two
+           lines clear of the shade so they carry the same brightness as the lit
+           part of the portrait. The portrait itself stays under the shade and
+           keeps sinking into the dark. */
+        .noir-id { position: relative; z-index: 46; }
 
         .noir-name {
-          font-family: var(--font-body);
-          font-weight: 900;
-          font-size: clamp(3rem, 10.5vw, 4.6rem);
-          line-height: 0.98;
-          white-space: nowrap;
-          overflow: hidden;
-          padding-bottom: 0.15em;
-          letter-spacing: -0.01em;
-          color: var(--theme);
-          margin: 0;
-          cursor: default;
-          transition: color 0.25s ease;
+          position: relative; z-index: 4;
+          font-family: var(--font-body); font-weight: 900; line-height: 0.92;
+          font-size: clamp(3.6rem, 13vw, 8rem); letter-spacing: -0.02em; color: var(--theme, #eef7f4); margin: 0;
+          text-shadow: 0 0 50px rgba(214,236,232,0.3), 0 6px 30px rgba(0,0,0,0.8);
         }
-        .noir-name:hover {
-          color: var(--theme);
-        }
+        .noir-pron { position: relative; z-index: 4; display: block; margin-top: 8px; text-transform: lowercase; font-family: var(--font-mono); font-size: clamp(1.05rem, 2.6vw, 1.35rem); color: rgba(223,238,235,0.92); text-shadow: 0 0 24px rgba(214,236,232,0.25); }
 
-        .noir-pron {
-          display: block;
-          margin-top: 4px;
-          text-transform: lowercase;
-          font-family: var(--font-mono);
-          font-style: normal;
-          font-size: clamp(1rem, 2.2vw, 1.15rem);
-          letter-spacing: 0.02em;
-          color: rgba(174, 226, 218, 0.6);
-          cursor: default;
-        }
+        /* disc pinned left-middle, the 3 contacts top-right, inspired-by top-left */
+        .noir-music-layer { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+        .noir-music-layer .about-masthead { display: block; position: static; margin: 0; padding: 0; }
+        .noir-music-layer .about-music-control { position: absolute; left: clamp(16px, 4vw, 44px); top: clamp(16px, 3vh, 28px); pointer-events: auto; }
+        .noir-music-layer .about-nav { position: absolute; top: clamp(16px, 3vh, 28px); right: clamp(18px, 4vw, 40px); pointer-events: auto; }
 
-        .noir-visual {
-          grid-area: visual;
-          position: relative;
+        /* ── The fixture that emits <LampScene />'s column ──────────────────
+           Ceiling-mounted (top: 0), sitting over the beam's throat, so the
+           column reads as coming out from under it. The shade is a separate
+           child because clip-path applies to descendants too — the lip's glow
+           has to spill below the shade's bottom edge, so it can't be clipped
+           by it. */
+        .noir-lamp {
+          position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 6;
+          width: min(560px, 88vw);
+          padding: clamp(16px, 2.6vh, 26px) clamp(18px, 4vw, 38px) clamp(15px, 2.2vh, 21px);
+          filter: drop-shadow(0 12px 26px rgba(0,0,0,0.78));
         }
-        /* the picture casts light outward across the page */
-        .noir-visual::before {
-          content: "";
-          position: absolute;
-          inset: -60% -80%;
-          z-index: 0;
-          pointer-events: none;
-          background: radial-gradient(50% 42% at 50% 30%,
-            rgba(174,226,218,0.28) 0%,
-            rgba(120,190,182,0.12) 34%,
-            transparent 68%);
-          mix-blend-mode: screen;
-          filter: blur(8px);
+        .noir-lamp-shade {
+          position: absolute; inset: 0; z-index: -1; pointer-events: none;
+          clip-path: polygon(15% 0, 85% 0, 100% 100%, 0 100%);
+          background: linear-gradient(180deg, #080f0e 0%, #131f1d 58%, #1e2c29 100%);
         }
-        .noir-portrait {
-          position: relative;
-          z-index: 1;
-          display: block;
-          width: 100%;
-          min-height: 260px;
-          aspect-ratio: 4 / 5;
-          overflow: hidden;
-          border-radius: 4px;
-          border: 1px solid rgba(174, 226, 218, 0.28);
-          background-image: repeating-linear-gradient(135deg, rgba(27,46,48,0.9) 0 11px, rgba(12,28,31,0.9) 11px 22px);
-          /* the frame itself glows, spilling light onto the surrounding page */
-          box-shadow:
-            0 0 60px 4px rgba(174,226,218,0.28),
-            0 20px 120px 30px rgba(174,226,218,0.16);
-          transition: box-shadow 0.35s ease, transform 0.35s ease;
+        /* the bulb line: brightest dead centre, where the column starts */
+        .noir-lamp-lip {
+          position: absolute; left: 0; right: 0; bottom: 0; height: 3px; pointer-events: none;
+          background: linear-gradient(90deg, transparent 0%, var(--theme) 14%, #fdfffe 50%, var(--theme) 86%, transparent 100%);
+          box-shadow: 0 0 18px 3px rgba(243,208,152,0.5), 0 0 52px 12px rgba(214,236,232,0.26);
         }
-        .noir-portrait:hover {
-          transform: translateY(-3px);
-          box-shadow:
-            0 0 80px 6px rgba(174,226,218,0.38),
-            0 24px 140px 40px rgba(174,226,218,0.22);
-        }
-        .noir-portrait img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          filter: brightness(1.08) contrast(1.02);
-        }
-        /* cone of scattered light falling from the top strip: brightest just
-           under the bar, spreading wider and fading with distance */
-        .noir-portrait::before {
-          content: "";
-          position: absolute;
-          inset: 0;
-          z-index: 2;
-          pointer-events: none;
-          background: radial-gradient(125% 78% at 50% -8%,
-            rgba(174,226,218,0.55) 0%,
-            rgba(174,226,218,0.2) 26%,
-            rgba(174,226,218,0.05) 48%,
-            transparent 66%);
-          mix-blend-mode: screen;
-        }
-        /* the emitting light strip at the top edge, ~full width, glowing */
-        .noir-portrait::after {
-          content: "";
-          position: absolute;
-          top: 0;
-          left: 6%;
-          right: 6%;
-          height: 3px;
-          z-index: 3;
-          pointer-events: none;
-          border-radius: 0 0 3px 3px;
-          background: linear-gradient(90deg,
-            transparent, rgba(174,226,218,0.95) 22%, #ffffff 50%, rgba(174,226,218,0.95) 78%, transparent);
-          box-shadow: 0 0 14px 2px rgba(174,226,218,0.85), 0 6px 24px 4px rgba(174,226,218,0.4);
-        }
+        .noir-topnav { position: relative; display: flex; justify-content: center; gap: clamp(18px, 3vw, 34px); pointer-events: auto; }
+        /* Theme colour, dimmed by opacity rather than a second hardcoded rgba —
+           keeps --theme the single source for the accent. */
+        .noir-topnav a { font-family: var(--font-mono); font-size: clamp(0.82rem, 1.4vw, 0.98rem); letter-spacing: 0.06em; text-transform: lowercase; color: var(--theme); opacity: 0.62; text-decoration: none; transition: opacity 0.25s ease, text-shadow 0.25s ease; }
+        .noir-topnav a:hover { opacity: 1; text-shadow: 0 0 14px rgba(243,208,152,0.65); }
+        /* z 46: above the LampScene shade (45), which reaches solid black at the
+           bottom edge and would otherwise swallow this button. */
+        .noir-inspired { position: absolute; bottom: clamp(16px, 3vh, 28px); left: clamp(18px, 4vw, 40px); z-index: 46; border: 0; padding: 0; background: transparent; cursor: pointer; font-family: var(--font-mono); font-style: italic; font-size: 0.8rem; color: rgba(207,227,223,0.45); transition: color 0.25s ease; }
+        .noir-inspired:hover { color: #eaf6f2; }
 
-        .noir-copy {
-          grid-area: copy;
-          display: flex;
-          flex-direction: column;
-          gap: 24px;
-        }
-        .noir-desc {
-          margin: 0;
-          font-family: var(--font-mono);
-          font-style: normal;
-          text-transform: lowercase;
-          font-size: clamp(1.05rem, 2.4vw, 1.22rem);
-          line-height: 1.7;
-          min-height: calc(1.7em * 4);
-          color: rgba(215, 231, 227, 0.72);
-          cursor: default;
-          transition: color 0.25s ease;
-        }
-        .noir-desc:hover {
-          color: #eaf6f2;
-        }
-
-        .noir-nav {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-        }
-        .noir-action {
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          padding: 13px 4px;
-          text-decoration: none;
-          color: var(--teal-glow);
-          border-top: 1px solid rgba(174, 226, 218, 0.14);
-          font-family: var(--font-mono);
-          font-style: italic;
-          transition: color 0.25s ease, padding-left 0.25s ease;
-        }
-        .noir-action:last-child {
-          border-bottom: 1px solid rgba(174, 226, 218, 0.14);
-        }
-        .noir-action:hover {
-          color: #ffffff;
-          padding-left: 12px;
-        }
-        .noir-action-label {
-          flex: 1;
-          min-width: 0;
-          font-weight: 400;
-          font-size: clamp(1rem, 2.5vw, 1.18rem);
-          letter-spacing: 0.04em;
-          text-transform: none;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-        .noir-action-arrow {
-          flex: 0 0 auto;
-          font-size: 0.78rem;
-          color: currentColor;
-        }
-
-        .noir-footer {
-          grid-area: social;
-          display: flex;
-          align-items: center;
-          padding-top: 6px;
-        }
-        .noir-hint {
-          margin-left: auto;
-          font-family: var(--font-mono);
-          font-style: italic;
-          font-size: 0.78rem;
-          color: rgba(174, 226, 218, 0.45);
-        }
-        .noir-hint-button {
-          border: 0;
-          padding: 0;
-          background: transparent;
-          cursor: pointer;
-          transition: color 0.25s ease;
-        }
-        .noir-hint-button:hover {
-          color: var(--theme);
-        }
-        .noir-cursor {
-          animation: noir-cursor-blink 1.1s step-end infinite;
-        }
-
-        .video-modal-backdrop {
-          position: fixed;
-          inset: 0;
-          z-index: 100;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: rgba(0, 0, 0, 0.75);
-          backdrop-filter: blur(4px);
-          -webkit-backdrop-filter: blur(4px);
-        }
-        .video-modal {
-          position: relative;
-          width: 100vw;
-          aspect-ratio: 16 / 9;
-          height: auto;
-          background: #000;
-          border: 1px solid oklch(0.7 0.045 70);
-          box-shadow: 0 24px 70px rgba(0, 0, 0, 0.72);
-        }
-        .video-modal iframe {
-          width: 100%;
-          height: 100%;
-          border: 0;
-          display: block;
-        }
-        .video-modal-close {
-          position: absolute;
-          top: 8px;
-          right: 8px;
-          width: 32px;
-          height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 50%;
-          border: 1px solid oklch(0.7 0.045 70);
-          background: oklch(0.938 0.03 84);
-          color: #241d16;
-          cursor: pointer;
-          z-index: 1;
-        }
-
-        @media (min-width: 768px) {
-          .video-modal {
-            width: 75vw;
-          }
-          .video-modal-close {
-            top: -14px;
-            right: -14px;
-          }
-          .about-noir {
-            grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-            grid-template-rows: auto 1fr auto;
-            grid-template-areas:
-              "masthead visual"
-              "copy visual"
-              "social visual";
-            column-gap: clamp(32px, 5vw, 60px);
-            padding: clamp(28px, 3vw, 40px);
-          }
-          .noir-visual {
-            display: flex;
-            align-self: stretch;
-            min-height: 0;
-          }
-          .noir-portrait {
-            flex: 1;
-            height: 100%;
-            min-height: 0;
-            aspect-ratio: auto;
-          }
-          .noir-name {
-            font-size: clamp(4.2rem, 7.4vw, 6.4rem);
-          }
-        }
-
-        @media (min-width: 1024px) {
-          .noir-name {
-            font-size: 7.6rem;
-          }
-          .noir-desc {
-            font-size: 1.35rem;
-            max-width: 46ch;
-          }
-        }
+        .video-modal-backdrop { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); }
+        .video-modal { position: relative; width: 100vw; aspect-ratio: 16/9; background: #000; border: 1px solid rgba(214,236,232,0.4); box-shadow: 0 24px 70px rgba(0,0,0,0.72); }
+        .video-modal iframe { width: 100%; height: 100%; border: 0; display: block; }
+        .video-modal-close { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid rgba(214,236,232,0.4); background: #dfe8e6; color: #05100e; cursor: pointer; z-index: 1; }
+        @media (min-width: 768px) { .video-modal { width: 75vw; } .video-modal-close { top: -14px; right: -14px; } }
       `}</style>
 
-      <div className="about-noir relative z-10">
-        <div className="noir-masthead">
-          <MusicHeader onPlayStateChange={setSpotlightEnabled} />
-          <span className="noir-eyebrow">hover anything<span className="noir-cursor">_</span></span>
-          <h2
-            className="noir-name"
-            onMouseEnter={() => scrambleText(originalTitlePadded, replacementTitlePadded, setDisplayTitle)}
-            onMouseLeave={() => scrambleText(replacementTitlePadded, originalTitlePadded, setDisplayTitle)}
-          >
-            {displayTitle}
-          </h2>
-          <span
-            className="noir-pron"
-            onMouseEnter={() => scrambleText(originalPronPadded, replacementPronPadded, setDisplayPronunciation)}
-            onMouseLeave={() => scrambleText(replacementPronPadded, originalPronPadded, setDisplayPronunciation)}
-          >
-            {displayPronunciation}
-          </span>
-        </div>
-
-        <div className="noir-visual">
-          <Link href="/noirboard" className="noir-portrait">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/ope-new.png" alt="Ope" />
-          </Link>
-        </div>
-
-        <div className="noir-copy">
-          <p
-            className="noir-desc"
-            onMouseEnter={() => scrambleText(originalTextPadded, replacementTextPadded, setDisplayText)}
-            onMouseLeave={() => scrambleText(replacementTextPadded, originalTextPadded, setDisplayText)}
-          >
-            {displayText}
-          </p>
-
-          <nav className="noir-nav">
-            <Link href="/chat" className="noir-action">
-              <span className="noir-action-label">Chat with librarian moxxi</span>
-              <span className="noir-action-arrow">↗</span>
+      <div className="noir-stage">
+        <div className="noir-zone scene-zone">
+          <LampScene />
+          <div className="noir-music-layer">
+            <MusicHeader onPlayStateChange={setSpotlightEnabled} />
+          </div>
+          <button type="button" className="noir-inspired" onClick={() => setShowVideoOverlay(true)}>inspired by ↗</button>
+          <div className="noir-lamp">
+            <span className="noir-lamp-shade" aria-hidden />
+            <span className="noir-lamp-lip" aria-hidden />
+            <nav className="noir-topnav" aria-label="Sections">
+              {TOP_LINKS.map((l) => (
+                <Link key={l.href} href={l.href}>{l.label}</Link>
+              ))}
+            </nav>
+          </div>
+          <div className="scene">
+            <Link href="/noirboard" className="noir-portrait">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/ope-new.png" alt="Ope" />
             </Link>
-            <Link href="/casearchive" className="noir-action">
-              <span className="noir-action-label">Explore the case archives</span>
-              <span className="noir-action-arrow">↗</span>
-            </Link>
-            <Link href="/gallery" className="noir-action">
-              <span className="noir-action-label">Visit the gallery</span>
-              <span className="noir-action-arrow">↗</span>
-            </Link>
-          </nav>
-        </div>
-
-        <div className="noir-footer">
-          <button
-            type="button"
-            className="noir-hint noir-hint-button"
-            onClick={() => setShowVideoOverlay(true)}
-          >
-            inspired by ↗
-          </button>
+            <div className="noir-id">
+              <h2 className="noir-name">{title}</h2>
+              <span className="noir-pron">{pronunciation}</span>
+            </div>
+          </div>
         </div>
       </div>
 
       {showVideoOverlay && (
         <div className="video-modal-backdrop" onClick={() => setShowVideoOverlay(false)}>
           <div className="video-modal" onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              className="video-modal-close"
-              aria-label="Close"
-              onClick={() => setShowVideoOverlay(false)}
-            >
-              <FaTimes />
-            </button>
+            <button type="button" className="video-modal-close" aria-label="Close" onClick={() => setShowVideoOverlay(false)}><FaTimes /></button>
             <iframe
               src={`https://www.youtube.com/embed/${BACKGROUND_VIDEO.videoId}?autoplay=1&start=${BACKGROUND_VIDEO.start}`}
-              title="Background video"
-              allow="autoplay; encrypted-media"
-              allowFullScreen
+              title="Background video" allow="autoplay; encrypted-media" allowFullScreen
             />
           </div>
         </div>

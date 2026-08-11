@@ -9,6 +9,7 @@ import { useChatRoomLogic } from './useChatRoomLogic';
 import ChatDeskStyles from './styles/ChatDeskStyles';
 import EditorStyles from '@/styles/EditorStyles';
 import MarkdownStyles from '@/styles/MarkdownStyles';
+import LampScene from '@/components/layout/LampScene';
 import { MOXXI_GREETING } from '@/configs/ai';
 
 if (typeof window !== 'undefined') {
@@ -294,6 +295,7 @@ export default function ChatDesk() {
 
   return (
     <div className="chat-desk" ref={deskRef}>
+      <LampScene />
       <div className="send-arrow">
         <span className="arrow-head" />
         <span className="arrow-line" />
