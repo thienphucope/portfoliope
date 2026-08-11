@@ -321,6 +321,12 @@ export default function NoteFeedStyles() {
         display: none;
       }
 
+      @media (max-width: 767px) {
+        .nf-cases-label {
+          text-align: center;
+        }
+      }
+
       @media (min-width: 1024px) {
         .nf-cases-header {
           grid-template-columns: minmax(0, 1fr) auto;

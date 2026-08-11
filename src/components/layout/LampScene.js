@@ -13,9 +13,21 @@ const wrapStyle = {
   left: '50%',
   top: 0,
   transform: 'translateX(-50%)',
-  width: '200vw',
+  // The clip below is in PERCENT of this box, so the cone's opening angle is
+  // atan(spread / height) — i.e. it tracks the viewport ASPECT RATIO. At 16:9
+  // that's ~33°; on a 390x844 phone the same percentages collapse to ~9° and the
+  // beam reads as a squeezed sliver. Flooring the width in dvh pins a minimum
+  // angle (~20°) that no longer depends on how narrow the screen is. On desktop
+  // 200vw always wins, so nothing there changes. Raise 200dvh for a wider cone.
+  width: 'max(200vw, 200dvh)',
   height: '100dvh',
-  zIndex: 0,
+  // A lamp lights what's IN FRONT of it. At z 0 the column painted under every
+  // positioned item on the page (gallery cards, case notes), so it read as a
+  // glow stuck behind the furniture. 44 puts it over content and just under the
+  // shade (45), mirroring how the shade already works — screen-blend + no
+  // pointer events, so it only adds light. Anything that must stay unlit sits
+  // above 44: the landing's lamp fixture (46), the held magnifier (50).
+  zIndex: 44,
   pointerEvents: 'none',
   mixBlendMode: 'screen',
   // Just enough to take the razor off the clip edge. The blur only works at all
@@ -64,7 +76,10 @@ const shadeStyle = {
 export default function LampScene({ shade = true }) {
   return (
     <>
-      <div aria-hidden style={wrapStyle}>
+      {/* shade={false} marks a reading surface, so it opts out of BOTH halves of
+          the lamp: no dimming, and the column drops back to z 0 rather than
+          screen-blending 0.5 alpha white over a page of body text. */}
+      <div aria-hidden style={shade ? wrapStyle : { ...wrapStyle, zIndex: 0 }}>
         <div style={beamStyle} />
       </div>
       {shade && <div aria-hidden style={shadeStyle} />}

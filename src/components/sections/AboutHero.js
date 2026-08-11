@@ -116,6 +116,17 @@ export default function Hero({ galleryImages = [] }) {
         .noir-music-layer .about-music-control { position: absolute; left: clamp(16px, 4vw, 44px); top: clamp(16px, 3vh, 28px); pointer-events: auto; }
         .noir-music-layer .about-nav { position: absolute; top: clamp(16px, 3vh, 28px); right: clamp(18px, 4vw, 40px); pointer-events: auto; }
 
+        /* Mobile: no disc, and the 3 contacts drop out of the overlay into the
+           flow so they sit right above the name — no pixel-guessed offset, the
+           .scene gap spaces them. position:relative (not static) keeps z-index
+           live: down here the LampScene shade (z 45) would grey the icons out. */
+        @media (max-width: 767px) {
+          .noir-music-layer { position: relative; z-index: 46; }
+          .noir-music-layer .about-music-control { display: none; }
+          .noir-music-layer .about-nav { position: static; justify-content: center; }
+          .noir-inspired { display: none; }
+        }
+
         /* ── The fixture that emits <LampScene />'s column ──────────────────
            Ceiling-mounted (top: 0), sitting over the beam's throat, so the
            column reads as coming out from under it. The shade is a separate
@@ -123,7 +134,10 @@ export default function Hero({ galleryImages = [] }) {
            has to spill below the shade's bottom edge, so it can't be clipped
            by it. */
         .noir-lamp {
-          position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 6;
+          /* z 46, above the beam (44): the fixture is what hides the column's
+             blown-white throat, so it has to sit in front of it — otherwise the
+             light paints over the shade and the nav links inside it. */
+          position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 46;
           width: min(560px, 88vw);
           padding: clamp(16px, 2.6vh, 26px) clamp(18px, 4vw, 38px) clamp(15px, 2.2vh, 21px);
           filter: drop-shadow(0 12px 26px rgba(0,0,0,0.78));
@@ -159,9 +173,6 @@ export default function Hero({ galleryImages = [] }) {
       <div className="noir-stage">
         <div className="noir-zone scene-zone">
           <LampScene />
-          <div className="noir-music-layer">
-            <MusicHeader onPlayStateChange={setSpotlightEnabled} />
-          </div>
           <button type="button" className="noir-inspired" onClick={() => setShowVideoOverlay(true)}>inspired by ↗</button>
           <div className="noir-lamp">
             <span className="noir-lamp-shade" aria-hidden />
@@ -177,6 +188,11 @@ export default function Hero({ galleryImages = [] }) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/ope-new.png" alt="Ope" />
             </Link>
+            {/* In the flow, directly above .noir-id: on mobile it un-absolutes
+                and rides just above the name. On desktop it's inset:0 overlay. */}
+            <div className="noir-music-layer">
+              <MusicHeader onPlayStateChange={setSpotlightEnabled} />
+            </div>
             <div className="noir-id">
               <h2 className="noir-name">{title}</h2>
               <span className="noir-pron">{pronunciation}</span>

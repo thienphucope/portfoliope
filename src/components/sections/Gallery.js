@@ -241,6 +241,12 @@ export default function Gallery({ images = [], showDesktopDiscuss = false }) {
           outline-offset: 4px;
         }
 
+        @media (max-width: 767px) {
+          .gallery-title {
+            text-align: center;
+          }
+        }
+
         @media (min-width: 560px) {
           .gallery-wall {
             column-count: 2;
