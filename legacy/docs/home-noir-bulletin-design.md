@@ -13,13 +13,18 @@ Không dùng video nền, icon trinh thám trang trí, dây đỏ hay ghim. Đè
 ## Trình tự trải nghiệm
 
 1. Hero chiếm `100dvh` và được pin trong một quãng `100%` viewport.
-2. Chân dung mờ đi; tên và pronunciation đi vào giữa, phóng lớn rồi biến mất.
-3. Bulletin chỉ bắt đầu hiện khi scroll chạm đúng điểm kết thúc Hero. Trước đó stage có `opacity: 0`, vì vậy section không trượt lên che Hero và không tạo đường biên giữa hai trang.
-4. Bulletin được pin ở `100dvh`. Scroll tiếp theo chỉ điều khiển timeline: item bay từ dưới vào, snap vào vị trí, giữ ngắn, rồi bay khỏi cạnh trên.
-5. Các item chạy theo nhiều wave. Wave mới vào ngay khi wave cũ rời đi nên chuyển động liên tục nhưng màn hình không đổi vị trí.
-6. Không có auto-scroll. Timeline chỉ tiến hoặc lùi theo thao tác scroll thực của người xem; dừng scroll là chuyển động dừng tại chỗ.
+2. Trên desktop, hai bên chân dung có một cuộc đối thoại ngắn bằng text trần. Hai giọng thay phiên fade, gợi về map, loose ends và seven missing minutes ở bulletin; câu cuối là `Scroll.`. Không dùng bubble, border hoặc speaker label. Mỗi câu có tọa độ cao/thấp và khoảng cách tới ảnh khác nhau, được seed sẵn trong data để cho cảm giác random nhưng không nhảy khi hydrate. Text sáng và lớn hơn nền nhưng vẫn nằm trong màu giấy ấm. Toàn bộ dialogue fade ngay khi bắt đầu cuộn và không render trên mobile hoặc `prefers-reduced-motion`.
+3. Ngay khi Hero ScrollTrigger vượt `0.8%`, thuật toán scramble seeded từ `legacy/deprecated/AboutHero.teal.js` đổi `Ope Watson` thành `Evidence Wall` và pronunciation thành `notes / photographs / loose ends` trong `200ms`. Thuật toán giữ pha `70%` ký tự nhiễu rồi dùng `30%` cuối để hội tụ. Cuộn ngược hoàn toàn về đầu sẽ scramble trở lại identity gốc.
+   Trên mobile, identity và description bị giới hạn ở `78vw`; description được phép xuống dòng và dùng cỡ chữ `0.72–0.9rem`. Scale của Hero cũng giảm từ `1.3/1.9` xuống `1.05/1.22` để cả text gốc, text scramble và trạng thái phóng lớn luôn nằm trong viewport.
+4. Chân dung mờ đi; identity đã đổi đi vào giữa, phóng lớn rồi biến mất.
+5. Bulletin chỉ bắt đầu hiện khi scroll chạm đúng điểm kết thúc Hero. Trước đó stage có `opacity: 0`, vì vậy section không trượt lên che Hero và không tạo đường biên giữa hai trang.
+6. Bulletin được pin ở `100dvh`. Scroll tiếp theo chỉ điều khiển timeline: item bay từ dưới vào, snap vào vị trí, giữ ngắn, rồi bay khỏi cạnh trên.
+7. Các item chạy theo nhiều wave. Wave mới vào ngay khi wave cũ rời đi nên chuyển động liên tục nhưng màn hình không đổi vị trí.
+8. Không có auto-scroll. Timeline chỉ tiến hoặc lùi theo thao tác scroll thực của người xem; dừng scroll là chuyển động dừng tại chỗ.
 
 Với `prefers-reduced-motion`, chỉ wave đầu được hiện tĩnh và không chạy chuỗi bay.
+
+Tên `Ope Watson` và pronunciation là hai button không khung dùng chung hành vi. Click phát event `ope:inspect-bulletin`; BulletinWall tính progress tại thời điểm item đầu tiên vừa hoàn tất fly-in, ngay trước mốc linear travel, tween scroll tới đó trong `1.65s` rồi dừng. Đây là navigation do người dùng chủ động kích hoạt, không phải auto-scroll. Momentum scroll đồng bộ lại target khi nhận event để không kéo ngược hành trình.
 
 ## Loading screen
 
@@ -127,6 +132,8 @@ Map gốc nằm tại `public/evidence/noir-city-map.png`: bản đồ thành ph
 - Không đưa video background, icon trang trí, dây đỏ hoặc ghim trở lại.
 - Không để bulletin trở thành một trang dài cuộn qua camera.
 - Không đặt background hiện hữu của bulletin phía trên Hero trước điểm bắt đầu của scene.
+- Dialogue của Hero chỉ là text trần trên desktop; không thêm bubble, khung, avatar hoặc icon.
+- Click identity chỉ được đưa tới item đầu vừa snap dưới rồi dừng; không tự chạy tiếp qua linear travel hoặc các item sau.
 - Không bỏ critical CSS của loading screen ra khỏi `<head>`; nếu làm vậy FOUC có thể xuất hiện lại.
 - Không đổi placement về grid, masonry hoặc shelf rows.
 - Không để sticky chứa đoạn văn dài.

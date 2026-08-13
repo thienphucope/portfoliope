@@ -30,6 +30,11 @@ export default function useMomentumScroll() {
   useEffect(() => {
     if (typeof window === 'undefined' || window.innerWidth <= 1024) return;
 
+    const syncExternalScroll = () => {
+      verticalScrollTarget.current = window.scrollY;
+      isWheelScrolling.current = false;
+    };
+
     const handleWheel = (e) => {
       if (e.ctrlKey || e.shiftKey) return; 
       e.preventDefault();
@@ -44,8 +49,10 @@ export default function useMomentumScroll() {
       startAnimation();
     };
 
+    window.addEventListener('ope:inspect-bulletin', syncExternalScroll);
     window.addEventListener('wheel', handleWheel, { passive: false });
     return () => {
+      window.removeEventListener('ope:inspect-bulletin', syncExternalScroll);
       window.removeEventListener('wheel', handleWheel);
     };
   }, [startAnimation]);

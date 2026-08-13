@@ -316,6 +316,17 @@ export default function BulletinWall() {
 
     const elements = Array.from(board.querySelectorAll('.bw-item'));
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let inspectTween = null;
+    let timeline = null;
+    const waveStride = 1.85;
+    const enterLead = 0.16;
+    const enterDuration = 0.24;
+    const travelLead = 0.44;
+    const travelDuration = 0.9;
+    const snapOffset = window.innerHeight * 0.34;
+    const exitLead = travelLead + travelDuration + 0.04;
+    const exitDuration = 0.24;
+    const timelineEnd = (laid.waveCount - 1) * waveStride + 1.92;
 
     const ctx = gsap.context(() => {
       if (reducedMotion) {
@@ -337,16 +348,7 @@ export default function BulletinWall() {
 
       // There are only two snaps: arrival near the bottom and departure near
       // the top. Everything between them is one uninterrupted linear scroll.
-      const waveStride = 1.85;
-      const enterLead = 0.16;
-      const enterDuration = 0.24;
-      const travelLead = 0.44;
-      const travelDuration = 0.9;
-      const snapOffset = window.innerHeight * 0.34;
-      const exitLead = travelLead + travelDuration + 0.04;
-      const exitDuration = 0.24;
-      const timelineEnd = (laid.waveCount - 1) * waveStride + 1.92;
-      const timeline = gsap.timeline({
+      timeline = gsap.timeline({
         scrollTrigger: {
           trigger: wall,
           start: 'top top',
@@ -410,7 +412,33 @@ export default function BulletinWall() {
       timeline.to(stage, { opacity: 0, duration: 0.14, ease: 'power1.in' }, timelineEnd - 0.14);
     }, wall);
 
+    const inspectFirstWave = () => {
+      if (reducedMotion || !timeline?.scrollTrigger) return;
+
+      const trigger = timeline.scrollTrigger;
+      const firstItem = laid.items.find((item) => item.wave === 0 && item.waveOrder === 0);
+      if (!firstItem) return;
+
+      const firstArrival = enterLead + firstItem.waveOrder * 0.075 + enterDuration;
+      const progress = Math.min(0.98, (firstArrival + 0.015) / timeline.duration());
+      const target = trigger.start + (trigger.end - trigger.start) * progress;
+      const scrollState = { y: window.scrollY };
+
+      inspectTween?.kill();
+      inspectTween = gsap.to(scrollState, {
+        y: target,
+        duration: 1.65,
+        ease: 'power2.inOut',
+        onUpdate: () => window.scrollTo({ top: scrollState.y, behavior: 'auto' }),
+        onComplete: () => { inspectTween = null; },
+      });
+    };
+
+    window.addEventListener('ope:inspect-bulletin', inspectFirstWave);
+
     return () => {
+      inspectTween?.kill();
+      window.removeEventListener('ope:inspect-bulletin', inspectFirstWave);
       ctx.revert();
     };
   }, [laid]);

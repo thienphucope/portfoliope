@@ -18,6 +18,62 @@ const TOP_LINKS = [
   { label: 'gallery', href: '/gallery' },
 ];
 
+const DESKTOP_DIALOGUE = [
+  { side: 'left', text: 'Anything below?', top: 29, edge: 3 },
+  { side: 'right', text: 'A map. Loose ends.', top: 36, edge: 2 },
+  { side: 'left', text: 'Anything strange?', top: 54, edge: 1 },
+  { side: 'right', text: 'Seven missing minutes.', top: 60, edge: 5 },
+  { side: 'left', text: 'Where?', top: 42, edge: 7 },
+  { side: 'right', text: 'Scroll.', top: 48, edge: 3 },
+];
+
+const visibleScrambleText = (value) => value.trimEnd();
+const SCRAMBLE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+function scrambleElement(element, original, target, duration = 200) {
+  if (!element) return () => {};
+
+  const length = Math.max(original.length, target.length);
+  const originalPadded = original.padEnd(length, ' ');
+  const targetPadded = target.padEnd(length, ' ');
+  let seed = 1234;
+  let startTime = null;
+  let frame;
+
+  const pseudoRandom = () => {
+    seed = (1103515245 * seed + 12345) % 2147483647;
+    return seed / 2147483647;
+  };
+
+  const animate = (timestamp) => {
+    if (!startTime) startTime = timestamp;
+    const progressRatio = Math.min((timestamp - startTime) / duration, 1);
+
+    if (progressRatio < 0.7) {
+      element.textContent = visibleScrambleText(Array.from({ length }, (_, index) => (
+        targetPadded[index] === ' '
+          ? ' '
+          : SCRAMBLE_CHARS[Math.floor(pseudoRandom() * SCRAMBLE_CHARS.length)]
+      )).join(''));
+    } else {
+      const blendRatio = (progressRatio - 0.7) / 0.3;
+      element.textContent = visibleScrambleText(Array.from({ length }, (_, index) => {
+        const originalChar = originalPadded[index];
+        const targetChar = targetPadded[index];
+        if (targetChar === ' ') return ' ';
+        if (originalChar === ' ') return targetChar;
+        return blendRatio < pseudoRandom() ? originalChar : targetChar;
+      }).join(''));
+    }
+
+    if (progressRatio < 1) frame = window.requestAnimationFrame(animate);
+    else element.textContent = target;
+  };
+
+  frame = window.requestAnimationFrame(animate);
+  return () => window.cancelAnimationFrame(frame);
+}
+
 export default function Hero({ galleryImages = [] }) {
   const [showVideoOverlay, setShowVideoOverlay] = useState(false);
   const { setSpotlightEnabled } = useSpotlight();
@@ -25,19 +81,49 @@ export default function Hero({ galleryImages = [] }) {
   const sectionRef = useRef(null);
   const portraitRef = useRef(null);
   const idRef = useRef(null);
+  const dialogueRef = useRef(null);
+  const titleTextRef = useRef(null);
+  const pronTextRef = useRef(null);
 
   const title = "Ope Watson";
   const pronunciation = "en. /'ohp 'wots-uhn/  jp. /opeオペ/";
+  const bulletinTitle = 'Evidence Wall';
+  const bulletinDescription = 'notes / photographs / loose ends';
+
+  const inspectBulletin = () => {
+    window.dispatchEvent(new Event('ope:inspect-bulletin'));
+  };
 
   // No matchMedia any more: the only breakpoint branch used to be the mobile
   // contact cluster riding the name, and the contacts have moved out of the
   // pinned scene into the fixed furniture.
   useEffect(() => {
+    let copyMode = 'identity';
+    let cancelTitleScramble = () => {};
+    let cancelPronScramble = () => {};
+
+    const updateIdentityCopy = (progress) => {
+      const nextMode = progress > 0.008 ? 'bulletin' : 'identity';
+      if (nextMode === copyMode) return;
+      copyMode = nextMode;
+
+      cancelTitleScramble();
+      cancelPronScramble();
+      if (nextMode === 'bulletin') {
+        cancelTitleScramble = scrambleElement(titleTextRef.current, title, bulletinTitle);
+        cancelPronScramble = scrambleElement(pronTextRef.current, pronunciation, bulletinDescription);
+      } else {
+        cancelTitleScramble = scrambleElement(titleTextRef.current, bulletinTitle, title);
+        cancelPronScramble = scrambleElement(pronTextRef.current, bulletinDescription, pronunciation);
+      }
+    };
+
     const ctx = gsap.context(() => {
       const centerDelta = () => {
         const rect = idRef.current.getBoundingClientRect();
         return window.innerHeight / 2 - (rect.top + rect.height / 2);
       };
+      const isMobile = () => window.matchMedia('(max-width: 767px)').matches;
 
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -48,19 +134,30 @@ export default function Hero({ galleryImages = [] }) {
           pin: true,
           pinSpacing: false,
           invalidateOnRefresh: true,
+          onUpdate: (self) => updateIdentityCopy(self.progress),
         },
       });
 
       tl.to(portraitRef.current, { opacity: 0, duration: 0.6, ease: 'power1.out' }, 0)
-        .to(idRef.current, { y: centerDelta, scale: 1.3, duration: 0.6, ease: 'power2.out' }, 0)
         .to(idRef.current, {
-          scale: 1.9,
+          y: centerDelta,
+          scale: () => isMobile() ? 1.05 : 1.3,
+          duration: 0.6,
+          ease: 'power2.out',
+        }, 0)
+        .to(dialogueRef.current, { opacity: 0, duration: 0.1, ease: 'power1.out' }, 0)
+        .to(idRef.current, {
+          scale: () => isMobile() ? 1.22 : 1.9,
           opacity: 0,
           duration: 0.4,
           ease: 'power1.in',
         }, 0.6);
     }, sectionRef);
-    return () => ctx.revert();
+    return () => {
+      cancelTitleScramble();
+      cancelPronScramble();
+      ctx.revert();
+    };
   }, []);
 
   useEffect(() => {
@@ -98,6 +195,13 @@ export default function Hero({ galleryImages = [] }) {
     <section ref={sectionRef} className="noir-room relative w-full overflow-hidden">
       <style jsx global>{`
         @keyframes cursor-blink { 0%,49%{opacity:1;} 50%,100%{opacity:0;} }
+        @keyframes noir-dialogue-line {
+          0%, 100% { opacity: 0; transform: translateY(5px); filter: blur(2px); }
+          5% { opacity: 0; }
+          10%, 21% { opacity: 0.92; transform: translateY(0); filter: blur(0); }
+          27% { opacity: 0; transform: translateY(-3px); filter: blur(1px); }
+          28%, 99% { opacity: 0; }
+        }
 
         .noir-room { background: #000; --font-mono: 'Special Elite', 'Courier New', monospace; color: #dfe8e6; --beam-w: min(640px, 84vw); }
 
@@ -125,8 +229,66 @@ export default function Hero({ galleryImages = [] }) {
           mix-blend-mode: screen;
         }
 
+        .noir-dialogue {
+          position: absolute;
+          inset: 0;
+          z-index: 3;
+          display: none;
+          pointer-events: none;
+          will-change: opacity;
+        }
+        .noir-dialogue-side {
+          position: absolute;
+          inset: 0;
+          color: rgba(238,232,214,0.94);
+          font-family: var(--font-body);
+          font-size: clamp(1.08rem, 1.45vw, 1.38rem);
+          font-weight: 500;
+          font-style: italic;
+          line-height: 1.45;
+          letter-spacing: 0.025em;
+          text-shadow: 0 2px 20px #000, 0 0 15px rgba(243,208,152,0.18);
+        }
+        .noir-dialogue-line {
+          position: absolute;
+          top: calc(var(--top) * 1%);
+          width: clamp(170px, 21vw, 330px);
+          opacity: 0;
+          animation: noir-dialogue-line 18s ease-in-out infinite;
+          animation-delay: calc(0.45s + var(--line) * 3s);
+        }
+        .noir-dialogue-left .noir-dialogue-line {
+          right: calc(50% + min(35vh, 31vw) + var(--edge) * 1vw);
+          text-align: right;
+        }
+        .noir-dialogue-right .noir-dialogue-line {
+          left: calc(50% + min(35vh, 31vw) + var(--edge) * 1vw);
+          text-align: left;
+        }
+        @media (min-width: 1024px) {
+          .noir-dialogue { display: block; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .noir-dialogue { display: none; }
+        }
+
         /* Keep the identity above the foreground ceiling wash. */
         .noir-id { position: relative; z-index: 46; transform-origin: center; will-change: transform; }
+        .noir-identity-action {
+          border: 0;
+          margin: 0;
+          padding: 0;
+          color: inherit;
+          background: transparent;
+          font: inherit;
+          line-height: inherit;
+          letter-spacing: inherit;
+          text-transform: inherit;
+          cursor: pointer;
+          transition: color 0.2s ease, text-shadow 0.2s ease;
+        }
+        .noir-identity-action:hover { color: #fff2cf; text-shadow: 0 0 32px rgba(243,208,152,0.48); }
+        .noir-identity-action:focus-visible { outline: 1px solid rgba(243,208,152,0.62); outline-offset: 7px; }
 
         .noir-name {
           position: relative; z-index: 4;
@@ -134,7 +296,27 @@ export default function Hero({ galleryImages = [] }) {
           font-size: clamp(3.6rem, 13vw, 8rem); letter-spacing: -0.02em; color: var(--theme, #eef7f4); margin: 0;
           text-shadow: 0 0 50px rgba(214,236,232,0.3), 0 6px 30px rgba(0,0,0,0.8);
         }
-        .noir-pron { position: relative; z-index: 4; display: block; margin-top: 8px; text-transform: lowercase; font-family: var(--font-mono); font-size: clamp(1.05rem, 2.6vw, 1.35rem); color: rgba(223,238,235,0.92); text-shadow: 0 0 24px rgba(214,236,232,0.25); }
+        .noir-pron { position: relative; z-index: 4; display: block; width: fit-content; margin: 8px auto 0; text-align: center; text-transform: lowercase; font-family: var(--font-mono); font-size: clamp(1.05rem, 2.6vw, 1.35rem); color: rgba(223,238,235,0.92); text-shadow: 0 0 24px rgba(214,236,232,0.25); }
+
+        @media (max-width: 767px) {
+          .noir-id { width: 100%; text-align: center; }
+          .noir-name { font-size: clamp(2.55rem, 11.5vw, 3.35rem); }
+          .noir-name .noir-identity-action {
+            display: block;
+            width: fit-content;
+            max-width: 78vw;
+            margin: 0 auto;
+            white-space: nowrap;
+          }
+          .noir-pron {
+            width: 78vw;
+            max-width: 78vw;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            font-size: clamp(0.72rem, 3vw, 0.9rem);
+            line-height: 1.3;
+          }
+        }
 
         /* Fixed ceiling furniture, outside the pinned hero. */
         .noir-fixture {
@@ -248,8 +430,38 @@ export default function Hero({ galleryImages = [] }) {
               <img src="/ope-new.png" alt="Ope" />
             </Link>
             <div ref={idRef} className="noir-id">
-              <h2 className="noir-name">{title}</h2>
-              <span className="noir-pron">{pronunciation}</span>
+              <h2 className="noir-name">
+                <button type="button" className="noir-identity-action" onClick={inspectBulletin}>
+                  <span ref={titleTextRef}>{title}</span>
+                </button>
+              </h2>
+              <button type="button" className="noir-pron noir-identity-action" onClick={inspectBulletin}>
+                <span ref={pronTextRef}>{pronunciation}</span>
+              </button>
+            </div>
+          </div>
+          <div ref={dialogueRef} className="noir-dialogue" aria-hidden="true">
+            <div className="noir-dialogue-side noir-dialogue-left">
+              {DESKTOP_DIALOGUE.map((line, index) => line.side === 'left' && (
+                <span
+                  key={line.text}
+                  className="noir-dialogue-line"
+                  style={{ '--line': index, '--top': line.top, '--edge': line.edge }}
+                >
+                  {line.text}
+                </span>
+              ))}
+            </div>
+            <div className="noir-dialogue-side noir-dialogue-right">
+              {DESKTOP_DIALOGUE.map((line, index) => line.side === 'right' && (
+                <span
+                  key={line.text}
+                  className="noir-dialogue-line"
+                  style={{ '--line': index, '--top': line.top, '--edge': line.edge }}
+                >
+                  {line.text}
+                </span>
+              ))}
             </div>
           </div>
         </div>
