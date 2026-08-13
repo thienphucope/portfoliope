@@ -8,12 +8,12 @@ export default function SnowEffect({ mounted }) {
   const updateSnow = useCallback(() => {
     const snowContainer = snowRef.current;
     if (snowContainer) {
-      const scrollHeight = document.documentElement.scrollHeight;
-      snowContainer.style.height = `${scrollHeight}px`;
-      snowContainer.style.setProperty('--page-height', `${scrollHeight}px`);
+      const vh = window.innerHeight;
+      snowContainer.style.height = `${vh}px`;
+      snowContainer.style.setProperty('--page-height', `${vh}px`);
       const flakes = snowContainer.querySelectorAll('.snowflake');
       flakes.forEach((flake) => {
-        const startTop = Math.random() * -scrollHeight;
+        const startTop = Math.random() * -vh;
         flake.style.top = `${startTop}px`;
         const fallDuration = Math.random() * 5 + 5;
         flake.style.setProperty('--fall-duration', `${fallDuration}s`);
@@ -53,7 +53,7 @@ export default function SnowEffect({ mounted }) {
   if (!mounted || !snowflakes) return null;
 
   return (
-    <div ref={snowRef} className="absolute top-0 left-0 w-full h-full snow-container pointer-events-none">
+    <div ref={snowRef} className="fixed top-0 left-0 w-full h-full snow-container pointer-events-none">
       {snowflakes}
     </div>
   );

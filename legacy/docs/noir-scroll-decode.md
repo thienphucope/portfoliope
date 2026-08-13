@@ -1,5 +1,8 @@
 # Noir Interrogation Landing — AboutHero
 
+> Tài liệu lịch sử. Thiết kế trang chủ hiện hành nằm tại
+> [`home-noir-bulletin-design.md`](./home-noir-bulletin-design.md).
+
 _Cập nhật: 2026-08-11. Nguồn: src/components/sections/AboutHero.js_
 
 > Ý tưởng gốc "scroll-decode + gate câu hỏi" đã **bị bỏ**. Bản chốt đơn giản hơn nhiều —

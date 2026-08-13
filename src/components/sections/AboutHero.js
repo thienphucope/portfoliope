@@ -1,12 +1,16 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { FaTimes } from 'react-icons/fa';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 import useSpotlight from '@/hooks/useSpotlight';
 import MusicHeader from '@/components/sections/MusicHeader';
 import LampScene from '@/components/layout/LampScene';
 import { BACKGROUND_VIDEO } from '@/configs/media';
+
+if (typeof window !== 'undefined') gsap.registerPlugin(ScrollTrigger);
 
 const TOP_LINKS = [
   { label: 'chat', href: '/chat' },
@@ -14,29 +18,49 @@ const TOP_LINKS = [
   { label: 'gallery', href: '/gallery' },
 ];
 
-const GLYPHS = ['✦', '✳', '❋', '◆', '○', '✕', '△', '❉', '⟡', '✧', '✺', '✴', '＋', '◇', '☾', '✶'];
-
 export default function Hero({ galleryImages = [] }) {
-  const [glyphs, setGlyphs] = useState([]);
   const [showVideoOverlay, setShowVideoOverlay] = useState(false);
   const { setSpotlightEnabled } = useSpotlight();
+
+  const sectionRef = useRef(null);
+  const portraitRef = useRef(null);
+  const idRef = useRef(null);
 
   const title = "Ope Watson";
   const pronunciation = "en. /'ohp 'wots-uhn/  jp. /opeオペ/";
 
+  // No matchMedia any more: the only breakpoint branch used to be the mobile
+  // contact cluster riding the name, and the contacts have moved out of the
+  // pinned scene into the fixed furniture.
   useEffect(() => {
-    const generated = Array.from({ length: 16 }).map((_, i) => ({
-      id: i,
-      glyph: GLYPHS[Math.floor(Math.random() * GLYPHS.length)],
-      top: 4 + Math.random() * 90,
-      left: 3 + Math.random() * 93,
-      size: 12 + Math.random() * 26,
-      rotation: Math.floor(Math.random() * 90) - 45,
-      duration: 5 + Math.random() * 5,
-      delay: -Math.random() * 6,
-      opacity: 0.08 + Math.random() * 0.12,
-    }));
-    setGlyphs(generated);
+    const ctx = gsap.context(() => {
+      const centerDelta = () => {
+        const rect = idRef.current.getBoundingClientRect();
+        return window.innerHeight / 2 - (rect.top + rect.height / 2);
+      };
+
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: 'top top',
+          end: '+=100%',
+          scrub: 1,
+          pin: true,
+          pinSpacing: false,
+          invalidateOnRefresh: true,
+        },
+      });
+
+      tl.to(portraitRef.current, { opacity: 0, duration: 0.6, ease: 'power1.out' }, 0)
+        .to(idRef.current, { y: centerDelta, scale: 1.3, duration: 0.6, ease: 'power2.out' }, 0)
+        .to(idRef.current, {
+          scale: 1.9,
+          opacity: 0,
+          duration: 0.4,
+          ease: 'power1.in',
+        }, 0.6);
+    }, sectionRef);
+    return () => ctx.revert();
   }, []);
 
   useEffect(() => {
@@ -47,37 +71,43 @@ export default function Hero({ galleryImages = [] }) {
   }, [showVideoOverlay]);
 
   return (
-    <section className="noir-room relative w-full overflow-hidden">
-      <div className="noir-glyphs" aria-hidden>
-        {glyphs.map((g) => (
-          <span key={g.id} className="noir-glyph" style={{
-            top: `${g.top}%`, left: `${g.left}%`, fontSize: `${g.size}px`, opacity: g.opacity,
-            '--r': `${g.rotation}deg`, animationDuration: `${g.duration}s`, animationDelay: `${g.delay}s`,
-          }}>{g.glyph}</span>
-        ))}
+    <>
+      {/* The furniture that must NOT move: a SIBLING of the pinned section, not
+          a child of it. position:fixed alone wasn't enough — ScrollTrigger's pin
+          takes the whole section with it, so anything inside travels along no
+          matter what its own position is. Being outside the trigger element is
+          the only thing the pin can't reach. */}
+      <LampScene fixed />
+      <div className="noir-fixture">
+        <div className="noir-lamp">
+          <span className="noir-tube" aria-hidden>
+            <i className="noir-tube-bulb" />
+          </span>
+          <nav className="noir-topnav" aria-label="Sections">
+            {TOP_LINKS.map((l) => (
+              <Link key={l.href} href={l.href}>{l.label}</Link>
+            ))}
+          </nav>
+        </div>
+        <div className="noir-music-layer">
+          <MusicHeader onPlayStateChange={setSpotlightEnabled} />
+        </div>
+        <button type="button" className="noir-inspired" onClick={() => setShowVideoOverlay(true)}>inspired by ↗</button>
       </div>
 
+    <section ref={sectionRef} className="noir-room relative w-full overflow-hidden">
       <style jsx global>{`
-        @keyframes noir-glyph-float {
-          0%   { transform: translateY(0) rotate(var(--r)); }
-          50%  { transform: translateY(-14px) rotate(calc(var(--r) + 8deg)); }
-          100% { transform: translateY(0) rotate(var(--r)); }
-        }
         @keyframes cursor-blink { 0%,49%{opacity:1;} 50%,100%{opacity:0;} }
 
         .noir-room { background: #000; --font-mono: 'Special Elite', 'Courier New', monospace; color: #dfe8e6; --beam-w: min(640px, 84vw); }
 
-        .noir-glyphs { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
-        .noir-glyph { position: absolute; color: #cfe3df; animation: noir-glyph-float ease-in-out infinite; }
-
-        .noir-stage { position: relative; z-index: 2; width: 100%; margin: 0; padding: 0; }
+        .noir-stage { position: relative; width: 100%; margin: 0; padding: 0; }
 
         /* landing fits exactly one screen */
         .scene-zone { position: relative; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
 
         /* No z-index here on purpose: it would open a stacking context and trap
-           .noir-id below the LampScene shade. .noir-stage (z 2) already lifts
-           the whole scene above the glyph layer. */
+           .noir-id below the fixed LampScene wash. */
         .scene { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: clamp(12px, 2.2vh, 26px); padding: clamp(10px, 3vh, 32px) 0; height: 100%; }
 
         /* across the table: no frame, edges dissolved into the dark */
@@ -95,12 +125,8 @@ export default function Hero({ galleryImages = [] }) {
           mix-blend-mode: screen;
         }
 
-        /* The name sits ~80% down the screen, where the LampScene shade is ~0.6
-           black — under it, even white text reads as grey. z 46 lifts the two
-           lines clear of the shade so they carry the same brightness as the lit
-           part of the portrait. The portrait itself stays under the shade and
-           keeps sinking into the dark. */
-        .noir-id { position: relative; z-index: 46; }
+        /* Keep the identity above the foreground ceiling wash. */
+        .noir-id { position: relative; z-index: 46; transform-origin: center; will-change: transform; }
 
         .noir-name {
           position: relative; z-index: 4;
@@ -110,56 +136,100 @@ export default function Hero({ galleryImages = [] }) {
         }
         .noir-pron { position: relative; z-index: 4; display: block; margin-top: 8px; text-transform: lowercase; font-family: var(--font-mono); font-size: clamp(1.05rem, 2.6vw, 1.35rem); color: rgba(223,238,235,0.92); text-shadow: 0 0 24px rgba(214,236,232,0.25); }
 
-        /* disc pinned left-middle, the 3 contacts top-right, inspired-by top-left */
-        .noir-music-layer { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+        /* Fixed ceiling furniture, outside the pinned hero. */
+        .noir-fixture {
+          position: fixed; inset: 0; z-index: 46; pointer-events: none;
+          --font-mono: 'Special Elite', 'Courier New', monospace;
+        }
+
+        /* disc top-left, the 3 contacts top-right */
+        .noir-music-layer { position: absolute; inset: 0; pointer-events: none; }
         .noir-music-layer .about-masthead { display: block; position: static; margin: 0; padding: 0; }
         .noir-music-layer .about-music-control { position: absolute; left: clamp(16px, 4vw, 44px); top: clamp(16px, 3vh, 28px); pointer-events: auto; }
         .noir-music-layer .about-nav { position: absolute; top: clamp(16px, 3vh, 28px); right: clamp(18px, 4vw, 40px); pointer-events: auto; }
 
-        /* Mobile: no disc, and the 3 contacts drop out of the overlay into the
-           flow so they sit right above the name — no pixel-guessed offset, the
-           .scene gap spaces them. position:relative (not static) keeps z-index
-           live: down here the LampScene shade (z 45) would grey the icons out. */
+        /* Mobile: the tube/navigation owns the full first row. Contacts move to
+           a compact second row, clear of the light fixture. */
         @media (max-width: 767px) {
-          .noir-music-layer { position: relative; z-index: 46; }
           .noir-music-layer .about-music-control { display: none; }
-          .noir-music-layer .about-nav { position: static; justify-content: center; }
-          .noir-inspired { display: none; }
+          .noir-music-layer .about-nav {
+            top: 64px;
+            left: 0;
+            right: 0;
+            justify-content: center;
+          }
         }
 
-        /* ── The fixture that emits <LampScene />'s column ──────────────────
-           Ceiling-mounted (top: 0), sitting over the beam's throat, so the
-           column reads as coming out from under it. The shade is a separate
-           child because clip-path applies to descendants too — the lip's glow
-           has to spill below the shade's bottom edge, so it can't be clipped
-           by it. */
+        /* Fluorescent tube: the links divide its usable face into three equal
+           sections. The fixture is intentionally shallow; the broad light wash
+           comes from <LampScene />, not from a spotlight-shaped shade. */
         .noir-lamp {
-          /* z 46, above the beam (44): the fixture is what hides the column's
-             blown-white throat, so it has to sit in front of it — otherwise the
-             light paints over the shade and the nav links inside it. */
-          position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 46;
-          width: min(560px, 88vw);
-          padding: clamp(16px, 2.6vh, 26px) clamp(18px, 4vw, 38px) clamp(15px, 2.2vh, 21px);
-          filter: drop-shadow(0 12px 26px rgba(0,0,0,0.78));
+          position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 47;
+          pointer-events: none;
+          width: min(840px, 66vw);
+          height: 44px;
+          padding: 0 22px;
+          filter: drop-shadow(0 9px 14px rgba(0,0,0,0.82));
         }
-        .noir-lamp-shade {
+        .noir-tube {
           position: absolute; inset: 0; z-index: -1; pointer-events: none;
-          clip-path: polygon(15% 0, 85% 0, 100% 100%, 0 100%);
-          background: linear-gradient(180deg, #080f0e 0%, #131f1d 58%, #1e2c29 100%);
+          border: 1px solid rgba(196,208,202,0.22);
+          border-radius: 3px 3px 7px 7px;
+          background:
+            linear-gradient(90deg, rgba(255,255,255,0.025), transparent 8% 92%, rgba(255,255,255,0.025)),
+            linear-gradient(180deg, #18201e 0%, #101715 58%, #080d0c 100%);
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.07),
+            inset 0 -8px 12px rgba(0,0,0,0.5),
+            0 2px 0 #020504;
         }
-        /* the bulb line: brightest dead centre, where the column starts */
-        .noir-lamp-lip {
-          position: absolute; left: 0; right: 0; bottom: 0; height: 3px; pointer-events: none;
-          background: linear-gradient(90deg, transparent 0%, var(--theme) 14%, #fdfffe 50%, var(--theme) 86%, transparent 100%);
-          box-shadow: 0 0 18px 3px rgba(243,208,152,0.5), 0 0 52px 12px rgba(214,236,232,0.26);
+        .noir-tube::before,
+        .noir-tube::after {
+          content: '';
+          position: absolute;
+          top: 8px;
+          bottom: 7px;
+          width: 7px;
+          border: 1px solid rgba(188,199,194,0.16);
+          background: #090e0d;
         }
-        .noir-topnav { position: relative; display: flex; justify-content: center; gap: clamp(18px, 3vw, 34px); pointer-events: auto; }
-        /* Theme colour, dimmed by opacity rather than a second hardcoded rgba —
-           keeps --theme the single source for the accent. */
-        .noir-topnav a { font-family: var(--font-mono); font-size: clamp(0.82rem, 1.4vw, 0.98rem); letter-spacing: 0.06em; text-transform: lowercase; color: var(--theme); opacity: 0.62; text-decoration: none; transition: opacity 0.25s ease, text-shadow 0.25s ease; }
-        .noir-topnav a:hover { opacity: 1; text-shadow: 0 0 14px rgba(243,208,152,0.65); }
-        /* z 46: above the LampScene shade (45), which reaches solid black at the
-           bottom edge and would otherwise swallow this button. */
+        .noir-tube::before { left: 9px; }
+        .noir-tube::after { right: 9px; }
+        .noir-tube-bulb {
+          position: absolute;
+          left: 22px;
+          right: 22px;
+          bottom: -2px;
+          height: 5px;
+          border-radius: 0 0 999px 999px;
+          background: linear-gradient(90deg, #9a865f 0%, #f7e4b6 8%, #fff7dc 50%, #f7e4b6 92%, #9a865f 100%);
+          box-shadow:
+            0 3px 5px rgba(255,244,213,0.78),
+            0 10px 22px rgba(243,208,152,0.34),
+            0 24px 52px rgba(214,222,207,0.14);
+        }
+        .noir-tube-bulb::after {
+          content: '';
+          position: absolute;
+          top: 100%;
+          left: -12%;
+          width: 124%;
+          height: 70px;
+          background: radial-gradient(ellipse at 50% 0%, rgba(243,208,152,0.22), transparent 68%);
+          filter: blur(9px);
+        }
+        .noir-topnav { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); align-items: center; width: 100%; height: 100%; pointer-events: auto; }
+        .noir-topnav a { display: flex; align-items: center; justify-content: center; height: 52%; border-right: 1px solid rgba(196,208,202,0.13); font-family: var(--font-mono); font-size: clamp(0.76rem, 1.2vw, 0.92rem); letter-spacing: 0.045em; text-transform: lowercase; color: rgba(243,208,152,0.64); text-decoration: none; transition: color 0.2s ease, text-shadow 0.2s ease; }
+        .noir-topnav a:last-child { border-right: 0; }
+        .noir-topnav a:hover { color: #fff0cb; text-shadow: 0 0 10px rgba(243,208,152,0.54); }
+
+        @media (max-width: 767px) {
+          .noir-lamp { top: 0; left: 0; right: 0; width: auto; height: 48px; padding: 0 14px; transform: none; }
+          .noir-tube { border-radius: 0 0 5px 5px; }
+          .noir-tube-bulb { left: 14px; right: 14px; }
+          .noir-topnav a { font-size: clamp(0.7rem, 3vw, 0.82rem); letter-spacing: 0.015em; }
+        }
+
         .noir-inspired { position: absolute; bottom: clamp(16px, 3vh, 28px); left: clamp(18px, 4vw, 40px); z-index: 46; border: 0; padding: 0; background: transparent; cursor: pointer; font-family: var(--font-mono); font-style: italic; font-size: 0.8rem; color: rgba(207,227,223,0.45); transition: color 0.25s ease; }
         .noir-inspired:hover { color: #eaf6f2; }
 
@@ -172,28 +242,12 @@ export default function Hero({ galleryImages = [] }) {
 
       <div className="noir-stage">
         <div className="noir-zone scene-zone">
-          <LampScene />
-          <button type="button" className="noir-inspired" onClick={() => setShowVideoOverlay(true)}>inspired by ↗</button>
-          <div className="noir-lamp">
-            <span className="noir-lamp-shade" aria-hidden />
-            <span className="noir-lamp-lip" aria-hidden />
-            <nav className="noir-topnav" aria-label="Sections">
-              {TOP_LINKS.map((l) => (
-                <Link key={l.href} href={l.href}>{l.label}</Link>
-              ))}
-            </nav>
-          </div>
           <div className="scene">
-            <Link href="/noirboard" className="noir-portrait">
+            <Link ref={portraitRef} href="/noirboard" className="noir-portrait">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/ope-new.png" alt="Ope" />
             </Link>
-            {/* In the flow, directly above .noir-id: on mobile it un-absolutes
-                and rides just above the name. On desktop it's inset:0 overlay. */}
-            <div className="noir-music-layer">
-              <MusicHeader onPlayStateChange={setSpotlightEnabled} />
-            </div>
-            <div className="noir-id">
+            <div ref={idRef} className="noir-id">
               <h2 className="noir-name">{title}</h2>
               <span className="noir-pron">{pronunciation}</span>
             </div>
@@ -213,5 +267,6 @@ export default function Hero({ galleryImages = [] }) {
         </div>
       )}
     </section>
+    </>
   );
 }

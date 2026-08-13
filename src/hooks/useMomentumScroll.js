@@ -45,7 +45,9 @@ export default function useMomentumScroll() {
     };
 
     window.addEventListener('wheel', handleWheel, { passive: false });
-    return () => window.removeEventListener('wheel', handleWheel);
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+    };
   }, [startAnimation]);
 
   const scrollTo = useCallback((targetY) => {

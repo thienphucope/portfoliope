@@ -14,20 +14,14 @@
   /* Theme color - single source of truth for the accent palette */
   --theme: #F3D098;   /* trầm thêm, vẫn ấm và tự nhiên */
 
-  /* ── Teal night-scene palette (ref: videoframe_47812) ── */
-  --teal-glow:   #AEE2DA;  /* ánh sáng lạnh từ cửa */
-  --teal-mid:    #3D6B6A;  /* hắt sáng tường/kệ */
-  --teal-shadow: #1B2E30;  /* bóng râm */
-  --teal-void:   #090E11;  /* góc khuất */
-  /* Reusable atmospheric background: pure noir black (matches AboutHero .noir-room) */
-  --teal-scene: #000;
+  /* ── Night-scene atmosphere (ref: videoframe_47812) ── */
   /* Top-down light falloff. Stops sample 1 - t^2.2, the mirror of the shade
      curve in LampScene: the lift holds through the upper half instead of
      draining off linearly, then fades out. Every stop sits on one smooth curve —
      a stop that breaks it puts the old bright band back near the top. Layer it
      OVER a black base, sized 100dvh (same as <LampScene />) so long pages don't
      stretch the ramp. */
-  --scene-falloff: linear-gradient(180deg, rgba(174,226,218,0.17) 0%, rgba(174,226,218,0.167) 15%, rgba(174,226,218,0.158) 30%, rgba(174,226,218,0.141) 45%, rgba(174,226,218,0.115) 60%, rgba(174,226,218,0.08) 75%, rgba(174,226,218,0.051) 85%, rgba(174,226,218,0.025) 93%, rgba(174,226,218,0) 100%);
+  --scene-falloff: linear-gradient(180deg, rgba(243,208,152,0.17) 0%, rgba(243,208,152,0.167) 15%, rgba(243,208,152,0.158) 30%, rgba(243,208,152,0.141) 45%, rgba(243,208,152,0.115) 60%, rgba(243,208,152,0.08) 75%, rgba(243,208,152,0.051) 85%, rgba(243,208,152,0.025) 93%, rgba(243,208,152,0) 100%);
 
   /* ── Typography (single source) ── */
   --font-display: 'Playfair Display', Georgia, serif;  /* titles / headings */
@@ -82,18 +76,18 @@
 }
 
 /* -------------------------------------------------------------------------- */
-/*                            TEAL NIGHT-SCENE ATMOSPHERE                      */
+/*                              NIGHT-SCENE ATMOSPHERE                        */
 /* -------------------------------------------------------------------------- */
 /* Full atmospheric backdrop: black floor + one screen-tall top-down falloff. */
-.teal-scene {
-  background: var(--scene-falloff), var(--teal-scene);
+.night-scene {
+  background: var(--scene-falloff), #000;
   background-size: 100% 100dvh;
   background-repeat: no-repeat;
 }
 
 /* The overhead light beam now lives in the reusable <LampScene /> component
    (src/components/layout/LampScene.js). Drop it as the first child of any
-   .teal-scene (black) container. */
+   .night-scene (black) container. */
 
 /* -------------------------------------------------------------------------- */
 /*                                 BASE STYLES                                */
