@@ -9,7 +9,6 @@ import { useChatRoomLogic } from './useChatRoomLogic';
 import ChatDeskStyles from './styles/ChatDeskStyles';
 import EditorStyles from '@/styles/EditorStyles';
 import MarkdownStyles from '@/styles/MarkdownStyles';
-import LampScene from '@/components/layout/LampScene';
 import { MOXXI_GREETING } from '@/configs/ai';
 
 if (typeof window !== 'undefined') {
@@ -90,6 +89,8 @@ export default function ChatDesk() {
   useEffect(() => { handleAnalyzeRef.current = handleAnalyze; }, [handleAnalyze]);
 
   const [isMagnifierHeld, setIsMagnifierHeld] = useState(false);
+  const isMagnifierHeldRef = useRef(false);
+  useEffect(() => { isMagnifierHeldRef.current = isMagnifierHeld; }, [isMagnifierHeld]);
 
   // Writable paper stack: MAX_PAPERS real blank papers, each grabbable,
   // click-to-focus-to-type, throw-up-to-send.
@@ -268,22 +269,37 @@ export default function ChatDesk() {
     }
   }, [papers.length, isProcessing, resetConversation]);
 
+  // Click picks the magnifier up and sticks it to the pointer (no button-hold
+  // needed); click again drops it wherever it currently sits.
+  const handleMagnifierClick = useCallback((e) => {
+    const next = !isMagnifierHeldRef.current;
+    setIsMagnifierHeld(next);
+    if (next) {
+      const el = magnifierRef.current;
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        gsap.set(el, {
+          position: 'fixed', margin: 0, right: 'auto',
+          left: e.clientX - rect.width / 2,
+          top: e.clientY - rect.height / 2,
+        });
+      }
+      startLiveCall();
+    } else {
+      endLiveCall();
+    }
+  }, [startLiveCall, endLiveCall]);
+
   useEffect(() => {
-    if (!isMounted || !magnifierRef.current) return;
-    const [inst] = Draggable.create(magnifierRef.current, {
-      type: 'x,y',
-      inertia: false,
-      onPress: function () {
-        setIsMagnifierHeld(true);
-        startLiveCall();
-      },
-      onRelease: function () {
-        setIsMagnifierHeld(false);
-        endLiveCall();
-      },
-    });
-    return () => inst.kill();
-  }, [isMounted, startLiveCall, endLiveCall]);
+    if (!isMagnifierHeld || !magnifierRef.current) return;
+    const el = magnifierRef.current;
+    const rect = el.getBoundingClientRect();
+    const halfW = rect.width / 2;
+    const halfH = rect.height / 2;
+    const onPointerMove = (e) => gsap.set(el, { left: e.clientX - halfW, top: e.clientY - halfH });
+    window.addEventListener('pointermove', onPointerMove);
+    return () => window.removeEventListener('pointermove', onPointerMove);
+  }, [isMagnifierHeld]);
 
   const liveStatus = isProcessing
     ? 'responding'
@@ -295,7 +311,6 @@ export default function ChatDesk() {
 
   return (
     <div className="chat-desk" ref={deskRef}>
-      <LampScene />
       <div className="send-arrow">
         <span className="arrow-head" />
         <span className="arrow-line" />
@@ -353,6 +368,7 @@ export default function ChatDesk() {
       <div
         ref={magnifierRef}
         className={`magnifier${isMagnifierHeld ? ' held' : ''}`}
+        onClick={handleMagnifierClick}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/magnifier.webp" alt="Live voice call" draggable={false} />

@@ -453,7 +453,7 @@ export default function NoteFeedStyles() {
         border: 1px solid rgba(243, 208, 152, 0.24);
         border-radius: 2px;
         background:
-          linear-gradient(180deg, rgba(174, 226, 218, 0.07), rgba(61, 107, 106, 0.03)),
+          linear-gradient(180deg, rgba(243, 208, 152, 0.07), rgba(243, 208, 152, 0.02)),
           rgba(9, 16, 18, 0.82);
         box-shadow:
           inset 0 1px 0 rgba(255, 255, 255, 0.05),

@@ -9,13 +9,13 @@ export default function ChatDeskStyles() {
         width: 100%;
         height: 100dvh;
         overflow: hidden;
-        color: #d7e7e3;
+        color: #f4e8c1;
         background: var(--scene-falloff), #000;
         font-family: 'Special Elite', 'Courier New', monospace;
-        border: 1px solid rgba(174, 226, 218, 0.16);
+        border: 1px solid rgba(243, 208, 152, 0.16);
         box-shadow:
           inset 0 0 0 5px rgba(7, 15, 17, 0.6),
-          inset 0 0 0 6px rgba(174, 226, 218, 0.14);
+          inset 0 0 0 6px rgba(243, 208, 152, 0.14);
       }
       .chat-desk::before {
         content: '';
@@ -59,7 +59,7 @@ export default function ChatDeskStyles() {
       .arrow-label {
         font-size: 0.68rem;
         letter-spacing: 0.14em;
-        color: rgba(174, 226, 218, 0.55);
+        color: rgba(243, 208, 152, 0.55);
       }
 
       /* Two knobs for the whole sheet — tune here, not per rule. */

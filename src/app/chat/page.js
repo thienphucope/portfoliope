@@ -1,4 +1,4 @@
-import ChatDesk from '@/features/chatroom/ChatDesk';
+import ChatToggle from '@/features/chatroom/ChatToggle';
 
 export const metadata = {
   title: 'The Consulting Room',
@@ -6,5 +6,5 @@ export const metadata = {
 };
 
 export default function ChatPage() {
-  return <ChatDesk />;
+  return <ChatToggle />;
 }

@@ -1,48 +1,21 @@
 {
   "items": [
     {
-      "name": "polaroid/amechrist.png",
-      "title": "amechrist",
-      "scale": 1,
-      "rotation": -2,
-      "x": 916,
-      "y": 996,
-      "z": 10
-    },
-    {
-      "name": "polaroid/amelia.webp",
-      "title": "amelia",
-      "scale": 1,
-      "rotation": 3,
-      "x": 925,
-      "y": 883,
-      "z": 10
-    },
-    {
       "name": "polaroid/blackcat.jpg",
       "title": "blackcat",
       "scale": 1,
       "rotation": 0,
-      "x": 1150,
-      "y": 1117,
+      "x": 1115,
+      "y": 1116,
       "z": 10
     },
     {
-      "name": "polaroid/channels4_profile.jpg",
-      "title": "channels4_profile",
+      "name": "polaroid/enola.jpg",
+      "title": "enola",
       "scale": 1,
-      "rotation": 3,
-      "x": 1469,
-      "y": 585,
-      "z": 10
-    },
-    {
-      "name": "polaroid/christ1.png",
-      "title": "christ1",
-      "scale": 1,
-      "rotation": -1,
-      "x": 1415,
-      "y": 1121,
+      "rotation": -3,
+      "x": 1244,
+      "y": 1144,
       "z": 10
     },
     {
@@ -55,6 +28,15 @@
       "z": 10
     },
     {
+      "name": "polaroid/moxxi.jpg",
+      "title": "moxxi",
+      "scale": 1,
+      "rotation": 0,
+      "x": 922,
+      "y": 860,
+      "z": 10
+    },
+    {
       "name": "polaroid/news.png",
       "title": "news",
       "scale": 5,
@@ -64,21 +46,21 @@
       "z": 10
     },
     {
-      "name": "polaroid/ope.png",
-      "title": "ope",
+      "name": "polaroid/opexarii.jpg",
+      "title": "opexarii",
       "scale": 1,
-      "rotation": -4,
-      "x": 923,
-      "y": 743,
+      "rotation": -3,
+      "x": 1575,
+      "y": 848,
       "z": 10
     },
     {
-      "name": "polaroid/saba.png",
-      "title": "saba",
+      "name": "polaroid/sadame.jpg",
+      "title": "sadame",
       "scale": 1,
-      "rotation": 0,
-      "x": 1576,
-      "y": 978,
+      "rotation": -2,
+      "x": 1461,
+      "y": 589,
       "z": 10
     },
     {
@@ -86,67 +68,31 @@
       "title": "smallope",
       "scale": 1,
       "rotation": -2,
-      "x": 1023,
-      "y": 1112,
+      "x": 923,
+      "y": 733,
       "z": 10
     },
     {
-      "name": "polaroid/thinkingwatson.webp",
-      "title": "thinkingwatson",
+      "name": "polaroid/titanhaaland.jpg",
+      "title": "titanhaaland",
       "scale": 1,
       "rotation": 4,
-      "x": 1005,
-      "y": 591,
-      "z": 10
-    },
-    {
-      "name": "polaroid/union.jpeg",
-      "title": "union",
-      "scale": 1,
-      "rotation": -1,
-      "x": 1575,
-      "y": 843,
-      "z": 10
-    },
-    {
-      "name": "polaroid/Watson-Amelia_pr-img_01.png",
-      "title": "Watson-Amelia_pr-img_01",
-      "scale": 1,
-      "rotation": -2,
-      "x": 1282,
-      "y": 1132,
-      "z": 10
-    },
-    {
-      "name": "polaroid/watson.png",
-      "title": "watson",
-      "scale": 1,
-      "rotation": 4,
-      "x": 1596,
-      "y": 716,
-      "z": 10
-    },
-    {
-      "name": "polaroid/watsoncrop.png",
-      "title": "watsoncrop",
-      "scale": 1,
-      "rotation": 0,
-      "x": 1552,
-      "y": 1103,
+      "x": 1375,
+      "y": 1137,
       "z": 10
     }
   ],
   "config": {
     "pov": {
       "position": [
-        -0.12200921049724567,
+        -0.12200921049724568,
         1.0417739318697583,
         16.784293111800274
       ],
       "target": [
         -0.12200921049724567,
-        1.0417739318697579,
-        9.982422401801244
+        1.041773931869758,
+        11.784293111800274
       ]
     },
     "atmosphere": {}

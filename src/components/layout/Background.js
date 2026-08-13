@@ -43,7 +43,7 @@ export default function Background() {
         .video-background iframe { position: absolute; top: 50%; left: 50%; width: 100vw; height: 100dvh; transform: translate(-50%, -50%) scale(1.5); }
         @media (max-aspect-ratio: 16/9) { .video-background iframe { width: 177.78vh; height: 100dvh; } }
         @media (min-aspect-ratio: 16/9) { .video-background iframe { width: 100vw; height: 56.25vw; } }
-        .video-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100dvh; z-index: 1; background: radial-gradient(120% 90% at 50% 6%, rgba(174,226,218,0.12), transparent 45%), radial-gradient(140% 120% at 50% 120%, rgba(61,107,106,0.28), transparent 60%), linear-gradient(180deg, rgba(9,14,17,0.55) 0%, rgba(9,14,17,0.68) 100%); backdrop-filter: blur(20px) saturate(0.7) hue-rotate(140deg); -webkit-backdrop-filter: blur(20px) saturate(0.7) hue-rotate(140deg); pointer-events: none; }
+        .video-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100dvh; z-index: 1; background: rgba(0,0,0,0.5); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); pointer-events: none; }
       `}</style>
       <div className="video-background">
         <div ref={bgPlayerDivRef}></div>

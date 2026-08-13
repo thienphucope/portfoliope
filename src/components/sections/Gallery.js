@@ -40,18 +40,18 @@ export default function Gallery({ images = [], showDesktopDiscuss = false }) {
           min-height: 100dvh;
           margin: 0;
           --font-mono: 'Special Elite', 'Courier New', monospace;
-          color: #d7e7e3;
+          color: #f4e8c1;
           background:
-            radial-gradient(120% 60% at 50% 0%, rgba(174,226,218,0.10), transparent 40%),
-            radial-gradient(140% 90% at 50% 120%, rgba(61,107,106,0.16), transparent 60%),
+            radial-gradient(120% 60% at 50% 0%, rgba(243,208,152,0.10), transparent 40%),
+            radial-gradient(140% 90% at 50% 120%, rgba(243,208,152,0.16), transparent 60%),
             rgba(10, 20, 22, 0.42);
           backdrop-filter: blur(9px);
           -webkit-backdrop-filter: blur(9px);
           padding: var(--feature-space);
-          border: 1px solid rgba(174, 226, 218, 0.16);
+          border: 1px solid rgba(243, 208, 152, 0.16);
           box-shadow:
             inset 0 0 0 5px rgba(10, 20, 22, 0.4),
-            inset 0 0 0 6px rgba(174, 226, 218, 0.14);
+            inset 0 0 0 6px rgba(243, 208, 152, 0.14);
           overflow: hidden;
         }
 
@@ -135,7 +135,7 @@ export default function Gallery({ images = [], showDesktopDiscuss = false }) {
         }
 
         .gallery-image-button:focus-visible {
-          outline: 2px solid var(--teal-glow);
+          outline: 2px solid var(--theme);
           outline-offset: 4px;
         }
 
@@ -145,7 +145,7 @@ export default function Gallery({ images = [], showDesktopDiscuss = false }) {
           font-size: clamp(0.72rem, 1.3vw, 0.86rem);
           font-style: italic;
           line-height: 1.25;
-          color: rgba(215, 231, 227, 0.7);
+          color: rgba(243, 208, 152, 0.7);
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -159,7 +159,7 @@ export default function Gallery({ images = [], showDesktopDiscuss = false }) {
           font-family: var(--font-mono);
           font-size: clamp(5rem, 20vw, 16rem);
           line-height: 0.8;
-          color: var(--teal-glow);
+          color: var(--theme);
           opacity: 0.04;
           pointer-events: none;
           transform: rotate(-8deg);
@@ -222,11 +222,11 @@ export default function Gallery({ images = [], showDesktopDiscuss = false }) {
           align-items: center;
           justify-content: center;
           border-radius: 50%;
-          border: 1px solid rgba(174, 226, 218, 0.3);
+          border: 1px solid rgba(243, 208, 152, 0.3);
           background: rgba(11, 24, 26, 0.7);
           backdrop-filter: blur(6px);
           -webkit-backdrop-filter: blur(6px);
-          color: var(--teal-glow);
+          color: var(--theme);
           cursor: pointer;
           transition: transform 0.2s ease, background-color 0.2s ease;
         }
@@ -280,7 +280,7 @@ export default function Gallery({ images = [], showDesktopDiscuss = false }) {
           }
 
           .gallery-masthead .gallery-discuss-links .about-social-prompt {
-            color: rgba(174, 226, 218, 0.6);
+            color: rgba(243, 208, 152, 0.6);
           }
 
           .gallery-masthead .gallery-discuss-links .title-fly-out {
