@@ -387,7 +387,7 @@ export default function BulletinWall() {
           scale: 1,
           rotation,
           duration: enterDuration,
-          ease: 'back.out(1.55)',
+          ease: 'power3.out',
         }, enterAt);
 
         timeline.to(element, {

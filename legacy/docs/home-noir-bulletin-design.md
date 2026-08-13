@@ -95,8 +95,12 @@ y: khoảng 84vh phía dưới vị trí đích
 x: jitter nhẹ
 opacity: 0 → 1
 scale: 0.82 → 1
-ease: back.out(1.55)
+ease: power3.out
 ```
+
+Fly-in chỉ giảm tốc một chiều khi tới vị trí snap dưới. Không dùng `back.out`,
+`elastic` hoặc easing có overshoot: hiệu ứng nảy bị phóng đại khi ScrollTrigger
+scrub tiến/lùi và có thể làm item giật khỏi quỹ đạo scroll.
 
 Exit:
 
