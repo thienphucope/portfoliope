@@ -289,10 +289,7 @@ export default function NoteFeedStyles() {
         padding: var(--feature-space);
         scrollbar-width: none;
         box-sizing: border-box;
-        background: var(--scene-falloff), var(--nf-bg);
-        background-size: 100% 100dvh;
-        background-repeat: no-repeat;
-        background-attachment: local;
+        background: var(--nf-bg);
       }
       .nf-feed::-webkit-scrollbar { display: none; }
 

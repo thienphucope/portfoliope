@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { gsap } from 'gsap';
 import { Draggable } from 'gsap/Draggable';
 import { InertiaPlugin } from 'gsap/InertiaPlugin';
+import { FaTrash } from 'react-icons/fa';
 import { ChatMarkdownContent } from './ChatMarkdownContent';
 import { useChatRoomLogic } from './useChatRoomLogic';
 import ChatDeskStyles from './styles/ChatDeskStyles';
@@ -79,6 +80,7 @@ export default function ChatDesk() {
 
   const deskRef = useRef(null);
   const magnifierRef = useRef(null);
+  const trashRef = useRef(null);
 
   const isProcessingRef = useRef(false);
   useEffect(() => { isProcessingRef.current = isProcessing; }, [isProcessing]);
@@ -146,6 +148,23 @@ export default function ChatDesk() {
     });
   }, []);
 
+  const discardPaper = useCallback((id, el) => {
+    gsap.to(el, {
+      y: '+=300', scale: 0.2, opacity: 0, rotation: -8,
+      duration: 0.3, ease: 'power2.in',
+      onComplete: () => {
+        writableInstances.current[id]?.kill();
+        delete writableInstances.current[id];
+        delete writableElRefs.current[id];
+        delete writableCbCache.current[id];
+        delete textsRef.current[id];
+        setTexts(prev => { const n = { ...prev }; delete n[id]; return n; });
+        setFocusedId(prev => (prev === id ? null : prev));
+        setPapers(prev => prev.filter(p => p.id !== id));
+      },
+    });
+  }, []);
+
   const registerWritablePaper = useCallback((id, index) => {
     if (writableCbCache.current[id]) return writableCbCache.current[id];
 
@@ -189,6 +208,16 @@ export default function ChatDesk() {
           const text = (textsRef.current[id] || '').trim();
           if (nearTop && vy < -250 && text && !isProcessingRef.current) {
             throwWritablePaper(id, this.target);
+            return;
+          }
+          const tr = trashRef.current;
+          if (tr) {
+            const trR = tr.getBoundingClientRect();
+            const cx = paperRect.left + paperRect.width / 2;
+            const cy = paperRect.top + paperRect.height / 2;
+            if (cx > trR.left - 80 && cx < trR.right + 80 && cy > trR.top - 80) {
+              discardPaper(id, this.target);
+            }
           }
         },
       })[0];
@@ -196,7 +225,7 @@ export default function ChatDesk() {
     };
     writableCbCache.current[id] = callback;
     return callback;
-  }, [liftPaper, throwWritablePaper]);
+  }, [liftPaper, throwWritablePaper, discardPaper]);
 
   useEffect(() => () => {
     Object.values(writableInstances.current).forEach(inst => inst?.kill());
@@ -377,6 +406,21 @@ export default function ChatDesk() {
       {isMagnifierHeld && isLiveCall && (
         <span className={`live-status live-status--${liveStatus}`}>{liveStatus}</span>
       )}
+
+      <button
+        ref={trashRef}
+        type="button"
+        className="desk-trash"
+        onClick={() => {
+          const id = focusedId || papers[0]?.id;
+          if (!id) return;
+          const el = writableElRefs.current[id];
+          if (el) discardPaper(id, el);
+        }}
+        aria-label="Discard paper"
+      >
+        <FaTrash />
+      </button>
 
       <ChatDeskStyles />
       <EditorStyles />

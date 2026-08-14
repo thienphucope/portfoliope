@@ -19,8 +19,8 @@ export default function ChatToggle() {
       <style jsx>{`
         .chat-mode-toggle {
           position: fixed;
-          top: 14px;
-          right: 14px;
+          bottom: 14px;
+          left: 14px;
           z-index: 1000;
           font-family: var(--font-mono, 'Courier New', monospace);
           font-size: 0.78rem;

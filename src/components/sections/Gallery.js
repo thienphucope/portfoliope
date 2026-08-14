@@ -41,29 +41,9 @@ export default function Gallery({ images = [], showDesktopDiscuss = false }) {
           margin: 0;
           --font-mono: 'Special Elite', 'Courier New', monospace;
           color: #f4e8c1;
-          background:
-            radial-gradient(120% 60% at 50% 0%, rgba(243,208,152,0.10), transparent 40%),
-            radial-gradient(140% 90% at 50% 120%, rgba(243,208,152,0.16), transparent 60%),
-            rgba(10, 20, 22, 0.42);
-          backdrop-filter: blur(9px);
-          -webkit-backdrop-filter: blur(9px);
+          background: #000;
           padding: var(--feature-space);
-          border: 1px solid rgba(243, 208, 152, 0.16);
-          box-shadow:
-            inset 0 0 0 5px rgba(10, 20, 22, 0.4),
-            inset 0 0 0 6px rgba(243, 208, 152, 0.14);
           overflow: hidden;
-        }
-
-        .gallery-noir::before {
-          content: "";
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          z-index: 0;
-          mix-blend-mode: screen;
-          opacity: 0.05;
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
         }
 
         .gallery-shell {

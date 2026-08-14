@@ -1,0 +1,117 @@
+
+> my-portfolio@0.1.0 dev
+> next dev --turbopack -p 3000
+
+   ▲ Next.js 15.2.6 (Turbopack)
+   - Local:        http://localhost:3000
+   - Network:      http://172.25.240.1:3000
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 831ms
+ ○ Compiling /casearchive/[[...slug]] ...
+ ✓ Compiled /casearchive/[[...slug]] in 3.4s
+[GitHub] Case tree unavailable (main: fetch failed, master: fetch failed).
+[Case Archive] GitHub is unavailable; serving the current cache.
+ GET /casearchive 200 in 3622ms
+ GET /casearchive 200 in 435ms
+ ✓ Compiled /api/cases in 478ms
+[GitHub] Case tree unavailable (main: fetch failed, master: fetch failed).
+[Case Archive] GitHub is unavailable; serving the current cache.
+ POST /api/cases 200 in 628ms
+[GitHub] Case tree unavailable (main: fetch failed, master: fetch failed).
+[Case Archive] GitHub is unavailable; serving the current cache.
+ GET /casearchive 200 in 749ms
+[GitHub] Case tree unavailable (main: fetch failed, master: fetch failed).
+[Case Archive] GitHub is unavailable; serving the current cache.
+ GET /casearchive 200 in 513ms
+ ○ Compiling / ...
+ ✓ Compiled / in 3.4s
+ GET / 200 in 119ms
+[GitHub] Case tree unavailable (main: fetch failed, master: fetch failed).
+[Case Archive] GitHub is unavailable; serving the current cache.
+ GET /casearchive 200 in 472ms
+ ✓ Compiled in 514ms
+ ✓ Compiled in 298ms
+ ○ Compiling /casearchive/[[...slug]] ...
+ ✓ Compiled /casearchive/[[...slug]] in 513ms
+⚠️ [GitHub] Error on branch 'main': fetch failed
+⚠️ [GitHub] Error on branch 'master': fetch failed
+CaseArchivePage: using the available case cache: Failed to fetch cases from GitHub
+ GET /casearchive 200 in 1417ms
+ ✓ Compiled in 0ms
+ ✓ Compiled in 274ms
+⚠️ [GitHub] Error on branch 'main': fetch failed
+⚠️ [GitHub] Error on branch 'master': fetch failed
+Failed to hydrate server cache in CaseArchivePage: Error: Failed to fetch cases from GitHub
+    at hydrateServerCache (file://E%3A/portfoliope/src/services/caseProvider.js:87:34)
+    at async CaseArchivePage (file://E%3A/portfoliope/src/app/casearchive/%5B%5B...slug%5D%5D/page.js:81:17)
+  85 |
+  86 |   const tree = await getGithubCasesTree();
+> 87 |   if (!Array.isArray(tree)) throw new Error('Failed to fetch cases from GitHub');
+     |                                  ^
+  88 |
+  89 |   const fileRepoPaths = [];
+  90 |   const walk = (nodes) => {
+ GET /casearchive 200 in 806ms
+ ✓ Compiled /casearchive/[[...slug]] in 106ms
+⚠️ [GitHub] Error on branch 'main': fetch failed
+⚠️ [GitHub] Error on branch 'master': fetch failed
+Failed to hydrate server cache in CaseArchivePage: Error: Failed to fetch cases from GitHub
+    at hydrateServerCache (file://E%3A/portfoliope/src/services/caseProvider.js:87:34)
+    at async CaseArchivePage (file://E%3A/portfoliope/src/app/casearchive/%5B%5B...slug%5D%5D/page.js:81:17)
+  85 |
+  86 |   const tree = await getGithubCasesTree();
+> 87 |   if (!Array.isArray(tree)) throw new Error('Failed to fetch cases from GitHub');
+     |                                  ^
+  88 |
+  89 |   const fileRepoPaths = [];
+  90 |   const walk = (nodes) => {
+ GET /casearchive 200 in 392ms
+⚠️ [GitHub] Error on branch 'main': fetch failed
+⚠️ [GitHub] Error on branch 'master': fetch failed
+Failed to hydrate server cache in CaseArchivePage: Error: Failed to fetch cases from GitHub
+    at hydrateServerCache (file://E%3A/portfoliope/src/services/caseProvider.js:87:34)
+    at async CaseArchivePage (file://E%3A/portfoliope/src/app/casearchive/%5B%5B...slug%5D%5D/page.js:81:17)
+  85 |
+  86 |   const tree = await getGithubCasesTree();
+> 87 |   if (!Array.isArray(tree)) throw new Error('Failed to fetch cases from GitHub');
+     |                                  ^
+  88 |
+  89 |   const fileRepoPaths = [];
+  90 |   const walk = (nodes) => {
+ GET /casearchive 200 in 587ms
+⚠️ [GitHub] Error on branch 'main': fetch failed
+⚠️ [GitHub] Error on branch 'master': fetch failed
+ POST /api/cases 500 in 398ms
+ ✓ Compiled in 356ms
+⚠️ [GitHub] Error on branch 'main': fetch failed
+⚠️ [GitHub] Error on branch 'master': fetch failed
+Failed to hydrate server cache in CaseArchivePage: Error: Failed to fetch cases from GitHub
+    at hydrateServerCache (file://E%3A/portfoliope/src/services/caseProvider.js:87:34)
+    at async CaseArchivePage (file://E%3A/portfoliope/src/app/casearchive/%5B%5B...slug%5D%5D/page.js:81:17)
+  85 |
+  86 |   const tree = await getGithubCasesTree();
+> 87 |   if (!Array.isArray(tree)) throw new Error('Failed to fetch cases from GitHub');
+     |                                  ^
+  88 |
+  89 |   const fileRepoPaths = [];
+  90 |   const walk = (nodes) => {
+ GET /casearchive 200 in 670ms
+⚠️ [GitHub] Error on branch 'main': fetch failed
+⚠️ [GitHub] Error on branch 'master': fetch failed
+ POST /api/cases 500 in 286ms
+ GET /casearchive 200 in 535ms
+⚠️ [GitHub] Error on branch 'main': fetch failed
+⚠️ [GitHub] Error on branch 'master': fetch failed
+Failed to hydrate server cache in CaseArchivePage: Error: Failed to fetch cases from GitHub
+    at hydrateServerCache (file://E%3A/portfoliope/src/services/caseProvider.js:87:34)
+    at async CaseArchivePage (file://E%3A/portfoliope/src/app/casearchive/%5B%5B...slug%5D%5D/page.js:81:17)
+  85 |
+  86 |   const tree = await getGithubCasesTree();
+> 87 |   if (!Array.isArray(tree)) throw new Error('Failed to fetch cases from GitHub');
+     |                                  ^
+  88 |
+  89 |   const fileRepoPaths = [];
+  90 |   const walk = (nodes) => {
+[?25h

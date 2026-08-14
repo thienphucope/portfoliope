@@ -10,22 +10,8 @@ export default function ChatDeskStyles() {
         height: 100dvh;
         overflow: hidden;
         color: #f4e8c1;
-        background: var(--scene-falloff), #000;
+        background: #000;
         font-family: 'Special Elite', 'Courier New', monospace;
-        border: 1px solid rgba(243, 208, 152, 0.16);
-        box-shadow:
-          inset 0 0 0 5px rgba(7, 15, 17, 0.6),
-          inset 0 0 0 6px rgba(243, 208, 152, 0.14);
-      }
-      .chat-desk::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        z-index: 0;
-        mix-blend-mode: screen;
-        opacity: 0.05;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
       }
 
       .send-arrow {
@@ -62,7 +48,6 @@ export default function ChatDeskStyles() {
         color: rgba(243, 208, 152, 0.55);
       }
 
-      /* Two knobs for the whole sheet — tune here, not per rule. */
       .chat-desk { --paper: #f5f4ef; --paper-ink: #16211f; }
 
       .desk-paper {
@@ -71,7 +56,6 @@ export default function ChatDeskStyles() {
         left: 0;
         z-index: 2;
         width: min(320px, 78vw);
-        /* Opaque now, so the backdrop-filter it used to carry was pure GPU cost. */
         background: var(--paper);
         border: 1px solid rgba(0, 0, 0, 0.14);
         box-shadow: 0 12px 30px rgba(0,0,0,0.62), 0 2px 6px rgba(0,0,0,0.4);
@@ -84,8 +68,6 @@ export default function ChatDeskStyles() {
       .desk-paper:active { cursor: grabbing; }
 
       .response-paper { color: var(--paper-ink); font-size: 1.02rem; }
-      /* MarkdownStyles is light-on-dark globally (#fff headings, pale-gold
-         links); on white paper those vanish, so re-ink them here. */
       .response-paper .markdown-content,
       .response-paper .markdown-content h1,
       .response-paper .markdown-content h2,
@@ -151,11 +133,8 @@ export default function ChatDeskStyles() {
 
       .magnifier {
         position: absolute;
-        right: 14%;
-        top: 50%;
-        margin-top: -187.5px;
-        /* above the shade (45): on mobile it sits at 62% height, deep in the
-           dark end of the ramp, and it's the primary control */
+        left: clamp(16px, 4vw, 44px);
+        bottom: clamp(16px, 3vh, 28px);
         z-index: 46;
         width: 375px;
         height: 375px;
@@ -170,7 +149,6 @@ export default function ChatDeskStyles() {
         bottom: 6%;
         left: 50%;
         transform: translateX(-50%);
-        /* above the LampScene shade (45) — it hits solid black at this edge */
         z-index: 46;
         font-size: 0.82rem;
         letter-spacing: 0.16em;
@@ -181,6 +159,29 @@ export default function ChatDeskStyles() {
       .live-status--listening { color: #b07a2e; }
       .live-status--transcribing { color: #2f8f57; }
       .live-status--responding { color: #c0392b; }
+
+      .desk-trash {
+        position: absolute;
+        right: clamp(16px, 4vw, 44px);
+        bottom: clamp(16px, 3vh, 28px);
+        z-index: 46;
+        width: 56px;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(243, 208, 152, 0.18);
+        border-radius: 50%;
+        background: rgba(10, 20, 22, 0.5);
+        color: rgba(243, 208, 152, 0.45);
+        font-size: 1.3rem;
+        cursor: pointer;
+        transition: border-color 0.2s, color 0.2s;
+      }
+      .desk-trash:hover {
+        border-color: rgba(243, 208, 152, 0.45);
+        color: rgba(243, 208, 152, 0.75);
+      }
 
       @media (max-width: 480px) {
         .desk-paper, .paper-stack { width: 68vw; }
@@ -196,12 +197,13 @@ export default function ChatDeskStyles() {
         .magnifier {
           width: 200px;
           height: 200px;
-          top: 62%;
-          bottom: auto;
-          left: calc(50% - 100px);
+          top: auto;
+          bottom: 16px;
+          left: 16px;
           right: auto;
           margin-top: 0;
         }
+        .desk-trash { width: 44px; height: 44px; font-size: 1.1rem; }
       }
     `}</style>
   );
