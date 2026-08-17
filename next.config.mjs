@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   serverExternalPackages: ['msedge-tts', 'ws'],
+  // /gallery prerenders by scraping each playlist + a watch-page fetch per video;
+  // 6 playlists blows the default 60s budget. Bump it. ponytail: raise again if
+  // playlist count grows, or move the per-video embeddable check off the build path.
+  staticPageGenerationTimeout: 300,
   async redirects() {
     return [
       {
