@@ -5,6 +5,7 @@ import "./globals.css";
 import Script from 'next/script';
 import { Analytics } from '@vercel/analytics/react';
 import BootScreen from '@/components/layout/BootScreen';
+import { MediaModalProvider } from '@/components/ui/MediaModal';
 
 const BOOT_SCREEN_CSS = `
   html, body { background-color: #000 !important; }
@@ -79,7 +80,7 @@ export default function RootLayout({ children }) {
           crossOrigin="anonymous"
           strategy="afterInteractive"
         />
-        {children}
+        <MediaModalProvider>{children}</MediaModalProvider>
       </body>
       <Analytics />
     </html>

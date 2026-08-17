@@ -1,29 +1,36 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { FaTimes } from 'react-icons/fa';
 import MusicHeader from '@/components/sections/MusicHeader';
 
-export default function Gallery({ images = [], showDesktopDiscuss = false }) {
-  const [activePhoto, setActivePhoto] = useState(null);
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function embedSrc(playlist, ids) {
+  const params = new URLSearchParams({ rel: '0', modestbranding: '1', loop: '1' });
+  if (!ids?.length) {
+    // scrape returned nothing → plain playlist embed (still works, just no shuffle)
+    params.set('list', playlist.playlistId);
+    return `https://www.youtube-nocookie.com/embed/videoseries?${params}`;
+  }
+  const [first, ...rest] = ids;
+  params.set('playlist', rest.length ? rest.join(',') : first);
+  return `https://www.youtube-nocookie.com/embed/${first}?${params}`;
+}
+
+export default function Gallery({ playlists = [], showDesktopDiscuss = false }) {
+  // Shuffle each playlist's videos after mount (SSR renders source order; avoids hydration mismatch).
+  const [orders, setOrders] = useState(null);
 
   useEffect(() => {
-    if (!activePhoto) return;
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') setActivePhoto(null);
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [activePhoto]);
+    setOrders(playlists.map((p) => shuffle(p.videoIds || [])));
+  }, [playlists]);
 
   return (
     <section className="gallery-section relative w-full min-h-[100dvh] overflow-hidden">
@@ -71,64 +78,39 @@ export default function Gallery({ images = [], showDesktopDiscuss = false }) {
           color: var(--theme);
         }
 
-        .gallery-wall {
-          column-count: 1;
-          column-gap: clamp(14px, 2.4vw, 26px);
+        .gallery-playlists {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: clamp(20px, 3vw, 40px);
         }
 
-        .gallery-card {
-          display: inline-block;
+        @media (max-width: 900px) {
+          .gallery-playlists {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        .gallery-playlist-section {
           width: 100%;
-          break-inside: avoid;
-          margin: 0 0 clamp(14px, 2.4vw, 26px);
-          transition: transform 0.24s ease;
         }
 
-        .gallery-card:hover {
-          transform: translateY(-3px);
-        }
-
-        .gallery-image-button {
-          display: block;
-          width: 100%;
-          padding: 0;
-          border: 0;
-          border-radius: 4px;
-          background: transparent;
-          color: inherit;
-          cursor: zoom-in;
-          text-align: left;
-        }
-
-        .gallery-card img {
-          display: block;
-          width: 100%;
-          height: auto;
-          border-radius: 4px;
-          background: rgba(12, 28, 31, 0.9);
-          box-shadow: 0 16px 34px -26px rgba(0, 0, 0, 0.7);
-          transition: box-shadow 0.24s ease;
-        }
-
-        .gallery-card:hover img {
-          box-shadow: 0 22px 44px -28px rgba(15, 15, 15, 0.68);
-        }
-
-        .gallery-image-button:focus-visible {
-          outline: 2px solid var(--theme);
-          outline-offset: 4px;
-        }
-
-        .gallery-card figcaption {
-          margin-top: 10px;
-          font-family: var(--font-mono);
-          font-size: clamp(0.72rem, 1.3vw, 0.86rem);
-          font-style: italic;
-          line-height: 1.25;
-          color: rgba(243, 208, 152, 0.7);
-          white-space: nowrap;
+        .gallery-playlist {
+          position: relative;
+          width: min(1120px, 100%);
+          margin: 0 auto;
+          aspect-ratio: 16 / 9;
+          border-radius: 6px;
           overflow: hidden;
-          text-overflow: ellipsis;
+          background: rgba(12, 28, 31, 0.9);
+          box-shadow: 0 26px 90px rgba(0, 0, 0, 0.55);
+        }
+
+        .gallery-playlist iframe {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          border: 0;
         }
 
         .gallery-mark {
@@ -145,97 +127,9 @@ export default function Gallery({ images = [], showDesktopDiscuss = false }) {
           transform: rotate(-8deg);
         }
 
-        .gallery-lightbox {
-          position: fixed;
-          inset: 0;
-          z-index: 10000;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: clamp(18px, 4vw, 44px);
-          background: rgba(14, 10, 7, 0.88);
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-        }
-
-        .gallery-lightbox-figure {
-          width: min(1120px, 100%);
-          max-height: 100%;
-          margin: 0;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .gallery-lightbox-img {
-          display: block;
-          max-width: 100%;
-          max-height: calc(100dvh - 128px);
-          width: auto;
-          height: auto;
-          object-fit: contain;
-          border-radius: 4px;
-          background: rgba(12, 28, 31, 0.9);
-          box-shadow: 0 26px 90px rgba(0, 0, 0, 0.55);
-        }
-
-        .gallery-lightbox-caption {
-          max-width: min(760px, 100%);
-          font-family: var(--font-mono);
-          font-style: italic;
-          font-size: clamp(0.82rem, 1.4vw, 0.96rem);
-          line-height: 1.35;
-          color: oklch(0.938 0.03 84);
-          text-align: center;
-          overflow-wrap: anywhere;
-        }
-
-        .gallery-lightbox-close {
-          position: fixed;
-          top: clamp(14px, 3vw, 28px);
-          right: clamp(14px, 3vw, 28px);
-          z-index: 10001;
-          width: 40px;
-          height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 50%;
-          border: 1px solid rgba(243, 208, 152, 0.3);
-          background: rgba(11, 24, 26, 0.7);
-          backdrop-filter: blur(6px);
-          -webkit-backdrop-filter: blur(6px);
-          color: var(--theme);
-          cursor: pointer;
-          transition: transform 0.2s ease, background-color 0.2s ease;
-        }
-
-        .gallery-lightbox-close:hover {
-          background: var(--theme);
-          transform: translateY(-1px);
-        }
-
-        .gallery-lightbox-close:focus-visible {
-          outline: 2px solid var(--theme);
-          outline-offset: 4px;
-        }
-
         @media (max-width: 767px) {
           .gallery-title {
             text-align: center;
-          }
-        }
-
-        @media (min-width: 560px) {
-          .gallery-wall {
-            column-count: 2;
-          }
-        }
-
-        @media (min-width: 900px) {
-          .gallery-wall {
-            column-count: 3;
           }
         }
 
@@ -267,12 +161,6 @@ export default function Gallery({ images = [], showDesktopDiscuss = false }) {
             max-width: 22vw;
           }
         }
-
-        @media (min-width: 1240px) {
-          .gallery-wall {
-            column-count: 4;
-          }
-        }
       `}</style>
 
       <div className="gallery-noir">
@@ -290,56 +178,23 @@ export default function Gallery({ images = [], showDesktopDiscuss = false }) {
             )}
           </header>
 
-          <div className="gallery-wall" aria-label="Gallery">
-            {images.map((photo) => (
-              <figure
-                className="gallery-card"
-                key={photo.src}
-              >
-                <button
-                  type="button"
-                  className="gallery-image-button"
-                  aria-label={`View ${photo.title} fullscreen`}
-                  onClick={() => setActivePhoto(photo)}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={photo.src} alt={photo.title} loading="lazy" decoding="async" />
-                </button>
-                <figcaption>{photo.title}</figcaption>
-              </figure>
+          <div className="gallery-playlists">
+            {playlists.map((playlist, i) => (
+              <section className="gallery-playlist-section" key={playlist.playlistId}>
+                <div className="gallery-playlist">
+                  <iframe
+                    src={embedSrc(playlist, orders ? orders[i] : playlist.videoIds)}
+                    title={playlist.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    loading="lazy"
+                  />
+                </div>
+              </section>
             ))}
           </div>
         </div>
       </div>
-
-      {activePhoto && (
-        <div
-          className="gallery-lightbox"
-          role="dialog"
-          aria-modal="true"
-          aria-label={activePhoto.title}
-          onClick={() => setActivePhoto(null)}
-        >
-          <button
-            type="button"
-            className="gallery-lightbox-close"
-            aria-label="Close fullscreen image"
-            onClick={() => setActivePhoto(null)}
-          >
-            <FaTimes aria-hidden="true" />
-          </button>
-          <figure className="gallery-lightbox-figure" onClick={(event) => event.stopPropagation()}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              className="gallery-lightbox-img"
-              src={activePhoto.src}
-              alt={activePhoto.title}
-              decoding="async"
-            />
-            <figcaption className="gallery-lightbox-caption">{activePhoto.title}</figcaption>
-          </figure>
-        </div>
-      )}
     </section>
   );
 }

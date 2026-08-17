@@ -1,7 +1,7 @@
 "use client";
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { FaTimes } from 'react-icons/fa';
+import { useMediaModal } from '@/components/ui/MediaModal';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -75,7 +75,7 @@ function scrambleElement(element, original, target, duration = 200) {
 }
 
 export default function Hero({ galleryImages = [] }) {
-  const [showVideoOverlay, setShowVideoOverlay] = useState(false);
+  const openMedia = useMediaModal();
   const { setSpotlightEnabled } = useSpotlight();
 
   const sectionRef = useRef(null);
@@ -160,12 +160,6 @@ export default function Hero({ galleryImages = [] }) {
     };
   }, []);
 
-  useEffect(() => {
-    if (!showVideoOverlay) return;
-    const handleKeyDown = (e) => { if (e.key === 'Escape') setShowVideoOverlay(false); };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showVideoOverlay]);
 
   return (
     <>
@@ -189,7 +183,7 @@ export default function Hero({ galleryImages = [] }) {
         <div className="noir-music-layer">
           <MusicHeader onPlayStateChange={setSpotlightEnabled} />
         </div>
-        <button type="button" className="noir-inspired" onClick={() => setShowVideoOverlay(true)}>inspired by ↗</button>
+        <button type="button" className="noir-inspired" onClick={() => openMedia({ type: 'youtube', videoId: BACKGROUND_VIDEO.videoId, start: BACKGROUND_VIDEO.start, title: 'Inspiration' })}>inspired by ↗</button>
       </div>
 
     <section ref={sectionRef} className="noir-room relative w-full overflow-hidden">
@@ -412,14 +406,9 @@ export default function Hero({ galleryImages = [] }) {
           .noir-topnav a { font-size: clamp(0.7rem, 3vw, 0.82rem); letter-spacing: 0.015em; }
         }
 
-        .noir-inspired { position: absolute; bottom: clamp(16px, 3vh, 28px); left: clamp(18px, 4vw, 40px); z-index: 46; border: 0; padding: 0; background: transparent; cursor: pointer; font-family: var(--font-mono); font-style: italic; font-size: 0.8rem; color: rgba(207,227,223,0.45); transition: color 0.25s ease; }
+        .noir-inspired { position: absolute; bottom: clamp(16px, 3vh, 28px); left: clamp(18px, 4vw, 40px); z-index: 46; border: 0; padding: 0; background: transparent; cursor: pointer; font-family: var(--font-mono); font-style: italic; font-size: 0.8rem; color: rgba(207,227,223,0.45); transition: color 0.25s ease; pointer-events: auto; }
         .noir-inspired:hover { color: #eaf6f2; }
 
-        .video-modal-backdrop { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); }
-        .video-modal { position: relative; width: 100vw; aspect-ratio: 16/9; background: #000; border: 1px solid rgba(214,236,232,0.4); box-shadow: 0 24px 70px rgba(0,0,0,0.72); }
-        .video-modal iframe { width: 100%; height: 100%; border: 0; display: block; }
-        .video-modal-close { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid rgba(214,236,232,0.4); background: #dfe8e6; color: #05100e; cursor: pointer; z-index: 1; }
-        @media (min-width: 768px) { .video-modal { width: 75vw; } .video-modal-close { top: -14px; right: -14px; } }
       `}</style>
 
       <div className="noir-stage">
@@ -467,17 +456,6 @@ export default function Hero({ galleryImages = [] }) {
         </div>
       </div>
 
-      {showVideoOverlay && (
-        <div className="video-modal-backdrop" onClick={() => setShowVideoOverlay(false)}>
-          <div className="video-modal" onClick={(e) => e.stopPropagation()}>
-            <button type="button" className="video-modal-close" aria-label="Close" onClick={() => setShowVideoOverlay(false)}><FaTimes /></button>
-            <iframe
-              src={`https://www.youtube.com/embed/${BACKGROUND_VIDEO.videoId}?autoplay=1&start=${BACKGROUND_VIDEO.start}`}
-              title="Background video" allow="autoplay; encrypted-media" allowFullScreen
-            />
-          </div>
-        </div>
-      )}
     </section>
     </>
   );

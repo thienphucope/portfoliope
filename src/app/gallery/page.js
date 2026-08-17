@@ -2,7 +2,7 @@ import FingerprintEffect from '@/components/sections/FingerprintEffect';
 import Gallery from '@/components/sections/Gallery';
 import SnowEffect from '@/components/sections/SnowEffect';
 import MomentumScroll from '@/components/layout/MomentumScroll';
-import { getGalleryImages } from '@/lib/galleryImages';
+import { getGalleryPlaylists } from '@/lib/galleryPlaylists';
 
 export const metadata = {
   title: 'Gallery | Ope Watson',
@@ -11,7 +11,7 @@ export const metadata = {
 };
 
 export default async function GalleryPage() {
-  const images = await getGalleryImages();
+  const playlists = await getGalleryPlaylists();
 
   return (
     <div className="min-h-[100dvh] flex flex-col">
@@ -23,7 +23,7 @@ export default async function GalleryPage() {
             <SnowEffect mounted={true} />
           </div>
           <div className="w-full transition-opacity duration-1000 opacity-100 relative z-10">
-            <Gallery images={images} showDesktopDiscuss />
+            <Gallery playlists={playlists} showDesktopDiscuss />
           </div>
         </main>
       </div>

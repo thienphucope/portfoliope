@@ -4,7 +4,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
       @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap');
 
       :root {
-        --void: #0a0a0c;
+        --void: #000;
         --colorone-dim: #8a6b52;
         --parchment: #f4e8c1;
         --parchment-dark: #c4b48a;
@@ -18,16 +18,13 @@ export default function ChatRoomStyles({ isEmbedded }) {
         position: fixed;
         inset: 0;
         height: 100dvh;
-        background: var(--void);
-        background-image:
-          radial-gradient(circle at 10% 20%, rgba(186, 145, 112, 0.05), transparent 40rem),
-          repeating-linear-gradient(0deg, rgba(186, 145, 112, 0.02) 0, rgba(186, 145, 112, 0.02) 1px, transparent 1px, transparent 3px);
+        background: #000;
         color: var(--parchment);
         font-family: var(--font-body);
         display: flex;
         flex-direction: column;
       }
-      ${isEmbedded ? '.chat-shell { position: relative; flex: 1; min-height: 0; background: #0a0a0c; background-image: none; }' : ''}
+      ${isEmbedded ? '.chat-shell { position: relative; flex: 1; min-height: 0; background: #000; background-image: none; }' : ''}
 
       .chat-shell::after {
         content: "";
@@ -43,8 +40,8 @@ export default function ChatRoomStyles({ isEmbedded }) {
         align-items: center;
         justify-content: center;
         padding: var(--feature-header-top) var(--feature-space-right) var(--feature-header-bottom) var(--feature-space-left);
-        border-bottom: var(--feature-divider);
-        background: rgba(10, 10, 12, 0.95);
+        border-bottom: 1px solid #000;
+        background: #000;
         position: relative;
         z-index: 10;
       }
@@ -134,7 +131,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
         top: calc(100% + 12px);
         right: 0;
         width: 260px;
-        background: rgba(10, 10, 12, 0.98);
+        background: rgba(0, 0, 0, 0.98);
         border: 1px dashed rgba(186, 145, 112, 0.4);
         padding: 16px;
         display: flex;
@@ -265,7 +262,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
         font-size: 0.82rem;
         letter-spacing: 2px;
         background: transparent;
-        border: 1px dashed rgba(186, 145, 112, 0.35);
+        border: 1px dashed rgba(255,255,255,0.12);
         color: var(--colorone-dim);
         padding: 6px 12px;
         cursor: pointer;
@@ -274,7 +271,7 @@ export default function ChatRoomStyles({ isEmbedded }) {
       .suggest-btn:hover {
         color: var(--theme);
         border-color: var(--theme);
-        background: rgba(186, 145, 112, 0.05);
+        background: rgba(255,255,255,0.03);
       }
 
       .live-transcription {
@@ -307,8 +304,8 @@ export default function ChatRoomStyles({ isEmbedded }) {
       .input-area {
         flex-shrink: 0;
         padding: var(--feature-header-bottom) var(--feature-space-right) var(--feature-header-bottom) var(--feature-space-left);
-        border-top: var(--feature-divider);
-        background: rgba(10, 10, 12, 0.95);
+        border-top: 1px solid #000;
+        background: #000;
         position: relative;
         z-index: 10;
       }
@@ -319,12 +316,12 @@ export default function ChatRoomStyles({ isEmbedded }) {
         display: flex;
         align-items: center;
         gap: 16px;
-        border: 1px solid rgba(186, 145, 112, 0.2);
-        background: rgba(186, 145, 112, 0.02);
+        border: 1px solid rgba(255,255,255,0.08);
+        background: #000;
         padding: 16px;
         transition: border-color 0.3s;
       }
-      .textarea-row:focus-within { border-color: var(--colorone-dim); background: rgba(186, 145, 112, 0.05); }
+      .textarea-row:focus-within { border-color: var(--colorone-dim); background: #000; }
 
       .chat-input {
         flex: 1;
@@ -391,9 +388,9 @@ export default function ChatRoomStyles({ isEmbedded }) {
         justify-content: space-between;
         max-width: 800px;
         margin: 0 auto;
-        border: 1px solid rgba(186, 145, 112, 0.2);
+        border: 1px solid rgba(255,255,255,0.08);
         padding: 16px 24px;
-        background: rgba(186, 145, 112, 0.02);
+        background: #000;
       }
 
       .live-copy {

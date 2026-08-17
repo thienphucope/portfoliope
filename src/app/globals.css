@@ -9,7 +9,7 @@
 /*                                DESIGN TOKENS                              */
 /* -------------------------------------------------------------------------- */
 :root {
-  --background: #070f11;
+  --background: #000;
   --foreground: #f0f0f0;
   /* Theme color - single source of truth for the accent palette */
   --theme: #F3D098;   /* trầm thêm, vẫn ấm và tự nhiên */
@@ -32,11 +32,11 @@
   --md-line: 1.8;
   --md-colortext: #e0e0e0;
   /* Feature backgrounds */
-  --feature-bg: #0a1618;
-  --feature-backdrop-bg: #070f11;
+  --feature-bg: #000;
+  --feature-backdrop-bg: #000;
   /* Scrim over the photo backdrop (.case-background): even top-down ramp to
      near-solid black — two stops, same reason as --scene-falloff. */
-  --feature-backdrop-overlay: linear-gradient(180deg, rgba(4,11,13,0.55) 0%, rgba(0,0,0,0.97) 100%);
+  --feature-backdrop-overlay: #000;
   /* Feature edge spacing */
   --feature-space-top: 28px;
   --feature-space-right: 24px;
@@ -390,3 +390,26 @@ body::-webkit-scrollbar,
 @media (max-width: 1024px) {
   .chapter-rail { display: none; }
 }
+
+/* -------------------------------------------------------------------------- */
+/*                              MEDIA MODAL                                   */
+/* -------------------------------------------------------------------------- */
+.media-modal-backdrop { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.88); backdrop-filter: blur(4px); }
+.media-modal { position: relative; width: 75vw; aspect-ratio: 16/9; background: #000; border: 1px solid rgba(214,236,232,0.4); box-shadow: 0 24px 70px rgba(0,0,0,0.72); }
+.media-modal iframe { width: 100%; height: 100%; border: 0; display: block; }
+.media-modal--image { width: auto; max-width: 90vw; max-height: 90vh; aspect-ratio: unset; border: none; background: transparent; }
+.media-modal--image img { display: block; max-width: 90vw; max-height: 88vh; object-fit: contain; }
+.media-modal-close { position: absolute; top: -14px; right: -14px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid rgba(214,236,232,0.4); background: #dfe8e6; color: #05100e; cursor: pointer; z-index: 1; }
+@media (max-width: 767px) {
+  .media-modal { width: 100vw; }
+  .media-modal-close { top: 8px; right: 8px; }
+}
+
+/* -------------------------------------------------------------------------- */
+/*                             MEDIA THUMBNAIL                                */
+/* -------------------------------------------------------------------------- */
+.media-thumb { position: relative; display: block; overflow: hidden; border: 0; padding: 0; background: #000; cursor: pointer; border-radius: 4px; }
+.media-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; transition: filter 0.25s ease; }
+.media-thumb:hover img { filter: brightness(1.15); }
+.media-thumb--video .media-thumb-play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.85); font-size: 2rem; text-shadow: 0 2px 12px rgba(0,0,0,0.6); pointer-events: none; transition: transform 0.2s ease; }
+.media-thumb--video:hover .media-thumb-play { transform: scale(1.15); }

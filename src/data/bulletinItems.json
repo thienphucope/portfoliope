@@ -1,0 +1,22 @@
+[
+  { "id": "z0", "type": "icon", "photo": "/polaroid/news.png", "alt": "News", "w": 1418, "h": 1688, "anchorX": 0.5, "anchorY": 0.45 },
+  { "id": "sherlock1", "type": "polaroid", "photo": "https://yt3.googleusercontent.com/ytc/AIdro_nojmxqVZidJZELqIXOLv3tc--s7TdTvC593GxcahYMIg=s900-c-k-c0x00ffffff-no-rj", "alt": "Sherlock Holmes", "ref": "221B", "anchorX": 0.05, "anchorY": 0.35 },
+  { "id": "sherlock2", "type": "video", "videoId": "1IDBZ5AsUuk", "text": "Creative Transitions in Sherlock", "anchorX": 0.32, "anchorY": 0.35 },
+  { "id": "sherlock3", "type": "polaroid", "photo": "https://hips.hearstapps.com/hmg-prod/images/b840e2eb-3269-46c7-9056-2c62bc8c6ce6.jpg?crop=0.345xw:0.519xh;0.421xw,0.142xh&resize=360:*", "alt": "Sherlock Holmes", "ref": "BBC", "anchorX": 0.68, "anchorY": 0.35 },
+  { "id": "sherlock4", "type": "note", "title": "DEDUCTION / 221B", "text": "When you have eliminated the impossible, whatever remains, however improbable, must be the truth.", "mark": "— A. C. Doyle", "anchorX": 0.88, "anchorY": 0.35 },
+  { "id": "sherlock5", "type": "video", "videoId": "gNiC1Mxfl_w", "text": "Sherlock Theme", "anchorX": 0.5, "anchorY": 0.7 },
+  { "id": "money1", "type": "video", "videoId": "Ysot4dDNCPc", "text": "Money Troubles", "anchorX": 0.28, "anchorY": 0.15 },
+  { "id": "money3", "type": "icon", "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Claude_AI_symbol.svg/3840px-Claude_AI_symbol.svg.png", "alt": "Claude AI", "anchorX": 0.22, "anchorY": 0.62 },
+  { "id": "money4", "type": "icon", "photo": "https://static.vecteezy.com/system/resources/previews/022/841/114/non_2x/chatgpt-logo-transparent-background-free-png.png", "alt": "ChatGPT", "anchorX": 0.32, "anchorY": 0.62 },
+  { "id": "money5", "type": "icon", "photo": "https://brandlogos.net/wp-content/uploads/2025/08/meta-ai-logo.png", "alt": "Meta AI", "anchorX": 0.22, "anchorY": 0.82 },
+  { "id": "money6", "type": "icon", "photo": "https://static.vecteezy.com/system/resources/thumbnails/018/930/572/small/youtube-logo-youtube-icon-transparent-free-png.png", "alt": "YouTube", "anchorX": 0.32, "anchorY": 0.82 },
+  { "id": "money2", "type": "receipt", "shop": "DEV LIFE MONTHLY", "time": "AUG 2026", "rows": ["── SURVIVAL ──", "rent ........... 850.00", "ramen x30 ...... 45.00", "bus pass ....... 45.00", "coffee ......... 62.40", "── AI TOOLS ──", "claude API ..... 52.80", "chatgpt plus ... 20.00", "copilot pro .... 19.00", "opencode/ds .... 0.00", "── INFRA ──", "vercel hobby ... 0.00", "── MENTAL ──", "mass panic ..... 3x", "impostor syn ... daily", "touch grass .... 0 min", "sanity ......... 0.00"], "total": "-1094.20", "anchorX": 0.72 },
+  { "id": "viking1", "type": "bigpic", "photo": "https://www.ariananews.af/wp-content/uploads/2026/06/Norway.jpg", "alt": "Viking Warriors", "ref": "793 AD", "text": "Viking Warriors — LINDISFARNE RAID LINEUP, 793", "anchorX": 0.5, "anchorY": 0.5 },
+  { "id": "mcu1", "type": "video", "videoId": "zkeiEBaOOXA", "start": 65, "text": "Black Suit", "anchorX": 0.25, "anchorY": 0.25 },
+  { "id": "mcu2", "type": "video", "videoId": "pvgwR2aVJCo", "text": "1/14000605", "anchorX": 0.72, "anchorY": 0.25 },
+  { "id": "mcu3", "type": "video", "videoId": "FRIUhO4MdGU", "start": 213, "text": "I'm Ironman", "anchorX": 0.25, "anchorY": 0.7 },
+  { "id": "mcu4", "type": "video", "videoId": "I7jP1JQerrw", "start": 38, "text": "Here is your Mijonir", "anchorX": 0.72, "anchorY": 0.7 },
+  { "id": "yotsuba1", "type": "polaroid", "photo": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcQq7Tjxi7zLFDUf3DLCsTfmYw798o1Ij_EBM-GJvWjPHUC6AXCH", "alt": "Gotoubun no Hanayome", "ref": "5-TOUBUN" },
+  { "id": "yotsuba2", "type": "video", "videoId": "eS0-KXu05Rc", "text": "Yotsuba Nakano" },
+  { "id": "z", "type": "sticky", "tone": 1, "kicker": "WALL", "text": "to be continued...", "meta": "— O.W.", "anchorX": 0.5, "anchorY": 0.45 }
+]

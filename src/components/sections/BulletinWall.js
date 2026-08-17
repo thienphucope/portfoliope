@@ -1,12 +1,11 @@
 "use client";
 
-// A scroll-driven, pinned evidence scene. The page itself stays visually still:
-// small batches of evidence fly up, snap into a dense composition, then leave
-// through the top before the next batch arrives. Photos come from stable,
-// seeded Picsum endpoints; evidence copy is shaped like actual case material.
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { FaPlay } from 'react-icons/fa';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useMediaModal } from '@/components/ui/MediaModal';
+import RAW_ITEMS from '@/data/bulletinItems.json';
 
 if (typeof window !== 'undefined') gsap.registerPlugin(ScrollTrigger);
 
@@ -18,42 +17,15 @@ const SIZE = {
   note: [440, 360],
   paper: [350, 460],
   map: [820, 540],
-  bigpic: [545, 370],
+  bigpic: [680, 460],
   smallpic: [260, 180],
   polaroid: [265, 318],
-  receipt: [180, 340],
+  receipt: [320, 620],
   envelope: [360, 210],
+  video: [420, 280],
+  icon: [120, 120],
   bare: [400, 90],
 };
-
-const photo = (seed, width = 900, height = 650) =>
-  `https://picsum.photos/seed/${seed}/${width}/${height}?grayscale`;
-
-const ITEMS = [
-  { id: 'a1', type: 'bare', text: 'CASE 510 / INCIDENT WALL', anchorX: 0.12 },
-  { id: 'a2', type: 'sticky', tone: 0, kicker: 'CALL', text: 'M. Hart / 21:00. North stairwell.', meta: '13 AUG', anchorX: 0.76 },
-  { id: 'a3', type: 'bigpic', photo: photo('ope-harbour-0314'), alt: 'Harbour evidence photograph', ref: 'EX. 01', text: 'harbour / camera 03:14', anchorX: 0.18 },
-  { id: 'a4', type: 'map', photo: '/evidence/noir-city-map.png', alt: 'Hand-drawn fictional river city evidence map', ref: 'ROUTE STUDY / 510', anchorX: 0.62, rotation: -1.1 },
-  { id: 'a5', type: 'polaroid', photo: photo('ope-last-seen', 520, 620), alt: 'Last-seen evidence photograph', ref: 'P-04', text: 'last seen / 00:47', anchorX: 0.88 },
-  { id: 'a6', type: 'paper', title: 'WITNESS STATEMENT', meta: 'CASE 510 · SHEET 01', text: 'The night porter heard the service door close at 03:10. No vehicle left the courtyard.', stamp: 'SIGNED', anchorX: 0.22 },
-  { id: 'a7', type: 'smallpic', photo: photo('ope-plate-kx88', 520, 360), alt: 'Vehicle evidence photograph', ref: 'EX. 03', text: 'plate KX-88', anchorX: 0.7 },
-  { id: 'a8', type: 'sticky', tone: 1, kicker: 'WEATHER', text: 'He says rain. Log says dry.', meta: 'VERIFY', anchorX: 0.92 },
-  { id: 'b1', type: 'envelope', addressee: 'M. HART', meta: 'FOUND / LOCKER 12', anchorX: 0.1 },
-  { id: 'b2', type: 'bigpic', photo: photo('ope-stairwell'), alt: 'Stairwell evidence photograph', ref: 'EX. 07', text: 'service stairwell / west wing', anchorX: 0.64 },
-  { id: 'b3', type: 'sticky', tone: 2, kicker: 'LEDGER', text: 'Page 41. Initials: E.W.', meta: 'PRIORITY', anchorX: 0.28 },
-  { id: 'b4', type: 'note', title: 'FIELD NOTES / NORTH DOCK', text: '03:17 — chain loose at the east gate. Salt on the inside sill. Shoe print turns back before the water.', mark: 'check tide table', anchorX: 0.82 },
-  { id: 'b5', type: 'paper', title: 'AUDIO TRANSCRIPT', meta: 'TAPE 02 · 03:06:18', text: '[metal impact] … eleven seconds of silence … footsteps ascending … second voice unintelligible.', stamp: 'EVIDENCE', anchorX: 0.15 },
-  { id: 'b6', type: 'smallpic', photo: photo('ope-brass-key', 520, 360), alt: 'Recovered key evidence photograph', ref: 'EX. 11', text: 'recovered near drain', anchorX: 0.52 },
-  { id: 'b7', type: 'receipt', shop: 'NORTH PIER CAFE', time: '02:52', rows: ['coffee ........ 1.20', 'matches ....... 0.15', 'cash .......... 2.00'], total: '0.65', anchorX: 0.94 },
-  { id: 'b8', type: 'polaroid', photo: photo('ope-witness', 520, 620), alt: 'Witness reference photograph', ref: 'P-12', text: 'witness B / re-interview', anchorX: 0.35 },
-  { id: 'c1', type: 'sticky', tone: 3, kicker: 'ROOM 4B', text: 'Two coats. One hook.', meta: 'WHO LEFT?', anchorX: 0.08 },
-  { id: 'c2', type: 'bigpic', photo: photo('ope-east-pier'), alt: 'East pier evidence photograph', ref: 'EX. 14', text: 'east pier / first light', anchorX: 0.72 },
-  { id: 'c3', type: 'note', title: 'TIMELINE / REVISED', text: '02:52 receipt. 03:06 tape. 03:10 door. 03:14 harbour camera. Clock discrepancy: seven minutes.', mark: 'do not file yet', anchorX: 0.25 },
-  { id: 'c4', type: 'polaroid', photo: photo('ope-courtyard', 520, 620), alt: 'Courtyard evidence photograph', ref: 'P-17', text: 'courtyard / blind angle', anchorX: 0.9 },
-  { id: 'c5', type: 'paper', title: "CORONER'S NOTE", meta: 'PRELIMINARY · NOT FINAL', text: 'Estimated interval conflicts with the lobby clock by seven minutes. Recheck recorded times.', stamp: 'REVIEW', anchorX: 0.62 },
-  { id: 'c6', type: 'sticky', tone: 4, kicker: 'CLOCK', text: 'Who set it seven minutes fast?', meta: 'OPEN', anchorX: 0.18 },
-  { id: 'c7', type: 'bare', text: 'STATUS / OPEN', anchorX: 0.78 },
-];
 
 function lcg(seed) {
   let state = seed >>> 0;
@@ -89,9 +61,11 @@ function boxDistance(a, b) {
   return Math.hypot(dx, dy);
 }
 
-// Seeded free placement inside one viewport. Items are packed into successive
-// waves; each wave has its own collision field, so the composition can stay
-// large and close without turning into a permanent grid.
+const ITEMS = RAW_ITEMS.map(item => ({
+  ...item,
+  type: item.type || (item.photo ? 'polaroid' : 'bare'),
+}));
+
 function layout(items, boardW, viewportH) {
   const isMobile = boardW < 600;
   const isTablet = boardW < 900;
@@ -104,7 +78,9 @@ function layout(items, boardW, viewportH) {
   const waveLimit = isMobile ? 2 : isTablet ? 3 : 4;
   const rand = lcg(0x0813f00d);
   const dimensions = items.map((item) => {
-    const [baseWidth, baseHeight] = SIZE[item.type];
+    const [defW, defH] = SIZE[item.type] || SIZE.bare;
+    const baseWidth = item.w || defW;
+    const baseHeight = item.h || defH;
     const itemScale = Math.min(
       scale,
       (boardW - margin * 2) / baseWidth,
@@ -128,18 +104,30 @@ function layout(items, boardW, viewportH) {
     const targetX = margin + (maxX - margin) * (item.anchorX ?? rand());
     const minY = safeTop;
     const maxY = Math.max(minY, viewportH - safeBottom - height);
+    const targetY = minY + (maxY - minY) * (item.anchorY ?? (0.3 + rand() * 0.4));
 
-    const findPosition = (currentWave) => {
-      if (currentWave.length >= waveLimit) return null;
+    const findPosition = (currentWave, grouped) => {
+      if (!grouped && currentWave.length >= waveLimit) return null;
+
+      const extMaxY = grouped
+        ? Math.max(maxY, maxY + usableHeight)
+        : maxY;
 
       let best = null;
       for (let attempt = 0; attempt < 520; attempt += 1) {
-        const x = attempt === 0
-          ? targetX
-          : margin + rand() * Math.max(0, maxX - margin);
-        const y = attempt === 0
-          ? minY + (maxY - minY) * (0.3 + rand() * 0.4)
-          : minY + rand() * Math.max(0, maxY - minY);
+        const hasAnchor = item.anchorX != null || item.anchorY != null;
+        let x, y;
+        if (attempt === 0) {
+          x = targetX;
+          y = targetY;
+        } else if (hasAnchor && attempt < 150) {
+          const spread = Math.min(attempt * 4, 400);
+          x = clamp(targetX + (rand() - 0.5) * spread, margin, maxX);
+          y = clamp(targetY + (rand() - 0.5) * spread, minY, extMaxY);
+        } else {
+          x = margin + rand() * Math.max(0, maxX - margin);
+          y = minY + rand() * Math.max(0, extMaxY - minY);
+        }
         const box = collisionBox(x, y, width, height, rotation, gap);
         if (currentWave.some((candidate) => boxesOverlap(box, candidate.collision))) continue;
 
@@ -150,24 +138,37 @@ function layout(items, boardW, viewportH) {
         const centerY = y + height / 2;
         const centerPenalty = Math.abs(centerX - boardW / 2) * 0.09
           + Math.abs(centerY - (safeTop + usableHeight / 2)) * 0.08;
-        const score = nearest * 1.8 + Math.abs(x - targetX) * 0.12 + centerPenalty;
+        const anchorPenalty = hasAnchor ? Math.abs(y - targetY) * 0.12 : 0;
+        const score = nearest * 1.8 + Math.abs(x - targetX) * 0.12 + anchorPenalty + centerPenalty;
 
         if (!best || score < best.score) best = { x, y, box, score };
       }
       return best;
     };
 
-    let best = findPosition(waveItems);
+    const groupOf = (i) => i.id.replace(/\d+$/, '');
+    const itemGroup = groupOf(item);
+    const isNamed = itemGroup.length > 1;
+    const waveHasNamed = waveItems.some((w) => groupOf(w).length > 1);
+
+    if (waveItems.length > 0 && (isNamed || waveHasNamed)) {
+      const compatible = isNamed && waveItems.every((w) => groupOf(w) === itemGroup);
+      if (!compatible) { wave += 1; waveItems = []; }
+    }
+
+    const sameGroup = isNamed && waveItems.some((w) => groupOf(w) === itemGroup);
+    let best = findPosition(waveItems, sameGroup);
     if (!best) {
       wave += 1;
       waveItems = [];
-      best = findPosition(waveItems);
+      best = findPosition(waveItems, true);
     }
 
     const waveOrder = waveItems.length;
 
     const positioned = {
       ...item,
+      grouped: isNamed,
       x: best.x,
       y: best.y,
       width,
@@ -192,16 +193,32 @@ function layout(items, boardW, viewportH) {
 }
 
 function ItemContent({ item }) {
+  const openMedia = useMediaModal();
+
   const evidencePhoto = (
     <span className="bw-photo">
-      {/* External evidence placeholders intentionally bypass Next image
-          optimization so the API URL can be swapped without config changes. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={item.photo} alt={item.alt} loading="lazy" referrerPolicy="no-referrer" />
+      <img src={item.photo} alt={item.alt || ''} loading="lazy" referrerPolicy="no-referrer" />
     </span>
   );
 
   switch (item.type) {
+    case 'video':
+      return (
+        <button
+          type="button"
+          className="bw-video-btn"
+          onClick={() => openMedia({ type: 'youtube', videoId: item.videoId, start: item.start, title: item.text })}
+        >
+          <i className="bw-tape" />
+          <span className="bw-photo">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={`https://img.youtube.com/vi/${item.videoId}/hqdefault.jpg`} alt={item.text || ''} loading="lazy" />
+          </span>
+          <span className="bw-video-play"><FaPlay /></span>
+          {item.text && <span className="bw-hand">{item.text}</span>}
+        </button>
+      );
     case 'sticky':
       return (
         <>
@@ -260,9 +277,18 @@ function ItemContent({ item }) {
       );
     case 'bigpic':
     case 'smallpic':
-      return <><i className="bw-tape" />{evidencePhoto}<span className="bw-photo-ref">{item.ref}</span><span className="bw-cap">{item.text}</span></>;
+      return <button type="button" className="bw-img-btn" onClick={() => openMedia({ type: 'image', src: item.photo, alt: item.alt })}><i className="bw-tape" />{evidencePhoto}<span className="bw-photo-ref">{item.ref}</span><span className="bw-cap">{item.text}</span></button>;
     case 'polaroid':
-      return <><i className="bw-tape" />{evidencePhoto}<span className="bw-photo-ref">{item.ref}</span><span className="bw-hand">{item.text}</span></>;
+      return <button type="button" className="bw-img-btn" onClick={() => openMedia({ type: 'image', src: item.photo, alt: item.alt })}><i className="bw-tape" />{evidencePhoto}<span className="bw-photo-ref">{item.ref}</span><span className="bw-hand">{item.text}</span></button>;
+    case 'icon':
+      return (
+        <button type="button" className="bw-img-btn" onClick={() => openMedia({ type: 'image', src: item.photo, alt: item.alt })}>
+          <span className="bw-icon-img">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={item.photo} alt={item.alt || ''} loading="lazy" referrerPolicy="no-referrer" />
+          </span>
+        </button>
+      );
     default:
       return <span className="bw-bare-copy">{item.text}</span>;
   }
@@ -318,7 +344,7 @@ export default function BulletinWall() {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let inspectTween = null;
     let timeline = null;
-    const waveStride = 1.85;
+    const waveStride = 1.58;
     const enterLead = 0.16;
     const enterDuration = 0.24;
     const travelLead = 0.44;
@@ -346,8 +372,6 @@ export default function BulletinWall() {
       gsap.set(stage, { opacity: 0 });
       gsap.set(elements, { opacity: 0 });
 
-      // There are only two snaps: arrival near the bottom and departure near
-      // the top. Everything between them is one uninterrupted linear scroll.
       timeline = gsap.timeline({
         scrollTrigger: {
           trigger: wall,
@@ -369,9 +393,10 @@ export default function BulletinWall() {
       elements.forEach((element, index) => {
         const item = laid.items[index];
         const waveStart = item.wave * waveStride;
-        const enterAt = waveStart + enterLead + item.waveOrder * 0.075;
+        const stagger = item.grouped ? 0.015 : 0.075;
+        const enterAt = waveStart + enterLead + item.waveOrder * stagger;
         const travelAt = waveStart + travelLead;
-        const exitAt = waveStart + exitLead + item.waveOrder * 0.035;
+        const exitAt = waveStart + exitLead + item.waveOrder * (item.grouped ? 0.008 : 0.035);
         const rotation = Number(element.dataset.rotation);
         const flightTilt = Number(element.dataset.flightTilt);
         const flightX = Number(element.dataset.flightX);
@@ -627,11 +652,11 @@ export default function BulletinWall() {
           box-shadow: 0 calc(15px * var(--s)) calc(30px * var(--s)) rgba(0,0,0,0.82);
           font-family: var(--font-mono);
         }
-        .bw-receipt-shop { padding-bottom: calc(7px * var(--s)); border-bottom: 1px dashed rgba(33,38,33,0.46); text-align: center; font-size: calc(9px * var(--s)); font-weight: 700; letter-spacing: 0.06em; }
-        .bw-receipt-time { padding: calc(8px * var(--s)) 0; font-size: calc(7px * var(--s)); opacity: 0.64; }
-        .bw-receipt-rows { display: flex; flex-direction: column; gap: calc(8px * var(--s)); padding: calc(8px * var(--s)) 0 calc(12px * var(--s)); border-top: 1px dashed rgba(33,38,33,0.28); border-bottom: 1px dashed rgba(33,38,33,0.38); font-size: calc(7px * var(--s)); white-space: nowrap; }
-        .bw-receipt-total { padding-top: calc(10px * var(--s)); text-align: right; font-size: calc(8px * var(--s)); font-weight: 700; }
-        .bw-receipt-code { margin-top: auto; text-align: center; font-size: calc(6px * var(--s)); letter-spacing: 0.08em; opacity: 0.46; }
+        .bw-receipt-shop { padding-bottom: calc(8px * var(--s)); border-bottom: 1px dashed rgba(33,38,33,0.46); text-align: center; font-size: calc(15px * var(--s)); font-weight: 700; letter-spacing: 0.06em; }
+        .bw-receipt-time { padding: calc(8px * var(--s)) 0; font-size: calc(11px * var(--s)); opacity: 0.64; }
+        .bw-receipt-rows { display: flex; flex-direction: column; gap: calc(5px * var(--s)); padding: calc(8px * var(--s)) 0 calc(12px * var(--s)); border-top: 1px dashed rgba(33,38,33,0.28); border-bottom: 1px dashed rgba(33,38,33,0.38); font-size: calc(13px * var(--s)); white-space: nowrap; }
+        .bw-receipt-total { padding-top: calc(10px * var(--s)); text-align: right; font-size: calc(14px * var(--s)); font-weight: 700; }
+        .bw-receipt-code { margin-top: auto; text-align: center; font-size: calc(10px * var(--s)); letter-spacing: 0.08em; opacity: 0.46; }
 
         .bw-envelope {
           align-items: flex-start;
@@ -673,6 +698,41 @@ export default function BulletinWall() {
           font-family: var(--font-body);
         }
         .bw-bare { padding: calc(8px * var(--s)); color: var(--theme); }
+        .bw-icon { padding: 0; background: transparent; border: none; box-shadow: none; }
+        .bw-icon-img { display: block; width: 100%; height: 100%; }
+        .bw-icon-img img { display: block; width: 100%; height: 100%; object-fit: contain; filter: none; }
+
+        .bw-video {
+          justify-content: flex-start;
+          padding: calc(10px * var(--s)) calc(10px * var(--s)) calc(5px * var(--s));
+          color: #1b2420;
+          border: 1px solid rgba(255,255,255,0.32);
+          background: linear-gradient(145deg, #f1eddf, #d9d1bd);
+          box-shadow:
+            0 calc(5px * var(--s)) calc(8px * var(--s)) rgba(0,0,0,0.62),
+            0 calc(20px * var(--s)) calc(42px * var(--s)) rgba(0,0,0,0.86);
+          font-family: var(--font-body);
+        }
+        .bw-video .bw-photo { flex: 1; min-height: 0; margin-bottom: calc(6px * var(--s)); }
+        .bw-video-btn,
+        .bw-img-btn { all: unset; display: contents; cursor: pointer; }
+        .bw-video-play {
+          position: absolute;
+          top: calc(10px * var(--s));
+          left: calc(10px * var(--s));
+          right: calc(10px * var(--s));
+          bottom: calc(38px * var(--s));
+          z-index: 3;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: rgba(255,255,255,0.88);
+          font-size: calc(28px * var(--s));
+          text-shadow: 0 2px 14px rgba(0,0,0,0.7);
+          pointer-events: none;
+          transition: transform 0.2s ease;
+        }
+        .bw-video-btn:hover .bw-video-play { transform: scale(1.18); }
 
         .bw-photo {
           position: relative;
@@ -702,6 +762,7 @@ export default function BulletinWall() {
           transform: scale(1.015);
         }
         .bw-polaroid .bw-photo { margin-bottom: calc(6px * var(--s)); }
+        .bw-polaroid .bw-photo img { object-fit: contain; }
         .bw-hand { position: relative; z-index: 1; padding: calc(7px * var(--s)) 0; font-weight: 700; letter-spacing: 0.02em; }
         .bw-sticky-kicker { position: relative; z-index: 1; width: 100%; padding-bottom: calc(7px * var(--s)); border-bottom: 1px solid rgba(34,37,30,0.24); font-family: var(--font-mono); font-size: calc(9px * var(--s)); font-weight: 700; letter-spacing: 0.16em; opacity: 0.68; }
         .bw-sticky .bw-hand { flex: 1; padding-top: calc(13px * var(--s)); font-size: calc(15px * var(--s)); line-height: 1.25; }
