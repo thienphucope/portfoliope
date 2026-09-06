@@ -148,7 +148,7 @@ function SceneContent({ compact, onReady, onContextLost, inspecting, onInspect }
       { id: 'magnifier', label: 'Magnifier', node: <Magnifier /> },
       { id: 'stapler', label: 'Stapler', node: <Stapler /> },
       { id: 'scatter', label: 'Pencils & clips', node: <DeskScatter /> },
-      { id: 'clock', label: 'Desk clock', node: <DeskClock /> },
+      { id: 'clock', label: 'Desk clock', node: <DeskClock texture={textures.clock} /> },
     ];
   }, [resources, compact]);
 

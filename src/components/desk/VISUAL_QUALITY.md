@@ -1,5 +1,13 @@
 # Visual quality — desk scene reads soft / hazy ("mờ ảo")
 
+## Modeling pass completed — 2026-09-07
+
+The model repairs and 360-degree checks are recorded in MODELING_TODO.md.
+The five PNG references now inform complete props, including the close-up clock.
+DPR remains [1,2]; camera, lights, fog and exposure were not tuned in this pass.
+The diagnostic notes below describe the earlier investigation. They are not a
+verified claim that the new geometry resolves every cause of wide-shot softness.
+
 Hand-off note. The wide desk shot looks soft and washed, while the **same items
 in inspect mode (`InspectView`, 360° orbit) are razor sharp**. That contrast is
 the main diagnostic clue — use it.

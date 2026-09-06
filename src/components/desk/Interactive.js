@@ -15,13 +15,16 @@ export function Interactive({ id, active, onHover, onSelect, children }) {
 
   useEffect(() => {
     if (!active || !ref.current) return;
-    const saved = [];
+    const saved = [], seen = new Set();
     ref.current.traverse((o) => {
       // MeshBasicMaterial (e.g. the lamp bulb) has no emissive; skip it.
-      if (o.isMesh && o.material?.emissive) {
-        saved.push([o.material, o.material.emissiveIntensity, o.material.emissive.clone()]);
-        o.material.emissive.set(GLOW_COLOR);
-        o.material.emissiveIntensity = GLOW_INTENSITY;
+      if (!o.isMesh) return;
+      for (const material of Array.isArray(o.material) ? o.material : [o.material]) {
+        if (!material?.emissive || seen.has(material)) continue;
+        seen.add(material);
+        saved.push([material, material.emissiveIntensity, material.emissive.clone()]);
+        material.emissive.set(GLOW_COLOR);
+        material.emissiveIntensity = GLOW_INTENSITY;
       }
     });
     invalidate();

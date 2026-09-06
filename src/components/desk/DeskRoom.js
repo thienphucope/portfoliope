@@ -87,9 +87,9 @@ export function DeskFurniture({ woodMaterial, textures }) {
       <Box at={[0, 0.445, 0]} size={[0.53, 0.008, 0.085]} color="#394a3b" />
       <Paper at={[-0.05, 0.46, 0]} width={0.4} depth={0.33} turn={0.25} curl={0.32} color="#d0d6b9" />
     </group>
-    <group position={[0.58, -1.96, -1.31]}>
+    <group position={[0.58, -2.6175, -1.31]}>
       <Book at={[0, 0, 0]} size={[1.04, 0.35, 1.32]} color="#636e51" texture={textures.bookSpines[3]} turn={0.1} />
-      <Book at={[0.07, 0.28, 0]} size={[0.95, 0.19, 1.3]} color="#846b47" texture={textures.bookSpines[4]} turn={-0.03} />
+      <Book at={[0.07, 0.27, 0]} size={[0.95, 0.19, 1.3]} color="#846b47" texture={textures.bookSpines[4]} turn={-0.03} />
     </group>
   </group>;
 }

@@ -3,8 +3,10 @@
 `src/app/page.js` mounts `DeskLanding`. The previous `sections/AboutHero.js`
 and the other components of the previous landing are preserved.
 
-All four images in `public/content` have equal weight in this scene:
+All five images in `public/content` inform this scene:
 
+- `videoframe_141128.png`: the twin-bell clock, spiral calendar, ribbed pen
+  holder, scissors and lamp details in close-up.
 - `videoframe_146758.png`: the full working surface, stationery, paper trays,
   leaning books, calendar and arrangement beside the windows.
 - `videoframe_149620.png`: the articulated lamp, its warm light and the cool
@@ -34,7 +36,8 @@ models are not used as scene assets. There is no character model.
 - `DeskLanding.js` / `DeskLanding.module.css`: HTML navigation, title, loading
   state and WebGL fallback.
 - `Interactive.js`: per-item hover glow and click-to-inspect wrapper.
-- `MODELING_TODO.md`: known modelling defects to fix — read before a modelling pass.
+- `MODELING_TODO.md`: completed modelling fixes, verification and rules for future passes.
+- `paperSupport.js`: sampled contact heights for layered paper.
 - `VISUAL_QUALITY.md`: why the desk shot reads soft/hazy — diagnosis, what was
   tried, and the levers (dpr / contrast / fog / framing).
 

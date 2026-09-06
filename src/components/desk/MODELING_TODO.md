@@ -1,83 +1,63 @@
-# Desk modeling — known issues to fix
+# Desk modeling — completed pass, 2026-09-07
 
-Context: the props were modelled to read correctly from the **single fixed desk
-camera**. Now that each item opens in **inspect mode** (`InspectView` in
-`DeskScene.js`, free 360° orbit), the back sides, undersides and shortcuts are
-visible. The goal of this pass is to make every item a **complete solid that
-holds up from all angles**, not a facade for one viewpoint.
+This pass uses all five reference PNGs in public/content, including the new
+videoframe_141128.png close-up. Unseen backs and undersides follow plausible
+construction for the same period and materials.
 
-Do NOT treat these as done until checked in inspect mode by rotating fully.
+## Completed
 
-Coordinates are the desk world space (tabletop surface at `y = 0`, front edge is
-`+z`). Primitives live in `primitives.js`; each item in `items/<Name>.js`.
+- **Lamp:** parallel links use a shared joint plane and identical offsets at
+  both ends. Two coil springs terminate on the lower joint axles. The head
+  attaches at the shade socket. The shade has a thick rim, inner enamel lining,
+  socket and bulb; the weighted base has a closed underside and power cable.
+- **Books:** size consistently means cover width, total thickness, cover length.
+  Front and back boards connect through a curved spine; the page block has
+  three exposed edges. Standing books rotate the complete book, preserving
+  the binding orientation. Stacked books and floor books have corrected heights.
+- **Magnifier:** a closed, convex glass lens sits inside a stepped metal frame.
+  The ferrule connects the frame to a shaped, capped handle.
+- **Mug:** the hollow cup has a thick lip, interior floor and ceramic handle
+  joined at both ends. The cup rests in a solid saucer; ribs follow the taper.
+- **Clock:** the new reference guides the rounded case, domed hollow bells,
+  carry handle, dial and feet. A glass crystal covers separate solid hands.
+  The back has a winding key, setting knob, screws and a rear support foot.
+- **Calendar:** both boards and the page pack have real binding holes. Rings
+  pass through them, and a bottom strap sets the A-frame spread.
+- **Other props:** hollow pen holder with a bottom and full-length pencils;
+  forged scissor blades, joined grips and pivot; stapler hinge, magazine, anvil
+  and rubber base; radio feet, rear panel, controls and fasteners; bent wire clips.
+- **Casebook and paper:** the open book has separate covers, a binding and
+  filled curved page blocks. Attached notes conform to the page surface.
+  Loose paper has closed thin geometry and an unprinted reverse. Sheet heights
+  sample the previously placed sheets instead of using arbitrary raised origins.
+- **Placement:** freestanding props contact y = 0. Photos rest on the sheets
+  underneath, and the stapler sits in the clear space beside the mug.
 
----
+Paper now uses separate front/back materials. Interactive supports material
+arrays and restores shared materials once, keeping hover functional.
 
-## 1. Desk lamp — arms twisted, spring detached
-File: `items/DeskLamp.js`
+## Verification
 
-- The two side rods of each arm segment (the `[-0.073, 0.073].map(offset => …)`
-  pair, plus the thinner center rods) are **not parallel** — they read as
-  twisted/misaligned between the base→elbow and elbow→head segments.
-- The coil **spring** (`spring` = a fixed `CatmullRomCurve3` helix from
-  `(-2.97, 0.72, -0.83)` upward) is **floating**, not anchored to the arm
-  joints.
+- ESLint passed for src/components/desk.
+- 90 browser renders: 15 review subjects, each from four sides, above and below,
+  using the same light rig as Inspect. No non-finite vertex coordinates.
+- Bounds checks put freestanding model minima at y = 0 within 0.000001 units.
+  Individual sheets can sit above zero when supported by other sheets.
+- Actual desk interaction checked for clock, lamp, calendar, organizer, mug,
+  magnifier, pen cup, scissors, radio, stapler, casebook, pencils/clips and a
+  clipping: select, full 360-degree drag, underside, return to desk.
+- Visual captures are in .devlogs/model-review (local review output). The
+  temporary /model-review route is removed after verification.
 
-Target: both arm rails genuinely parallel on each segment; the spring anchored
-between the two lower-arm joints (or wrapped around the lower rail), physically
-connected at both ends.
+The renderer, lighting, fog, exposure and desk camera retain the previous
+baseline. Any later work on wide-shot softness belongs to VISUAL_QUALITY.md.
 
-## 2. Books — covers look wrong, no real spine
-File: `primitives.js` → `Book` (used by `items/Organizer.js` and the floor books
-in `DeskRoom.js` `DeskFurniture`).
+## Rules for future model changes
 
-- Current build = page block + a top plate + a bottom plate + one thin side box,
-  with the cover texture laid on top. It reads like a sandwich, not a book.
+Coordinates are desk world space: tabletop y = 0, front edge +z.
+Primitives live in primitives.js; each item is in items/<Name>.js.
+paperSupport.js holds the sheet contact sampling, and ScissorShape.js is shared
+by the loose scissors and the pair in the pen holder.
 
-Target: a proper book = the page block wrapped by a **front cover and back
-cover** on its two large faces, joined by a **spine** slab along the binding
-edge. Cover texture on the front face; page edges on the other three sides.
-
-## 3. Magnifier — no actual lens glass
-File: `items/Magnifier.js`
-
-- The lens is a flat `circleGeometry` at `opacity 0.14` inside the ring — nearly
-  invisible, doesn't read as glass.
-
-Target: a real **glass lens** filling the ring frame — a slightly domed /
-thicker transparent disc with a glassy material (visible specular highlight,
-higher opacity, ideally a hint of refraction), seated in the frame.
-
-## 4. Mug — handle only floats outside the body
-File: `items/Mug.js`
-
-- The handle is a `Ring` (torus) at `[0.27, 0.31, 0]` sitting **outside** the
-  wall, not joined to the mug body. From other angles it reads as a detached
-  loop.
-
-Target: a handle that **attaches to the mug wall at top and bottom** (C/D
-shape merging into the body), correct from every angle.
-
-## 6. Calendar — legs not attached to the spiral binding
-File: `items/Calendar.js`
-
-- The two tilted boards (the A-frame "legs", front `+0.22` / back `-0.22`) and
-  the 8 spiral binding rings (row at `y ≈ 0.808`) are **separate** — the boards
-  float relative to the coil instead of being bound by it.
-
-Target: the two boards meet at the top where the spiral rings **thread through
-both**, physically joining them into one bound calendar.
-
-## 7. Floating items
-Several items hover above the tabletop instead of resting on it — obvious once
-you orbit in inspect mode. Audit every item so its lowest point sits on the
-surface (`y = 0`); no gap, no clipping into the desk. Check especially the props
-placed with a raised group origin (e.g. `Radio`, `DeskClock`, `Mug`,
-`PaperClutter` sheets).
-
----
-
-## General
-The overarching fix is #7's spirit applied everywhere: stop modelling for one
-camera. Each prop should be closed geometry, correct on the back and underside,
-and physically connected where parts meet (joints, bindings, handles).
+Always check the rear, underside, physical joints and support contacts in
+Inspect. A model is not finished based only on the fixed desk view.

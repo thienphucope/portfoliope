@@ -251,8 +251,28 @@ export function makeDeskTextures() {
     writing(ctx, rng, 25, 229, 200, 1, 8, '#945537');
   }, 260);
 
+  textures.clock = canvasTexture(768, 768, (ctx, w, h, rng) => {
+    paper(ctx, w, h, rng, '#d3ceb5');
+    ctx.translate(w / 2, h / 2);
+    ctx.strokeStyle = '#3a4942'; ctx.fillStyle = '#34443d';
+    for (let i = 0; i < 60; i++) {
+      const a = i / 60 * Math.PI * 2;
+      ctx.save(); ctx.rotate(a); ctx.lineWidth = i % 5 === 0 ? 5 : 2;
+      ctx.beginPath(); ctx.moveTo(0, -337); ctx.lineTo(0, i % 5 === 0 ? -311 : -325); ctx.stroke(); ctx.restore();
+    }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = 'bold 76px Georgia';
+    for (let n = 1; n <= 12; n++) {
+      const a = n / 12 * Math.PI * 2;
+      ctx.save(); ctx.translate(Math.sin(a) * 269, -Math.cos(a) * 269); ctx.rotate((rng() - 0.5) * 0.13);
+      ctx.fillText(String(n), 0, 0); ctx.restore();
+    }
+    ctx.font = '16px Georgia'; ctx.fillStyle = '#75806a'; ctx.fillText('LONDON', 0, -117);
+    ctx.font = '11px Georgia'; ctx.fillText('MECHANICAL · 8 DAY', 0, 131);
+  }, 290);
+
   textures.calendar = canvasTexture(384, 448, (ctx, w, h, rng) => {
-    paper(ctx, w, h, rng, '#d5d4bb'); headline(ctx, 'SEPTEMBER', 22, 52, 43); headline(ctx, '2026', 275, 86, 27, '#a55940');
+    paper(ctx, w, h, rng, '#d5d4bb'); headline(ctx, '11', 22, 52, 47); headline(ctx, 'NOV', 253, 66, 43);
     ctx.strokeStyle = '#71817a'; ctx.lineWidth = 2;
     for (let col = 0; col <= 7; col++) { ctx.beginPath(); ctx.moveTo(18 + col * 49, 116); ctx.lineTo(18 + col * 49, 359); ctx.stroke(); }
     for (let row = 0; row <= 5; row++) { ctx.beginPath(); ctx.moveTo(18, 116 + row * 48); ctx.lineTo(361, 116 + row * 48); ctx.stroke(); }
