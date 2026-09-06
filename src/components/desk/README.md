@@ -36,10 +36,7 @@ models are not used as scene assets. There is no character model.
 - `DeskLanding.js` / `DeskLanding.module.css`: HTML navigation, title, loading
   state and WebGL fallback.
 - `Interactive.js`: per-item hover glow and click-to-inspect wrapper.
-- `MODELING_TODO.md`: completed modelling fixes, verification and rules for future passes.
 - `paperSupport.js`: sampled contact heights for layered paper.
-- `VISUAL_QUALITY.md`: why the desk shot reads soft/hazy — diagnosis, what was
-  tried, and the levers (dpr / contrast / fog / framing).
 
 World units: the tabletop is at y = 0; its front edge is positive z. The camera
 stays fixed and frames the desk differently for portrait screens. Rendering is
