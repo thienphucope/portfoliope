@@ -20,7 +20,7 @@ function CameraRig({ compact }) {
       target.set(0, 0.45, -0.3);
       const direction = new THREE.Vector3(0, 0.48, 0.88).normalize();
       const horizontalHalfFov = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * aspect;
-      const distance = 4.2 / horizontalHalfFov + 1.8;
+      const distance = 3.3 / horizontalHalfFov + 1.4;
       camera.position.copy(target).addScaledVector(direction, distance);
     } else if (aspect < 1.5) {
       camera.position.sub(target).multiplyScalar(1.5 / aspect).add(target);
@@ -90,7 +90,7 @@ function SceneContent({ compact, onReady, onContextLost }) {
 
   return <>
     <color attach="background" args={['#344c46']} />
-    <fog attach="fog" args={['#344c46', 17, 38]} />
+    <fog attach="fog" args={['#344c46', 24, 42]} />
     <CameraRig compact={compact} />
     <Lighting compact={compact} />
     {resources && <group>
@@ -119,10 +119,10 @@ export default function DeskScene({ onReady, onContextLost }) {
   }, []);
   return <Canvas
     shadows={THREE.PCFSoftShadowMap}
-    dpr={compact ? [1, 1.2] : [1, 1.6]}
+    dpr={compact ? [1, 2] : [1, 2]}
     frameloop="demand"
     camera={{ position: [0.1, 3.8, 6.95], fov: 46, near: 0.1, far: 60 }}
-    gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 0.95 }}
+    gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.0 }}
     onCreated={({ gl }) => {
       gl.domElement.setAttribute('aria-label', 'A three-dimensional detective’s desk beside rain-streaked Venetian blinds, covered in notes, books and evidence.');
       gl.domElement.setAttribute('role', 'img');

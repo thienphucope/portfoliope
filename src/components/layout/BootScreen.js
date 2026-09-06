@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 const MINIMUM_VISIBLE_MS = 650;
 const MAXIMUM_WAIT_MS = 2400;
 const EXIT_MS = 480;
 
 export default function BootScreen() {
+  const pathname = usePathname();
   const [phase, setPhase] = useState('visible');
 
   useEffect(() => {
@@ -42,7 +44,8 @@ export default function BootScreen() {
     };
   }, []);
 
-  if (phase === 'gone') return null;
+  // The home page has its own "Opening the study" loader; skip the site boot there.
+  if (phase === 'gone' || pathname === '/') return null;
 
   return (
     <div
