@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { makeDeskTextures, disposeDeskTextures } from './deskTextures';
-import { Casebook, PaperClutter, DeskLamp, Mug, Stationery, Organizer, Calendar, Radio, DeskClock } from './DeskObjects';
+import { OrbitControls, Center, Bounds } from '@react-three/drei';
+import { Casebook, paperItems, DeskLamp, Mug, PenCup, Scissors, Magnifier, Stapler, DeskScatter, Organizer, Calendar, Radio, DeskClock } from './items';
 import { DeskFurniture, Room } from './DeskRoom';
+import { Interactive } from './Interactive';
 
 function CameraRig({ compact }) {
   const { camera, size, invalidate } = useThree();
@@ -40,8 +42,8 @@ function Lighting({ compact }) {
     const object = new THREE.Object3D(); object.position.set(-1.6, -0.3, 1.1); return object;
   }, []);
   return <>
-    <ambientLight color="#93b8b9" intensity={0.4} />
-    <hemisphereLight args={['#bbd8d9', '#3c514a', 1.2]} />
+    <ambientLight color="#93b8b9" intensity={0.22} />
+    <hemisphereLight args={['#bbd8d9', '#3c514a', 0.5]} />
     <primitive object={keyTarget} />
     <primitive object={sunTarget} />
     <spotLight position={[-1.91, 2.18, -0.28]} target={keyTarget} color="#ffd29a"
@@ -58,10 +60,48 @@ function Lighting({ compact }) {
   </>;
 }
 
-function SceneContent({ compact, onReady, onContextLost }) {
+// A single item on its own: recentred, auto-framed and free to orbit 360°.
+function InspectView({ children }) {
+  const { invalidate } = useThree();
+  useEffect(() => {
+    invalidate();
+    const frame = requestAnimationFrame(() => invalidate());
+    return () => cancelAnimationFrame(frame);
+  }, [invalidate]);
+  return <>
+    <ambientLight intensity={0.7} />
+    <hemisphereLight args={['#d4e4e0', '#3c4a44', 1.0]} />
+    <directionalLight position={[4, 6, 5]} intensity={2.2} />
+    <directionalLight position={[-5, 3, -4]} intensity={0.9} color="#a9d2dc" />
+    <OrbitControls makeDefault enablePan={false} enableDamping={false} minDistance={0.6} maxDistance={40} />
+    <Bounds fit observe margin={1.2}>
+      <Center>{children}</Center>
+    </Bounds>
+  </>;
+}
+
+function SceneContent({ compact, onReady, onContextLost, inspecting, onInspect }) {
   const [resources, setResources] = useState(null);
+  const [hoveredId, setHoveredId] = useState(null);
   const { invalidate, gl } = useThree();
   const ready = useRef(false);
+  const clearRef = useRef();
+
+  // Single source of truth for which item is lit. onPointerMove re-asserts it,
+  // so moving onto another item always corrects a hover that lost its out event.
+  const handleHover = useCallback((id, leaving) => {
+    if (leaving) {
+      clearRef.current = requestAnimationFrame(() => setHoveredId((cur) => (cur === id ? null : cur)));
+    } else {
+      cancelAnimationFrame(clearRef.current);
+      setHoveredId(id);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.body.style.cursor = hoveredId && !inspecting ? 'pointer' : 'auto';
+    return () => { document.body.style.cursor = 'auto'; };
+  }, [hoveredId, inspecting]);
 
   useEffect(() => {
     const canvas = gl.domElement;
@@ -88,28 +128,50 @@ function SceneContent({ compact, onReady, onContextLost }) {
     return () => cancelAnimationFrame(frame);
   }, [resources, invalidate, onReady]);
 
+  // Repaint on every desk <-> inspect switch (frameloop is on demand), and drop
+  // any hover so an item doesn't come back from inspection already glowing.
+  useEffect(() => { setHoveredId(null); invalidate(); }, [inspecting, invalidate]);
+
+  const items = useMemo(() => {
+    if (!resources) return [];
+    const { textures } = resources;
+    return [
+      { id: 'casebook', label: 'Casebook', node: <Casebook textures={textures} /> },
+      ...paperItems(textures, compact),
+      { id: 'lamp', label: 'Desk lamp', node: <DeskLamp /> },
+      { id: 'organizer', label: 'Paper tray', node: <Organizer {...resources} /> },
+      { id: 'calendar', label: 'Calendar', node: <Calendar texture={textures.calendar} /> },
+      { id: 'radio', label: 'Radio', node: <Radio /> },
+      { id: 'mug', label: 'Mug', node: <Mug /> },
+      { id: 'pencup', label: 'Pen cup', node: <PenCup /> },
+      { id: 'scissors', label: 'Scissors', node: <Scissors /> },
+      { id: 'magnifier', label: 'Magnifier', node: <Magnifier /> },
+      { id: 'stapler', label: 'Stapler', node: <Stapler /> },
+      { id: 'scatter', label: 'Pencils & clips', node: <DeskScatter /> },
+      { id: 'clock', label: 'Desk clock', node: <DeskClock /> },
+    ];
+  }, [resources, compact]);
+
+  const inspected = inspecting ? items.find((item) => item.id === inspecting) : null;
+
   return <>
-    <color attach="background" args={['#344c46']} />
-    <fog attach="fog" args={['#344c46', 24, 42]} />
-    <CameraRig compact={compact} />
-    <Lighting compact={compact} />
-    {resources && <group>
-      <Room {...resources} compact={compact} />
-      <DeskFurniture {...resources} />
-      <PaperClutter textures={resources.textures} compact={compact} />
-      <Casebook textures={resources.textures} />
-      <DeskLamp />
-      <Organizer {...resources} />
-      <Calendar texture={resources.textures.calendar} />
-      <Radio />
-      <Mug />
-      <Stationery />
-      <DeskClock />
-    </group>}
+    <color attach="background" args={[inspecting ? '#26332f' : '#344c46']} />
+    {!inspecting && <fog attach="fog" args={['#344c46', 24, 42]} />}
+    {inspected
+      ? <InspectView key={inspected.id}>{inspected.node}</InspectView>
+      : <>
+          <CameraRig compact={compact} />
+          <Lighting compact={compact} />
+          {resources && <group>
+            <Room {...resources} compact={compact} />
+            <DeskFurniture {...resources} />
+            {items.map(({ id, label, node }) => <Interactive key={id} id={id} active={hoveredId === id} onHover={handleHover} onSelect={() => onInspect({ id, label })}>{node}</Interactive>)}
+          </group>}
+        </>}
   </>;
 }
 
-export default function DeskScene({ onReady, onContextLost }) {
+export default function DeskScene({ onReady, onContextLost, inspecting, onInspect }) {
   const [compact, setCompact] = useState(false);
   useEffect(() => {
     const query = window.matchMedia('(max-width: 767px)');
@@ -129,6 +191,6 @@ export default function DeskScene({ onReady, onContextLost }) {
     }}
     onContextMenu={(event) => event.preventDefault()}
   >
-    <SceneContent compact={compact} onReady={onReady} onContextLost={onContextLost} />
+    <SceneContent compact={compact} onReady={onReady} onContextLost={onContextLost} inspecting={inspecting} onInspect={onInspect} />
   </Canvas>;
 }

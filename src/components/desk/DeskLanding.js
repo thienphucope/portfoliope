@@ -30,6 +30,7 @@ export default function DeskLanding() {
   const [ready, setReady] = useState(false);
   const [contextLost, setContextLost] = useState(false);
   const [supports3D, setSupports3D] = useState(null);
+  const [inspecting, setInspecting] = useState(null);
   const router = useRouter();
   const handleReady = useCallback(() => setReady(true), []);
   const handleContextLost = useCallback((event) => { event.preventDefault(); setContextLost(true); }, []);
@@ -51,7 +52,7 @@ export default function DeskLanding() {
       <SceneBoundary onFailure={handleReady}>
         {supports3D === false ? <UnavailableScene /> : contextLost ? <div className={styles.unavailable} role="status">
           <p>The scene was interrupted.</p><button type="button" onClick={() => { setReady(false); setContextLost(false); }}>Return to the desk</button>
-        </div> : supports3D ? <DeskScene onReady={handleReady} onContextLost={handleContextLost} /> : null}
+        </div> : supports3D ? <DeskScene onReady={handleReady} onContextLost={handleContextLost} inspecting={inspecting?.id} onInspect={setInspecting} /> : null}
       </SceneBoundary>
     </div>
     {!ready && <div className={styles.loading} role="status"><span />Opening the study</div>}
@@ -62,7 +63,7 @@ export default function DeskLanding() {
         <MusicHeader />
       </div>
     </header>
-    <div className={styles.foot}>
+    {!inspecting && <div className={styles.foot}>
       <div className={styles.identity}>
         <p className={styles.eyebrow}>A desk full of loose ends</p>
         <h1 id="desk-title">Ope Watson<span>.</span></h1>
@@ -73,7 +74,14 @@ export default function DeskLanding() {
         <Link href="/casearchive">Case archives</Link>
         <Link href="/gallery">Gallery</Link>
       </nav>
-    </div>
+    </div>}
+    {inspecting && <div className={styles.inspect}>
+      <button type="button" className={styles.inspectBack} onClick={() => setInspecting(null)}>
+        <span aria-hidden="true">←</span> Back to desk
+      </button>
+      <p className={styles.inspectName}>{inspecting.label}</p>
+      <p className={styles.inspectHint}>Drag to rotate · scroll to zoom</p>
+    </div>}
     <noscript><p className={styles.unavailable}>Explore Ope Watson’s notes through the case archives.</p></noscript>
   </section>;
 }

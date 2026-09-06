@@ -22,10 +22,21 @@ models are not used as scene assets. There is no character model.
 
 - `DeskScene.js`: renderer, camera framing, lighting and resource lifetime.
 - `DeskRoom.js`: windows, room, board and furniture.
-- `DeskObjects.js`: paper geometry, notebook and individual desk objects.
+- `primitives.js`: shared building blocks (Box, Rod, Disc, Ring, Paper, Tape,
+  Pin, Polaroid, Pencil, Book) reused by the room and the items.
+- `items/`: one file per desk object (Casebook, DeskLamp, Mug, PenCup, Scissors,
+  Magnifier, Stapler, DeskScatter, Organizer, Calendar, Radio, DeskClock),
+  re-exported from `items/index.js`. Split out so each item can grow its own
+  interaction later. `PaperClutter.js` is the exception: it exports `paperItems`,
+  a function returning one interactive item per sheet/photo on the desk.
+  DeskScatter lumps the loose pencils and paper clips that aren't worth files.
 - `deskTextures.js`: paper, wood, map, photo and stationery textures.
 - `DeskLanding.js` / `DeskLanding.module.css`: HTML navigation, title, loading
   state and WebGL fallback.
+- `Interactive.js`: per-item hover glow and click-to-inspect wrapper.
+- `MODELING_TODO.md`: known modelling defects to fix — read before a modelling pass.
+- `VISUAL_QUALITY.md`: why the desk shot reads soft/hazy — diagnosis, what was
+  tried, and the levers (dpr / contrast / fog / framing).
 
 World units: the tabletop is at y = 0; its front edge is positive z. The camera
 stays fixed and frames the desk differently for portrait screens. Rendering is

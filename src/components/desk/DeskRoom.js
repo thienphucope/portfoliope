@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import * as THREE from 'three';
-import { Box, Rod, Disc, Paper, Book } from './DeskObjects';
+import { Box, Rod, Disc, Paper, Book } from './primitives';
 
 const BOARD_PINS = [[-0.91, 0.49], [-0.35, 0.04], [0.25, 0.39], [0.83, -0.3], [-0.55, -0.42]];
 
