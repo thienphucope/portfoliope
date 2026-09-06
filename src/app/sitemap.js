@@ -9,7 +9,6 @@ export default async function sitemap() {
   const staticPages = [
     { route: '', priority: 1.0, changeFrequency: 'daily' },
     { route: '/casearchive', priority: 0.9, changeFrequency: 'daily' },
-    { route: '/gallery', priority: 0.7, changeFrequency: 'monthly' },
     { route: '/privacy', priority: 0.3, changeFrequency: 'monthly' },
     { route: '/terms', priority: 0.3, changeFrequency: 'monthly' },
   ].map((item) => ({

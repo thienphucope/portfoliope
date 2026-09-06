@@ -72,7 +72,6 @@ export default function DeskLanding() {
       <nav className={styles.nav} aria-label="Main navigation">
         <Link href="/chat">Chat</Link>
         <Link href="/casearchive">Case archives</Link>
-        <Link href="/gallery">Gallery</Link>
       </nav>
     </div>}
     {inspecting && <div className={styles.inspect}>

@@ -15,7 +15,6 @@ if (typeof window !== 'undefined') gsap.registerPlugin(ScrollTrigger);
 const TOP_LINKS = [
   { label: 'chat', href: '/chat' },
   { label: 'casearchives', href: '/casearchive' },
-  { label: 'gallery', href: '/gallery' },
 ];
 
 const DESKTOP_DIALOGUE = [
