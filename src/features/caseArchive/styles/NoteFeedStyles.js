@@ -4,7 +4,7 @@ export default function NoteFeedStyles() {
       @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap');
 
       :root {
-        --nf-bg: #000;
+        --nf-bg: #463527; /* desk-wood walnut, matches the desk surface */
         --nf-txt: #e0e0e0;
         --nf-txt-dim: #aaaaaa;
         --nf-border: rgba(255,255,255,0.08);
@@ -447,23 +447,21 @@ export default function NoteFeedStyles() {
         page-break-inside: avoid;
         margin: 0 0 clamp(14px, 2.4vw, 26px);
         padding: clamp(10px, 1.2vw, 14px) clamp(10px, 1.2vw, 14px) clamp(16px, 1.8vw, 24px);
-        border: 1px solid rgba(243, 208, 152, 0.24);
+        border: 1px solid rgba(74, 58, 30, 0.28);
         border-radius: 2px;
-        background:
-          linear-gradient(180deg, rgba(243, 208, 152, 0.07), rgba(243, 208, 152, 0.02)),
-          rgba(9, 16, 18, 0.82);
+        background: linear-gradient(180deg, #ece6d0, #ded7bb);
         box-shadow:
-          inset 0 1px 0 rgba(255, 255, 255, 0.05),
-          0 18px 34px -24px rgba(0, 0, 0, 0.95);
-        color: var(--nf-txt);
+          inset 0 1px 0 rgba(255, 255, 255, 0.6),
+          0 18px 34px -24px rgba(0, 0, 0, 0.65);
+        color: #2b2417;
         transition: transform 0.24s ease, box-shadow 0.24s ease;
       }
 
       .nf-case:hover {
-        border-color: rgba(243, 208, 152, 0.48);
+        border-color: rgba(120, 92, 44, 0.55);
         box-shadow:
-          inset 0 1px 0 rgba(255, 255, 255, 0.08),
-          0 24px 44px -24px rgba(0, 0, 0, 1);
+          inset 0 1px 0 rgba(255, 255, 255, 0.75),
+          0 24px 44px -22px rgba(0, 0, 0, 0.85);
         transform: translateY(-3px);
       }
 
@@ -479,11 +477,11 @@ export default function NoteFeedStyles() {
         width: 100%;
         height: auto;
         display: block;
-        border: 1px solid rgba(243, 208, 152, 0.18);
-        background: rgba(255, 255, 255, 0.04);
-        opacity: 0.82;
+        border: 1px solid rgba(74, 58, 30, 0.25);
+        background: rgba(0, 0, 0, 0.04);
+        opacity: 1;
         transition: opacity 0.3s, filter 0.3s;
-        filter: grayscale(28%);
+        filter: grayscale(8%);
       }
 
       .nf-case-img:hover img,
@@ -503,7 +501,7 @@ export default function NoteFeedStyles() {
       .nf-case-date {
         font-family: var(--font-mono);
         font-size: var(--ui-text-action);
-        color: var(--theme);
+        color: #8a6a2c;
         letter-spacing: 1px;
       }
 
@@ -511,8 +509,8 @@ export default function NoteFeedStyles() {
         font-family: var(--font-mono);
         font-size: var(--ui-text-action);
         letter-spacing: 1px;
-        color: rgba(224,224,224,0.72);
-        border: 1px solid rgba(243, 208, 152, 0.2);
+        color: rgba(43, 36, 22, 0.72);
+        border: 1px solid rgba(74, 58, 30, 0.3);
         padding: 2px 7px;
       }
 
@@ -520,7 +518,7 @@ export default function NoteFeedStyles() {
         font-family: var(--font-mono);
         font-size: var(--ui-text-action);
         letter-spacing: 1px;
-        color: rgba(224,224,224,0.64);
+        color: rgba(43, 36, 22, 0.58);
       }
 
       .nf-case-title {
@@ -528,18 +526,18 @@ export default function NoteFeedStyles() {
         font-size: clamp(1.25rem, 2.1vw, 1.7rem);
         font-weight: 700;
         margin: 0 0 8px 0;
-        color: var(--nf-txt);
+        color: #241d10;
         cursor: pointer;
         transition: color 0.2s;
         line-height: 1.18;
       }
-      .nf-case-title:hover { color: var(--theme); }
+      .nf-case-title:hover { color: #7a5a20; }
 
       .nf-case-excerpt,
       .nf-feed .nf-case-excerpt.markdown-content {
         font-size: var(--ui-text-body);
         line-height: 1.55;
-        color: rgba(224,224,224,0.78);
+        color: rgba(43, 36, 22, 0.82);
         margin-bottom: 12px;
         text-align: left;
       }
@@ -557,31 +555,18 @@ export default function NoteFeedStyles() {
         letter-spacing: var(--ui-letter-action);
         line-height: 1;
         text-transform: uppercase;
-        color: var(--theme);
+        color: #8a6a2c;
         cursor: pointer;
         padding: 0;
         transition: color 0.2s;
       }
       .nf-case-read:hover {
-        color: #fff;
-        text-shadow: 0 0 10px rgba(243, 208, 152, 0.42);
+        color: #4a3714;
       }
 
       @media (min-width: 640px) {
         .nf-case-list.is-masonry {
           column-count: 2;
-        }
-      }
-
-      @media (min-width: 1080px) {
-        .nf-case-list.is-masonry {
-          column-count: 3;
-        }
-      }
-
-      @media (min-width: 1500px) {
-        .nf-case-list.is-masonry {
-          column-count: 4;
         }
       }
 
