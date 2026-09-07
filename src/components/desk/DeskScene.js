@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
+import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { makeDeskTextures, disposeDeskTextures } from './deskTextures';
 import { OrbitControls, Center, Bounds } from '@react-three/drei';
@@ -11,6 +11,15 @@ import { Interactive } from './Interactive';
 
 function CameraRig({ compact }) {
   const { camera, size, invalidate } = useThree();
+  const basePos = useRef(new THREE.Vector3());
+  const baseTarget = useRef(new THREE.Vector3());
+  const mouse = useRef({ x: 0, y: 0 });
+  const reduced = useRef(false);
+
+  useEffect(() => {
+    reduced.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }, []);
+
   useEffect(() => {
     const aspect = size.width / size.height;
     // A fixed viewpoint closer to the desk and lower, as seen from the chair.
@@ -27,10 +36,32 @@ function CameraRig({ compact }) {
     } else if (aspect < 1.5) {
       camera.position.sub(target).multiplyScalar(1.5 / aspect).add(target);
     }
+    basePos.current.copy(camera.position);
+    baseTarget.current.copy(target);
     camera.lookAt(target);
     camera.updateProjectionMatrix();
     invalidate();
   }, [camera, compact, invalidate, size]);
+
+  // Mouse-look: the pointer eases the view toward whichever edge the cursor
+  // drifts to (cubic, so the centre stays calm and only the edges lean), clamped
+  // by the pointer's own -1..1 range. Once settled, park the on-demand loop until
+  // the next pointer move re-triggers a frame. Held fully still for reduced-motion.
+  useFrame(({ pointer }) => {
+    if (reduced.current) return;
+    const tx = pointer.x * Math.abs(pointer.x) * 0.6;
+    const ty = pointer.y * Math.abs(pointer.y) * 0.34;
+    mouse.current.x += (tx - mouse.current.x) * 0.05;
+    mouse.current.y += (ty - mouse.current.y) * 0.05;
+    camera.position.set(
+      basePos.current.x + mouse.current.x,
+      basePos.current.y + mouse.current.y,
+      basePos.current.z,
+    );
+    camera.lookAt(baseTarget.current.x, baseTarget.current.y, baseTarget.current.z);
+    if (Math.abs(tx - mouse.current.x) + Math.abs(ty - mouse.current.y) > 0.0002) invalidate();
+  });
+
   return null;
 }
 
@@ -155,8 +186,8 @@ function SceneContent({ compact, onReady, onContextLost, inspecting, onInspect }
   const inspected = inspecting ? items.find((item) => item.id === inspecting) : null;
 
   return <>
-    <color attach="background" args={[inspecting ? '#26332f' : '#344c46']} />
-    {!inspecting && <fog attach="fog" args={['#344c46', 24, 42]} />}
+    <color attach="background" args={[inspecting ? '#26332f' : '#1e2e2a']} />
+    {!inspecting && <fog attach="fog" args={['#1e2e2a', 24, 42]} />}
     {inspected
       ? <InspectView key={inspected.id}>{inspected.node}</InspectView>
       : <>

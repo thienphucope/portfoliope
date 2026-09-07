@@ -10,7 +10,7 @@ export default function ChatDeskStyles() {
         height: 100dvh;
         overflow: hidden;
         color: #f4e8c1;
-        background: #000;
+        background: #1e2e2a;
         font-family: 'Special Elite', 'Courier New', monospace;
       }
 

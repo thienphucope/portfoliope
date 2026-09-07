@@ -4,7 +4,7 @@ export default function NoteFeedStyles() {
       @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap');
 
       :root {
-        --nf-bg: #463527; /* desk-wood walnut, matches the desk surface */
+        --nf-bg: #1e2e2a; /* teal, matches the landing desk */
         --nf-txt: #e0e0e0;
         --nf-txt-dim: #aaaaaa;
         --nf-border: rgba(255,255,255,0.08);

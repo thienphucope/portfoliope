@@ -51,15 +51,10 @@ export default function BootScreen() {
     <div
       className={`site-boot${phase === 'leaving' ? ' is-leaving' : ''}`}
       role="status"
-      aria-label="Opening Ope Watson case file"
+      aria-label="Opening the study"
     >
-      <span className="site-boot__tube" aria-hidden />
-      <div className="site-boot__copy">
-        <span className="site-boot__case">CASE FILE / 0510</span>
-        <strong>OPE WATSON</strong>
-        <span className="site-boot__progress" aria-hidden><i /></span>
-        <small>developing evidence</small>
-      </div>
+      <span className="site-boot__dot" aria-hidden />
+      Opening the study
     </div>
   );
 }
