@@ -5,7 +5,7 @@ import { Canvas, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { makeDeskTextures, disposeDeskTextures } from './deskTextures';
 import { OrbitControls, Center, Bounds } from '@react-three/drei';
-import { Casebook, paperItems, DeskLamp, Mug, PenCup, Scissors, Magnifier, Stapler, DeskScatter, Organizer, Calendar, Radio, DeskClock } from './items';
+import { Casebook, paperItems, DeskLamp, Mug, PenCup, Scissors, Magnifier, Stapler, scatterItems, Organizer, Calendar, Radio, DeskClock } from './items';
 import { DeskFurniture, Room } from './DeskRoom';
 import { Interactive } from './Interactive';
 
@@ -147,7 +147,7 @@ function SceneContent({ compact, onReady, onContextLost, inspecting, onInspect }
       { id: 'scissors', label: 'Scissors', node: <Scissors /> },
       { id: 'magnifier', label: 'Magnifier', node: <Magnifier /> },
       { id: 'stapler', label: 'Stapler', node: <Stapler /> },
-      { id: 'scatter', label: 'Pencils & clips', node: <DeskScatter /> },
+      ...scatterItems(),
       { id: 'clock', label: 'Desk clock', node: <DeskClock texture={textures.clock} /> },
     ];
   }, [resources, compact]);

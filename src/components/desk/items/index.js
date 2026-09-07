@@ -6,7 +6,7 @@ export { PenCup } from './PenCup';
 export { Scissors } from './Scissors';
 export { Magnifier } from './Magnifier';
 export { Stapler } from './Stapler';
-export { DeskScatter } from './DeskScatter';
+export { scatterItems } from './DeskScatter';
 export { Organizer } from './Organizer';
 export { Calendar } from './Calendar';
 export { Radio } from './Radio';
