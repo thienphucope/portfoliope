@@ -1,0 +1,10 @@
+.editor { width: 100%; }
+.editor :global(.title-block) { position: relative; width: 100%; margin-bottom: 24px; padding: 0 2px 24px; overflow: visible; border-bottom: 1px solid var(--archive-line); }
+.editor :global(.title-block .block-content) { width: 100%; overflow: visible; text-align: left; }
+.editor :global(.title-block .note-title-heading) { display: inline-block; width: 100%; margin: 0; padding: 0; white-space: nowrap; overflow: visible; color: var(--archive-ink); font-family: var(--archive-font-heading); font-weight: 400; line-height: 1.15; letter-spacing: -0.04em; text-align: left; }
+.editor :global(.block-content) { padding: 2px 0; }
+.editor :global(.block-reading-highlight) { padding: 4px 8px; border-radius: 0; background: var(--archive-reading) !important; color: var(--archive-ink) !important; box-shadow: none; transition: background var(--archive-motion), color var(--archive-motion); }
+.editor :global(.block-reading-highlight) :is(h1, h2, h3, h4, h5, h6, p, span, li, a, code, pre, div, table, thead, tbody, tfoot, tr, th, td, em, strong, small, sup, sub) { color: var(--archive-ink) !important; }
+.editor :global(.block-reading-highlight) :is(:global(.table-container), :global(.code-block), pre, th, td) { background: transparent !important; border-color: var(--archive-line) !important; }
+.editor :global(.block-reading-highlight) :is(a, :global(.internal-link)) { border-bottom-color: var(--archive-ink) !important; }
+@media (max-width: 639px) { .editor :global(.title-block) { margin-bottom: 20px; padding-bottom: 20px; } }

@@ -1,0 +1,111 @@
+/* Feature-owned tokens. Existing renderer variables inherit these values only
+   inside an archive surface; other routes retain their own theme. */
+.theme,
+:global(body):has(.theme) :global(.site-boot) {
+  --archive-backdrop: #b5b0ac;
+  --archive-paper: #e6dfd6;
+  --archive-ink: #2c2621;
+  --archive-muted: #655c54;
+  --archive-line: #80766c;
+  --archive-line-soft: #c9bfb4;
+  --archive-surface: #d9d0c5;
+  --archive-hover: #ded5ca;
+  --archive-accent: #824d34;
+  --archive-danger: #9e352d;
+  --archive-reading: #c4b49c;
+  --archive-code-string: #426047;
+  --archive-code-symbol: #674476;
+  --archive-shadow: #2c26211a;
+  --archive-font-heading: 'EB Garamond', Georgia, serif;
+  --archive-font-ui: 'Roboto Variable', Arial, sans-serif;
+  --archive-font-code: 'Roboto Mono Variable', monospace;
+  --archive-gutter: clamp(20px, 2.5vw, 40px);
+  --archive-outer-space: clamp(20px, 5vw, 80px);
+  --archive-content-width: 1440px;
+  --archive-type-body: 1rem;
+  --archive-type-label: 0.875rem;
+  --archive-motion: 180ms ease;
+
+  --background: var(--archive-paper);
+  --foreground: var(--archive-ink);
+  --theme: var(--archive-ink);
+  --bg: var(--archive-paper);
+  --txt: var(--archive-ink);
+  --accent: var(--archive-accent);
+  --border: var(--archive-line-soft);
+  --code-bg: var(--archive-surface);
+  --void: var(--archive-paper);
+  --colorone-dim: var(--archive-muted);
+  --parchment: var(--archive-ink);
+  --parchment-dark: var(--archive-muted);
+  --font-display: var(--archive-font-heading);
+  --font-body: var(--archive-font-heading);
+  --font-mono: var(--archive-font-code);
+  --md-colortext: var(--archive-ink);
+  --md-size: 1.3125rem;
+  --md-line: 1.7;
+  --feature-bg: var(--archive-paper);
+  --feature-backdrop-bg: var(--archive-backdrop);
+  --feature-backdrop-overlay: transparent;
+  --feature-divider: 1px solid var(--archive-line-soft);
+  --ui-text-body: var(--archive-type-body);
+  --ui-text-action: var(--archive-type-label);
+  --ui-letter-action: 0;
+  --ui-text-placeholder: var(--archive-type-body);
+  --ui-letter-placeholder: 0;
+  --ui-placeholder-opacity: 1;
+
+  color: var(--archive-ink);
+  color-scheme: light;
+  font-family: var(--archive-font-ui);
+  font-size: var(--archive-type-body);
+  line-height: 1.5;
+}
+
+/* The shared boot overlay is a sibling of the page. Theme it only while an
+   archive surface is present, using the same tokens and existing timing. */
+:global(body):has(.theme) :global(.site-boot) { background: var(--archive-paper); color: var(--archive-ink); }
+:global(body):has(.theme) :global(.site-boot__tube) { display: none; }
+:global(body):has(.theme) :global(.site-boot__copy strong) { color: var(--archive-ink); font-family: var(--archive-font-heading); font-weight: 400; letter-spacing: -0.02em; }
+:global(body):has(.theme) :global(.site-boot__case),
+:global(body):has(.theme) :global(.site-boot__copy small) { color: var(--archive-muted); }
+:global(body):has(.theme) :global(.site-boot__progress) { background: var(--archive-line-soft); }
+:global(body):has(.theme) :global(.site-boot__progress i) { background: var(--archive-ink); }
+
+.theme *,
+.theme *::before,
+.theme *::after {
+  box-sizing: border-box;
+}
+
+/* Minimal scrollbars across every archive scroll surface (feed + each article). */
+.theme,
+.theme * { scrollbar-width: thin; scrollbar-color: var(--archive-line-soft) transparent; }
+.theme ::-webkit-scrollbar { width: 6px; height: 6px; }
+.theme ::-webkit-scrollbar-track { background: transparent; }
+.theme ::-webkit-scrollbar-thumb { background: var(--archive-line-soft); border-radius: 0; }
+.theme ::-webkit-scrollbar-thumb:hover { background: var(--archive-line); }
+
+.theme ::selection {
+  background: var(--archive-ink);
+  color: var(--archive-paper);
+}
+
+.theme :is(button, a, input, textarea, select):focus-visible {
+  outline: 2px solid var(--archive-accent);
+  outline-offset: 4px;
+}
+
+.theme button { cursor: pointer; }
+.theme button:disabled { cursor: default; opacity: 0.5; }
+
+@media (max-width: 639px) {
+  .theme {
+    --archive-outer-space: 0px;
+    --archive-gutter: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme { --archive-motion: 0s; }
+}

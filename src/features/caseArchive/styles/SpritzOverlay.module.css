@@ -1,0 +1,2 @@
+.overlay { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 24px; color: var(--archive-ink); background: var(--archive-paper); user-select: none; }
+.word { max-width: 100%; font-family: var(--archive-font-heading); font-size: clamp(2.5rem, 8vw, 8rem); font-weight: 400; line-height: 1.2; letter-spacing: -0.025em; text-align: center; text-transform: lowercase; overflow-wrap: anywhere; }

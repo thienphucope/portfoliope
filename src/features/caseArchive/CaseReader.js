@@ -3,10 +3,10 @@ import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMe
 import { DEFAULT_VAULT_FILE, CASE_BASE } from '@/configs/vault';
 import { ArrowLeft } from 'lucide-react';
 import BlockEditor from '@/features/caseArchive/components/BlockEditor';
-import BaseStyles from '@/styles/BaseStyles';
-import TabPanelStyles from '@/styles/TabPanelStyles';
 import WindowFrame from '@/components/ui/WindowFrame';
-import LampScene from '@/components/layout/LampScene';
+import Link from 'next/link';
+import theme from './styles/ArchiveTheme.module.css';
+import styles from './styles/CaseReader.module.css';
 import dynamic from 'next/dynamic';
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
@@ -301,12 +301,12 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
   const activeTabPanel = useMemo(() => {
     const activeT = tabs.find(t => t.id === activeTab); if (!activeT) return null;
     return (
-      <article ref={markdownContainerRef} className="markdown-container" style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }} onScroll={(e) => { const t = e.target; if (fileName && !isRestoringRef.current) scrollPosMap.current[fileName] = t.scrollTop; updateActiveChapter(t); const bottom = t.scrollHeight - t.scrollTop <= t.clientHeight + 100; if (bottom !== isAtBottom) setIsAtBottom(bottom); }}>
+      <article ref={markdownContainerRef} className="markdown-container" onScroll={(e) => { const t = e.target; if (fileName && !isRestoringRef.current) scrollPosMap.current[fileName] = t.scrollTop; updateActiveChapter(t); const bottom = t.scrollHeight - t.scrollTop <= t.clientHeight + 100; if (bottom !== isAtBottom) setIsAtBottom(bottom); }}>
         <div className="note-content-wrapper">
           {fileName === activeT.id ? (
             <BlockEditor content={content} fileName={fileName} onLinkClick={handleLinkClick} fileRegistry={fileRegistry.current} reader={augmentedReader} />
           ) : (
-            <div className="loading-placeholder" style={{ padding: '2rem', opacity: 0.5 }}>Loading...</div>
+            <div className={styles.loading} role="status">Loading...</div>
           )}
         </div>
       </article>
@@ -314,19 +314,20 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
   }, [activeTab, tabs, fileName, content, fileRegistry, isAtBottom, augmentedReader, handleLinkClick, updateActiveChapter]);
 
   return (
-    <div className={['accordion-app pc-layout', activeTab ? 'has-active' : '', !isEditorOpen ? 'feed-active' : ''].join(' ')} ref={appShellRef}>
-      <div className="case-background"><img src="/casebg2.png" alt="" /></div>
-      <div className="video-overlay" />
-      <LampScene shade={false} />
+    <main className={[theme.theme, styles.reader, 'accordion-app pc-layout', activeTab ? 'has-active' : '', !isEditorOpen ? 'feed-active' : ''].join(' ')} ref={appShellRef}>
+      <header className={styles.masthead}>
+        <Link className={styles.brand} href="/">Ope Watson</Link>
+        <Link className={styles.backLink} href="/"><ArrowLeft size={16} aria-hidden="true" />Case archives</Link>
+      </header>
       <SpritzOverlay text={reader.currentText} isPlaying={reader.isPlaying} isPaused={reader.isPaused} playbackRate={reader.playbackRate} />
 
       <>
           {isEditorOpen && !maximizedWindow && (
-            <div onClick={closeEditorWindow} style={{ position: 'absolute', inset: 0, zIndex: 9 }} />
+            <div onClick={closeEditorWindow} className={styles.dismissArea} />
           )}
 
           {isEditorOpen && (
-            <div className={`windows-container has-editor ${maximizedWindow ? 'has-maximized' : ''}`} style={{ width: '100vw', height: '100dvh', margin: 0, display: 'flex', flexDirection: 'row' }}>
+            <div className={`windows-container has-editor ${styles.windows} ${maximizedWindow ? 'has-maximized' : ''}`}>
 
               {editorView === 'note' && !isChatOpen && tabs.find(t => t.id === activeTab)?.type === 'editor' && (
                 <ChapterRail chapters={chapters} activeIndex={activeChapterIndex} onJump={scrollToChapter} />
@@ -341,11 +342,11 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
                     ? <div className="pdf-container"><PDFViewer ref={pdfRef} onClose={() => setEditorView('note')} reader={augmentedReader} isOpen={true} onStateChange={handlePdfStateChange} initialFile={lastPdfStateRef.current.file} initialPage={lastPdfStateRef.current.pageNumber} initialFitMode={lastPdfStateRef.current.fitMode} /></div>
                     : activeTabPanel;
                 const editorContent = (
-                  <div style={{ display: 'flex', height: '100%', minHeight: 0, width: '100%' }}>
-                    <div style={{ flex: 1, minWidth: 0, minHeight: 0, overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}>{mainContent}</div>
+                  <div className={styles.editorContent}>
+                    <div className={styles.mainPane}>{mainContent}</div>
                     {isChatOpen && (
-                      <div style={{ width: '50%', flexShrink: 0, borderLeft: '1px solid var(--theme)', height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                        <div className="chat-container" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+                      <div className={styles.chatPane}>
+                        <div className="chat-container">
                           <ChatRoom ref={chatRef} isEmbedded={true} onLinkClick={handleLinkClick} onLiveCallChange={setIsLiveCallActive} />
                         </div>
                       </div>
@@ -354,7 +355,7 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
                 );
 
                 return (
-                  <div className="window-frame-wrapper" style={isMax ? {} : { flex: 1, height: '100%', minHeight: 0 }}>
+                  <div className={`window-frame-wrapper ${isMax ? '' : styles.windowWrapper}`}>
                     <WindowFrame
                       id="editor"
                       title={`Case Archives - ${tabTitle}`}
@@ -392,23 +393,21 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
 
             </div>
           )}
+          {!isEditorOpen && <div className={styles.loading} role="status">Consulting archives...</div>}
         </>
 
       {(pendingReadConfirm || reader.isPlaying) && (
-        <div className="global-reader-bar" onClick={(e) => e.stopPropagation()} style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 10000, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(16px)', borderRadius: '40px', padding: '8px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '18px', border: '1px solid var(--theme, #FFFACD)', boxShadow: '0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(255,250,205,0.2)', animation: 'fadeInDown 0.3s ease-out', color: 'white', transition: 'all 0.3s ease' }}>
-          {pendingReadConfirm ? ( <div className="reader-confirm-btn" onClick={() => { pendingReadConfirm(); setPendingReadConfirm(null); }} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}><Volume2 size={20} color="var(--theme, #FFFACD)" /></div> ) : (
+        <div className={styles.readerBar} onClick={(e) => e.stopPropagation()} role="group" aria-label="Reading controls">
+          {pendingReadConfirm ? ( <button type="button" className={styles.readerButton} aria-label="Start reading" onClick={() => { pendingReadConfirm(); setPendingReadConfirm(null); }}><Volume2 size={20} /></button> ) : (
             <>
-              <div className="reader-ctrl-btn" onClick={() => reader.isPaused ? reader.resume() : reader.pause()} title={reader.isPaused ? "Resume" : "Pause"} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>{reader.isPaused ? ( <Play size={20} fill="var(--theme, #FFFACD)" color="var(--theme, #FFFACD)" /> ) : ( <Pause size={20} fill="var(--theme, #FFFACD)" color="var(--theme, #FFFACD)" /> )}</div>
-              <div className="reader-ctrl-btn" onClick={() => reader.stop()} title="Stop" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}><Square size={18} fill="white" color="white" /></div>
-              <div className="reader-speed-toggle" onClick={() => { const rates = [1.0, 1.25, 1.5, 2.0]; let next; if (reader.playbackRate === 4.0) next = 1.0; else if (reader.playbackRate === 2.0) next = reader.isPaused ? 4.0 : 1.0; else { const idx = rates.indexOf(reader.playbackRate); next = idx === -1 ? 1.0 : rates[(idx + 1) % rates.length]; } reader.setSpeed(next); }} style={{ cursor: 'pointer', fontSize: '0.92rem', fontWeight: '800', color: reader.playbackRate === 4.0 ? '#FF4500' : 'var(--theme, #FFFACD)', background: reader.playbackRate === 4.0 ? 'rgba(255,69,0,0.2)' : 'rgba(255,250,205,0.1)', padding: '4px 10px', borderRadius: '12px', minWidth: '45px', textAlign: 'center', userSelect: 'none', transition: 'all 0.3s ease' }}>{reader.playbackRate}x</div>
-              <div className="reader-cefr-toggle" onClick={() => { const levels = ['none', 'a1', 'a2', 'b1', 'b2', 'c1', 'c2']; const idx = levels.indexOf(reader.cefrLevel); const next = levels[(idx + 1) % levels.length]; reader.updateCefrLevel(next); }} title="Learning English Level" style={{ cursor: 'pointer', fontSize: '0.78rem', fontWeight: '900', color: reader.cefrLevel === 'none' ? 'rgba(255,250,205,0.4)' : '#000', background: reader.cefrLevel === 'none' ? 'rgba(255,250,205,0.05)' : 'var(--theme, #FFFACD)', padding: '4px 8px', borderRadius: '10px', minWidth: '40px', textAlign: 'center', userSelect: 'none', textTransform: 'uppercase', border: reader.cefrLevel === 'none' ? '1px solid rgba(255,250,205,0.1)' : 'none' }}>{reader.cefrLevel === 'none' ? 'Off' : reader.cefrLevel}</div>
+              <button type="button" className={styles.readerButton} onClick={() => reader.isPaused ? reader.resume() : reader.pause()} title={reader.isPaused ? "Resume" : "Pause"} aria-label={reader.isPaused ? "Resume" : "Pause"}>{reader.isPaused ? ( <Play size={20} fill="currentColor" /> ) : ( <Pause size={20} fill="currentColor" /> )}</button>
+              <button type="button" className={styles.readerButton} onClick={() => reader.stop()} title="Stop" aria-label="Stop"><Square size={18} fill="currentColor" /></button>
+              <button type="button" className={`${styles.readerButton} ${reader.playbackRate === 4.0 ? styles.fastReading : ''}`} aria-label={`Reading speed: ${reader.playbackRate}x`} onClick={() => { const rates = [1.0, 1.25, 1.5, 2.0]; let next; if (reader.playbackRate === 4.0) next = 1.0; else if (reader.playbackRate === 2.0) next = reader.isPaused ? 4.0 : 1.0; else { const idx = rates.indexOf(reader.playbackRate); next = idx === -1 ? 1.0 : rates[(idx + 1) % rates.length]; } reader.setSpeed(next); }}>{reader.playbackRate}x</button>
+              <button type="button" className={`${styles.readerButton} ${reader.cefrLevel !== 'none' ? styles.activeLevel : ''}`} onClick={() => { const levels = ['none', 'a1', 'a2', 'b1', 'b2', 'c1', 'c2']; const idx = levels.indexOf(reader.cefrLevel); const next = levels[(idx + 1) % levels.length]; reader.updateCefrLevel(next); }} title="Learning English Level" aria-label={`Learning English Level: ${reader.cefrLevel}`}>{reader.cefrLevel === 'none' ? 'Off' : reader.cefrLevel}</button>
             </>
           )}
-          <style dangerouslySetInnerHTML={{ __html: ` .reader-ctrl-btn { opacity: 0.8; transition: all 0.2s; } .reader-ctrl-btn:hover { opacity: 1; transform: scale(1.1); } .reader-speed-toggle:hover { background: rgba(255,250,205,0.2); } .reader-cefr-toggle { transition: all 0.2s; } .reader-cefr-toggle:hover { transform: scale(1.05); filter: brightness(1.1); } @keyframes fadeInDown { from { opacity: 0; transform: translate(-50%, -20px); } to { opacity: 1; transform: translate(-50%, 0); } } `}} />
         </div>
       )}
-      <BaseStyles />
-      <TabPanelStyles />
-    </div>
+    </main>
   );
 }

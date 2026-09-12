@@ -102,7 +102,7 @@ export default async function CaseArchivePage({ params }) {
     : [];
 
   return (
-    <main>
+    <div>
       {/* SSR fallback for crawlers: unique content per URL. The interactive UI is client-rendered. */}
       <div style={{ display: 'none' }} aria-hidden="true">
         {isRoot ? (
@@ -124,12 +124,10 @@ export default async function CaseArchivePage({ params }) {
 
       {isRoot
         ? (
-          <div className="nf-shell">
-            <NoteFeed serverData={githubData} />
-          </div>
+          <NoteFeed serverData={githubData} />
         )
         : <CaseReader serverHydratedData={githubData} />
       }
-    </main>
+    </div>
   );
 }

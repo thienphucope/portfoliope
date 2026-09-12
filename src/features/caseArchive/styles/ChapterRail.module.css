@@ -1,0 +1,33 @@
+.rail {
+  position: relative;
+  display: flex;
+  flex: 0 0 clamp(200px, 20vw, 280px);
+  flex-direction: column;
+  min-height: 0;
+  padding: 26px 20px;
+  border-right: 1px solid var(--archive-line);
+  background: var(--archive-paper);
+}
+.rail :global(.chapter-rail-title) { padding: 0 0 20px; color: var(--archive-ink); font-family: var(--archive-font-heading); font-size: 1.5rem; line-height: 1.1; }
+.rail :global(.chapter-rail-list) { flex: 1; min-height: 0; margin: 0; padding: 0; overflow-y: auto; overflow-x: hidden; list-style: none; overscroll-behavior: contain; }
+.rail :global(.chapter-rail-item) { margin: 0; }
+.rail :global(.chapter-rail-link) {
+  display: block;
+  width: 100%;
+  padding: 10px 8px 10px calc((var(--chapter-level, 1) - 1) * 10px + 10px);
+  border: 0;
+  border-bottom: 1px solid var(--archive-line-soft);
+  border-left: 2px solid transparent;
+  background: transparent;
+  color: var(--archive-muted);
+  font-family: var(--archive-font-ui);
+  font-size: var(--archive-type-label);
+  line-height: 1.45;
+  text-align: left;
+  overflow-wrap: anywhere;
+  transition: background var(--archive-motion), color var(--archive-motion);
+}
+.rail :global(.chapter-rail-link[data-level="1"]) { padding-top: 16px; color: var(--archive-ink); }
+.rail :global(.chapter-rail-link:hover) { color: var(--archive-ink); background: var(--archive-hover); }
+.rail :global(.chapter-rail-link.is-active) { border-left-color: var(--archive-ink); color: var(--archive-ink); background: var(--archive-surface); }
+@media (max-width: 1023px) { .rail { display: none; } }

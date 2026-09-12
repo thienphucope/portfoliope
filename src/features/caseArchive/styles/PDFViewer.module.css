@@ -1,0 +1,14 @@
+.viewer { display: flex; flex-direction: column; position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; z-index: 5; color: var(--archive-ink); background: var(--archive-paper); }
+.viewer :global(.pdf-body) { flex: 1; min-height: 0; overflow: auto; position: relative; background: var(--archive-surface); -webkit-overflow-scrolling: touch; }
+.viewer :global(.pdf-body[data-has-file="true"]) { cursor: text; }
+.viewer :global(.pdf-document) { display: flex; flex-direction: column; align-items: center; width: 100%; }
+.viewer :global(.pdf-page-wrapper) { display: flex; position: relative; flex-direction: column; align-items: center; width: 100%; margin-bottom: 12px; background: var(--archive-surface); }
+.viewer :global(.pdf-empty-container) { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; padding: 32px; border: 0; border-radius: 0; color: var(--archive-muted); background: var(--archive-paper); }
+.viewer :global(.pdf-empty-container:hover) { color: var(--archive-ink); background: var(--archive-hover); }
+.viewer :global(.pdf-empty-container svg) { width: 48px; height: 48px; stroke-width: 1; }
+.viewer :global(.pdf-text-highlight) { background: var(--archive-reading) !important; color: var(--archive-ink) !important; border-radius: 0; }
+.viewer :global(.pdf-page-loading) { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; gap: 16px; background: var(--archive-surface); color: var(--archive-muted); font-family: var(--archive-font-ui); font-size: var(--archive-type-label); }
+.viewer :global(.pdf-loading) { padding: 40px 24px; text-align: center; }
+.viewer :global(.pdf-loading-spinner) { width: 20px; height: 20px; border: 1px solid var(--archive-line-soft); border-top-color: var(--archive-ink); border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .viewer :global(.pdf-loading-spinner) { animation: none; } }

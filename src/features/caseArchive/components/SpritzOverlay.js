@@ -1,6 +1,7 @@
 // src/features/caseArchive/components/SpritzOverlay.js
 "use client";
 import { useState, useEffect } from 'react';
+import styles from '../styles/SpritzOverlay.module.css';
 
 // Full-screen RSVP ("Spritz") reader: flashes one word at a time, shown only
 // while the reader is playing at 4x speed.
@@ -27,8 +28,8 @@ const SpritzOverlay = ({ text, isPlaying, isPaused, playbackRate }) => {
   if (playbackRate !== 4.0 || !isPlaying || words.length === 0) return null;
 
   return (
-    <div className="spritz-overlay" style={{ position: 'fixed', inset: 0, background: 'var(--background, #000)', color: 'var(--theme, #FFFACD)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, userSelect: 'none' }}>
-      <div className="spritz-word" style={{ fontSize: '6vw', fontWeight: '400', fontFamily: 'var(--font-mono)', textAlign: 'center', letterSpacing: '-0.02em', textTransform: 'lowercase' }}>
+    <div className={`spritz-overlay ${styles.overlay}`}>
+      <div className={`spritz-word ${styles.word}`}>
         {words[index] || words[words.length - 1]}
       </div>
     </div>

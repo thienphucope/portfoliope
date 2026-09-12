@@ -1,0 +1,16 @@
+.graph {
+  --graph-node: var(--archive-paper);
+  --graph-node-stroke: var(--archive-muted);
+  --graph-active: var(--archive-accent);
+  --graph-tag: var(--archive-surface);
+  --graph-tag-stroke: var(--archive-line);
+  --graph-label: var(--archive-ink);
+  --graph-link: #80766c80;
+  --graph-link-active: var(--archive-muted);
+  --graph-link-dim: #80766c26;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: var(--archive-paper);
+}

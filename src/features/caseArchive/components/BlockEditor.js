@@ -3,6 +3,7 @@ import { ensureLibsLoaded, postProcess, fitHeading } from '@/lib/markdown';
 import { mkBlock } from '../utils/editor';
 import EditorStyles from '@/styles/EditorStyles';
 import MarkdownStyles from '@/styles/MarkdownStyles';
+import styles from '../styles/BlockEditor.module.css';
 
 /**
  * Read-only block renderer for the case vault.
@@ -47,23 +48,12 @@ const TitleBlock = ({ fileName, reader, onDoubleClick, isReading }) => {
   return (
     <div
       className={`block-wrapper title-block ${isReading ? 'block-reading-highlight' : ''}`}
-      style={{ padding: '0 2px', overflow: 'visible', width: '100%', boxSizing: 'border-box', position: 'relative' }}
       onDoubleClick={(e) => reader?.triggerRead ? reader.triggerRead(e, () => onDoubleClick()) : onDoubleClick()}
     >
-      <div className="block-content markdown-content" style={{ textAlign: 'center', overflow: 'visible', width: '100%' }}>
+      <div className="block-content markdown-content">
         <h1
           ref={titleRef}
           className="fit-heading note-title-heading"
-          style={{
-            display: 'inline-block',
-            whiteSpace: 'nowrap',
-            overflow: 'visible',
-            textAlign: 'center',
-            padding: 'var(--note-title-padding)',
-            margin: '0',
-            fontFamily: 'var(--font-display)',
-            fontWeight: '900'
-          }}
         >
           {displayTitle}
         </h1>
@@ -229,7 +219,7 @@ const BlockEditor = ({ content, fileName, onLinkClick, fileRegistry = {}, reader
     <>
     <EditorStyles />
     <MarkdownStyles />
-    <div className="block-editor">
+    <div className={`block-editor ${styles.editor}`}>
       <TitleBlock fileName={fileName} reader={reader} onDoubleClick={() => startReadingFrom(-1)} isReading={isPlaying && readingBlockIndex === -1} />
       {blocks.map((block, index) => {
         const isReading = isPlaying && readingBlockIndex === index;
@@ -246,41 +236,6 @@ const BlockEditor = ({ content, fileName, onLinkClick, fileRegistry = {}, reader
           </div>
         );
       })}
-      <style jsx global>{`
-        .title-block {
-          --note-title-padding: 18px 0 14px;
-        }
-        @media (max-width: 768px) {
-          .title-block {
-            --note-title-padding: 12px 0 10px;
-          }
-        }
-        .block-reading-highlight {
-          background-color: var(--theme) !important;
-          color: var(--background) !important;
-          border-radius: 4px;
-          transition: background-color 0.3s ease, color 0.3s ease;
-          box-shadow: 0 0 12px var(--theme);
-          padding: 4px 8px;
-        }
-        .block-reading-highlight :is(h1, h2, h3, h4, h5, h6, p, span, li, a, code, pre, div, table, thead, tbody, tfoot, tr, th, td, em, strong, small, sup, sub) {
-          color: var(--background) !important;
-        }
-        .block-reading-highlight :is(.table-container, .code-block, pre) {
-          background: transparent !important;
-          border-color: rgba(0, 0, 0, 0.24) !important;
-        }
-        .block-reading-highlight .table-container :is(th, td) {
-          background: transparent !important;
-          border-bottom-color: rgba(0, 0, 0, 0.2) !important;
-        }
-        .block-reading-highlight .table-container thead {
-          border-bottom-color: rgba(0, 0, 0, 0.34) !important;
-        }
-        .block-reading-highlight :is(a, .internal-link) {
-          border-bottom-color: var(--background) !important;
-        }
-      `}</style>
     </div>
     </>
   );

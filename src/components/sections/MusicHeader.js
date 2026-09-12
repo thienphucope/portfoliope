@@ -105,9 +105,13 @@ function MusicHeader({ onPlayStateChange, className = '', promptLabel = '', aria
         .about-music-control {
           position: relative;
           flex: 0 0 auto;
+          border: 0;
+          padding: 0;
+          background: transparent;
           cursor: pointer;
         }
         .disk {
+          display: block;
           position: relative;
           width: 48px;
           height: 48px;
@@ -194,10 +198,10 @@ function MusicHeader({ onPlayStateChange, className = '', promptLabel = '', aria
       <div style={{ display: 'none' }}><div ref={musicPlayerDivRef}></div></div>
       <div className={mastheadClassName}>
         {showMusicControl && (
-          <div className="about-music-control" onClick={togglePlayPause} onMouseEnter={handleDiskMouseEnter} onMouseLeave={handleDiskMouseLeave}>
-            <div className={`disk ${!isPlaying ? 'paused' : ''}`}></div>
+          <button type="button" className="about-music-control" aria-label={isPlaying ? 'Pause music' : 'Play music'} aria-pressed={isPlaying} onClick={togglePlayPause} onMouseEnter={handleDiskMouseEnter} onMouseLeave={handleDiskMouseLeave}>
+            <span className={`disk ${!isPlaying ? 'paused' : ''}`}></span>
             {videoTitle && <span key={animationKey} className={`title-fly-out ${animationClass} font-fredericka`} style={{ fontFamily: 'var(--font-display)' }}>{videoTitle.length > 30 ? videoTitle.slice(0, 30).trimEnd() + '…' : videoTitle}</span>}
-          </div>
+          </button>
         )}
         <nav className="about-nav" aria-label={ariaLabel}>
           {promptLabel && <span className="about-social-prompt">{promptLabel}</span>}

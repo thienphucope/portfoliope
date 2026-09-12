@@ -24,6 +24,9 @@
 .DS_Store
 *.pem
 
+# dev logs / local verification artifacts
+.devlogs/
+
 # debug
 npm-debug.log*
 yarn-debug.log*

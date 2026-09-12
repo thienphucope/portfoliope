@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect, forwardRef, useImperativeHandle, useMemo } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Upload } from 'lucide-react';
+import styles from '../styles/PDFViewer.module.css';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
@@ -43,10 +44,7 @@ const LazyPage = ({ pageNumber, width, height, fitMode, scale, pageAspectRatio, 
   return (
     <div 
       ref={containerRef} className="pdf-page-wrapper" data-page-number={pageNumber}
-      style={{ 
-        minHeight: calculatedHeight || '200px', width: '100%', display: 'flex', flexDirection: 'column',
-        alignItems: 'center', marginBottom: '10px', position: 'relative', background: '#1a1a1a'
-      }}
+      style={{ minHeight: calculatedHeight || '200px' }}
     >
       {isVisible ? (
         <Page
@@ -247,7 +245,7 @@ const PDFViewer = forwardRef(({ onClose, reader, isOpen, onStateChange, initialF
   const activeHighlight = currentBlockText || currentText;
 
   return (
-    <div className="pdf-viewer-overlay">
+    <div className={`pdf-viewer-overlay ${styles.viewer}`}>
       <div ref={onBodyRef} className="pdf-body" onDoubleClick={(e) => {
         if (isPlaying) return;
         const sel = window.getSelection()?.toString().trim();
@@ -257,11 +255,11 @@ const PDFViewer = forwardRef(({ onClose, reader, isOpen, onStateChange, initialF
         const pNum = pNode ? parseInt(pNode.getAttribute('data-page-number')) : pageNumber;
         const idx = (textContentRef.current[pNum] || []).findIndex(l => l.includes(txt));
         if (idx !== -1) triggerRead ? triggerRead(e, () => startReadingFrom(idx, pNum)) : startReadingFrom(idx, pNum);
-      }} style={{ cursor: file ? 'text' : 'default' }}>
+      }} data-has-file={Boolean(file)}>
         {!memoizedFile ? (
-          <div className="pdf-empty-container" onClick={() => fileInputRef.current.click()} style={{ cursor: 'pointer' }}>
-            <Upload size={64} color="var(--theme, #FFFACD)" style={{ opacity: 0.15 }} />
-          </div>
+          <button type="button" className="pdf-empty-container" aria-label="Upload PDF" onClick={() => fileInputRef.current.click()}>
+            <Upload size={64} aria-hidden="true" />
+          </button>
         ) : (
           <Document file={memoizedFile} onLoadSuccess={onDocumentLoadSuccess} loading={<div className="pdf-loading">Opening...</div>} className={`pdf-document fit-${fitMode}`}>
             {Array.from(new Array(numPages || 0), (_, i) => (
@@ -270,18 +268,7 @@ const PDFViewer = forwardRef(({ onClose, reader, isOpen, onStateChange, initialF
           </Document>
         )}
       </div>
-      <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".pdf" style={{ display: 'none' }} />
-      <style dangerouslySetInnerHTML={{ __html: `
-        .pdf-viewer-overlay { display: flex; flex-direction: column; position: absolute; inset: 0; height: 100%; width: 100%; color: white; background: transparent; overflow: hidden; z-index: 5; }
-        .pdf-body { flex: 1; overflow-y: auto; background: var(--feature-bg); position: relative; -webkit-overflow-scrolling: touch; }
-        .pdf-document { display: flex; flex-direction: column; align-items: center; width: 100%; }
-        .pdf-empty-container { display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; }
-        .pdf-upload-empty { width: 100%; max-width: 500px; padding: 60px 30px; border: 2px dashed #222; border-radius: 16px; text-align: center; cursor: pointer; background: rgba(255, 250, 205, 0.02); }
-        .pdf-text-highlight { background-color: var(--theme) !important; color: var(--background) !important; border-radius: 2px; }
-        .pdf-page-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,0.02); color: #444; font-size: 12px; gap: 10px; }
-        .pdf-loading-spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.1); border-top-color: var(--theme); border-radius: 50%; animation: pdf-spin 1s linear infinite; }
-        @keyframes pdf-spin { to { transform: rotate(360deg); } }
-      `}} />
+      <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".pdf" hidden />
     </div>
   );
 });

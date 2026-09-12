@@ -1,9 +1,10 @@
 // src/features/caseArchive/components/ChapterRail.js
 // Left-side table of contents for the active note; jumps to a heading on click.
+import styles from '../styles/ChapterRail.module.css';
 const ChapterRail = ({ chapters, activeIndex, onJump }) => {
   if (!chapters.length) return null;
   return (
-    <nav className="chapter-rail" aria-label="Chapters">
+    <nav className={`chapter-rail ${styles.rail}`} aria-label="Chapters">
       <div className="chapter-rail-title">Chapters</div>
       <ul className="chapter-rail-list">
         {chapters.map((c, i) => (
@@ -13,7 +14,7 @@ const ChapterRail = ({ chapters, activeIndex, onJump }) => {
               className={`chapter-rail-link ${i === activeIndex ? 'is-active' : ''}`}
               data-level={c.level}
               aria-current={i === activeIndex ? 'location' : undefined}
-              style={{ paddingLeft: `${(c.level - 1) * 12 + 14}px` }}
+              style={{ '--chapter-level': c.level }}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
