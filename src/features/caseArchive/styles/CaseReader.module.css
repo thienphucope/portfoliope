@@ -1,33 +1,21 @@
 .reader {
-  --reader-edge: clamp(0px, 2.5vw, 40px);
+  --reader-edge: 0px;
   position: fixed;
   inset: 0;
   display: flex;
   flex-direction: column;
   padding: var(--reader-edge);
-  background: var(--archive-backdrop);
+  background: var(--archive-paper-texture), var(--archive-paper);
   overflow: hidden;
 }
 
-.masthead {
-  position: relative;
-  z-index: 11;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-  gap: 20px;
-  min-height: 68px;
-  padding: 16px var(--archive-gutter);
-  border-bottom: 1px solid var(--archive-line);
-  background: var(--archive-paper);
-}
-.brand { color: inherit; font-family: var(--archive-font-heading); font-size: 1.875rem; letter-spacing: -0.04em; line-height: 1; text-decoration: none; }
-.backLink { display: inline-flex; align-items: center; gap: 10px; padding: 8px 0; color: inherit; font-size: var(--archive-type-label); text-decoration: none; }
+.breadcrumb { position: relative; z-index: 11; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 24px; margin: 0 var(--archive-gutter); padding: 16px 0; border-bottom: 1px solid var(--archive-line-soft); }
+.currentNote { overflow: hidden; color: var(--archive-muted); font-family: var(--archive-font-heading); font-size: .9375rem; font-style: italic; text-overflow: ellipsis; white-space: nowrap; }
+.backLink { display: inline-flex; align-items: center; flex-shrink: 0; gap: 10px; padding: 4px 0; color: inherit; font-family: var(--archive-font-heading); font-size: .875rem; text-decoration: none; }
 .backLink:hover { text-decoration: underline; text-underline-offset: 4px; }
 .dismissArea { position: absolute; inset: 0; z-index: 9; }
 .loading { flex: 1; padding: 48px var(--archive-gutter); background: var(--archive-paper); color: var(--archive-muted); text-align: center; }
-.windows { position: relative; z-index: 10; display: flex; flex: 1; flex-direction: row; min-height: 0; width: 100%; margin: 0; background: var(--archive-paper); }
+.windows { position: relative; z-index: 10; display: flex; flex: 1; flex-direction: row; min-height: 0; width: auto; margin: 0 var(--archive-gutter); background: transparent; }
 .windowWrapper { display: flex; flex: 1; min-width: 0; min-height: 0; height: 100%; }
 .editorContent { display: flex; height: 100%; min-height: 0; width: 100%; }
 .mainPane { display: flex; position: relative; flex: 1; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }
@@ -37,8 +25,8 @@
 
 /* WindowFrame is shared with other features. These overrides apply only to the
    archive instance, including its mobile toolbar and search overlay. */
-.reader .windows :global(.window-frame) { flex-direction: column-reverse; min-height: 0; border-radius: 0; box-shadow: none; transition: none; container-type: normal; }
-.reader .windows :global(.window-frame.maximized) { inset: var(--reader-edge); width: auto; height: auto; }
+.reader .windows :global(.window-frame) { flex-direction: column; min-height: 0; border-radius: 0; background: transparent; box-shadow: none; transition: none; container-type: normal; }
+.reader .windows :global(.window-frame.maximized) { inset: var(--reader-edge); width: auto; height: auto; background: var(--archive-paper-texture), var(--archive-paper); }
 .reader .windows :global(.window-grain) { display: none; }
 .reader .windows :global(.window-content) { display: flex; flex: 1; flex-direction: column; min-height: 0; min-width: 0; }
 .reader .windows :global(.window-title-bar) {
@@ -51,11 +39,11 @@
   height: auto;
   min-height: 58px;
   padding: 10px 20px;
-  border-bottom: 1px solid var(--archive-line-soft);
-  background: var(--archive-paper);
+  border-top: 1px solid var(--archive-line-soft);
+  background: transparent;
 }
 .reader .windows :global(.window-title-content) { position: relative; flex-direction: row; flex: 1 1 180px; justify-content: flex-start; min-width: 0; width: auto; }
-.reader .windows :global(.window-title-box) { flex-direction: row; align-items: center; justify-content: flex-start; gap: 10px; width: auto; max-width: 100%; padding: 8px 10px; border: 1px solid var(--archive-line-soft); border-radius: 0; background: transparent; }
+.reader .windows :global(.window-title-box) { flex-direction: row; align-items: center; justify-content: flex-start; gap: 10px; width: auto; max-width: 100%; padding: 8px 10px; border: 1px solid transparent; border-radius: 0; background: transparent; }
 .reader .windows :global(.window-title-box:hover) { background: var(--archive-hover); border-color: var(--archive-line); }
 .reader .windows :global(.title-search-hint) { flex-shrink: 0; }
 .reader .windows :global(.window-title-text) { writing-mode: horizontal-tb; font-family: var(--archive-font-ui); font-size: var(--archive-type-label); font-weight: 400; }
@@ -74,14 +62,14 @@
 .reader .windows :global(.window-inline-search) { font-family: var(--archive-font-ui); font-size: 1rem; }
 .reader .windows :global(.window-inline-search:focus-visible) { outline: none; }
 .reader .windows :global(.window-inline-search::placeholder) { color: var(--archive-muted); font-family: var(--archive-font-ui); }
-.reader .windows :global(.search-results-dropdown) { top: calc(100% + 1px); border: 1px solid var(--archive-line); border-radius: 0; background: var(--archive-paper); box-shadow: none; }
+.reader .windows :global(.search-results-dropdown) { top: auto; bottom: calc(100% + 1px); border: 1px solid var(--archive-line); border-radius: 0; background: var(--archive-paper); box-shadow: 0 -4px 20px var(--archive-shadow); }
 .reader .windows :global(.search-item) { padding: 12px 16px; border-left: 0; border-bottom: 1px solid var(--archive-line-soft); color: var(--archive-ink); font-family: var(--archive-font-ui); font-size: var(--archive-type-label); }
 .reader .windows :global(.search-item.is-tag) { color: var(--archive-accent); }
 .reader .windows :global(.search-item:hover) { padding-left: 16px; background: var(--archive-hover); }
 .reader .windows :global(.search-no-results) { opacity: 1; color: var(--archive-muted); font-size: var(--archive-type-label); }
 
-.reader :global(.markdown-container) { flex: 1; min-height: 0; padding: 40px clamp(20px, 4vw, 72px) 80px; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
-.reader :global(.note-content-wrapper) { width: 100%; max-width: 780px; margin: 0 auto; }
+.reader :global(.markdown-container) { flex: 1; min-height: 0; padding: 54px clamp(24px, 5vw, 96px) 90px; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.reader :global(.note-content-wrapper) { width: 100%; max-width: 860px; margin: 0 auto; }
 .reader :global(.markdown-content) { color: var(--archive-ink); font-size: var(--md-size); line-height: var(--md-line); text-align: left; }
 .reader :global(.markdown-content h1),
 .reader :global(.markdown-content h2),
@@ -160,7 +148,7 @@
 .reader :global(.info-icon) { border-color: var(--archive-line-soft); color: var(--archive-muted); }
 .reader :global(.info-icon::after) { color: var(--archive-ink); background: var(--archive-paper); border-color: var(--archive-line); box-shadow: none; }
 
-.readerBar { position: fixed; bottom: max(24px, env(safe-area-inset-bottom)); left: 50%; z-index: 10000; display: flex; align-items: center; justify-content: center; gap: 4px; max-width: calc(100vw - 32px); padding: 8px; border: 1px solid var(--archive-line); background: var(--archive-paper); transform: translateX(-50%); }
+.readerBar { position: fixed; bottom: max(82px, env(safe-area-inset-bottom)); left: 50%; z-index: 10000; display: flex; align-items: center; justify-content: center; gap: 4px; max-width: calc(100vw - 32px); padding: 8px; border: 1px solid var(--archive-line); background: var(--archive-paper); transform: translateX(-50%); box-shadow: 0 4px 18px var(--archive-shadow); }
 .readerButton { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 40px; padding: 8px 10px; border: 0; border-radius: 0; background: transparent; color: var(--archive-ink); font-family: var(--archive-font-ui); font-size: var(--archive-type-label); text-transform: uppercase; }
 .readerButton:hover { background: var(--archive-hover); }
 .fastReading { color: var(--archive-danger); background: var(--archive-surface); }
@@ -173,8 +161,9 @@
 
 @media (max-width: 639px) {
   .reader { --reader-edge: 0px; --md-size: 1.1875rem; }
-  .masthead { min-height: 64px; padding: 16px 20px; }
-  .brand { font-size: 1.625rem; }
+  .breadcrumb { padding: 10px 0; }
+  .currentNote { display: none; }
+  .windows { margin: 0; }
   .backLink { gap: 6px; }
   .reader .windows :global(.window-title-bar) { padding: 8px 12px; gap: 6px; }
   .reader .windows :global(.window-title-content) { flex-basis: 120px; }

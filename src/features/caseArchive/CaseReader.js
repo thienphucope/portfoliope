@@ -21,6 +21,7 @@ import { Volume2, VolumeX, Play, Pause, Square, Zap } from 'lucide-react';
 import { useGraphData } from '@/features/caseArchive/hooks/useGraphData';
 import SpritzOverlay from '@/features/caseArchive/components/SpritzOverlay';
 import ChapterRail from '@/features/caseArchive/components/ChapterRail';
+import ArchiveHeader from '@/features/caseArchive/components/ArchiveHeader';
 
 const GraphView = dynamic(() => import('@/features/caseArchive/components/GraphView'), { ssr: false });
 
@@ -315,10 +316,11 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
 
   return (
     <main className={[theme.theme, styles.reader, 'accordion-app pc-layout', activeTab ? 'has-active' : '', !isEditorOpen ? 'feed-active' : ''].join(' ')} ref={appShellRef}>
-      <header className={styles.masthead}>
-        <Link className={styles.brand} href="/">Ope Watson</Link>
-        <Link className={styles.backLink} href="/"><ArrowLeft size={16} aria-hidden="true" />Case archives</Link>
-      </header>
+      <ArchiveHeader reader />
+      <div className={styles.breadcrumb}>
+        <Link className={styles.backLink} href="/"><ArrowLeft size={15} aria-hidden="true" />Back to the archives</Link>
+        <span className={styles.currentNote}>{fileName.split('/').pop().replace(/\.md$/i, '') || 'Reading room'}</span>
+      </div>
       <SpritzOverlay text={reader.currentText} isPlaying={reader.isPlaying} isPaused={reader.isPaused} playbackRate={reader.playbackRate} />
 
       <>

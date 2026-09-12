@@ -14,34 +14,10 @@ import styles from '../styles/BlockEditor.module.css';
 // ─── TITLE BLOCK (fixed file name header) ────────────────────────────────────
 
 const TitleBlock = ({ fileName, reader, onDoubleClick, isReading }) => {
-  const titleRef = useRef(null);
-
   const displayTitle = useMemo(() => {
     if (!fileName) return '';
     return fileName.split('/').pop().replace(/\.md$/, '');
   }, [fileName]);
-
-  const updateSize = useCallback(() => {
-    const el = titleRef.current;
-    if (el) {
-      fitHeading(el, 120);
-    }
-  }, []);
-
-  useEffect(() => {
-    const el = titleRef.current;
-    if (!el) return;
-    updateSize();
-    window.addEventListener('resize', updateSize);
-    const observer = new ResizeObserver(() => updateSize());
-    if (el.parentElement) observer.observe(el.parentElement);
-    const fontTimer = setTimeout(updateSize, 500);
-    return () => {
-      window.removeEventListener('resize', updateSize);
-      observer.disconnect();
-      clearTimeout(fontTimer);
-    };
-  }, [displayTitle, updateSize]);
 
   if (!displayTitle) return null;
 
@@ -52,8 +28,7 @@ const TitleBlock = ({ fileName, reader, onDoubleClick, isReading }) => {
     >
       <div className="block-content markdown-content">
         <h1
-          ref={titleRef}
-          className="fit-heading note-title-heading"
+          className="note-title-heading"
         >
           {displayTitle}
         </h1>

@@ -1,14 +1,14 @@
 .rail {
   position: relative;
   display: flex;
-  flex: 0 0 clamp(200px, 20vw, 280px);
+  flex: 0 0 clamp(190px, 18vw, 270px);
   flex-direction: column;
   min-height: 0;
-  padding: 26px 20px;
-  border-right: 1px solid var(--archive-line);
-  background: var(--archive-paper);
+  padding: 42px 24px 28px 0;
+  border-right: 1px solid var(--archive-line-soft);
+  background: transparent;
 }
-.rail :global(.chapter-rail-title) { padding: 0 0 20px; color: var(--archive-ink); font-family: var(--archive-font-heading); font-size: 1.5rem; line-height: 1.1; }
+.rail :global(.chapter-rail-title) { margin-bottom: 14px; padding: 0 0 15px; border-bottom: 1px solid var(--archive-line-soft); color: var(--archive-ink); font-family: var(--archive-font-heading); font-size: 1.375rem; line-height: 1.1; letter-spacing: -.025em; }
 .rail :global(.chapter-rail-list) { flex: 1; min-height: 0; margin: 0; padding: 0; overflow-y: auto; overflow-x: hidden; list-style: none; overscroll-behavior: contain; }
 .rail :global(.chapter-rail-item) { margin: 0; }
 .rail :global(.chapter-rail-link) {
@@ -20,7 +20,7 @@
   border-left: 2px solid transparent;
   background: transparent;
   color: var(--archive-muted);
-  font-family: var(--archive-font-ui);
+  font-family: var(--archive-font-heading);
   font-size: var(--archive-type-label);
   line-height: 1.45;
   text-align: left;

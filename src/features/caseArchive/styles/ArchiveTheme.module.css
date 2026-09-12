@@ -2,26 +2,27 @@
    inside an archive surface; other routes retain their own theme. */
 .theme,
 :global(body):has(.theme) :global(.site-boot) {
-  --archive-backdrop: #b5b0ac;
-  --archive-paper: #e6dfd6;
-  --archive-ink: #2c2621;
-  --archive-muted: #655c54;
-  --archive-line: #80766c;
-  --archive-line-soft: #c9bfb4;
-  --archive-surface: #d9d0c5;
-  --archive-hover: #ded5ca;
-  --archive-accent: #824d34;
+  --archive-backdrop: #f4f0e7;
+  --archive-paper: #f4f0e7;
+  --archive-ink: #222420;
+  --archive-muted: #68675f;
+  --archive-line: #77786d;
+  --archive-line-soft: #ccc8bc;
+  --archive-surface: #eae5da;
+  --archive-hover: #ebe6da;
+  --archive-accent: #786348;
+  --archive-paper-texture: url('/paper-grain.svg');
   --archive-danger: #9e352d;
   --archive-reading: #c4b49c;
   --archive-code-string: #426047;
   --archive-code-symbol: #674476;
   --archive-shadow: #2c26211a;
-  --archive-font-heading: 'EB Garamond', Georgia, serif;
+  --archive-font-heading: Georgia, 'Times New Roman', serif;
   --archive-font-ui: 'Roboto Variable', Arial, sans-serif;
   --archive-font-code: 'Roboto Mono Variable', monospace;
-  --archive-gutter: clamp(20px, 2.5vw, 40px);
-  --archive-outer-space: clamp(20px, 5vw, 80px);
-  --archive-content-width: 1440px;
+  --archive-gutter: clamp(24px, 4.8vw, 92px);
+  --archive-outer-space: 0px;
+  --archive-content-width: none;
   --archive-type-body: 1rem;
   --archive-type-label: 0.875rem;
   --archive-motion: 180ms ease;
@@ -64,7 +65,7 @@
 
 /* The shared boot overlay is a sibling of the page. Theme it only while an
    archive surface is present, using the same tokens and existing timing. */
-:global(body):has(.theme) :global(.site-boot) { background: var(--archive-paper); color: var(--archive-ink); }
+:global(body):has(.theme) :global(.site-boot) { background: var(--archive-paper-texture), var(--archive-paper); color: var(--archive-ink); }
 :global(body):has(.theme) :global(.site-boot__tube) { display: none; }
 :global(body):has(.theme) :global(.site-boot__copy strong) { color: var(--archive-ink); font-family: var(--archive-font-heading); font-weight: 400; letter-spacing: -0.02em; }
 :global(body):has(.theme) :global(.site-boot__case),
