@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Shuffle } from 'lucide-react';
 import { FaGithub, FaDiscord, FaRegEnvelope, FaGlobe } from 'react-icons/fa';
 import { FaXTwitter } from 'react-icons/fa6';
@@ -23,36 +23,133 @@ const associates = [
   { name: '@thsottiaux', href: 'https://x.com/thsottiaux', Icon: FaXTwitter },
 ];
 
+const REEL_SESSION_KEY = 'archive-reel-playback-v1';
+
+function normalizeGroups(groups) {
+  if (!Array.isArray(groups)) return [];
+  return groups
+    .map((group) => [...new Set(
+      (Array.isArray(group) ? group : []).filter((id) => typeof id === 'string' && id)
+    )])
+    .filter((group) => group.length);
+}
+
+function readReelSession(groups) {
+  const available = new Set(groups.flat());
+  const fallback = {
+    played: new Set(),
+    nextGroupIndex: Math.floor(Math.random() * groups.length),
+    lastVideoId: null,
+  };
+
+  try {
+    const stored = JSON.parse(sessionStorage.getItem(REEL_SESSION_KEY));
+    if (!stored || typeof stored !== 'object') return fallback;
+
+    const played = new Set(
+      (Array.isArray(stored.played) ? stored.played : []).filter((id) => available.has(id))
+    );
+    const lastVideoId = available.has(stored.lastVideoId) ? stored.lastVideoId : null;
+    if (lastVideoId) played.add(lastVideoId);
+
+    return {
+      played,
+      nextGroupIndex: Number.isInteger(stored.nextGroupIndex)
+        ? ((stored.nextGroupIndex % groups.length) + groups.length) % groups.length
+        : fallback.nextGroupIndex,
+      lastVideoId,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+function saveReelSession(played, nextGroupIndex, lastVideoId) {
+  try {
+    sessionStorage.setItem(REEL_SESSION_KEY, JSON.stringify({
+      played: [...played],
+      nextGroupIndex,
+      lastVideoId,
+    }));
+  } catch {}
+}
+
+function pickFromNextGroup(groups, played, startIndex) {
+  for (let offset = 0; offset < groups.length; offset += 1) {
+    const groupIndex = (startIndex + offset) % groups.length;
+    const candidates = groups[groupIndex].filter((id) => !played.has(id));
+    if (candidates.length) {
+      return {
+        videoId: candidates[Math.floor(Math.random() * candidates.length)],
+        nextGroupIndex: (groupIndex + 1) % groups.length,
+      };
+    }
+  }
+  return null;
+}
+
 export default function ArchiveSidebar() {
-  const [videoIds, setVideoIds] = useState([]);
+  const [videoGroups, setVideoGroups] = useState([]);
   const [videoId, setVideoId] = useState(null);
   const playerRef = useRef(null);
   const reelDivRef = useRef(null);
-  const videoIdsRef = useRef([]);
+  const videoGroupsRef = useRef([]);
   const videoIdRef = useRef(null);
   const loadedIdRef = useRef(null);
+  const playedVideoIdsRef = useRef(new Set());
+  const nextGroupIndexRef = useRef(0);
+  const lastVideoIdRef = useRef(null);
 
-  useEffect(() => { videoIdsRef.current = videoIds; }, [videoIds]);
   useEffect(() => { videoIdRef.current = videoId; }, [videoId]);
 
-  const dispenseClue = () => setVideoId((current) => {
-    const pool = videoIdsRef.current.filter((v) => v !== current);
-    return pool.length ? pool[Math.floor(Math.random() * pool.length)] : current;
-  });
+  const dispenseClue = useCallback(() => {
+    const groups = videoGroupsRef.current;
+    if (!groups.length) return;
 
-  // Pull the gallery's embeddable clips and screen one at random.
+    let played = playedVideoIdsRef.current;
+    let choice = pickFromNextGroup(groups, played, nextGroupIndexRef.current);
+
+    // Start a fresh cycle only after every available clip has been seen. Keeping
+    // the last clip marked prevents an immediate repeat across the cycle boundary.
+    if (!choice) {
+      const lastVideoId = videoIdRef.current || lastVideoIdRef.current;
+      played = lastVideoId && new Set(groups.flat()).size > 1
+        ? new Set([lastVideoId])
+        : new Set();
+      choice = pickFromNextGroup(groups, played, nextGroupIndexRef.current);
+    }
+
+    if (!choice) return;
+    played.add(choice.videoId);
+    playedVideoIdsRef.current = played;
+    nextGroupIndexRef.current = choice.nextGroupIndex;
+    lastVideoIdRef.current = choice.videoId;
+    videoIdRef.current = choice.videoId;
+    saveReelSession(played, choice.nextGroupIndex, choice.videoId);
+    setVideoId(choice.videoId);
+  }, []);
+
+  // Pull the gallery's embeddable clips, keeping their playlist boundaries.
   useEffect(() => {
     let active = true;
     fetch('/api/gallery-video')
       .then((r) => r.json())
-      .then(({ videoIds }) => {
-        if (!active || !videoIds?.length) return;
-        setVideoIds(videoIds);
-        setVideoId(videoIds[Math.floor(Math.random() * videoIds.length)]);
+      .then(({ groups }) => {
+        if (!active) return;
+        const normalizedGroups = normalizeGroups(groups);
+        if (!normalizedGroups.length) return;
+
+        const saved = readReelSession(normalizedGroups);
+        videoGroupsRef.current = normalizedGroups;
+        playedVideoIdsRef.current = saved.played;
+        nextGroupIndexRef.current = saved.nextGroupIndex;
+        lastVideoIdRef.current = saved.lastVideoId;
+        setVideoGroups(normalizedGroups);
+        dispenseClue();
       })
       .catch(() => {});
     return () => { active = false; };
-  }, []);
+  }, [dispenseClue]);
 
   // Build the YouTube player once the first clip is ready; advance when a clip ends.
   useEffect(() => {
@@ -80,7 +177,7 @@ export default function ArchiveSidebar() {
       const prev = window.onYouTubeIframeAPIReady;
       window.onYouTubeIframeAPIReady = () => { if (prev) prev(); initPlayer(); };
     }
-  }, [videoId]);
+  }, [videoId, dispenseClue]);
 
   // Swap the clip in place on shuffle / auto-advance (loadVideoById autoplays the next).
   useEffect(() => {
@@ -102,7 +199,7 @@ export default function ArchiveSidebar() {
       <section className={styles.reel} aria-label="Random clue dispenser">
         <div className={styles.reelHead}>
           <span className={styles.recordLabel}>Random clue dispenser</span>
-          <button type="button" className={styles.reelShuffle} onClick={dispenseClue} disabled={videoIds.length < 2} aria-label="Dispense another clue"><Shuffle size={15} strokeWidth={1.6} aria-hidden="true" /></button>
+          <button type="button" className={styles.reelShuffle} onClick={dispenseClue} disabled={new Set(videoGroups.flat()).size < 2} aria-label="Dispense another clue"><Shuffle size={15} strokeWidth={1.6} aria-hidden="true" /></button>
         </div>
         <div className={styles.reelFrame}>
           <div ref={reelDivRef} />

@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowUpRight, MessageSquare, Volume2, LayoutDashboard } from 'lucide-react';
 import { ensureLibsLoaded } from '@/lib/markdown';
@@ -15,7 +14,6 @@ import styles from '@/features/caseArchive/styles/NoteFeed.module.css';
 import { CASE_BASE } from '@/configs/vault';
 
 export default function NoteFeed({ onLinkClick, serverData }) {
-  const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
   const [libsReady, setLibsReady] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -39,7 +37,8 @@ export default function NoteFeed({ onLinkClick, serverData }) {
       link.classList.add('internal-link');
       onLinkClick({ target: link, preventDefault: () => {} });
     } else {
-      router.push(`${CASE_BASE}/${targetId.replace(/\.md$/i, '')}`);
+      // New tab so the feed (and its playing music/video) stays put.
+      window.open(`${CASE_BASE}/${targetId.replace(/\.md$/i, '')}`, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -47,7 +46,7 @@ export default function NoteFeed({ onLinkClick, serverData }) {
     <div className={`${theme.theme} ${styles.shell}`}>
       <div className={`nf-feed ${styles.feed}`} ref={feedRef}>
         <div className={styles.sheet}>
-          <ArchiveHeader />
+          <ArchiveHeader newTab />
           <main id="archive-content">
             <section className={styles.hero} aria-labelledby="archive-title">
               <div className={styles.heroMeta}><span>Notes / Ideas / Experiments</span><span>Ope Watson’s working collection</span></div>
@@ -68,9 +67,9 @@ export default function NoteFeed({ onLinkClick, serverData }) {
             <section id="applications" className={styles.applications} aria-labelledby="applications-title">
               <div className="nf-section-heading"><h2 id="applications-title">Applications</h2><span className={styles.sectionLabel}>Tools from the workbench</span></div>
               <div className={styles.appGrid}>
-                <Link href="/chat" className={styles.appCard}><MessageSquare size={21} strokeWidth={1.3} aria-hidden="true" /><h3>AI Chat Vault</h3><p>A conversation with the archive.</p><ArrowUpRight size={16} className={styles.appArrow} aria-hidden="true" /></Link>
-                <Link href="/voice" className={styles.appCard}><Volume2 size={21} strokeWidth={1.3} aria-hidden="true" /><h3>Text to Speech</h3><p>Give written words a voice.</p><ArrowUpRight size={16} className={styles.appArrow} aria-hidden="true" /></Link>
-                <Link href="/noirboard" className={styles.appCard}><LayoutDashboard size={21} strokeWidth={1.3} aria-hidden="true" /><h3>Noir Board</h3><p>A place to connect the pieces.</p><ArrowUpRight size={16} className={styles.appArrow} aria-hidden="true" /></Link>
+                <Link href="/chat" target="_blank" rel="noopener noreferrer" className={styles.appCard}><MessageSquare size={21} strokeWidth={1.3} aria-hidden="true" /><h3>AI Chat Vault</h3><p>A conversation with the archive.</p><ArrowUpRight size={16} className={styles.appArrow} aria-hidden="true" /></Link>
+                <Link href="/voice" target="_blank" rel="noopener noreferrer" className={styles.appCard}><Volume2 size={21} strokeWidth={1.3} aria-hidden="true" /><h3>Text to Speech</h3><p>Give written words a voice.</p><ArrowUpRight size={16} className={styles.appArrow} aria-hidden="true" /></Link>
+                <Link href="/noirboard" target="_blank" rel="noopener noreferrer" className={styles.appCard}><LayoutDashboard size={21} strokeWidth={1.3} aria-hidden="true" /><h3>Noir Board</h3><p>A place to connect the pieces.</p><ArrowUpRight size={16} className={styles.appArrow} aria-hidden="true" /></Link>
               </div>
             </section>
             </div>
