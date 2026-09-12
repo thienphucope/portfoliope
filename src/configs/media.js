@@ -17,8 +17,7 @@ export const BACKGROUND_VIDEO = {
 
 // Gallery page embeds. One section per playlist; videos are fetched + shuffled.
 export const GALLERY_PLAYLISTS = [
-  { title: 'Section 01', playlistId: 'PLo2L9JmoQoy94NKhBLuQzFsAVKHVr5cmG&si=TrQ_IlRmMnlSyQfn' },
-  { title: 'Section 02', playlistId: 'PLRNOK1E5gA8Ud8E1duLN_jMnfoTSPtHit&si=lA79kbFo-lTlX9OD' },
-  { title: 'Section 03', playlistId: 'PLo2L9JmoQoy_jVwTJhA3QF3a98n2Dcga2&si=fcVYUphZ34pwR-g1' },
-
+  { title: 'Section 01', playlistId: 'PLo2L9JmoQoy94NKhBLuQzFsAVKHVr5cmG' },
+  { title: 'Section 02', playlistId: 'PLRNOK1E5gA8Ud8E1duLN_jMnfoTSPtHit' },
+  { title: 'Section 03', playlistId: 'PLo2L9JmoQoy_jVwTJhA3QF3a98n2Dcga2' },
 ];

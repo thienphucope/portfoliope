@@ -1,68 +1,106 @@
 import { GALLERY_PLAYLISTS } from '@/configs/media';
 
-// ponytail: scrapes YouTube's ytInitialData instead of the Data API. No key, but
-// fragile — if YouTube changes markup this returns [] and Gallery falls back to a
-// plain playlist embed. Upgrade path: YouTube Data API + YOUTUBE_API_KEY.
-const UA =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36';
+const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3';
 const YOUTUBE_TIMEOUT_MS = 8000;
+const YOUTUBE_CACHE_SECONDS = 86400;
+const MAX_RESULTS = 50;
 
-function extractVideoIds(html) {
-  const m = html.match(/var ytInitialData = (\{.*?\});<\/script>/s);
-  if (!m) return [];
-  let data;
-  try {
-    data = JSON.parse(m[1]);
-  } catch {
-    return [];
-  }
-  const seen = new Set();
-  (function walk(node) {
-    if (!node || typeof node !== 'object') return;
-    const lv = node.lockupViewModel;
-    if (lv?.contentId && lv.contentType === 'LOCKUP_CONTENT_TYPE_VIDEO') seen.add(lv.contentId);
-    for (const key in node) walk(node[key]);
-  })(data);
-  return [...seen];
+function normalizePlaylistId(value) {
+  return String(value || '').split('&')[0].trim();
 }
 
-// Drop videos that would grey-out & stall the embed: deleted/private (status != OK)
-// AND embed-disabled/age-restricted (playableInEmbed false). The watch page carries
-// both flags; oEmbed can't see embeddability, so it isn't enough.
-async function isEmbeddable(id) {
-  try {
-    const html = await (
-      await fetch(`https://www.youtube.com/watch?v=${id}&hl=en`, {
-        headers: { 'Accept-Language': 'en-US,en;q=0.9', 'User-Agent': UA },
-        next: { revalidate: 86400 },
-        signal: AbortSignal.timeout(YOUTUBE_TIMEOUT_MS),
-      })
-    ).text();
-    const status = html.match(/"playabilityStatus":\{"status":"([^"]+)"/)?.[1];
-    const inEmbed = html.match(/"playableInEmbed":(true|false)/)?.[1];
-    return status === 'OK' && inEmbed === 'true';
-  } catch {
-    return false; // transient failure → skip for now, self-heals next revalidate
+async function fetchYouTube(resource, params) {
+  const apiKey = process.env.YOUTUBE_API_KEY;
+  if (!apiKey) throw new Error('YOUTUBE_API_KEY is not configured');
+
+  const url = new URL(`${YOUTUBE_API_BASE}/${resource}`);
+  for (const [key, value] of Object.entries(params)) {
+    if (value) url.searchParams.set(key, String(value));
   }
+  url.searchParams.set('key', apiKey);
+
+  const response = await fetch(url, {
+    next: { revalidate: YOUTUBE_CACHE_SECONDS },
+    signal: AbortSignal.timeout(YOUTUBE_TIMEOUT_MS),
+  });
+
+  if (!response.ok) {
+    let message = response.statusText;
+    try {
+      const body = await response.json();
+      message = body?.error?.message || message;
+    } catch {}
+    throw new Error(`YouTube Data API ${resource} failed (${response.status}): ${message}`);
+  }
+
+  return response.json();
+}
+
+async function getPlaylistVideoIds(playlistId) {
+  const ids = [];
+  let pageToken = null;
+
+  do {
+    const data = await fetchYouTube('playlistItems', {
+      part: 'contentDetails',
+      playlistId,
+      maxResults: MAX_RESULTS,
+      pageToken,
+      fields: 'nextPageToken,items(contentDetails(videoId))',
+    });
+
+    for (const item of data.items || []) {
+      const id = item?.contentDetails?.videoId;
+      if (id) ids.push(id);
+    }
+    pageToken = data.nextPageToken || null;
+  } while (pageToken);
+
+  return [...new Set(ids)];
+}
+
+async function keepEmbeddableVideos(ids) {
+  const batches = [];
+  for (let i = 0; i < ids.length; i += MAX_RESULTS) {
+    batches.push(ids.slice(i, i + MAX_RESULTS));
+  }
+
+  const responses = await Promise.all(
+    batches.map((batch) => fetchYouTube('videos', {
+      part: 'status',
+      id: batch.join(','),
+      fields: 'items(id,status(embeddable,privacyStatus,uploadStatus))',
+    }))
+  );
+
+  const allowed = new Set();
+  for (const data of responses) {
+    for (const video of data.items || []) {
+      const status = video.status;
+      if (status?.embeddable && status.privacyStatus !== 'private' && status.uploadStatus === 'processed') {
+        allowed.add(video.id);
+      }
+    }
+  }
+
+  return ids.filter((id) => allowed.has(id));
 }
 
 export async function getGalleryPlaylists() {
+  if (!process.env.YOUTUBE_API_KEY) {
+    throw new Error('YOUTUBE_API_KEY is not configured');
+  }
+
   return Promise.all(
     GALLERY_PLAYLISTS.map(async (playlist) => {
+      const playlistId = normalizePlaylistId(playlist.playlistId);
       try {
-        const res = await fetch(
-          `https://www.youtube.com/playlist?list=${playlist.playlistId}&hl=en`,
-          {
-            headers: { 'Accept-Language': 'en-US,en;q=0.9', 'User-Agent': UA },
-            next: { revalidate: 86400 }, // refresh daily, no rebuild needed
-            signal: AbortSignal.timeout(YOUTUBE_TIMEOUT_MS),
-          }
-        );
-        const ids = extractVideoIds(await res.text());
-        const flags = await Promise.all(ids.map(isEmbeddable));
-        return { ...playlist, videoIds: ids.filter((_, i) => flags[i]) };
-      } catch {
-        return { ...playlist, videoIds: [] };
+        const ids = await getPlaylistVideoIds(playlistId);
+        const videoIds = await keepEmbeddableVideos(ids);
+        return { ...playlist, playlistId, videoIds };
+      } catch (error) {
+        console.error(`Gallery playlist "${playlist.title}" failed:`, error);
+        return { ...playlist, playlistId, videoIds: [] };
       }
     })
   );
