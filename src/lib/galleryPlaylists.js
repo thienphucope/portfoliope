@@ -5,6 +5,7 @@ import { GALLERY_PLAYLISTS } from '@/configs/media';
 // plain playlist embed. Upgrade path: YouTube Data API + YOUTUBE_API_KEY.
 const UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36';
+const YOUTUBE_TIMEOUT_MS = 8000;
 
 function extractVideoIds(html) {
   const m = html.match(/var ytInitialData = (\{.*?\});<\/script>/s);
@@ -34,7 +35,7 @@ async function isEmbeddable(id) {
       await fetch(`https://www.youtube.com/watch?v=${id}&hl=en`, {
         headers: { 'Accept-Language': 'en-US,en;q=0.9', 'User-Agent': UA },
         next: { revalidate: 86400 },
-        signal: AbortSignal.timeout(8000),
+        signal: AbortSignal.timeout(YOUTUBE_TIMEOUT_MS),
       })
     ).text();
     const status = html.match(/"playabilityStatus":\{"status":"([^"]+)"/)?.[1];
@@ -54,6 +55,7 @@ export async function getGalleryPlaylists() {
           {
             headers: { 'Accept-Language': 'en-US,en;q=0.9', 'User-Agent': UA },
             next: { revalidate: 86400 }, // refresh daily, no rebuild needed
+            signal: AbortSignal.timeout(YOUTUBE_TIMEOUT_MS),
           }
         );
         const ids = extractVideoIds(await res.text());

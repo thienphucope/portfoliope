@@ -7,6 +7,10 @@ export const metadata = {
   alternates: { canonical: '/' },
 };
 
+// Archive content comes from GitHub at request time. Declaring this explicitly
+// avoids a failed static-render probe (and misleading GitHub errors) during build.
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   let serverData = null;
   try {

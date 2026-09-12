@@ -2,6 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import { hydrateServerCache } from '@/services/caseProvider';
 
+// GitHub is optional data for the sitemap. Generate it on demand so a transient
+// GitHub/API-token failure cannot make the production build depend on the network.
+export const dynamic = 'force-dynamic';
+
 export default async function sitemap() {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://opewatson.com'; // Thay bằng domain của bạn nếu cần
 
