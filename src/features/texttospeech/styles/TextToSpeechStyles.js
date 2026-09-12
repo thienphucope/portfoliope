@@ -4,14 +4,15 @@ export default function TextToSpeechStyles() {
       .voice-route {
         min-height: 100dvh;
         padding: var(--feature-space);
-        background: var(--feature-bg, #0a0a0c);
+        background: var(--archive-paper-texture), var(--archive-paper);
         color: var(--md-colortext);
-        background-image: radial-gradient(circle at 10% 20%, rgba(186, 145, 112, 0.05), transparent 40rem), repeating-linear-gradient(0deg, rgba(186, 145, 112, 0.02) 0, rgba(186, 145, 112, 0.02) 1px, transparent 1px, transparent 3px);
         box-sizing: border-box;
       }
 
       .voice-route-inner {
         width: 100%;
+        max-width: 860px;
+        margin: 0 auto;
         height: calc(100dvh - var(--feature-space-top) - var(--feature-space-bottom));
         background: transparent;
         padding: 0;
@@ -73,14 +74,14 @@ export default function TextToSpeechStyles() {
         display: flex;
         align-items: center;
         gap: 16px;
-        border: 1px solid rgba(186, 145, 112, 0.2);
-        background: rgba(186, 145, 112, 0.02);
+        border: 1px solid var(--archive-line-soft);
+        background: transparent;
         padding: 16px;
         transition: border-color 0.3s;
       }
       .nf-tts-textarea-row:focus-within {
-        border-color: #8a6b52;
-        background: rgba(186, 145, 112, 0.05);
+        border-color: var(--archive-ink);
+        background: transparent;
       }
 
       .nf-tts-input {
@@ -164,14 +165,14 @@ export default function TextToSpeechStyles() {
         font-family: var(--font-mono);
         font-size: var(--ui-text-action);
         letter-spacing: var(--ui-letter-action);
-        color: rgba(224,224,224,0.35);
+        color: var(--archive-muted);
         text-transform: uppercase;
         text-align: center;
       }
 
       .nf-tts-history-item {
-        background: rgba(186, 145, 112, 0.02);
-        border: 1px dashed rgba(186, 145, 112, 0.15);
+        background: transparent;
+        border: 1px dashed var(--archive-line-soft);
         padding: 16px;
         display: flex;
         flex-direction: column;

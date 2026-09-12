@@ -1,4 +1,5 @@
 import TextToSpeech from '@/features/texttospeech/TextToSpeech';
+import theme from '@/features/caseArchive/styles/ArchiveTheme.module.css';
 
 export const metadata = {
   title: 'Voice Synthesis',
@@ -7,7 +8,7 @@ export const metadata = {
 
 export default function VoicePage() {
   return (
-    <div className="voice-route">
+    <div className={`${theme.theme} voice-route`}>
       <div className="voice-route-inner">
         <TextToSpeech />
       </div>

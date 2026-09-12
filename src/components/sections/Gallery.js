@@ -1,200 +1,92 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import MusicHeader from '@/components/sections/MusicHeader';
+import ArchiveHeader from '@/features/caseArchive/components/ArchiveHeader';
+import galleryImages from '@/data/galleryImages.json';
 
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-function embedSrc(playlist, ids) {
-  const params = new URLSearchParams({ rel: '0', modestbranding: '1', loop: '1' });
-  if (!ids?.length) {
-    // scrape returned nothing → plain playlist embed (still works, just no shuffle)
-    params.set('list', playlist.playlistId);
-    return `https://www.youtube-nocookie.com/embed/videoseries?${params}`;
-  }
-  const [first, ...rest] = ids;
-  params.set('playlist', rest.length ? rest.join(',') : first);
-  return `https://www.youtube-nocookie.com/embed/${first}?${params}`;
-}
-
-export default function Gallery({ playlists = [], showDesktopDiscuss = false }) {
-  // Shuffle each playlist's videos after mount (SSR renders source order; avoids hydration mismatch).
-  const [orders, setOrders] = useState(null);
-
-  useEffect(() => {
-    setOrders(playlists.map((p) => shuffle(p.videoIds || [])));
-  }, [playlists]);
-
+export default function Gallery() {
   return (
-    <section className="gallery-section relative w-full min-h-[100dvh] overflow-hidden">
+    <section className="gallery-archive">
       <style jsx global>{`
-        .gallery-section {
-          display: flex;
-          align-items: stretch;
-          justify-content: center;
-        }
-
-        .gallery-noir {
-          position: relative;
-          width: 100%;
+        .gallery-archive {
           min-height: 100dvh;
-          margin: 0;
-          --font-mono: 'Special Elite', 'Courier New', monospace;
-          color: #f4e8c1;
-          background: #000;
-          padding: var(--feature-space);
-          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          background: var(--archive-paper-texture), var(--archive-paper);
+          color: var(--archive-ink);
+          font-family: var(--archive-font-ui);
         }
-
-        .gallery-shell {
-          position: relative;
-          z-index: 2;
-          width: 100%;
-          margin: 0 auto;
+        .gallery-hero {
+          container-type: inline-size;
+          margin: 0 var(--archive-gutter);
+          padding: 34px 0 28px;
+          border-bottom: 1px solid var(--archive-line);
         }
-
-        .gallery-masthead {
-          padding-bottom: clamp(22px, 4vw, 38px);
+        .gallery-hero-meta {
+          display: flex;
+          justify-content: space-between;
+          gap: 20px;
+          color: var(--archive-muted);
+          font-family: var(--archive-font-code);
+          font-size: .625rem;
+          letter-spacing: .19em;
+          text-transform: uppercase;
         }
-
-        .gallery-masthead .gallery-discuss-links {
-          display: none;
+        .gallery-hero h1 {
+          margin: 20px 0 4px;
+          font-family: var(--archive-font-heading);
+          font-size: 18.1cqi;
+          font-weight: 400;
+          line-height: 1.07;
+          letter-spacing: -.065em;
+          white-space: nowrap;
         }
-
-        .gallery-title {
-          margin: 0;
-          font-family: var(--font-body);
-          font-weight: 900;
-          font-size: clamp(3.2rem, 10vw, 7.4rem);
-          line-height: 0.95;
-          letter-spacing: -0.01em;
-          color: var(--theme);
-        }
-
-        .gallery-playlists {
+        .gallery-hero h1 span { color: var(--archive-accent); }
+        .gallery-grid {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: clamp(20px, 3vw, 40px);
+          align-items: start;
+          gap: clamp(18px, 2.4vw, 34px);
+          margin: 0 var(--archive-gutter);
+          padding: 32px 0 48px;
         }
-
-        @media (max-width: 900px) {
-          .gallery-playlists {
-            grid-template-columns: 1fr;
-          }
+        .gallery-tile {
+          margin: 0;
+          padding: 6px;
+          border: 1px solid var(--archive-line-soft);
+          background: #ffffff30;
+          transition: border-color var(--archive-motion);
         }
-
-        .gallery-playlist-section {
-          width: 100%;
+        .gallery-tile:hover { border-color: var(--archive-muted); }
+        .gallery-tile img { display: block; width: 100%; height: auto; }
+        .gallery-cap {
+          margin: 9px 2px 2px;
+          color: var(--archive-muted);
+          font-family: var(--archive-font-code);
+          font-size: .625rem;
+          letter-spacing: .1em;
+          text-transform: uppercase;
         }
-
-        .gallery-playlist {
-          position: relative;
-          width: min(1120px, 100%);
-          margin: 0 auto;
-          aspect-ratio: 16 / 9;
-          border-radius: 6px;
-          overflow: hidden;
-          background: rgba(12, 28, 31, 0.9);
-          box-shadow: 0 26px 90px rgba(0, 0, 0, 0.55);
-        }
-
-        .gallery-playlist iframe {
-          position: absolute;
-          inset: 0;
-          width: 100%;
-          height: 100%;
-          border: 0;
-        }
-
-        .gallery-mark {
-          position: absolute;
-          right: clamp(18px, 4vw, 54px);
-          bottom: clamp(18px, 4vw, 42px);
-          z-index: 1;
-          font-family: var(--font-mono);
-          font-size: clamp(5rem, 20vw, 16rem);
-          line-height: 0.8;
-          color: var(--theme);
-          opacity: 0.04;
-          pointer-events: none;
-          transform: rotate(-8deg);
-        }
-
-        @media (max-width: 767px) {
-          .gallery-title {
-            text-align: center;
-          }
-        }
-
-        @media (min-width: 1024px) {
-          .gallery-masthead {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: clamp(24px, 5vw, 72px);
-          }
-
-          .gallery-masthead .gallery-discuss-links {
-            display: flex;
-            flex: 0 0 auto;
-            justify-content: flex-start;
-            gap: 16px;
-            padding-bottom: 0;
-          }
-
-          .gallery-masthead .gallery-discuss-links .about-nav {
-            gap: 18px;
-          }
-
-          .gallery-masthead .gallery-discuss-links .about-social-prompt {
-            color: rgba(243, 208, 152, 0.6);
-          }
-
-          .gallery-masthead .gallery-discuss-links .title-fly-out {
-            max-width: 22vw;
-          }
+        @media (max-width: 820px) {
+          .gallery-grid { grid-template-columns: 1fr; }
         }
       `}</style>
 
-      <div className="gallery-noir">
-        <span className="gallery-mark" aria-hidden="true">+</span>
-        <div className="gallery-shell">
-          <header className="gallery-masthead">
-            <h1 className="gallery-title">Gallery</h1>
-            {showDesktopDiscuss && (
-              <MusicHeader
-                className="gallery-discuss-links"
-                promptLabel="discuss?"
-                ariaLabel="Discuss links"
-                showMusicControl={false}
-              />
-            )}
-          </header>
-
-          <div className="gallery-playlists">
-            {playlists.map((playlist, i) => (
-              <section className="gallery-playlist-section" key={playlist.playlistId}>
-                <div className="gallery-playlist">
-                  <iframe
-                    src={embedSrc(playlist, orders ? orders[i] : playlist.videoIds)}
-                    title={playlist.title}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    loading="lazy"
-                  />
-                </div>
-              </section>
-            ))}
-          </div>
+      <ArchiveHeader />
+      <main className="gallery-main">
+        <section className="gallery-hero">
+          <div className="gallery-hero-meta"><span>Stills room</span><span>Frames &amp; references from the desk</span></div>
+          <h1>Gallery<span>.</span></h1>
+        </section>
+        <div className="gallery-grid">
+          {galleryImages.map((img) => (
+            <figure className="gallery-tile" key={img.src}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={img.src} alt={img.title} loading="lazy" />
+              <figcaption className="gallery-cap">{img.title}</figcaption>
+            </figure>
+          ))}
         </div>
-      </div>
+      </main>
     </section>
   );
 }

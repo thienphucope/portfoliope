@@ -47,7 +47,7 @@ export default function NoteFeed({ onLinkClick, serverData }) {
     <div className={`${theme.theme} ${styles.shell}`}>
       <div className={`nf-feed ${styles.feed}`} ref={feedRef}>
         <div className={styles.sheet}>
-          <ArchiveHeader onSearch={() => document.getElementById('archive-search')?.focus()} />
+          <ArchiveHeader />
           <main id="archive-content">
             <section className={styles.hero} aria-labelledby="archive-title">
               <div className={styles.heroMeta}><span>Notes / Ideas / Experiments</span><span>Ope Watson’s working collection</span></div>
@@ -78,7 +78,7 @@ export default function NoteFeed({ onLinkClick, serverData }) {
             </div>
           </main>
           <footer className={`nf-legal-links ${styles.footer}`}>
-            <Link href="/">OPE <span>— Lab Notes</span></Link>
+            <p className={styles.footerQuote}>“I have not failed. I’ve just found 10,000 ways that won’t work.” <span>— Thomas A. Edison</span></p>
             <span className="nf-legal-sep">© {new Date().getFullYear()} Ope Watson</span>
           </footer>
         </div>

@@ -1,48 +1,56 @@
 // src/components/sections/MusicHeader.js
 "use client";
-import { useState, useEffect, useRef } from 'react';
-import { SOCIAL_LINKS } from '@/configs/social';
-import { FaGithub, FaDiscord, FaEnvelope } from 'react-icons/fa';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { SkipBack, SkipForward, Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { MUSIC_PLAYER } from '@/configs/media';
 
-function MusicHeader({ onPlayStateChange, className = '', promptLabel = '', ariaLabel = 'Social links', showMusicControl = true } = {}) {
+const TRACKS = MUSIC_PLAYER.tracks || [];
+const DEFAULT_VOLUME = MUSIC_PLAYER.volume ?? 70;
+
+function fmtTime(s) {
+  if (!s || !isFinite(s)) return '0:00';
+  return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+}
+
+function MusicHeader({ className = '' } = {}) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoTitle, setVideoTitle] = useState('');
-  const [animationClass, setAnimationClass] = useState('');
-  const [animationKey, setAnimationKey] = useState(0);
+  const [index, setIndex] = useState(0);
+  const [played, setPlayed] = useState(0); // 0–1 fraction of current track
+  const [elapsed, setElapsed] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(DEFAULT_VOLUME); // 0–100; 0 === muted
   const [mounted, setMounted] = useState(false);
   const playerRef = useRef(null);
-  const newSongTimerRef = useRef(null);
   const musicPlayerDivRef = useRef(null);
+  const lastVolumeRef = useRef(DEFAULT_VOLUME || 70);
 
   useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || !TRACKS.length) return;
 
     const initPlayer = () => {
       if (!window.YT?.Player || playerRef.current || !musicPlayerDivRef.current) return;
       playerRef.current = new window.YT.Player(musicPlayerDivRef.current, {
-        height: '0', width: '0', videoId: MUSIC_PLAYER.videoId,
-        playerVars: { autoplay: 0, loop: 1, playlist: MUSIC_PLAYER.videoId, controls: 0, showinfo: 0, modestbranding: 1 },
+        height: '0', width: '0', videoId: TRACKS[0],
+        playerVars: { autoplay: 0, controls: 0, showinfo: 0, modestbranding: 1 },
         events: {
           onReady: (e) => { e.target.setVolume(MUSIC_PLAYER.volume); },
           onStateChange: (e) => {
-            if (e.data === window.YT.PlayerState.PLAYING) {
+            const YT = window.YT.PlayerState;
+            if (e.data === YT.PLAYING) {
               setIsPlaying(true);
-              onPlayStateChange?.(true);
-              const newTitle = e.target.getVideoData().title;
-              setVideoTitle(old => {
-                if (old !== newTitle) {
-                  if (newSongTimerRef.current) clearTimeout(newSongTimerRef.current);
-                  setAnimationClass('fly-cycle'); setAnimationKey(k => k + 1);
-                  newSongTimerRef.current = setTimeout(() => setAnimationClass(''), 5500);
-                }
-                return newTitle;
+              setVideoTitle(e.target.getVideoData().title);
+            } else if (e.data === YT.ENDED) {
+              setPlayed(0);
+              setIndex((i) => {
+                const next = (i + 1) % TRACKS.length;
+                playerRef.current?.loadVideoById(TRACKS[next]);
+                return next;
               });
             } else {
               setIsPlaying(false);
-              onPlayStateChange?.(false);
             }
           },
         },
@@ -60,75 +68,85 @@ function MusicHeader({ onPlayStateChange, className = '', promptLabel = '', aria
       const prev = window.onYouTubeIframeAPIReady;
       window.onYouTubeIframeAPIReady = () => { if (prev) prev(); initPlayer(); };
     }
-  }, [mounted, onPlayStateChange]);
+  }, [mounted]);
 
-  const togglePlayPause = () => {
-    if (!playerRef.current) return;
-    isPlaying ? playerRef.current.pauseVideo() : playerRef.current.playVideo();
-  };
+  // YouTube has no timeupdate event → poll while playing.
+  useEffect(() => {
+    if (!isPlaying) return;
+    const id = setInterval(() => {
+      const p = playerRef.current;
+      const d = p?.getDuration?.() || 0;
+      const t = p?.getCurrentTime?.() || 0;
+      setDuration(d);
+      setElapsed(t);
+      setPlayed(d ? t / d : 0);
+    }, 500);
+    return () => clearInterval(id);
+  }, [isPlaying]);
 
-  const handleDiskMouseEnter = () => {
-    if (newSongTimerRef.current) { clearTimeout(newSongTimerRef.current); newSongTimerRef.current = null; }
-    setAnimationClass('fly-out'); setAnimationKey(k => k + 1);
-  };
+  const seek = useCallback((fraction) => {
+    const p = playerRef.current;
+    const d = p?.getDuration?.() || 0;
+    if (!d) return;
+    p.seekTo(d * fraction, true);
+    setPlayed(fraction);
+  }, []);
 
-  const handleDiskMouseLeave = () => {
-    if (newSongTimerRef.current) { clearTimeout(newSongTimerRef.current); newSongTimerRef.current = null; }
-    setAnimationClass('fly-in'); setAnimationKey(k => k + 1);
-  };
+  const applyVolume = useCallback((v) => {
+    playerRef.current?.setVolume?.(v);
+    setVolume(v);
+    if (v > 0) lastVolumeRef.current = v;
+  }, []);
 
-  const socialLinks = [
-    { href: SOCIAL_LINKS.github, label: 'GitHub', Icon: FaGithub },
-    { href: SOCIAL_LINKS.discord, label: 'Discord', Icon: FaDiscord },
-    { href: SOCIAL_LINKS.email, label: 'Email', Icon: FaEnvelope },
-  ];
-  const mastheadClassName = ['about-masthead', className].filter(Boolean).join(' ');
+  const toggleMute = useCallback(() => {
+    applyVolume(volume > 0 ? 0 : lastVolumeRef.current || 70);
+  }, [volume, applyVolume]);
+
+  const togglePlayPause = useCallback(() => {
+    const p = playerRef.current;
+    if (!p) return;
+    isPlaying ? p.pauseVideo() : p.playVideo();
+  }, [isPlaying]);
+
+  const skip = useCallback((dir) => {
+    const p = playerRef.current;
+    if (!p || TRACKS.length < 2) return;
+    setPlayed(0);
+    setIndex((i) => {
+      const next = (i + dir + TRACKS.length) % TRACKS.length;
+      p.loadVideoById(TRACKS[next]);
+      p.playVideo();
+      return next;
+    });
+  }, []);
+
+  const nowPlaying = videoTitle
+    ? (videoTitle.length > 42 ? videoTitle.slice(0, 42).trimEnd() + '…' : videoTitle)
+    : 'Nothing playing';
+  const single = TRACKS.length < 2;
 
   return (
-    <>
+    <div className={['music-player', className].filter(Boolean).join(' ')}>
       <style jsx global>{`
         @keyframes rotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes flyOut { 0% { opacity: 0; transform: translateY(-50%) translateX(0); } 100% { opacity: 1; transform: translateY(-50%) translateX(40px); } }
-        @keyframes flyIn { 0% { opacity: 1; transform: translateY(-50%) translateX(40px); } 100% { opacity: 0; transform: translateY(-50%) translateX(0); } }
-        @keyframes flyOutStayIn { 0% { opacity: 0; transform: translateY(-50%) translateX(0); } 9% { opacity: 1; transform: translateY(-50%) translateX(40px); } 91% { opacity: 1; transform: translateY(-50%) translateX(40px); } 100% { opacity: 0; transform: translateY(-50%) translateX(0); } }
-        .about-masthead {
-          grid-area: masthead;
-          position: relative;
-          z-index: 2;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 14px;
-          margin-bottom: 0;
-          padding-bottom: 4px;
-        }
-        .about-music-control {
-          position: relative;
-          flex: 0 0 auto;
-          border: 0;
-          padding: 0;
-          background: transparent;
-          cursor: pointer;
-        }
+        .music-player { display: flex; align-items: center; gap: 15px; }
+        .mp-disc { flex: 0 0 auto; border: 0; padding: 0; background: transparent; cursor: pointer; line-height: 0; }
         .disk {
           display: block;
           position: relative;
-          width: 48px;
-          height: 48px;
+          width: 52px;
+          height: 52px;
           overflow: hidden;
-          border: 1px solid rgba(255,255,255,0.34);
+          border: 1px solid rgba(255,255,255,0.28);
           border-radius: 50%;
           background:
+            radial-gradient(circle at 50% 15%, #fff 0 1.7px, rgba(255,255,255,0.5) 1.7px 2.5px, transparent 2.9px),
             radial-gradient(circle at 50% 50%, #050505 0 3px, transparent 3.5px),
-            radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--theme) 86%, #fff) 0 10px, color-mix(in srgb, var(--theme) 74%, #000) 10px 14px, transparent 14.5px),
+            radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--theme) 86%, #fff) 0 11px, color-mix(in srgb, var(--theme) 74%, #000) 11px 15px, transparent 15.5px),
             repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,0.16) 0 1px, rgba(255,255,255,0.03) 1px 2px, transparent 2px 4px),
             conic-gradient(from 20deg, rgba(255,255,255,0.18), transparent 18%, rgba(255,255,255,0.07) 30%, transparent 56%, rgba(255,255,255,0.14), transparent 82%),
             radial-gradient(circle at 50% 50%, #202020 0, #080808 62%, #000 100%);
-          box-shadow:
-            0 0 0 2px rgba(0,0,0,0.78),
-            inset 0 0 0 1px rgba(255,255,255,0.08),
-            inset 0 0 18px rgba(255,255,255,0.06),
-            0 0 18px rgba(0,0,0,0.72);
+          box-shadow: 0 0 0 2px rgba(0,0,0,0.5), inset 0 0 12px rgba(255,255,255,0.05);
           animation: rotate 10s linear infinite;
         }
         .disk::before {
@@ -144,82 +162,110 @@ function MusicHeader({ onPlayStateChange, className = '', promptLabel = '', aria
           position: absolute;
           top: 50%;
           left: 50%;
-          width: 6px;
-          height: 6px;
+          width: 5px;
+          height: 5px;
           border-radius: 50%;
           background: #030303;
-          box-shadow:
-            0 0 0 1px rgba(255,255,255,0.2),
-            0 0 0 10px color-mix(in srgb, var(--theme) 24%, transparent),
-            0 0 0 14px color-mix(in srgb, var(--theme) 82%, #000);
+          box-shadow: 0 0 0 1px rgba(255,255,255,0.2), 0 0 0 10px color-mix(in srgb, var(--theme) 22%, transparent), 0 0 0 13px color-mix(in srgb, var(--theme) 78%, #000);
           transform: translate(-50%, -50%);
         }
         .disk.paused { animation-play-state: paused; }
-        .title-fly-out { position: absolute; top: 50%; left: 50%; transform: translateY(-50%); color: var(--theme); font-size: 1rem; font-weight: bold; font-style: italic; white-space: nowrap; max-width: 42vw; overflow: hidden; text-overflow: ellipsis; opacity: 0; pointer-events: none; }
-        .title-fly-out.fly-out { animation: flyOut 0.5s forwards; }
-        .title-fly-out.fly-in { animation: flyIn 0.5s forwards; }
-        .title-fly-out.fly-cycle { animation: flyOutStayIn 5.5s forwards; }
-        .about-nav {
-          display: flex;
-          align-items: center;
-          justify-content: flex-end;
-          flex-wrap: wrap;
-          gap: 16px;
-          color: var(--theme);
-        }
-        .about-social-prompt {
-          font-family: var(--font-mono);
-          font-size: 0.78rem;
-          font-style: italic;
-          letter-spacing: 0.08em;
-          line-height: 1;
-          color: currentColor;
+        .mp-meta { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+        .mp-topline { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+        .mp-title {
+          flex: 1;
+          min-width: 0;
+          overflow: hidden;
           white-space: nowrap;
+          text-overflow: ellipsis;
+          font-family: var(--font-body);
+          font-size: 0.95rem;
+          font-style: italic;
+          line-height: 1.2;
+          color: var(--archive-ink);
         }
-        .about-social-link {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          color: var(--theme);
-          font-size: 1.35rem;
-          line-height: 1;
-          transition: color 0.25s ease, transform 0.25s ease;
+        .mp-title.idle { color: var(--archive-muted); }
+        .mp-time { flex: 0 0 auto; font-family: var(--font-mono); font-size: 0.625rem; letter-spacing: 0.06em; color: var(--archive-muted); font-variant-numeric: tabular-nums; }
+        .mp-seek {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 100%;
+          height: 3px;
+          margin: 0;
+          cursor: pointer;
+          background: linear-gradient(to right, var(--archive-ink) var(--played, 0%), var(--archive-line) var(--played, 0%));
         }
-        .about-social-link:hover {
-          color: #fff;
-          transform: translateY(-2px);
+        .mp-seek::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 10px;
+          height: 10px;
+          border: 0;
+          border-radius: 50%;
+          background: var(--archive-ink);
         }
-
-        @media (min-width: 768px) {
-          .about-nav { gap: 22px; }
-          .about-social-link { font-size: 1.6rem; }
+        .mp-seek::-moz-range-thumb {
+          width: 10px;
+          height: 10px;
+          border: 0;
+          border-radius: 50%;
+          background: var(--archive-ink);
         }
+        .mp-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; color: var(--archive-muted); }
+        .mp-volume { display: flex; align-items: center; gap: 8px; }
+        .mp-vol { width: 54px; flex: 0 0 54px; }
+        .mp-btn { display: grid; place-items: center; border: 0; padding: 0; background: transparent; color: inherit; cursor: pointer; transition: color 0.18s; }
+        .mp-btn:hover:not(:disabled) { color: var(--archive-ink); }
+        .mp-btn:disabled { opacity: 0.35; cursor: default; }
+        .mp-play { color: var(--archive-ink); }
+        .mp-index { margin-left: auto; font-family: var(--font-mono); font-size: 0.625rem; letter-spacing: 0.08em; color: var(--archive-muted); }
       `}</style>
       <div style={{ display: 'none' }}><div ref={musicPlayerDivRef}></div></div>
-      <div className={mastheadClassName}>
-        {showMusicControl && (
-          <button type="button" className="about-music-control" aria-label={isPlaying ? 'Pause music' : 'Play music'} aria-pressed={isPlaying} onClick={togglePlayPause} onMouseEnter={handleDiskMouseEnter} onMouseLeave={handleDiskMouseLeave}>
-            <span className={`disk ${!isPlaying ? 'paused' : ''}`}></span>
-            {videoTitle && <span key={animationKey} className={`title-fly-out ${animationClass} font-fredericka`} style={{ fontFamily: 'var(--font-display)' }}>{videoTitle.length > 30 ? videoTitle.slice(0, 30).trimEnd() + '…' : videoTitle}</span>}
-          </button>
-        )}
-        <nav className="about-nav" aria-label={ariaLabel}>
-          {promptLabel && <span className="about-social-prompt">{promptLabel}</span>}
-          {socialLinks.map(({ href, label, Icon }) => (
-            <a
-              key={label}
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="about-social-link"
-              aria-label={label}
-            >
-              <Icon />
-            </a>
-          ))}
-        </nav>
+
+      <button type="button" className="mp-disc" onClick={togglePlayPause} aria-label={isPlaying ? 'Pause' : 'Play'} aria-pressed={isPlaying}>
+        <span className={`disk ${!isPlaying ? 'paused' : ''}`}></span>
+      </button>
+
+      <div className="mp-meta">
+        <div className="mp-topline">
+          <span className={`mp-title${isPlaying ? '' : ' idle'}`} title={videoTitle || undefined}>{nowPlaying}</span>
+          <span className="mp-time">{fmtTime(elapsed)} / {fmtTime(duration)}</span>
+        </div>
+        <input
+          type="range"
+          className="mp-seek"
+          min="0"
+          max="1"
+          step="0.001"
+          value={played}
+          onChange={(e) => seek(Number(e.target.value))}
+          style={{ '--played': `${played * 100}%` }}
+          aria-label="Seek"
+        />
+        <div className="mp-controls">
+          <button type="button" className="mp-btn" onClick={() => skip(-1)} disabled={single} aria-label="Previous track"><SkipBack size={16} strokeWidth={1.6} /></button>
+          <button type="button" className="mp-btn mp-play" onClick={togglePlayPause} aria-label={isPlaying ? 'Pause' : 'Play'}>{isPlaying ? <Pause size={17} strokeWidth={1.6} /> : <Play size={17} strokeWidth={1.6} />}</button>
+          <button type="button" className="mp-btn" onClick={() => skip(1)} disabled={single} aria-label="Next track"><SkipForward size={16} strokeWidth={1.6} /></button>
+          <div className="mp-volume">
+            <button type="button" className="mp-btn" onClick={toggleMute} aria-label={volume === 0 ? 'Unmute' : 'Mute'} aria-pressed={volume === 0}>
+              {volume === 0 ? <VolumeX size={16} strokeWidth={1.6} /> : <Volume2 size={16} strokeWidth={1.6} />}
+            </button>
+            <input
+              type="range"
+              className="mp-seek mp-vol"
+              min="0"
+              max="100"
+              step="1"
+              value={volume}
+              onChange={(e) => applyVolume(Number(e.target.value))}
+              style={{ '--played': `${volume}%` }}
+              aria-label="Volume"
+            />
+          </div>
+          <span className="mp-index">{String(index + 1).padStart(2, '0')} / {String(TRACKS.length).padStart(2, '0')}</span>
+        </div>
       </div>
-    </>
+    </div>
   );
 }
 

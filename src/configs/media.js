@@ -1,6 +1,11 @@
 export const MUSIC_PLAYER = {
-  videoId: 'KtC-pl9P3kE',
   volume: 30,
+  // Playlist for the sidebar player. Add more YouTube video IDs to extend it;
+  // the player reads each track's title from YouTube at runtime.
+  tracks: [
+    'KtC-pl9P3kE',
+    'ivVQYpGGvuc',
+  ],
 };
 
 export const BACKGROUND_VIDEO = {

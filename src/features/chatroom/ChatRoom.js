@@ -16,7 +16,7 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
     isThinking, isStreaming, streamingText, liveToolCalls, isProcessing,
     messagesAreaRef, messagesEndRef, textareaRef,
     handleAnalyze, handlePointerDown, handlePointerUp,
-    startLiveCall, endLiveCall, resetConversation,
+    endLiveCall, resetConversation,
   } = useChatRoomLogic({ onLiveCallChange, ref });
 
   if (!isMounted) return null;
@@ -124,13 +124,6 @@ const ChatRoom = forwardRef(function ChatRoom({ isEmbedded = false, onLinkClick,
                 disabled={isProcessing}
               />
               <div className="textarea-actions">
-                <button
-                  className={`action-btn${isLiveCall ? ' active' : ''}`}
-                  onClick={isLiveCall ? endLiveCall : startLiveCall}
-                  disabled={isProcessing && !isLiveCall}
-                >
-                  {isLiveCall ? '[ LIVE ]' : '[ VOICE ]'}
-                </button>
                 <button
                   className="action-btn"
                   onClick={resetConversation}
