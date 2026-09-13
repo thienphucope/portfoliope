@@ -25,6 +25,26 @@ const associates = [
 
 const REEL_SESSION_KEY = 'archive-reel-playback-v1';
 
+// A clue is only dispensed after a random trivia question is answered. Questions
+// come from Open Trivia DB (client-side, no key). Tweak the query to taste, e.g.
+// &difficulty=easy or &category=9. Rate limit: ~1 request / 5s per IP.
+const TRIVIA_URL = 'https://opentdb.com/api.php?amount=1&type=multiple';
+
+// EDIT ME — owner's skip-the-quiz pass. Entered once, remembered forever on this
+// browser. Client-side, so it's visible to anyone who digs; that's fine — the
+// quiz is friction for non-tech, and finding the key is its own reward.
+const MASTER_KEY = 'cumulonimbus';
+const MASTER_STORAGE_KEY = 'archive-reel-master-v1';
+
+// OpenTDB returns HTML-entity-encoded text (&quot;, &#039;, …); decode via the DOM.
+const decode = (s) => {
+  if (typeof document === 'undefined') return s;
+  const t = document.createElement('textarea');
+  t.innerHTML = s;
+  return t.value;
+};
+const shuffle = (a) => a.map((v) => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map(([, v]) => v);
+
 function normalizeGroups(groups) {
   if (!Array.isArray(groups)) return [];
   return groups
@@ -91,6 +111,14 @@ function pickFromNextGroup(groups, played, startIndex) {
 export default function ArchiveSidebar() {
   const [videoGroups, setVideoGroups] = useState([]);
   const [videoId, setVideoId] = useState(null);
+  const [puzzle, setPuzzle] = useState(null); // { loading } | { error } | { cooldown } | { question, answer, options } — gates the next clue
+  const [cooldown, setCooldown] = useState(0); // penalty seconds left after a wrong answer
+  const [showKey, setShowKey] = useState(false);
+  const [keyInput, setKeyInput] = useState('');
+  const [keyErr, setKeyErr] = useState(false);
+  const masterRef = useRef(false);
+  const wrongStreakRef = useRef(0);
+  const coolingRef = useRef(false);
   const playerRef = useRef(null);
   const reelDivRef = useRef(null);
   const videoGroupsRef = useRef([]);
@@ -101,6 +129,13 @@ export default function ArchiveSidebar() {
   const lastVideoIdRef = useRef(null);
 
   useEffect(() => { videoIdRef.current = videoId; }, [videoId]);
+
+  // Restore the skip-quiz pass if this browser unlocked it before.
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(MASTER_STORAGE_KEY) === '1') { masterRef.current = true; }
+    } catch {}
+  }, []);
 
   const dispenseClue = useCallback(() => {
     const groups = videoGroupsRef.current;
@@ -129,6 +164,74 @@ export default function ArchiveSidebar() {
     setVideoId(choice.videoId);
   }, []);
 
+  // Every clue after the first is locked behind a trivia question. Fetch one and
+  // show it; the actual swap happens only when the right option is picked.
+  const requestClue = useCallback(async () => {
+    if (masterRef.current) { dispenseClue(); return; } // pass held → skip the quiz
+    playerRef.current?.pauseVideo?.(); // freeze the current clip while the gate is up (no audio, no ENDED race)
+    setPuzzle({ loading: true });
+    try {
+      const res = await fetch(TRIVIA_URL);
+      const data = await res.json();
+      const q = data?.results?.[0];
+      if (data?.response_code !== 0 || !q) throw new Error('no question');
+      const answer = decode(q.correct_answer);
+      setPuzzle({
+        question: decode(q.question),
+        answer,
+        options: shuffle([answer, ...q.incorrect_answers.map(decode)]),
+      });
+    } catch {
+      setPuzzle({ error: true });
+    }
+  }, [dispenseClue]);
+
+  const handlePick = useCallback((opt) => {
+    if (!puzzle?.answer) return;
+    if (opt === puzzle.answer) {
+      wrongStreakRef.current = 0;
+      setCooldown(0);
+      setPuzzle(null);
+      dispenseClue();
+    } else {
+      // Penalty: lock the quiz for a stretch that doubles with each miss (5→10→
+      // 20…60s), so spamming one answer just piles on the wait. A fresh question
+      // auto-loads when the timer drains (see the cooldown effect).
+      wrongStreakRef.current += 1;
+      setPuzzle({ cooldown: true });
+      setCooldown(Math.min(5 * 2 ** (wrongStreakRef.current - 1), 60));
+    }
+  }, [puzzle, dispenseClue]);
+
+  // Tick the penalty down once per second.
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    coolingRef.current = true;
+    const id = setTimeout(() => setCooldown((c) => Math.max(0, c - 1)), 1000);
+    return () => clearTimeout(id);
+  }, [cooldown]);
+
+  // When the penalty drains, pull a fresh question automatically.
+  useEffect(() => {
+    if (cooldown === 0 && coolingRef.current) { coolingRef.current = false; requestClue(); }
+  }, [cooldown, requestClue]);
+
+  const submitKey = useCallback((e) => {
+    e.preventDefault();
+    if (keyInput === MASTER_KEY) {
+      try { localStorage.setItem(MASTER_STORAGE_KEY, '1'); } catch {}
+      masterRef.current = true;
+      setShowKey(false);
+      setKeyInput('');
+      setKeyErr(false);
+      setCooldown(0);
+      setPuzzle(null);
+      dispenseClue();
+    } else {
+      setKeyErr(true);
+    }
+  }, [keyInput, dispenseClue]);
+
   // Pull the gallery's embeddable clips, keeping their playlist boundaries.
   useEffect(() => {
     let active = true;
@@ -145,11 +248,13 @@ export default function ArchiveSidebar() {
         nextGroupIndexRef.current = saved.nextGroupIndex;
         lastVideoIdRef.current = saved.lastVideoId;
         setVideoGroups(normalizedGroups);
-        dispenseClue();
+        // Gate even the first clip — otherwise reloading the page hands out clips
+        // for free. Pass-holders skip straight to a clip.
+        if (masterRef.current) dispenseClue(); else requestClue();
       })
       .catch(() => {});
     return () => { active = false; };
-  }, [dispenseClue]);
+  }, [dispenseClue, requestClue]);
 
   // Build the YouTube player once the first clip is ready; advance when a clip ends.
   useEffect(() => {
@@ -161,7 +266,7 @@ export default function ArchiveSidebar() {
         width: '100%', height: '100%', videoId: videoIdRef.current,
         playerVars: { rel: 0, modestbranding: 1 },
         events: {
-          onStateChange: (e) => { if (e.data === window.YT.PlayerState.ENDED) dispenseClue(); },
+          onStateChange: (e) => { if (e.data === window.YT.PlayerState.ENDED) requestClue(); },
         },
       });
       loadedIdRef.current = videoIdRef.current;
@@ -177,7 +282,7 @@ export default function ArchiveSidebar() {
       const prev = window.onYouTubeIframeAPIReady;
       window.onYouTubeIframeAPIReady = () => { if (prev) prev(); initPlayer(); };
     }
-  }, [videoId, dispenseClue]);
+  }, [videoId, requestClue]);
 
   // Swap the clip in place on shuffle / auto-advance (loadVideoById autoplays the next).
   useEffect(() => {
@@ -199,10 +304,44 @@ export default function ArchiveSidebar() {
       <section className={styles.reel} aria-label="Random clue dispenser">
         <div className={styles.reelHead}>
           <span className={styles.recordLabel}>Random clue dispenser</span>
-          <button type="button" className={styles.reelShuffle} onClick={dispenseClue} disabled={new Set(videoGroups.flat()).size < 2} aria-label="Dispense another clue"><Shuffle size={15} strokeWidth={1.6} aria-hidden="true" /></button>
+          <button type="button" className={styles.reelShuffle} onClick={requestClue} disabled={new Set(videoGroups.flat()).size < 2} aria-label="Dispense another clue"><Shuffle size={15} strokeWidth={1.6} aria-hidden="true" /></button>
         </div>
         <div className={styles.reelFrame}>
           <div ref={reelDivRef} />
+          {puzzle && (
+            <div className={styles.reelPuzzle}>
+              {puzzle.loading && <p className={styles.reelPuzzleQ}>Pulling a question…</p>}
+              {puzzle.error && (
+                <>
+                  <p className={styles.reelPuzzleQ}>Couldn’t load a question.</p>
+                  <button type="button" className={styles.reelPuzzleRetry} onClick={requestClue}>Retry</button>
+                </>
+              )}
+              {puzzle.cooldown && (
+                <p className={styles.reelPuzzleQ}>Wrong. Next question in {cooldown}s…</p>
+              )}
+              {puzzle.question && (
+                <>
+                  <p className={styles.reelPuzzleQ}>{puzzle.question}</p>
+                  <div className={styles.reelPuzzleOpts}>
+                    {puzzle.options.map((opt) => (
+                      <button key={opt} type="button" onClick={() => handlePick(opt)}>{opt}</button>
+                    ))}
+                  </div>
+                  <span className={styles.reelPuzzleHint}>Miss it and the wait doubles</span>
+                </>
+              )}
+              {showKey ? (
+                <form className={styles.reelKeyForm} onSubmit={submitKey}>
+                  <input type="password" value={keyInput} onChange={(e) => { setKeyInput(e.target.value); if (keyErr) setKeyErr(false); }} placeholder="Master key" aria-label="Master key" autoFocus />
+                  <button type="submit">Unlock</button>
+                  {keyErr && <span className={styles.reelPuzzleErr}>Wrong key.</span>}
+                </form>
+              ) : (
+                <button type="button" className={styles.reelKeyToggle} onClick={() => setShowKey(true)}>Have a key?</button>
+              )}
+            </div>
+          )}
         </div>
       </section>
 

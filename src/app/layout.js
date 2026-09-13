@@ -69,7 +69,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/ope-new.png" />
+        <link rel="icon" href="/omicron.svg" type="image/svg+xml" />
         <style dangerouslySetInnerHTML={{ __html: BOOT_SCREEN_CSS }} />
         <noscript><style>{'.site-boot{display:none!important}'}</style></noscript>
       </head>

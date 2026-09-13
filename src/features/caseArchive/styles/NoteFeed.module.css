@@ -63,6 +63,19 @@
 .reelShuffle:disabled { opacity: .4; cursor: default; }
 .reelFrame { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid var(--archive-line-soft); background: var(--archive-surface); }
 .reelFrame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.reelPuzzle { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 16px; text-align: center; overflow-y: auto; background: var(--archive-surface); }
+.reelPuzzleQ { margin: 0; max-width: 40ch; color: var(--archive-ink); font-family: var(--archive-font-heading); font-size: .9rem; font-style: italic; line-height: 1.4; }
+.reelPuzzleOpts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; max-width: 320px; }
+.reelPuzzleOpts button { padding: 8px 10px; border: 1px solid var(--archive-line-soft); background: var(--archive-paper); color: var(--archive-ink); font-family: var(--archive-font-ui); font-size: .76rem; line-height: 1.25; text-align: center; transition: border-color var(--archive-motion), background var(--archive-motion); }
+.reelPuzzleOpts button:hover { border-color: var(--archive-ink); background: var(--archive-hover); }
+.reelPuzzleHint { color: var(--archive-muted); font-family: var(--archive-font-code); font-size: .56rem; letter-spacing: .1em; text-transform: uppercase; }
+.reelPuzzleRetry { padding: 8px 16px; border: 1px solid var(--archive-ink); background: var(--archive-ink); color: var(--archive-paper); font-family: var(--archive-font-code); font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; }
+.reelKeyToggle { border: 0; background: transparent; color: var(--archive-muted); font-family: var(--archive-font-code); font-size: .55rem; letter-spacing: .1em; text-transform: uppercase; text-decoration: underline; text-underline-offset: 3px; }
+.reelKeyToggle:hover { color: var(--archive-ink); }
+.reelKeyForm { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; width: 100%; max-width: 280px; }
+.reelKeyForm input { flex: 1; min-width: 0; padding: 7px 10px; border: 1px solid var(--archive-line-soft); background: var(--archive-paper); color: var(--archive-ink); font-family: var(--archive-font-ui); font-size: .78rem; }
+.reelKeyForm button { flex-shrink: 0; padding: 7px 12px; border: 1px solid var(--archive-ink); background: var(--archive-ink); color: var(--archive-paper); font-family: var(--archive-font-code); font-size: .6rem; letter-spacing: .12em; text-transform: uppercase; }
+.reelPuzzleErr { flex-basis: 100%; color: var(--archive-danger); font-family: var(--archive-font-code); font-size: .58rem; letter-spacing: .08em; text-transform: uppercase; }
 .sideSection { margin-top: 28px; }
 .sideSection h2 { padding-bottom: 10px; border-bottom: 1px solid var(--archive-line-soft); }
 .statusList { list-style: disc; margin: 15px 0 0; padding-left: 20px; color: #55574f; font-family: var(--archive-font-heading); font-size: 1rem; line-height: 1.6; }
