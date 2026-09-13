@@ -21,7 +21,9 @@
 .feed :global(.nf-search-input:focus-visible) { outline: none; }
 .feed :global(.nf-search-input::-webkit-search-cancel-button) { appearance: none; }
 .feed :global(.nf-search-clear) { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; border: 0; background: transparent; color: inherit; }
-.feed :global(.nf-tag-filter) { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 2px; }
+.feed :global(.nf-tag-filter) { display: flex; flex-wrap: nowrap; gap: 8px; margin: 18px 0 2px; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.feed :global(.nf-tag-filter::-webkit-scrollbar) { display: none; }
+.feed :global(.nf-tag-chip) { flex: 0 0 auto; }
 .feed :global(.nf-tag-chip) { padding: 4px 11px; border: 1px solid var(--archive-line-soft); background: transparent; color: var(--archive-muted); font-family: var(--archive-font-code); font-size: .625rem; letter-spacing: .14em; text-transform: uppercase; cursor: pointer; transition: color var(--archive-motion), border-color var(--archive-motion), background var(--archive-motion); }
 .feed :global(.nf-tag-chip:hover) { color: var(--archive-ink); border-color: var(--archive-muted); }
 .feed :global(.nf-tag-chip.is-active) { color: var(--archive-paper); background: var(--archive-ink); border-color: var(--archive-ink); }
