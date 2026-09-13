@@ -5,8 +5,18 @@
 .hero { container-type: inline-size; margin: 0 var(--archive-gutter); padding: 35px 0 30px; border-bottom: 1px solid var(--archive-line); }
 .heroMeta { display: flex; justify-content: space-between; gap: 20px; color: var(--archive-muted); font-family: var(--archive-font-code); font-size: .625rem; letter-spacing: .19em; text-transform: uppercase; }
 .heroMeta > :last-child { letter-spacing: .06em; }
-.hero h1 { margin: 20px 0 4px; color: var(--archive-ink); font-family: var(--archive-font-heading); font-size: 18.1cqi; font-weight: 400; line-height: 1.07; letter-spacing: -.065em; white-space: nowrap; }
+/* 17cqi (was 18.1) leaves slack: Android has no Georgia, substitutes a wider serif; lower more if the trailing dot ever clips again. */
+.hero h1 { margin: 20px 0 4px; color: var(--archive-ink); font-family: var(--archive-font-heading); font-size: 17cqi; font-weight: 400; line-height: 1.07; letter-spacing: -.065em; white-space: nowrap; }
 .hero h1 > span { color: var(--archive-accent); }
+/* Festive dot — each occasion recolors the period and makes it hop; click opens its tune (festive.js). */
+.hero h1 > span[data-holiday] { display: inline-block; vertical-align: baseline; cursor: pointer; animation: dotJump 2.2s ease-in-out infinite; }
+.hero h1 > span[data-holiday="halloween"] { color: #e8730c; }
+.hero h1 > span[data-holiday="christmas"] { color: #c1362b; }
+.hero h1 > span[data-holiday="newyear"] { color: #d4af37; }
+.hero h1 > span[data-holiday="trungthu"] { color: #e2691e; }
+.hero h1 > span[data-holiday="tet"] { color: #d4341f; }
+@keyframes dotJump { 0%, 55%, 100% { transform: translateY(0); } 68% { transform: translateY(-.2em); } 80% { transform: translateY(0); } 86% { transform: translateY(-.06em); } 92% { transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .hero h1 > span[data-holiday] { animation: none; } }
 .columns { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: clamp(26px, 3vw, 58px); margin: 0 var(--archive-gutter); padding: 34px 0 46px; }
 .primary { min-width: 0; }
 .sidebar { min-width: 0; padding-left: clamp(26px, 3vw, 58px); border-left: 1px solid var(--archive-line-soft); }

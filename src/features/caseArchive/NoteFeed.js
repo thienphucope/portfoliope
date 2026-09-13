@@ -12,17 +12,27 @@ import ArchiveSidebar from '@/features/caseArchive/components/ArchiveSidebar';
 import theme from '@/features/caseArchive/styles/ArchiveTheme.module.css';
 import styles from '@/features/caseArchive/styles/NoteFeed.module.css';
 import { CASE_BASE } from '@/configs/vault';
+import { holidayForDate, FESTIVAL_VIDEO } from '@/features/caseArchive/festive';
 
 export default function NoteFeed({ onLinkClick, serverData }) {
   const [isMounted, setIsMounted] = useState(false);
   const [libsReady, setLibsReady] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [dotHoliday, setDotHoliday] = useState('');
   const feedRef = useRef(null);
 
   useEffect(() => {
     setIsMounted(true);
+    setDotHoliday(holidayForDate(new Date()));
     ensureLibsLoaded().then(() => setLibsReady(true));
   }, []);
+
+  // Click the festive dot → open its tune in a new tab. Ordinary day → does nothing.
+  const openFestiveMusic = () => {
+    const v = FESTIVAL_VIDEO[dotHoliday];
+    if (!v) return;
+    window.open(`https://www.youtube.com/watch?v=${v.id}${v.start ? `&t=${v.start}s` : ''}`, '_blank', 'noopener,noreferrer');
+  };
 
   const { allFiles, fileRegistry, fullContentCache, upsertCacheEntry } = useBootstrapData(serverData);
   const { displayedCases, loading, loadedCount, fetchBatch, totalCount } = useFetchBatch({
@@ -50,7 +60,7 @@ export default function NoteFeed({ onLinkClick, serverData }) {
           <main id="archive-content">
             <section className={styles.hero} aria-labelledby="archive-title">
               <div className={styles.heroMeta}><span>Notes / Ideas / Experiments</span><span>Ope Watson’s working collection</span></div>
-              <h1 id="archive-title">Case Archives<span>.</span></h1>
+              <h1 id="archive-title">Case Archives<span data-holiday={dotHoliday || undefined} onClick={openFestiveMusic}>.</span></h1>
             </section>
             <div className={styles.columns}>
             <div className={styles.primary}>
