@@ -39,7 +39,7 @@ export default function CasesSection({ displayedCases, onLinkClick, loadedCount,
               aria-pressed={selectedTag === t}
               onClick={() => setSelectedTag(selectedTag === t ? null : t)}
             >
-              #{t}
+              {t}
             </button>
           ))}
         </div>
