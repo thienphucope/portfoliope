@@ -15,22 +15,6 @@ export default function ChatDeskStyles() {
         font-family: var(--font-body);
       }
 
-      .live-header {
-        flex-shrink: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: var(--feature-header-top) var(--feature-space-right) var(--feature-header-bottom) var(--feature-space-left);
-        border-bottom: 1px solid var(--archive-line-soft);
-      }
-      .live-overline {
-        font-family: var(--font-display);
-        font-size: var(--ui-text-title);
-        letter-spacing: var(--ui-letter-section-header);
-        font-weight: 700;
-        color: var(--theme);
-      }
-
       .live-stage {
         flex: 1;
         min-height: 0;

@@ -54,20 +54,18 @@ export default function TextToSpeechStyles() {
       .nf-tts-header {
         display: flex;
         align-items: center;
-        justify-content: center;
-        margin-left: calc(-1 * var(--tts-edge-left));
-        margin-right: calc(-1 * var(--tts-edge-right));
-        padding: var(--tts-header-top) var(--tts-edge-right) var(--tts-header-bottom) var(--tts-edge-left);
-        border-bottom: var(--feature-divider);
+        justify-content: flex-start;
+        padding: 2px 0 0;
         box-sizing: border-box;
       }
 
       .nf-tts-label {
-        font-family: var(--font-display);
-        font-size: var(--ui-text-title);
-        font-weight: 700;
-        letter-spacing: var(--ui-letter-section-header);
-        color: var(--theme);
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 400;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--archive-muted);
       }
 
       .nf-tts-textarea-row {
@@ -227,16 +225,6 @@ export default function TextToSpeechStyles() {
         .nf-tts-section {
           min-height: calc(100dvh - var(--feature-space-top) - var(--feature-space-bottom));
           gap: 14px;
-        }
-
-        .nf-tts-header {
-          justify-content: center;
-        }
-
-        .nf-tts-label {
-          width: 100%;
-          justify-content: center;
-          text-align: center;
         }
 
         .nf-tts-textarea-row {

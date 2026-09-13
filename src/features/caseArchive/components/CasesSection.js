@@ -10,9 +10,9 @@ export default function CasesSection({ displayedCases, onLinkClick, loadedCount,
   return (
     <section className="nf-cases" id="cases" aria-labelledby="latest-writing-title">
       <div className="nf-section-heading">
-        <h2 id="latest-writing-title">Latest Writing</h2>
+        <h2 id="latest-writing-title">Latest Cases</h2>
         <button type="button" className="nf-text-link" onClick={() => setShowAll(!showAll)} aria-expanded={showAll} aria-controls="writing-list">
-          {showAll ? 'Latest three' : 'All writing'} <ArrowRight size={16} aria-hidden="true" />
+          {showAll ? 'Latest three' : 'All cases'} <ArrowRight size={16} aria-hidden="true" />
         </button>
       </div>
       <div className="nf-search-row" role="search">

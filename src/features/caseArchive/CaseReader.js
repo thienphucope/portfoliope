@@ -48,6 +48,7 @@ export default function CaseReader({ serverHydratedData = null }) {
 
   useEffect(() => {
     setPendingReadConfirm(null);
+    setChromeHidden(false);
   }, [fileName, editorView, isEditorOpen]);
 
   const [content,      setContent]      = useState('');
@@ -86,6 +87,7 @@ export default function CaseReader({ serverHydratedData = null }) {
   const [viewMode,           setViewMode]            = useState('graph'); 
 const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
   const [activeChapterIndex, setActiveChapterIndex]  = useState(0);
+  const [chromeHidden,       setChromeHidden]         = useState(false);
 
   const appShellRef  = useRef(null);
   const scrollPosMap = useRef({});
@@ -302,7 +304,7 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
   const activeTabPanel = useMemo(() => {
     const activeT = tabs.find(t => t.id === activeTab); if (!activeT) return null;
     return (
-      <article ref={markdownContainerRef} className="markdown-container" onScroll={(e) => { const t = e.target; if (fileName && !isRestoringRef.current) scrollPosMap.current[fileName] = t.scrollTop; updateActiveChapter(t); const bottom = t.scrollHeight - t.scrollTop <= t.clientHeight + 100; if (bottom !== isAtBottom) setIsAtBottom(bottom); }}>
+      <article ref={markdownContainerRef} className="markdown-container" onScroll={(e) => { const t = e.target; const st = t.scrollTop; if (!isRestoringRef.current) { if (st < 40) setChromeHidden(false); else if (st > 120) setChromeHidden(true); } if (fileName && !isRestoringRef.current) scrollPosMap.current[fileName] = t.scrollTop; updateActiveChapter(t); const bottom = t.scrollHeight - t.scrollTop <= t.clientHeight + 100; if (bottom !== isAtBottom) setIsAtBottom(bottom); }}>
         <div className="note-content-wrapper">
           {fileName === activeT.id ? (
             <BlockEditor content={content} fileName={fileName} onLinkClick={handleLinkClick} fileRegistry={fileRegistry.current} reader={augmentedReader} />
@@ -316,10 +318,14 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
 
   return (
     <main className={[theme.theme, styles.reader, 'accordion-app pc-layout', activeTab ? 'has-active' : '', !isEditorOpen ? 'feed-active' : ''].join(' ')} ref={appShellRef}>
-      <ArchiveHeader reader />
-      <div className={styles.breadcrumb}>
-        <Link className={styles.backLink} href="/"><ArrowLeft size={15} aria-hidden="true" />Back to the archives</Link>
-        <span className={styles.currentNote}>{fileName.split('/').pop().replace(/\.md$/i, '') || 'Reading room'}</span>
+      <div className={`${styles.topChrome} ${chromeHidden ? styles.topChromeHidden : ''}`}>
+        <div className={styles.topChromeInner}>
+          <ArchiveHeader reader />
+          <div className={styles.breadcrumb}>
+            <Link className={styles.backLink} href="/"><ArrowLeft size={15} aria-hidden="true" />Back to the archives</Link>
+            <span className={styles.currentNote}>{fileName.split('/').pop().replace(/\.md$/i, '') || 'Reading room'}</span>
+          </div>
+        </div>
       </div>
       <SpritzOverlay text={reader.currentText} isPlaying={reader.isPlaying} isPaused={reader.isPaused} playbackRate={reader.playbackRate} />
 

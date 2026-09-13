@@ -207,7 +207,7 @@ export default function ArchiveSidebar() {
       </section>
 
       <section className={styles.sideSection} aria-labelledby="status-title">
-        <h2 id="status-title">Status</h2>
+        <h2 id="status-title">Wire</h2>
         <ul className={styles.statusList}>
           <li>Building, debugging, and taking notes.</li>
           <li>Turning small experiments into useful tools.</li>
@@ -217,12 +217,12 @@ export default function ArchiveSidebar() {
       </section>
 
       <section className={styles.sideSection} id="social" aria-labelledby="social-title">
-        <h2 id="social-title">Social</h2>
+        <h2 id="social-title">Comms</h2>
         <div className={styles.socialLinks}>{socialLinks.map(({ label, href, Icon }) => <a key={label} href={href} target="_blank" rel="noopener noreferrer"><Icon size={22} aria-hidden="true" /><span>{label}</span></a>)}</div>
       </section>
 
       <section className={styles.sideSection} aria-labelledby="associates-title">
-        <h2 id="associates-title">Associates</h2>
+        <h2 id="associates-title">Informants</h2>
         <div className={styles.socialLinks}>{associates.map(({ name, href, Icon }) => <a key={href} href={href} target="_blank" rel="noopener noreferrer"><Icon size={22} aria-hidden="true" /><span>{name}</span></a>)}</div>
       </section>
     </aside>

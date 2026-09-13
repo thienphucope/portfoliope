@@ -69,6 +69,9 @@ export default function Gallery() {
         @media (max-width: 820px) {
           .gallery-grid { grid-template-columns: 1fr; }
         }
+        @media (max-width: 760px) {
+          .gallery-hero-meta { display: none; }
+        }
       `}</style>
 
       <ArchiveHeader />

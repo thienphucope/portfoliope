@@ -65,7 +65,7 @@ export default function NoteFeed({ onLinkClick, serverData }) {
               setSearchTerm={setSearchTerm}
             />
             <section id="applications" className={styles.applications} aria-labelledby="applications-title">
-              <div className="nf-section-heading"><h2 id="applications-title">Applications</h2><span className={styles.sectionLabel}>Tools from the workbench</span></div>
+              <div className="nf-section-heading"><h2 id="applications-title">Tradecraft</h2><span className={styles.sectionLabel}>Tools from the workbench</span></div>
               <div className={styles.appGrid}>
                 <Link href="/chat" target="_blank" rel="noopener noreferrer" className={styles.appCard}><MessageSquare size={21} strokeWidth={1.3} aria-hidden="true" /><h3>AI Chat Vault</h3><p>A conversation with the archive.</p><ArrowUpRight size={16} className={styles.appArrow} aria-hidden="true" /></Link>
                 <Link href="/voice" target="_blank" rel="noopener noreferrer" className={styles.appCard}><Volume2 size={21} strokeWidth={1.3} aria-hidden="true" /><h3>Text to Speech</h3><p>Give written words a voice.</p><ArrowUpRight size={16} className={styles.appArrow} aria-hidden="true" /></Link>

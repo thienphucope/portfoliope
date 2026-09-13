@@ -35,7 +35,7 @@ export default function ChatToggle() {
       <style jsx>{`
         .chat-mode-toggle {
           position: fixed;
-          bottom: 16px;
+          top: 16px;
           right: 16px;
           z-index: 1000;
           font-family: var(--font-mono);

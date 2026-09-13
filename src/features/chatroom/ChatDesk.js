@@ -34,13 +34,6 @@ export default function ChatDesk() {
   return (
     <div className="live-desk">
       <div className="live-shell">
-        <header className="live-header">
-          <div className="live-overline info-wrap">
-            Live line
-            <span className="info-icon" data-tooltip="Voice call with Moxxi — speak and she answers aloud. Text history lives in the text room.">i</span>
-          </div>
-        </header>
-
         <div className="live-stage">
           {isLiveCall ? (
             <>

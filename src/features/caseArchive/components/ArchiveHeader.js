@@ -6,12 +6,12 @@ export default function ArchiveHeader({ reader = false, newTab = false }) {
   return (
     <header className={styles.header}>
       <Link className={styles.brand} href="/" aria-label="Ope Watson home">
-        <span className={styles.wordmark}>OPE <span aria-hidden="true">—</span> <em>Secret Base</em></span>
+        <span className={styles.wordmark}>OPE</span>
       </Link>
       <nav className={styles.navigation} aria-label="Sections">
-        <Link href="/casearchive" aria-current={reader ? undefined : 'page'} {...tab}>Writing</Link>
+        <Link href="/casearchive" aria-current={reader ? undefined : 'page'} {...tab}>Cases</Link>
         <span aria-hidden="true">/</span>
-        <Link href="/#applications">Applications</Link>
+        <Link href="/#applications">Tradecraft</Link>
         <span aria-hidden="true">/</span>
         <Link href="/gallery" {...tab}>Gallery</Link>
       </nav>
