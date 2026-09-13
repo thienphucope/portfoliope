@@ -1,4 +1,4 @@
-import { readdir, readFile } from 'fs/promises';
+import { readdir } from 'fs/promises';
 import { join } from 'path';
 import { NextResponse } from 'next/server';
 
@@ -6,66 +6,31 @@ export const dynamic = 'force-dynamic';
 
 const IMG_RE = /\.(png|jpe?g|webp|avif)$/i;
 
-async function scanDir(dirPath) {
-  try {
-    const files = await readdir(dirPath);
-    return files.filter(f => IMG_RE.test(f));
-  } catch {
-    return [];
-  }
-}
-
+// The board is whatever lives in /public/polaroid — drop a file in and it
+// renders. Name comes from the filename (minus extension); positions come from
+// seedLayout (auto-arranged), so there's no boardData.json to maintain.
 export async function GET() {
   try {
-    const publicDir = process.cwd();
-    const displayDir = join(publicDir, 'public', 'display');
-    const polaroidDir = join(publicDir, 'public', 'polaroid');
-    const dataPath = join(publicDir, 'src', 'features', 'noirboard', 'utils', 'boardData.json');
-
-    // 1. Scan both directories
-    const [displayFiles, polaroidFiles] = await Promise.all([
-      scanDir(displayDir),
-      scanDir(polaroidDir),
-    ]);
-
-    // 2. Read saved data
-    let boardData = { items: [], config: {} };
+    const dir = join(process.cwd(), 'public', 'polaroid');
+    let files = [];
     try {
-      const content = await readFile(dataPath, 'utf8');
-      boardData = JSON.parse(content);
-    } catch (e) {
-      console.warn('Could not read boardData.json, using defaults');
+      files = (await readdir(dir)).filter((f) => IMG_RE.test(f));
+    } catch {
+      files = [];
     }
 
-    // 3. Build items — display/ → photo (no frame), polaroid/ → polaroid (with frame)
-    let idx = 0;
-    const buildItems = (files, folder, type) =>
-      files.map((fileName) => {
-        idx++;
-        const saved = boardData.items?.find(it => it.name === `${folder}/${fileName}`);
-        return {
-          id: `po-${folder}-${fileName}`,
-          type,
-          imageUrl: `/${folder}/${fileName}`,
-          title: saved?.title || fileName.split('.')[0],
-          scale: saved?.scale ?? 1.0,
-          rotation: saved?.rotation ?? 0,
-          x: saved?.x ?? 1250,
-          y: saved?.y ?? 850,
-          z: saved?.z ?? idx,
-        };
-      });
+    // No x/y/z/rotation here on purpose — ThreeBoard falls back to getItemLayout
+    // for those (it only uses `it.x ?? layout.x`), so omitting them lets the auto
+    // layout place each photo instead of stacking them all at one point.
+    const items = files.map((fileName) => ({
+      id: `po-polaroid-${fileName}`,
+      type: 'polaroid',
+      imageUrl: `/polaroid/${fileName}`,
+      title: fileName.replace(IMG_RE, ''),
+      scale: 1,
+    }));
 
-    const mergedItems = [
-      ...buildItems(displayFiles, 'display', 'photo'),
-      ...buildItems(polaroidFiles, 'polaroid', 'polaroid'),
-    ];
-
-    return NextResponse.json({
-      items: mergedItems,
-      config: boardData.config || {},
-      connections: [],
-    });
+    return NextResponse.json({ items, config: {}, connections: [] });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

@@ -1,5 +1,5 @@
 [
-  { "id": "z0", "type": "icon", "photo": "/polaroid/news.png", "alt": "News", "w": 1418, "h": 1688, "anchorX": 0.5, "anchorY": 0.45 },
+  { "id": "z0", "type": "icon", "photo": "/news.png", "alt": "News", "w": 1418, "h": 1688, "anchorX": 0.5, "anchorY": 0.45 },
   { "id": "sherlock1", "type": "polaroid", "photo": "https://yt3.googleusercontent.com/ytc/AIdro_nojmxqVZidJZELqIXOLv3tc--s7TdTvC593GxcahYMIg=s900-c-k-c0x00ffffff-no-rj", "alt": "Sherlock Holmes", "ref": "221B", "anchorX": 0.05, "anchorY": 0.35 },
   { "id": "sherlock2", "type": "video", "videoId": "1IDBZ5AsUuk", "text": "Creative Transitions in Sherlock", "anchorX": 0.32, "anchorY": 0.35 },
   { "id": "sherlock3", "type": "polaroid", "photo": "https://hips.hearstapps.com/hmg-prod/images/b840e2eb-3269-46c7-9056-2c62bc8c6ce6.jpg?crop=0.345xw:0.519xh;0.421xw,0.142xh&resize=360:*", "alt": "Sherlock Holmes", "ref": "BBC", "anchorX": 0.68, "anchorY": 0.35 },

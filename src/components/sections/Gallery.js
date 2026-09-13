@@ -1,9 +1,8 @@
 "use client";
 
 import ArchiveHeader from '@/features/caseArchive/components/ArchiveHeader';
-import galleryImages from '@/data/galleryImages.json';
 
-export default function Gallery() {
+export default function Gallery({ images = [] }) {
   return (
     <section className="gallery-archive">
       <style jsx global>{`
@@ -84,7 +83,7 @@ export default function Gallery() {
           <h1>Gallery<span>.</span></h1>
         </section>
         <div className="gallery-grid">
-          {galleryImages.map((img) => (
+          {images.map((img) => (
             <figure className="gallery-tile" key={img.src}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={img.src} alt={img.title} loading="lazy" />
