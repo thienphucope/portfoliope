@@ -1,5 +1,9 @@
 .reader {
   --reader-edge: 0px;
+  --md-size: 1.0625rem;
+  --md-line: 1.75;
+  --font-body: var(--archive-font-reading);
+  --note-video-width: 480px;
   position: fixed;
   inset: 0;
   display: flex;
@@ -24,7 +28,7 @@
 .windowWrapper { display: flex; flex: 1; min-width: 0; min-height: 0; height: 100%; }
 .editorContent { display: flex; height: 100%; min-height: 0; width: 100%; }
 .mainPane { display: flex; position: relative; flex: 1; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }
-.chatPane { display: flex; flex: 0 0 45%; flex-direction: column; height: 100%; min-width: 0; overflow: hidden; border-left: 1px solid var(--archive-line); }
+.chatPane { display: flex; flex: 0 0 40%; flex-direction: column; height: 100%; min-width: 0; overflow: hidden; border-left: 1px solid var(--archive-line-soft); }
 .reader :global(.chat-container) { display: flex; flex: 1; flex-direction: column; min-height: 0; }
 .reader :global(.pdf-container) { position: relative; flex: 1; width: 100%; min-height: 0; }
 
@@ -73,29 +77,38 @@
 .reader .windows :global(.search-item:hover) { padding-left: 16px; background: var(--archive-hover); }
 .reader .windows :global(.search-no-results) { opacity: 1; color: var(--archive-muted); font-size: var(--archive-type-label); }
 
-.reader :global(.markdown-container) { flex: 1; min-height: 0; padding: 54px clamp(24px, 5vw, 96px) 90px; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
-.reader :global(.note-content-wrapper) { width: 100%; max-width: 860px; margin: 0 auto; }
-.reader :global(.markdown-content) { color: var(--archive-ink); font-size: var(--md-size); line-height: var(--md-line); text-align: left; }
+.reader :global(.markdown-container) { flex: 1; min-height: 0; padding: 40px clamp(24px, 4vw, 64px) 80px; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.reader :global(.note-content-wrapper) { width: 100%; max-width: 740px; margin: 0 auto; }
+.reader :global(.markdown-content) { color: var(--archive-ink); font-family: var(--archive-font-reading); font-size: var(--md-size); line-height: var(--md-line); letter-spacing: normal; word-spacing: normal; font-kerning: normal; text-align: left; overflow-wrap: break-word; }
 .reader :global(.markdown-content h1),
 .reader :global(.markdown-content h2),
 .reader :global(.markdown-content h3),
 .reader :global(.markdown-content h4),
 .reader :global(.markdown-content h5),
-.reader :global(.markdown-content h6) { color: var(--archive-ink); font-family: var(--archive-font-heading); font-weight: 400; letter-spacing: -0.025em; }
-.reader :global(.markdown-content h1) { font-size: 2em; }
-.reader :global(.markdown-content h2) { font-size: 1.65em; }
-.reader :global(.markdown-content h3) { font-size: 1.35em; }
+.reader :global(.markdown-content h6) { color: var(--archive-ink); font-family: var(--archive-font-reading); font-weight: 400; letter-spacing: -.015em; line-height: 1.4; margin-top: 1.15em; margin-bottom: .5em; overflow: visible; }
+.reader :global(.markdown-content h1) { font-size: 1.7em; }
+.reader :global(.markdown-content h2) { font-size: 1.4em; }
+.reader :global(.markdown-content h3) { font-size: 1.2em; }
+.reader :global(.markdown-content h4) { font-size: 1.08em; font-weight: 700; }
+.reader :global(.markdown-content h5), .reader :global(.markdown-content h6) { font-size: 1em; font-weight: 700; }
 .reader :global(.markdown-content p) { margin-bottom: 1em; }
+.reader :global(.markdown-content li) { line-height: var(--md-line); }
+.reader :global(.markdown-content p br) { display: revert; margin: 0; }
+.reader :global(.markdown-content :not(pre) > code) { padding: .12em .3em; background: var(--archive-surface); font-family: var(--archive-font-code); font-size: .85em; }
+.reader :global(.markdown-content kbd) { padding: 2px 5px; border: 1px solid var(--archive-line-soft); border-bottom-width: 2px; border-radius: 3px; font-family: var(--archive-font-code); font-size: .8em; }
 .reader :global(.markdown-content a),
 .reader :global(.internal-link) { color: var(--archive-accent); border-bottom-color: var(--archive-accent); }
 .reader :global(.markdown-content blockquote) { border-left: 1px solid var(--archive-line); opacity: 1; color: var(--archive-muted); }
 .reader :global(.markdown-content hr) { border: 0; border-top: 1px solid var(--archive-line); margin: 2em 0; }
 .reader :global(.markdown-content .table-container) { border-color: var(--archive-line); background: transparent; }
 .reader :global(.markdown-content .table-container th),
-.reader :global(.markdown-content .table-container td) { padding: 12px 16px; border-bottom-color: var(--archive-line-soft); color: var(--archive-ink); }
+.reader :global(.markdown-content .table-container td) { padding: 12px 14px; border-bottom-color: var(--archive-line-soft); color: var(--archive-ink); font-family: var(--archive-font-ui); font-size: .875rem; line-height: 1.65; }
 .reader :global(.markdown-content .table-container th) { background: var(--archive-surface); font-weight: 500; }
+.reader :global(.table-container th:has(audio)), .reader :global(.table-container td:has(audio)) { min-width: 236px; vertical-align: top; background: transparent; }
+.reader :global(.table-container th:has(audio) strong), .reader :global(.table-container td:has(audio) strong) { font-weight: 500; }
+.reader :global(.table-container audio) { min-width: 208px; }
 .reader :global(.code-block) { border-color: var(--archive-line-soft); background: var(--archive-surface); }
-.reader :global(.code-block pre) { padding: 16px; font-family: var(--archive-font-code); font-size: 0.875rem; line-height: 1.6; }
+.reader :global(.markdown-content .code-block pre) { padding: 16px; font-family: var(--archive-font-code); font-size: 0.875rem; line-height: 1.6; }
 .reader :global(.code-lang-label) { top: -22px; color: var(--archive-muted); font-family: var(--archive-font-code); font-size: 0.75rem; }
 .reader :global(.hljs-comment), .reader :global(.hljs-quote) { color: var(--archive-muted); }
 .reader :global(.hljs-keyword), .reader :global(.hljs-selector-tag), .reader :global(.hljs-name), .reader :global(.hljs-built_in) { color: var(--archive-accent); }
@@ -111,7 +124,13 @@
 .reader :global(.markdown-content details) { margin: 1.5em 0; padding: 16px 0; border-top: 1px solid var(--archive-line-soft); border-bottom: 1px solid var(--archive-line-soft); }
 .reader :global(.markdown-content summary) { color: var(--archive-ink); cursor: pointer; }
 .reader :global(.footnote-item) { color: var(--archive-muted); font-size: 0.9em; }
-.reader :global(.video-container) { min-width: 0; }
+/* One 480 x 270 player size in every note layout. Narrow panes scroll instead
+   of shrinking the player and hiding its controls. */
+.reader :global(.video-container) { width: var(--note-video-width); min-width: var(--note-video-width); max-width: none; aspect-ratio: 16 / 9; }
+.reader :global(iframe:is([src*="youtube.com/embed/"], [src*="youtube-nocookie.com/embed/"])) { display: block; width: var(--note-video-width); min-width: var(--note-video-width); max-width: none; height: auto; aspect-ratio: 16 / 9; border: 0; }
+.reader :global(.block-view:has(.video-container, iframe[src*="youtube.com/embed/"], iframe[src*="youtube-nocookie.com/embed/"])) { overflow-x: auto; overscroll-behavior-x: contain; }
+.reader :global(.table-container :is(th, td):has(.video-container, iframe[src*="youtube.com/embed/"], iframe[src*="youtube-nocookie.com/embed/"])) { min-width: calc(var(--note-video-width) + 28px); }
+.reader :global(.table-container .video-container) { margin: 8px 0; }
 .reader :global(.status-msg) { color: var(--archive-muted); font-family: var(--archive-font-ui); font-size: var(--archive-type-label); opacity: 1; }
 
 /* Shared editor surfaces retain their behavior and use the archive palette. */
@@ -125,35 +144,9 @@
 .reader :global(.slash-item:hover), .reader :global(.slash-item--active), .reader :global(.slash-item__icon) { color: var(--archive-ink); background: var(--archive-surface); }
 .reader :global(.block-reading-highlight) { box-shadow: none; }
 
-/* Only the embedded chat receives this theme; /chat uses its existing styles. */
-.reader :global(.chat-shell) { color: var(--archive-ink); background: var(--archive-paper); }
-.reader :global(.chat-shell::after) { box-shadow: none; }
-.reader :global(.chat-header) { border-bottom: 1px solid var(--archive-line-soft); padding: 20px; background: var(--archive-paper); }
-.reader :global(.chat-overline), .reader :global(.live-title), .reader :global(.live-subtitle) { color: var(--archive-muted); font-family: var(--archive-font-ui); font-size: var(--archive-type-label); letter-spacing: 0; opacity: 1; }
-.reader :global(.messages-area) { padding: 0; }
-.reader :global(.messages-list) { padding: 20px; }
-.reader :global(.history-entry) { border-color: var(--archive-line-soft); opacity: 1; }
-.reader :global(.history-entry .bubble-content) { color: var(--archive-muted); opacity: 1; }
-.reader :global(.bubble-content.markdown-content) { color: var(--archive-ink); }
-.reader :global(.input-area) { background: var(--archive-paper); border-top: 1px solid var(--archive-line-soft); padding: 16px 20px; }
-.reader :global(.textarea-row) { background: transparent; border-color: var(--archive-line); border-radius: 0; }
-.reader :global(.textarea-row) { flex-direction: column; align-items: stretch; gap: 12px; padding: 12px; }
-.reader :global(.textarea-row:focus-within) { background: transparent; border-color: var(--archive-ink); }
-.reader :global(.textarea-actions) { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; }
-.reader :global(.chat-input) { min-width: 0; width: 100%; color: var(--archive-ink); background: transparent; font-family: var(--archive-font-ui); font-size: 1rem; }
-.reader :global(.chat-input::placeholder) { color: var(--archive-muted); opacity: 1; font-family: var(--archive-font-ui); }
-.reader :global(.action-btn), .reader :global(.suggest-btn), .reader :global(.mic-btn), .reader :global(.end-btn) { color: var(--archive-ink); border-color: var(--archive-line-soft); border-radius: 0; background: transparent; font-family: var(--archive-font-ui); font-size: var(--archive-type-label); letter-spacing: 0; opacity: 1; text-shadow: none; }
-.reader :global(.suggest-btn) { border-style: solid; }
-.reader :global(.suggest-btn:hover), .reader :global(.action-btn:hover:not(:disabled)), .reader :global(.mic-btn:hover), .reader :global(.end-btn:hover) { color: var(--archive-ink); background: var(--archive-hover); border-color: var(--archive-line); text-shadow: none; }
-.reader :global(.live-transcription) { color: var(--archive-muted); border-color: var(--archive-line-soft); }
-.reader :global(.live-controls) { background: var(--archive-paper); }
-.reader :global(.mic-btn.listening), .reader :global(.mic-btn.holding) { color: var(--archive-accent); text-shadow: none; }
-.reader :global(.end-btn) { color: var(--archive-danger); }
-.reader :global(.action-btn:disabled) { color: var(--archive-muted); }
-.reader :global(.info-icon) { border-color: var(--archive-line-soft); color: var(--archive-muted); }
-.reader :global(.info-icon::after) { color: var(--archive-ink); background: var(--archive-paper); border-color: var(--archive-line); box-shadow: none; }
+/* ChatRoom owns its styles in both the standalone and embedded workspace. */
 
-.readerBar { position: fixed; bottom: max(82px, env(safe-area-inset-bottom)); left: 50%; z-index: 10000; display: flex; align-items: center; justify-content: center; gap: 4px; max-width: calc(100vw - 32px); padding: 8px; border: 1px solid var(--archive-line); background: var(--archive-paper); transform: translateX(-50%); box-shadow: 0 4px 18px var(--archive-shadow); }
+.readerBar { position: fixed; bottom: max(82px, env(safe-area-inset-bottom)); left: 50%; z-index: 10000; display: flex; align-items: center; justify-content: center; gap: 2px; max-width: calc(100vw - 32px); padding: 4px; border: 1px solid var(--archive-line-soft); border-radius: 6px; background: var(--archive-paper); transform: translateX(-50%); box-shadow: 0 4px 18px var(--archive-shadow); }
 .readerButton { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 40px; padding: 8px 10px; border: 0; border-radius: 0; background: transparent; color: var(--archive-ink); font-family: var(--archive-font-ui); font-size: var(--archive-type-label); text-transform: uppercase; }
 .readerButton:hover { background: var(--archive-hover); }
 .fastReading { color: var(--archive-danger); background: var(--archive-surface); }
@@ -165,7 +158,7 @@
 }
 
 @media (max-width: 639px) {
-  .reader { --reader-edge: 0px; --md-size: 1.1875rem; }
+  .reader { --reader-edge: 0px; --md-size: 1rem; --md-line: 1.75; }
   .breadcrumb { padding: 10px 0; }
   .currentNote { display: none; }
   .windows { margin: 0; }

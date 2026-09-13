@@ -24,7 +24,7 @@ export function useAI() {
     setIsStreaming(false);
   }, []);
 
-  const requestAI = useCallback(async (query, history = [], username = 'User', systemInstruction, provider) => {
+  const requestAI = useCallback(async (query, history = [], username = 'User', systemInstruction, provider, noteContext) => {
     stopAI();
 
     setIsThinking(true);
@@ -40,7 +40,7 @@ export function useAI() {
       const res = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'ai', query, history, username, systemInstruction, provider }),
+        body: JSON.stringify({ action: 'ai', query, history, username, systemInstruction, provider, noteContext }),
         signal: abortControllerRef.current.signal
       });
 

@@ -1,0 +1,30 @@
+/* Full character sets keep Vietnamese base letters and combining marks in the
+   same face. Self-hosted, including real bold and italic; see the bundled OFL. */
+@font-face {
+  font-family: 'Archive Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/lora/lora-regular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Archive Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/lora/lora-italic.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Archive Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/lora/lora-bold.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Archive Lora';
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/lora/lora-bold-italic.ttf') format('truetype');
+}

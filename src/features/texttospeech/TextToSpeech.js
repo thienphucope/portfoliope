@@ -2,6 +2,7 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
 import { useTTS } from '@/hooks/useTTS';
 import TextToSpeechStyles from './styles/TextToSpeechStyles';
+import { AudioLines, ArrowUpRight, LoaderCircle } from 'lucide-react';
 
 export default function TextToSpeech() {
   const [ttsText, setTtsText] = useState('');
@@ -50,32 +51,34 @@ export default function TextToSpeech() {
     <>
       <div className="nf-tts-section">
         <div className="nf-tts-header">
-          <div className="nf-tts-label info-wrap">
-            Voice synthesis
-            <span className="info-icon" data-tooltip="Speech synthesis using a fine-tuned GPT-SoVITS model of Moxxi's voice">i</span>
-          </div>
+          <span className="nf-tts-label">The voice studio</span>
+          <h1>Text to speech</h1>
+          <p>Bring a passage to life in Moxxi’s voice.</p>
         </div>
         <div className="nf-tts-history-area" ref={historyAreaRef}>
           {audioHistory.length > 0 ? (
             <div className="nf-tts-history">
               {audioHistory.map((item, i) => (
                 <div key={i} className="nf-tts-history-item">
+                  <div className="nf-tts-take"><span>Take {String(i + 1).padStart(2, '0')}</span><span>Moxxi</span></div>
                   <p className="nf-tts-history-text">&quot;{item.text}&quot;</p>
-                  <audio className="nf-tts-audio" controls src={item.url} autoPlay={i === audioHistory.length - 1} />
+                  <audio className="nf-tts-audio" aria-label={`Play take ${i + 1}`} controls src={item.url} autoPlay={i === audioHistory.length - 1} />
                 </div>
               ))}
             </div>
           ) : (
-            <div className="nf-tts-empty">No audio generated yet.</div>
+            <div className="nf-tts-empty"><AudioLines size={40} strokeWidth={1} aria-hidden="true" /><p>Your words. A familiar voice.</p><span>Write a passage below. Your recordings will appear here.</span></div>
           )}
         </div>
         <div className="nf-tts-composer">
-          {ttsError && <p className="nf-tts-error">{ttsError}</p>}
+          {ttsError && <p className="nf-tts-error" role="alert">{ttsError}</p>}
           <div className="nf-tts-textarea-row">
+            <label className="nf-tts-input-label" htmlFor="voice-text">Your text</label>
             <textarea
+              id="voice-text"
               ref={textareaRef}
               className="nf-tts-input"
-              placeholder="Speak..."
+              placeholder="Write something worth hearing…"
               value={ttsText}
               onChange={(e) => setTtsText(e.target.value)}
               onKeyDown={(e) => {
@@ -84,21 +87,25 @@ export default function TextToSpeech() {
                   handleGenerate();
                 }
               }}
-              rows={1}
+              rows={3}
               onInput={(e) => {
                 e.target.style.height = 'auto';
                 e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
               }}
               disabled={ttsLoading}
             />
-            <button
-              className="nf-tts-btn"
-              onClick={handleGenerate}
-              disabled={!ttsText.trim() || ttsLoading}
-            >
-              {ttsLoading ? '[ ... ]' : '[ GEN ]'}
-            </button>
+            <div className="nf-tts-actions">
+              <span className="nf-tts-count">{ttsText.length.toLocaleString()} characters</span>
+              <button
+                className="nf-tts-btn"
+                onClick={handleGenerate}
+                disabled={!ttsText.trim() || ttsLoading}
+              >
+                {ttsLoading ? <><LoaderCircle className="nf-tts-spinner" size={16} aria-hidden="true" />Generating…</> : <>Generate voice<ArrowUpRight size={16} strokeWidth={1.6} aria-hidden="true" /></>}
+              </button>
+            </div>
           </div>
+          <div className="nf-tts-composer-note" role="status">{ttsLoading ? 'Preparing your recording…' : 'Enter to generate · Shift + Enter for a new line'}</div>
         </div>
       </div>
       <TextToSpeechStyles />

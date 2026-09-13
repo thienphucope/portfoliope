@@ -4,7 +4,7 @@
   flex: 0 0 clamp(190px, 18vw, 270px);
   flex-direction: column;
   min-height: 0;
-  padding: 42px 24px 28px 0;
+  padding: 40px 24px 28px 0;
   border-right: 1px solid var(--archive-line-soft);
   background: transparent;
 }
@@ -20,9 +20,9 @@
   border-left: 2px solid transparent;
   background: transparent;
   color: var(--archive-muted);
-  font-family: var(--archive-font-heading);
-  font-size: var(--archive-type-label);
-  line-height: 1.45;
+  font-family: var(--archive-font-ui);
+  font-size: .8125rem;
+  line-height: 1.6;
   text-align: left;
   overflow-wrap: anywhere;
   transition: background var(--archive-motion), color var(--archive-motion);

@@ -6,6 +6,7 @@ import ChatDeskStyles from './styles/ChatDeskStyles';
 import EditorStyles from '@/styles/EditorStyles';
 import MarkdownStyles from '@/styles/MarkdownStyles';
 import { MOXXI_DISPLAY_NAME } from '@/configs/ai';
+import { AudioLines, Mic, PhoneOff } from 'lucide-react';
 
 // ChatDesk = the live voice line. Minimal: the current spoken exchange + call
 // state (listening / transcribing / responding). Full history lives in ChatRoom.
@@ -34,6 +35,7 @@ export default function ChatDesk() {
   return (
     <div className="live-desk">
       <div className="live-shell">
+        <div className="live-heading"><span>The consulting room</span><h1>Live voice</h1><p>A direct line to {MOXXI_DISPLAY_NAME}.</p></div>
         <div className="live-stage">
           {isLiveCall ? (
             <>
@@ -53,7 +55,7 @@ export default function ChatDesk() {
               )}
             </>
           ) : (
-            <p className="live-idle">Open a live line and talk to {MOXXI_DISPLAY_NAME}.</p>
+            <div className="live-idle"><AudioLines size={40} strokeWidth={1} aria-hidden="true" /><p>A little less typing.</p><span>Start a call and speak with {MOXXI_DISPLAY_NAME}.</span></div>
           )}
         </div>
 
@@ -70,10 +72,10 @@ export default function ChatDesk() {
               >
                 {isProcessing ? 'HALT' : isListening ? 'REC' : 'WAIT'}
               </button>
-              <button className="end-btn" onClick={endLiveCall}>Hang up</button>
+              <button className="end-btn" onClick={endLiveCall}><PhoneOff size={15} aria-hidden="true" />Hang up</button>
             </>
           ) : (
-            <button className="start-call-btn" onClick={startLiveCall}>Start live call</button>
+            <button className="start-call-btn" onClick={startLiveCall}><Mic size={16} strokeWidth={1.6} aria-hidden="true" />Start live call</button>
           )}
         </div>
       </div>

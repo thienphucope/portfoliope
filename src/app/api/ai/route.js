@@ -30,7 +30,7 @@ export async function POST(request) {
   let body;
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
 
-  const { query, history, systemInstruction, provider } = body;
+  const { query, history, systemInstruction, provider, noteContext } = body;
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -39,7 +39,7 @@ export async function POST(request) {
       try {
         const onToken = (chunk) => send({ type: 'text_delta', text: chunk });
         const result = await handleAiRequest(
-          { query, history, systemInstruction, provider },
+          { query, history, systemInstruction, provider, noteContext },
           (tc) => send({ type: 'tool_call', name: tc.name, args: tc.args }),
           onToken
         );

@@ -8,7 +8,7 @@ import { MOXXI_GREETING, MOXXI_ERROR_MSG } from '@/configs/ai';
 import { ensureLibsLoaded } from '@/lib/markdown';
 import { extractSpeechText } from './ChatMarkdownContent';
 
-export function useChatRoomLogic({ onLiveCallChange, ref } = {}) {
+export function useChatRoomLogic({ onLiveCallChange, ref, noteContext = null } = {}) {
   const [isMounted, setIsMounted] = useState(false);
   const [markdownReady, setMarkdownReady] = useState(false);
   const [convo, setConvo] = useState([
@@ -126,7 +126,7 @@ export function useChatRoomLogic({ onLiveCallChange, ref } = {}) {
     setConvo([...currentConvo, { role: 'assistant', content: '', live }]);
 
     try {
-      const { text: reply, toolCalls } = await requestAI(userMsg, convo.filter(m => m.content), undefined, undefined, provider);
+      const { text: reply, toolCalls } = await requestAI(userMsg, convo.filter(m => m.content), undefined, undefined, provider, noteContext);
       streamResponse(reply, (fullText) => {
         setConvo(prev => {
           const n = [...prev];
@@ -145,7 +145,7 @@ export function useChatRoomLogic({ onLiveCallChange, ref } = {}) {
         return n;
       });
     }
-  }, [engineInput, isThinking, isStreaming, isPlayingAudio, convo, requestAI, streamResponse, markdownReady, streamAudioLive]);
+  }, [engineInput, isThinking, isStreaming, isPlayingAudio, convo, requestAI, streamResponse, markdownReady, streamAudioLive, noteContext]);
 
   const executeInterrupt = useCallback(() => {
     stopAudio();

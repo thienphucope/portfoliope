@@ -1,7 +1,9 @@
 import "@fontsource-variable/roboto";
+import "@fontsource-variable/roboto/wght-italic.css";
 import "@fontsource-variable/roboto-mono";
 import "@fontsource/zen-kaku-gothic-new";
 import "./globals.css";
+import "@/styles/ReadingFonts.css";
 import Script from 'next/script';
 import { Analytics } from '@vercel/analytics/react';
 import BootScreen from '@/components/layout/BootScreen';

@@ -52,6 +52,7 @@ export default function CaseReader({ serverHydratedData = null }) {
   }, [fileName, editorView, isEditorOpen]);
 
   const [content,      setContent]      = useState('');
+  const noteContext = useMemo(() => fileName && content.trim() ? { fileName, content } : null, [fileName, content]);
   const [contentKey,   setContentKey]   = useState(0);
   const [activeOverlay,      setActiveOverlay]      = useState(null); 
   const [isChatOpen,         setIsChatOpen]         = useState(false);
@@ -355,7 +356,7 @@ const [zoomToNodeId,       setZoomToNodeId]        = useState(null);
                     {isChatOpen && (
                       <div className={styles.chatPane}>
                         <div className="chat-container">
-                          <ChatRoom ref={chatRef} isEmbedded={true} onLinkClick={handleLinkClick} onLiveCallChange={setIsLiveCallActive} />
+                          <ChatRoom ref={chatRef} isEmbedded={true} noteContext={noteContext} onLinkClick={handleLinkClick} onLiveCallChange={setIsLiveCallActive} />
                         </div>
                       </div>
                     )}
