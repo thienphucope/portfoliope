@@ -413,6 +413,31 @@ export default function NoteFeedStyles() {
         font-style: normal;
       }
 
+      /* ── Tag filter ── */
+      .nf-tag-filter {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: -8px 0 24px;
+      }
+      .nf-tag-chip {
+        font-family: var(--font-mono);
+        font-size: var(--ui-text-action);
+        letter-spacing: var(--ui-letter-action);
+        color: var(--theme);
+        background: rgba(186, 145, 112, 0.02);
+        border: 1px solid rgba(186, 145, 112, 0.2);
+        padding: 5px 12px;
+        cursor: pointer;
+        transition: border-color 0.3s, background-color 0.3s, color 0.3s;
+      }
+      .nf-tag-chip:hover { border-color: var(--theme); }
+      .nf-tag-chip.is-active {
+        color: var(--archive-paper);
+        background: var(--theme);
+        border-color: var(--theme);
+      }
+
       .nf-no-cases {
         padding: 40px 0;
         text-align: center;

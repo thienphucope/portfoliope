@@ -3,7 +3,7 @@ export function parseNote(content, fileName, fileId, fileDate) {
   const displayTitle = fileName.split('/').pop().replace(/\.md$/, '');
 
   const authorMatch = content.match(/author:\s*([^*#\n]+)/i);
-  const tagMatch    = content.match(/tag:\s*#?([^*#\n,\]]+)/i);
+  const tagMatch    = content.match(/tags?:\s*#?([^*#\n,\]]+)/i);
   const linksMatch  = content.match(/links:\s*([^*#\n]*)/i);
   const author = authorMatch ? authorMatch[1].trim() : null;
   const tag    = tagMatch    ? tagMatch[1].trim()    : 'Archive';
