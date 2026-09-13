@@ -1,20 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { ArrowRight, Search, X } from 'lucide-react';
 import CaseItem from './CaseItem';
 
-export default function CasesSection({ displayedCases, onLinkClick, loadedCount, totalCount, loading, onLoadMore, searchTerm, setSearchTerm }) {
+export default function CasesSection({ displayedCases, availableTags, selectedTag, setSelectedTag, onLinkClick, loadedCount, totalCount, loading, onLoadMore, searchTerm, setSearchTerm }) {
   const [showAll, setShowAll] = useState(false);
-  const [selectedTag, setSelectedTag] = useState(null);
-
-  // Chips come from whatever's loaded; clicking one filters the list client-side.
-  const tags = useMemo(
-    () => [...new Set(displayedCases.map((c) => c.tag).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
-    [displayedCases]
-  );
-
-  const byTag = selectedTag ? displayedCases.filter((c) => c.tag === selectedTag) : displayedCases;
   const expanded = showAll || Boolean(searchTerm.trim()) || Boolean(selectedTag);
-  const visibleCases = expanded ? byTag : byTag.slice(0, 3);
+  const visibleCases = expanded ? displayedCases : displayedCases.slice(0, 3);
 
   return (
     <section className="nf-cases" id="cases" aria-labelledby="latest-writing-title">
@@ -29,9 +20,9 @@ export default function CasesSection({ displayedCases, onLinkClick, loadedCount,
         <input id="archive-search" type="search" className="nf-search-input" aria-label="Search evidence" placeholder="Search the archives..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         {searchTerm && <button type="button" className="nf-search-clear" onClick={() => setSearchTerm('')} aria-label="Clear search"><X size={16} /></button>}
       </div>
-      {tags.length > 0 && (
+      {availableTags.length > 0 && (
         <div className="nf-tag-filter" role="group" aria-label="Filter by tag">
-          {tags.map((t) => (
+          {availableTags.map((t) => (
             <button
               key={t}
               type="button"
@@ -49,7 +40,7 @@ export default function CasesSection({ displayedCases, onLinkClick, loadedCount,
           <div className="nf-no-cases" role="status">{loading ? 'Consulting archives...' : 'No matching evidence found.'}</div>
         )}
       </div>
-      {expanded && !selectedTag && loadedCount < totalCount && <button type="button" className="nf-load-more" onClick={onLoadMore} disabled={loading}>{loading ? 'Consulting Evidence...' : 'Load more cases'} <ArrowRight size={16} aria-hidden="true" /></button>}
+      {expanded && loadedCount < totalCount && <button type="button" className="nf-load-more" onClick={onLoadMore} disabled={loading}>{loading ? 'Consulting Evidence...' : 'Load more cases'} <ArrowRight size={16} aria-hidden="true" /></button>}
     </section>
   );
 }

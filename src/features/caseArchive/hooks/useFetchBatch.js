@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { parseNote } from '../utils/noteParser';
+import { extractNoteTags, parseNote } from '../utils/noteParser';
 import { extractMedia } from '../utils/mediaExtractor';
 
 export const BATCH_SIZE = 30;
 
-export function useFetchBatch({ allFiles, fileRegistry, fullContentCache, upsertCacheEntry, isMounted, libsReady, searchTerm = '' }) {
+export function useFetchBatch({ allFiles, fileRegistry, fullContentCache, upsertCacheEntry, isMounted, libsReady, searchTerm = '', selectedTag = null }) {
   const [displayedCases, setDisplayedCases] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadedCount, setLoadedCount] = useState(() => {
@@ -16,11 +16,26 @@ export function useFetchBatch({ allFiles, fileRegistry, fullContentCache, upsert
   });
   const loadingRef = useRef(false);
 
-  // Reset displayedCases and loadedCount when searchTerm changes
+  // Start the result set from the beginning whenever a filter changes.
   useEffect(() => {
     setDisplayedCases([]);
     setLoadedCount(0);
-  }, [searchTerm]);
+  }, [searchTerm, selectedTag]);
+
+  const availableTags = useMemo(() => {
+    const tags = allFiles.flatMap((file) => {
+      const content = fullContentCache[file.id]?.raw;
+      if (!content) return [];
+      const parsedTags = extractNoteTags(content);
+      return parsedTags.length ? parsedTags : ['Archive'];
+    });
+    const uniqueTags = new Map();
+    tags.forEach((tag) => {
+      const key = tag.toLocaleLowerCase();
+      if (!uniqueTags.has(key)) uniqueTags.set(key, tag);
+    });
+    return [...uniqueTags.values()].sort((a, b) => a.localeCompare(b));
+  }, [allFiles, fullContentCache]);
 
   const filteredSortedFiles = useMemo(() => {
     const sorted = [...allFiles].sort((a, b) => {
@@ -29,21 +44,30 @@ export function useFetchBatch({ allFiles, fileRegistry, fullContentCache, upsert
       return dateB - dateA;
     });
 
-    if (!searchTerm.trim()) return sorted;
+    const tagFiltered = selectedTag
+      ? sorted.filter((file) => {
+          const content = fullContentCache[file.id]?.raw;
+          const tags = content ? extractNoteTags(content) : [];
+          const resolvedTags = tags.length ? tags : ['Archive'];
+          return resolvedTags.some((tag) => tag.localeCompare(selectedTag, undefined, { sensitivity: 'accent' }) === 0);
+        })
+      : sorted;
+
+    if (!searchTerm.trim()) return tagFiltered;
 
     const query = searchTerm.toLowerCase();
-    return sorted.filter((file) => {
+    return tagFiltered.filter((file) => {
       const content = fullContentCache[file.id]?.raw;
       const parsed = content ? parseNote(content, file.name, file.id, fullContentCache[file.id]?.date) : null;
       
       const matchTitle = file.name.toLowerCase().includes(query) || (parsed?.displayTitle && parsed.displayTitle.toLowerCase().includes(query));
-      const matchTag = parsed?.tag && parsed.tag.toLowerCase().includes(query);
+      const matchTag = parsed?.tags?.some((tag) => tag.toLowerCase().includes(query));
       const matchAuthor = parsed?.author && parsed.author.toLowerCase().includes(query);
       const matchContent = content && content.toLowerCase().includes(query);
       
       return matchTitle || matchTag || matchAuthor || matchContent;
     });
-  }, [allFiles, fullContentCache, searchTerm]);
+  }, [allFiles, fullContentCache, searchTerm, selectedTag]);
 
   const fetchBatch = useCallback(async (start, end) => {
     if (loadingRef.current) return;
@@ -75,12 +99,12 @@ export function useFetchBatch({ allFiles, fileRegistry, fullContentCache, upsert
       return [...prev, ...results.filter(Boolean)];
     });
     setLoadedCount(end);
-    if (!searchTerm) {
+    if (!searchTerm && !selectedTag) {
       sessionStorage.setItem('notefeed_loaded_count', end.toString());
     }
     setLoading(false);
     loadingRef.current = false;
-  }, [filteredSortedFiles, fileRegistry, fullContentCache, upsertCacheEntry, searchTerm]);
+  }, [filteredSortedFiles, fileRegistry, fullContentCache, upsertCacheEntry, searchTerm, selectedTag]);
 
   useEffect(() => {
     if (isMounted && libsReady && filteredSortedFiles.length > 0 && displayedCases.length === 0) {
@@ -88,5 +112,5 @@ export function useFetchBatch({ allFiles, fileRegistry, fullContentCache, upsert
     }
   }, [filteredSortedFiles, isMounted, libsReady, displayedCases.length, fetchBatch, loadedCount]);
 
-  return { displayedCases, loading, loadedCount, fetchBatch, totalCount: filteredSortedFiles.length };
+  return { displayedCases, availableTags, loading, loadedCount, fetchBatch, totalCount: filteredSortedFiles.length };
 }

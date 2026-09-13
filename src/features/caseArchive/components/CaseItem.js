@@ -37,7 +37,7 @@ export default function CaseItem({ caseData, index, onLinkClick }) {
         ) : <span className="nf-case-placeholder" aria-hidden="true">{greekLabel(index + 1)}</span>}
       </button>
       <div className="nf-case-copy">
-        <div className="nf-case-meta"><span className="nf-case-date">{caseData.formattedDate}</span>{caseData.tag && <span className="nf-case-tag">{caseData.tag}</span>}</div>
+        <div className="nf-case-meta"><span className="nf-case-date">{caseData.formattedDate}</span>{(caseData.tags || (caseData.tag ? [caseData.tag] : [])).map((tag) => <span key={tag} className="nf-case-tag">{tag}</span>)}</div>
         <h3 className="nf-case-title"><button type="button" onClick={() => onLinkClick(caseData.id)}>{caseData.displayTitle}</button></h3>
         <div ref={contentRef} className="nf-case-excerpt markdown-content" dangerouslySetInnerHTML={{ __html: caseData.descriptionHtml }} />
         {caseData.author && <span className="nf-case-author">written by {caseData.author}</span>}

@@ -18,6 +18,7 @@ export default function NoteFeed({ onLinkClick, serverData }) {
   const [isMounted, setIsMounted] = useState(false);
   const [libsReady, setLibsReady] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTag, setSelectedTag] = useState(null);
   const [dotHoliday, setDotHoliday] = useState('');
   const feedRef = useRef(null);
 
@@ -35,8 +36,8 @@ export default function NoteFeed({ onLinkClick, serverData }) {
   };
 
   const { allFiles, fileRegistry, fullContentCache, upsertCacheEntry } = useBootstrapData(serverData);
-  const { displayedCases, loading, loadedCount, fetchBatch, totalCount } = useFetchBatch({
-    allFiles, fileRegistry, fullContentCache, upsertCacheEntry, isMounted, libsReady, searchTerm,
+  const { displayedCases, availableTags, loading, loadedCount, fetchBatch, totalCount } = useFetchBatch({
+    allFiles, fileRegistry, fullContentCache, upsertCacheEntry, isMounted, libsReady, searchTerm, selectedTag,
   });
   useFeedEffects({ isMounted, displayedCases, libsReady, feedRef });
 
@@ -66,6 +67,9 @@ export default function NoteFeed({ onLinkClick, serverData }) {
             <div className={styles.primary}>
             <CasesSection
               displayedCases={displayedCases}
+              availableTags={availableTags}
+              selectedTag={selectedTag}
+              setSelectedTag={setSelectedTag}
               onLinkClick={handleLinkClick}
               loadedCount={loadedCount}
               totalCount={totalCount}
