@@ -11,6 +11,8 @@ export default function ArchiveHeader({ reader = false, newTab = false }) {
       <nav className={styles.navigation} aria-label="Sections">
         <Link href="/casearchive" aria-label="Cases" aria-current={reader ? undefined : 'page'} {...tab}>κασες</Link>
         <span aria-hidden="true">/</span>
+        <Link href="/casearchive#applications" aria-label="Tradecraft">τραδεκραφτ</Link>
+        <span aria-hidden="true">/</span>
         <Link href="/gallery" aria-label="Gallery" {...tab}>γαλλερυ</Link>
       </nav>
     </header>

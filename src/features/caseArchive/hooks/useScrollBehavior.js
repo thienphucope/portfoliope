@@ -17,6 +17,7 @@ export function useScrollBehavior({ appShellRef, tabs }) {
   const isWheelScrollingX   = useRef(false);
   const verticalScrollTargets = useRef(new Map());
   const isWheelScrollingY   = useRef(new Map());
+  const lastSetY            = useRef(new Map()); // scrollTop we set last frame, to detect a manual drag
 
   // ─── Scroll to specific tab ────────────────────────────────────────────────
 
@@ -126,16 +127,25 @@ export function useScrollBehavior({ appShellRef, tabs }) {
 
           if (!isWheelScrollingY.current.get(vScrollable)) {
             isWheelScrollingY.current.set(vScrollable, true);
+            const stopY = () => {
+              isWheelScrollingY.current.set(vScrollable, false);
+              verticalScrollTargets.current.delete(vScrollable);
+              lastSetY.current.delete(vScrollable);
+            };
             const animateY = () => {
-              const t    = verticalScrollTargets.current.get(vScrollable);
-              if (t === undefined) { isWheelScrollingY.current.set(vScrollable, false); return; }
+              const t = verticalScrollTargets.current.get(vScrollable);
+              if (t === undefined) { isWheelScrollingY.current.set(vScrollable, false); lastSetY.current.delete(vScrollable); return; }
+              // If scrollTop isn't where we left it last frame, the user grabbed
+              // the scrollbar — abandon so we don't yank it back (the bounce).
+              const expected = lastSetY.current.get(vScrollable);
+              if (expected !== undefined && Math.abs(vScrollable.scrollTop - expected) > 2) { stopY(); return; }
               const diff = t - vScrollable.scrollTop;
               if (Math.abs(diff) < 0.2) {
                 vScrollable.scrollTop = t;
-                isWheelScrollingY.current.set(vScrollable, false);
-                verticalScrollTargets.current.delete(vScrollable);
+                stopY();
               } else {
                 vScrollable.scrollTop += diff * 0.15;
+                lastSetY.current.set(vScrollable, vScrollable.scrollTop);
                 requestAnimationFrame(animateY);
               }
             };
@@ -185,6 +195,7 @@ export function useScrollBehavior({ appShellRef, tabs }) {
     if (!el) return;
     verticalScrollTargets.current.delete(el);
     isWheelScrollingY.current.set(el, false);
+    lastSetY.current.delete(el);
   }, []);
 
   return { scrollToTab, resetScroll };
