@@ -42,15 +42,15 @@ export default function Gallery() {
         }
         .gallery-hero h1 span { color: var(--archive-accent); }
         .gallery-grid {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          align-items: start;
-          gap: clamp(18px, 2.4vw, 34px);
+          columns: 3;
+          column-gap: clamp(18px, 2.4vw, 34px);
           margin: 0 var(--archive-gutter);
           padding: 32px 0 48px;
         }
         .gallery-tile {
-          margin: 0;
+          break-inside: avoid;
+          -webkit-column-break-inside: avoid;
+          margin: 0 0 clamp(18px, 2.4vw, 34px);
           padding: 6px;
           border: 1px solid var(--archive-line-soft);
           background: #ffffff30;
@@ -66,11 +66,14 @@ export default function Gallery() {
           letter-spacing: .1em;
           text-transform: uppercase;
         }
-        @media (max-width: 820px) {
-          .gallery-grid { grid-template-columns: 1fr; }
+        @media (max-width: 1000px) {
+          .gallery-grid { columns: 2; }
         }
         @media (max-width: 760px) {
           .gallery-hero-meta { display: none; }
+        }
+        @media (max-width: 620px) {
+          .gallery-grid { columns: 1; }
         }
       `}</style>
 

@@ -124,13 +124,14 @@
 .reader :global(.markdown-content details) { margin: 1.5em 0; padding: 16px 0; border-top: 1px solid var(--archive-line-soft); border-bottom: 1px solid var(--archive-line-soft); }
 .reader :global(.markdown-content summary) { color: var(--archive-ink); cursor: pointer; }
 .reader :global(.footnote-item) { color: var(--archive-muted); font-size: 0.9em; }
-/* One 480 x 270 player size in every note layout. Narrow panes scroll instead
-   of shrinking the player and hiding its controls. */
-.reader :global(.video-container) { width: var(--note-video-width); min-width: var(--note-video-width); max-width: none; aspect-ratio: 16 / 9; }
-.reader :global(iframe:is([src*="youtube.com/embed/"], [src*="youtube-nocookie.com/embed/"])) { display: block; width: var(--note-video-width); min-width: var(--note-video-width); max-width: none; height: auto; aspect-ratio: 16 / 9; border: 0; }
+/* Inline players fill the column; inside a table each cell keeps the fixed
+   480 x 270 player and scrolls narrow panes instead of shrinking it. */
+.reader :global(.video-container) { width: 100%; max-width: 100%; aspect-ratio: 16 / 9; }
+.reader :global(iframe:is([src*="youtube.com/embed/"], [src*="youtube-nocookie.com/embed/"])) { display: block; width: 100%; max-width: 100%; height: auto; aspect-ratio: 16 / 9; border: 0; }
+.reader :global(.table-container .video-container) { width: var(--note-video-width); min-width: var(--note-video-width); max-width: none; margin: 8px 0; }
+.reader :global(.table-container iframe:is([src*="youtube.com/embed/"], [src*="youtube-nocookie.com/embed/"])) { width: var(--note-video-width); min-width: var(--note-video-width); max-width: none; }
 .reader :global(.block-view:has(.video-container, iframe[src*="youtube.com/embed/"], iframe[src*="youtube-nocookie.com/embed/"])) { overflow-x: auto; overscroll-behavior-x: contain; }
 .reader :global(.table-container :is(th, td):has(.video-container, iframe[src*="youtube.com/embed/"], iframe[src*="youtube-nocookie.com/embed/"])) { min-width: calc(var(--note-video-width) + 28px); }
-.reader :global(.table-container .video-container) { margin: 8px 0; }
 .reader :global(.status-msg) { color: var(--archive-muted); font-family: var(--archive-font-ui); font-size: var(--archive-type-label); opacity: 1; }
 
 /* Shared editor surfaces retain their behavior and use the archive palette. */

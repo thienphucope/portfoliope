@@ -1,23 +1,8 @@
-import NoteFeed from '@/features/caseArchive/NoteFeed';
-import { hydrateServerCache } from '@/services/caseProvider';
+import { redirect } from 'next/navigation';
 
-export const metadata = {
-  title: 'Ope Watson',
-  description: 'Detective case archives, notes, and stories by Ope Watson.',
-  alternates: { canonical: '/' },
-};
-
-// Archive content comes from GitHub at request time. Declaring this explicitly
-// avoids a failed static-render probe (and misleading GitHub errors) during build.
-export const dynamic = 'force-dynamic';
-
-export default async function HomePage() {
-  let serverData = null;
-  try {
-    serverData = await hydrateServerCache(false);
-  } catch (error) {
-    console.error('Failed to hydrate home archives:', error);
-  }
-
-  return <NoteFeed serverData={serverData} />;
+// Root and /casearchive render the same feed. Send / to the canonical archive
+// path so the site has one home. Temporary (307) — swap to permanentRedirect
+// for SEO consolidation once the layout's settled.
+export default function HomePage() {
+  redirect('/casearchive');
 }
