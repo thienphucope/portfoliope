@@ -64,6 +64,29 @@
   line-height: 1.5;
 }
 
+/* Night: auto-inverted palette when local time is 18:00–05:59 (flag set by the
+   inline script in app/layout.js). Mirrors the token owners above so the feed,
+   reader, voice/chat/gallery routes and the boot overlay all invert together. */
+:global(html[data-archive-night]) .theme,
+:global(html[data-archive-night] body):has(.theme) :global(.site-boot) {
+  --archive-backdrop: #1a1714;
+  --archive-paper: #1a1714;
+  --archive-ink: #e9e4d7;
+  --archive-muted: #9a968b;
+  --archive-line: #6d6e63;
+  --archive-line-soft: #3a3832;
+  --archive-surface: #23201a;
+  --archive-hover: #29251e;
+  --archive-accent: #cbab80;
+  --archive-danger: #d4726a;
+  --archive-reading: #5b5344;
+  --archive-code-string: #82b98d;
+  --archive-code-symbol: #b58cc9;
+  --archive-shadow: #00000059;
+  color-scheme: dark;
+}
+:global(html[data-archive-night]) .theme :global(audio[controls]) { color-scheme: dark; }
+
 /* The shared boot overlay is a sibling of the page. Theme it only while an
    archive surface is present, using the same tokens and existing timing. */
 :global(body):has(.theme) :global(.site-boot) { background: var(--archive-paper-texture), var(--archive-paper); color: var(--archive-ink); }

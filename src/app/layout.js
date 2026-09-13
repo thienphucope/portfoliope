@@ -59,6 +59,10 @@ const BOOT_SCREEN_CSS = `
   @media (prefers-reduced-motion: reduce) { .site-boot__progress i { animation: none; left: 31%; } }
 `;
 
+// Auto dark theme: flag <html> before first paint (no flash) when local hour is
+// in the night window [18:00, 06:00). CSS override lives in ArchiveTheme.module.css.
+const NIGHT_THEME_SCRIPT = "(function(){try{var h=new Date().getHours();if(h>=18||h<6)document.documentElement.setAttribute('data-archive-night','');}catch(e){}})();";
+
 export const metadata = {
   metadataBase: new URL("https://opewatson.com"),
   title: "Ope Watson",
@@ -70,6 +74,7 @@ export default function RootLayout({ children }) {
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/omicron.svg" type="image/svg+xml" />
+        <script dangerouslySetInnerHTML={{ __html: NIGHT_THEME_SCRIPT }} />
         <style dangerouslySetInnerHTML={{ __html: BOOT_SCREEN_CSS }} />
         <noscript><style>{'.site-boot{display:none!important}'}</style></noscript>
       </head>
