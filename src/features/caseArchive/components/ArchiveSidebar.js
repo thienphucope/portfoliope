@@ -18,9 +18,9 @@ const socialLinks = [
 const associates = [
   { name: 'Meyu', href: 'https://meyu.fyi/', Icon: FaGlobe },
   { name: 'Onibarou', href: 'https://onibarou.substack.com/', Icon: SiSubstack },
-  { name: 'Bilibili', href: 'https://space.bilibili.com/437951672', Icon: SiBilibili },
-  { name: '@sama', href: 'https://x.com/sama', Icon: FaXTwitter },
-  { name: '@thsottiaux', href: 'https://x.com/thsottiaux', Icon: FaXTwitter },
+  { name: 'Liujing', href: 'https://space.bilibili.com/437951672', Icon: SiBilibili },
+  { name: 'Sama', href: 'https://x.com/sama', Icon: FaXTwitter },
+  { name: 'Tibo', href: 'https://x.com/thsottiaux', Icon: FaXTwitter },
 ];
 
 const REEL_SESSION_KEY = 'archive-reel-playback-v1';
@@ -348,10 +348,10 @@ export default function ArchiveSidebar() {
       <section className={styles.sideSection} aria-labelledby="status-title">
         <h2 id="status-title">Wire</h2>
         <ul className={styles.statusList}>
-          <li>Building, debugging, and taking notes.</li>
-          <li>Turning small experiments into useful tools.</li>
-          <li>Reading the docs. Then reading them again.</li>
-          <li>Making a little room for the next idea.</li>
+          <li>Widening the denominator to improve the odds.</li>
+          <li>Building lore and ritual for the character.</li>
+          <li>Chasing the clues still missing.</li>
+          <li>Trimming the surplus, one rep at a time.</li>
         </ul>
       </section>
 
